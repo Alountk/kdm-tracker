@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title} + ' · kdm-tracker'">kdm-tracker</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        (function () {
+            var root = document.documentElement, saved = null;
+            try { saved = localStorage['kdm-theme']; } catch (e) {}
+            if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+            document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('themeToggle');
+                function cur() { return root.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+                function label() { btn.textContent = cur() === 'dark' ? 'Light' : 'Dark'; }
+                label();
+                btn.onclick = function () { var next = cur() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage['kdm-theme'] = next; } catch (e) {} label(); };
+            });
+        })();
+    </script>
 </head>
 <body>
 <header th:fragment="header">
@@ -18,6 +32,8 @@
             <a th:href="@{/log}">Log</a>
             <a th:href="@{/prototypes/index.html}">Prototypes</a>
         </nav>
+        <span class="spacer"></span>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
     </div>
 </header>
 </body>

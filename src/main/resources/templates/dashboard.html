@@ -5,7 +5,7 @@
 <header th:replace="~{fragments :: header}"></header>
 <main class="container">
     <h1 th:text="${settlement.name}">New Settlement</h1>
-    <p class="muted">Lantern Year <strong th:text="${settlement.lanternYear}">1</strong></p>
+    <p class="muted"><span class="chip accent">Lantern Year <strong th:text="${settlement.lanternYear}">1</strong></span></p>
 
     <div class="cards">
         <div class="card">
