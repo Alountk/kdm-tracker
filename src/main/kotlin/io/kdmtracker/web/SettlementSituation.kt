@@ -2,6 +2,7 @@ package io.kdmtracker.web
 
 import io.kdmtracker.domain.Settlement
 import io.kdmtracker.domain.SettlementPhase
+import io.kdmtracker.domain.SettlementSteps
 
 /**
  * Situation presentation shared by the home cards and the settlement dashboard.
@@ -12,7 +13,8 @@ import io.kdmtracker.domain.SettlementPhase
  *   every other step (1-7 and 9-10) -> "In progress".
  */
 object SettlementSituation {
-    const val OFFICIAL_STEPS = 11
+    // Single source of truth for the official step count: the steps table itself.
+    const val OFFICIAL_STEPS = SettlementSteps.TOTAL
 
     fun phaseTone(phase: SettlementPhase): String =
         when (phase) {

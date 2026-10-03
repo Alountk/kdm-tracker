@@ -22,6 +22,12 @@ class Settlement(
     // by DataInitializer at startup, before anything reads them.
     @field:Column(nullable = true)
     var currentStep: Int = 1,
+    // Step-cockpit columns, added nullable for the same legacy-volume reason:
+    // settlement_event reads fine as NULL, endeavors is backfilled to 0 by DataInitializer.
+    @field:Column(nullable = true)
+    var settlementEvent: String? = null,
+    @field:Column(nullable = true)
+    var endeavors: Int = 0,
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "settlement_seq")
     @field:SequenceGenerator(name = "settlement_seq", sequenceName = "settlement_seq", allocationSize = 1)
