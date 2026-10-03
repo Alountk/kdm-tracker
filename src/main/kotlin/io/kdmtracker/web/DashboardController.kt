@@ -1,17 +1,24 @@
 package io.kdmtracker.web
 
+import io.kdmtracker.domain.Milestone
+import io.kdmtracker.domain.MilestoneKey
+import io.kdmtracker.domain.Principle
+import io.kdmtracker.domain.PrincipleCategory
 import io.kdmtracker.domain.Settlement
 import io.kdmtracker.domain.SettlementPhase
 import io.kdmtracker.domain.SettlementSteps
 import io.kdmtracker.domain.StepNote
 import io.kdmtracker.repository.InnovationRepository
 import io.kdmtracker.repository.LogEntryRepository
+import io.kdmtracker.repository.MilestoneRepository
+import io.kdmtracker.repository.PrincipleRepository
 import io.kdmtracker.repository.ResourceRepository
 import io.kdmtracker.repository.SettlementRepository
 import io.kdmtracker.repository.StepNoteRepository
 import io.kdmtracker.repository.SurvivorRepository
 import io.kdmtracker.web.form.SettlementForm
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
@@ -20,6 +27,7 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.server.ResponseStatusException
 import kotlin.math.roundToInt
 
 @Controller
@@ -31,6 +39,8 @@ class DashboardController(
     private val innovationRepository: InnovationRepository,
     private val logEntryRepository: LogEntryRepository,
     private val stepNoteRepository: StepNoteRepository,
+    private val milestoneRepository: MilestoneRepository,
+    private val principleRepository: PrincipleRepository,
 ) {
     @GetMapping("/settlements/{id}")
     fun dashboard(
@@ -168,9 +178,75 @@ class DashboardController(
         @RequestParam endeavors: Int,
     ): String {
         val settlement = locator.require(id)
-        // n is the step that renders the control (7 · Develop); the column is settlement-scoped.
+        // n is the step that renders the control (3 · Gain Endeavors or 7 · Develop);
+        // the column is settlement-scoped.
         settlement.endeavors = endeavors.coerceAtLeast(0)
         settlementRepository.save(settlement)
+        return "redirect:/settlements/$id"
+    }
+
+    // ---- Step 6 bookkeeping: population, milestones, principles ----
+
+    @PostMapping("/settlements/{id}/population")
+    fun savePopulation(
+        @PathVariable id: Long,
+        @RequestParam population: Int,
+    ): String {
+        val settlement = locator.require(id)
+        // The official rules start a settlement at 4 population; the number is user-owned
+        // bookkeeping (population changes come from events, not from a rules engine here).
+        settlement.population = population.coerceAtLeast(0)
+        settlementRepository.save(settlement)
+        return "redirect:/settlements/$id"
+    }
+
+    @PostMapping("/settlements/{id}/milestones/{key}")
+    fun saveMilestone(
+        @PathVariable id: Long,
+        @PathVariable key: String,
+        @RequestParam(defaultValue = "false") reached: Boolean,
+        @RequestParam(defaultValue = "false") resolved: Boolean,
+    ): String {
+        locator.require(id)
+        val milestoneKey =
+            MilestoneKey.entries.firstOrNull { it.name == key }
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown milestone $key")
+        // Lazy create: a row only exists after its first save (checkboxes post nothing
+        // when unchecked, so a missing param means false). No gating anywhere — milestones
+        // reached mid-phase are ticked by the user whenever they happen.
+        val existing = milestoneRepository.findBySettlementIdAndKey(id, milestoneKey.name)
+        milestoneRepository.save(
+            (existing ?: Milestone(settlementId = id, key = milestoneKey.name)).also {
+                it.reached = reached
+                it.resolved = resolved
+            },
+        )
+        return "redirect:/settlements/$id"
+    }
+
+    @PostMapping("/settlements/{id}/principles/{category}")
+    fun savePrinciple(
+        @PathVariable id: Long,
+        @PathVariable category: String,
+        @RequestParam choice: String,
+        @RequestParam(required = false) chosenInYear: Int?,
+    ): String {
+        val settlement = locator.require(id)
+        val principleCategory =
+            PrincipleCategory.entries.firstOrNull { it.name == category }
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown principle category $category")
+        if (choice !in principleCategory.choices) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown $category choice: $choice")
+        }
+        // One row per (settlement, category): the unique constraint plus this lookup make
+        // re-saving an update, never a duplicate. Year defaults to the current lantern year.
+        val existing = principleRepository.findBySettlementIdAndCategory(id, principleCategory)
+        principleRepository.save(
+            (existing ?: Principle(settlementId = id, category = principleCategory)).also {
+                it.choice = choice
+                it.chosenInYear = (chosenInYear ?: settlement.lanternYear).coerceAtLeast(1)
+            },
+        )
         return "redirect:/settlements/$id"
     }
 
@@ -207,6 +283,9 @@ class DashboardController(
         innovationRepository.deleteAll(innovationRepository.findAllBySettlementId(id))
         logEntryRepository.deleteAll(logEntryRepository.findAllBySettlementId(id))
         stepNoteRepository.deleteAll(stepNoteRepository.findAllBySettlementId(id))
+        // Milestones and principles have no FK (import-wipe pattern), so purge explicitly.
+        milestoneRepository.deleteAll(milestoneRepository.findAllBySettlementId(id))
+        principleRepository.deleteAll(principleRepository.findAllBySettlementId(id))
         settlementRepository.deleteById(id)
         return "redirect:/"
     }
@@ -224,7 +303,8 @@ class DashboardController(
         model.addAttribute("survivorAliveCount", survivorRepository.countBySettlementIdAndAliveTrue(id))
         model.addAttribute("survivorTotalCount", survivorRepository.countBySettlementId(id))
         model.addAttribute("resourceTotalQuantity", resources.sumOf { it.quantity })
-        model.addAttribute("innovationCount", innovationRepository.countBySettlementId(id))
+        val innovationCount = innovationRepository.countBySettlementId(id)
+        model.addAttribute("innovationCount", innovationCount)
         model.addAttribute(
             "recentLogs",
             logEntryRepository.findTop5BySettlementIdOrderByLanternYearDescCreatedAtDesc(id),
@@ -241,6 +321,26 @@ class DashboardController(
         model.addAttribute("aliveSurvivors", survivors.filter { it.alive })
         model.addAttribute("widgetSurvivors", survivors.filter { it.alive }.take(4))
         model.addAttribute("topResources", resources.sortedByDescending { it.quantity }.take(5))
+        // Step-1/6/10 bookkeeping: derived views. The milestone hint is render-only —
+        // it never gates progression (milestones are ticked manually when reached).
+        val population = settlement.population ?: 0
+        val deadCount = survivors.count { !it.alive }
+        val principles = principleRepository.findAllBySettlementId(id)
+        model.addAttribute("population", population)
+        model.addAttribute("deadCount", deadCount)
+        model.addAttribute("storageResources", resources.sortedBy { it.name })
+        model.addAttribute(
+            "milestones",
+            StepSixViews.milestoneRows(
+                milestoneRepository.findAllBySettlementId(id),
+                deadCount,
+                population,
+                innovationCount.toInt(),
+            ),
+        )
+        model.addAttribute("principleGroups", StepSixViews.principleGroups(principles, settlement.lanternYear))
+        model.addAttribute("principleCount", principles.size)
+        model.addAttribute("principleSummaries", StepSixViews.principleSummaries(principles))
         val ringDone = stepNo - 1
         model.addAttribute("ringDone", ringDone)
         model.addAttribute("ringOffset", ((1.0 - ringDone.toDouble() / SettlementSteps.TOTAL) * RING_C).roundToInt())

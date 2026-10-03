@@ -78,6 +78,40 @@
                 </form>
             </div>
 
+            <!-- Step 1 · Set Up: derived summary of the record-sheet state — display only. -->
+            <div class="step-block" th:if="${settlement.currentStep == 1}">
+                <div class="mini-head">Settlement summary</div>
+                <div class="kv"><span>Population</span><b th:text="${population}">0</b></div>
+                <div class="kv"><span>Survivors (alive / total)</span>
+                    <b th:text="|${survivorAliveCount} / ${survivorTotalCount}|">0 / 0</b>
+                </div>
+                <div class="kv"><span>Innovations</span><b th:text="${innovationCount}">0</b></div>
+                <div class="kv"><span>Storage units</span><b th:text="${resourceTotalQuantity}">0</b></div>
+                <div class="kv"><span>Deaths (dead survivors)</span><b th:text="${deadCount}">0</b></div>
+                <div class="mini-head" th:text="|Principles chosen: ${principleCount}|">Principles chosen: 0</div>
+                <ul class="mini-list" th:if="${principleCount > 0}">
+                    <li th:each="p : ${principleSummaries}" th:text="${p}">Principle · choice (LY 1)</li>
+                </ul>
+                <p class="muted" th:if="${principleCount == 0}">none</p>
+            </div>
+
+            <!-- Step 3 · Gain Endeavors: same settlement-scoped control as step 7. -->
+            <div class="step-block" th:if="${settlement.currentStep == 3}">
+                <form class="step-form" method="post"
+                      th:action="@{/settlements/{id}/steps/{n}/endeavors(id=${settlementId}, n=${currentStepDef.number})}">
+                    <div>
+                        <label for="endeavors">Settlement endeavors</label>
+                        <input id="endeavors" type="number" name="endeavors" min="0" th:value="${settlement.endeavors}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Save endeavors</button>
+                        <span class="muted">+1 endeavor per returning survivor</span>
+                    </div>
+                </form>
+                <p class="muted">+1 endeavor per returning survivor; innovations and principles may grant
+                    bonuses on top. Returnees themselves need the hunt-party model (see step 2).</p>
+            </div>
+
             <!-- Step 4 · Update Timeline: advance the year + record the drawn settlement event. -->
             <div class="step-block" th:if="${settlement.currentStep == 4}">
                 <form class="step-form" method="post"
@@ -117,6 +151,70 @@
                     still zero.</p>
             </div>
 
+            <!-- Step 6 · Check Milestones: population control, the five official milestone
+                 ticks and the three principle choices. Hints are derived at render time and
+                 never gate anything — milestones can be reached any time in the phase
+                 (research §5), so they are ticked manually when it happens. -->
+            <div class="step-block" th:if="${settlement.currentStep == 6}">
+                <form class="step-form" method="post"
+                      th:action="@{/settlements/{id}/population(id=${settlementId})}">
+                    <div>
+                        <label for="population">Population</label>
+                        <input id="population" type="number" name="population" min="0" th:value="${population}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Save population</button>
+                        <span class="muted">The rules start a settlement at 4 — set it here.</span>
+                    </div>
+                </form>
+
+                <div class="mini-head">Milestones · population <b th:text="${population}">0</b></div>
+                <div class="panel-row" th:each="m : ${milestones}">
+                    <form method="post" class="panel-form"
+                          th:action="@{/settlements/{id}/milestones/{key}(id=${settlementId}, key=${m.key})}">
+                        <div class="panel-row-title">
+                            <strong th:text="${m.title}">Principle: Death</strong>
+                            <span class="muted" th:text="|— ${m.condition}|">— 1 death</span>
+                            <span class="chip" th:classappend="${m.eligible ? 'success' : ''}"
+                                  th:text="${m.hint}">hint</span>
+                        </div>
+                        <label class="check">
+                            <input type="checkbox" name="reached" value="true" th:checked="${m.reached}"> Reached
+                        </label>
+                        <label class="check">
+                            <input type="checkbox" name="resolved" value="true" th:checked="${m.resolved}"> Resolved
+                        </label>
+                        <button type="submit" class="secondary small">Save</button>
+                    </form>
+                </div>
+                <p class="muted">Tick a milestone when it happens — reached later in the phase resolves
+                    immediately, too. Resolved means its story event is done.</p>
+
+                <div class="mini-head">Principles</div>
+                <div class="panel-row" th:each="g : ${principleGroups}">
+                    <form method="post" class="panel-form"
+                          th:action="@{/settlements/{id}/principles/{category}(id=${settlementId}, category=${g.category})}">
+                        <div class="panel-row-title">
+                            <strong th:text="${g.label}">Principle: Death</strong>
+                            <span class="chip success" th:if="${g.savedChoice != null}"
+                                  th:text="|${g.savedChoice} · LY ${g.year}|">Choice · LY 1</span>
+                            <span class="chip" th:if="${g.savedChoice == null}">not chosen yet</span>
+                        </div>
+                        <label class="check" th:each="c : ${g.choices}">
+                            <input type="radio" name="choice" th:value="${c}" th:checked="${c == g.savedChoice}">
+                            <span th:text="${c}">Choice</span>
+                        </label>
+                        <div>
+                            <label th:for="|principle-year-${g.category}|">Chosen in LY</label>
+                            <input th:id="|principle-year-${g.category}|" type="number" name="chosenInYear"
+                                   min="1" th:value="${g.year}">
+                        </div>
+                        <button type="submit" class="secondary small">Save principle</button>
+                    </form>
+                </div>
+                <p class="muted">Each category takes exactly one official choice, permanent once saved.</p>
+            </div>
+
             <!-- Step 7 · Develop: endeavor ledger input + quick links. -->
             <div class="step-block" th:if="${settlement.currentStep == 7}">
                 <form class="step-form" method="post"
@@ -150,6 +248,41 @@
                     as possible).</p>
             </div>
 
+            <!-- Step 9 · Special Showdown: interruption loop — fight it, then record the
+                 aftermath and go back to step 5 to update the death count. -->
+            <div class="step-block" th:if="${settlement.currentStep == 9}">
+                <p class="muted">Only when the timeline lists a Special Showdown for this year: departing
+                    survivors fight it immediately. Win or lose, afterwards loop back to step 5 to update
+                    the death count — no new endeavors, no timeline advance.</p>
+                <p>
+                    <a class="button"
+                       th:href="@{/settlements/{id}/log/new(id=${settlementId})}">Record the aftermath in the campaign log</a>
+                </p>
+            </div>
+
+            <!-- Step 10 · Record & Archive: the full settlement storage table. -->
+            <div class="step-block" th:if="${settlement.currentStep == 10}">
+                <div class="mini-head">Settlement storage</div>
+                <table th:unless="${#lists.isEmpty(storageResources)}">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${storageResources}">
+                        <td th:text="${r.name}">Bone</td>
+                        <td th:text="${r.category}">BASIC</td>
+                        <td th:text="${r.quantity}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p class="muted" th:if="${#lists.isEmpty(storageResources)}">Storage is empty.</p>
+                <p><a th:href="@{/settlements/{id}/resources(id=${settlementId})}">Open resources →</a></p>
+            </div>
+
             <!-- Step 11 · End phase: destructive, gated by an explicit confirm. -->
             <div class="step-block" th:if="${settlement.currentStep == 11}">
                 <div class="warn-box" th:classappend="${endeavorsDanger ? ' danger' : ''}">
@@ -168,10 +301,9 @@
                 </form>
             </div>
 
-            <!-- TODO(unit): steps 1, 2, 3, 6, 9 and 10 are notes + summary only — their bookkeeping
-                 (setup checklist, healing, endeavor counting, milestone ticks, storage archiving) is
-                 handled by later units once the data exists. No fake UI here on purpose; step 6
-                 milestone checkboxes are explicitly out of scope for this unit. -->
+            <!-- TODO(unit): step 2's bookkeeping (healing + per-survivor returning flag) needs
+                 the hunt-party model from the v2 session companion — no fake UI on purpose.
+                 Steps 1, 3, 6, 9 and 10 have their panels now; the rest are wired above. -->
         </div>
     </section>
 

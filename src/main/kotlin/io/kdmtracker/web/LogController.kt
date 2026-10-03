@@ -30,6 +30,19 @@ class LogController(
         return "log"
     }
 
+    @GetMapping("/settlements/{id}/log/new")
+    fun newEntry(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        // Standalone "new entry" URL: same page as the log list — the create form lives
+        // there. Step 9 links here to record a special showdown's aftermath.
+        locator.require(id)
+        fillList(id, model)
+        model.addAttribute(FORM, LogForm())
+        return "log"
+    }
+
     @PostMapping("/settlements/{id}/log")
     fun create(
         @PathVariable id: Long,

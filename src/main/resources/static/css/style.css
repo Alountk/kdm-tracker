@@ -1274,6 +1274,35 @@ label.check {
     white-space: nowrap;
 }
 
+/* Step-6 panel rows: one bordered row per milestone / principle group. */
+.panel-row {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px;
+    margin-top: 8px;
+}
+
+.panel-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+}
+
+.panel-row-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1 1 100%;
+    font-size: 0.85rem;
+}
+
+.panel-form .check {
+    margin-bottom: 0;
+}
+
 @media (max-width: 860px) {
     .bento {
         grid-template-columns: repeat(2, 1fr);

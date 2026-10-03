@@ -28,6 +28,11 @@ class Settlement(
     var settlementEvent: String? = null,
     @field:Column(nullable = true)
     var endeavors: Int = 0,
+    // Nullable column for the same legacy-volume reason: DataInitializer backfills NULL rows
+    // from the survivor count at startup. Kotlin default 0 — the official rules start a
+    // settlement at 4 population, the user sets it in the step-6 panel.
+    @field:Column(nullable = true)
+    var population: Int? = 0,
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "settlement_seq")
     @field:SequenceGenerator(name = "settlement_seq", sequenceName = "settlement_seq", allocationSize = 1)
