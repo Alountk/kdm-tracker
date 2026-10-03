@@ -10,9 +10,10 @@ import jakarta.persistence.UniqueConstraint
 /**
  * Free-form note attached to one settlement step.
  *
- * Deliberately has no foreign key to `settlements`: export/import replaces settlements
- * wholesale without knowing about notes (schemaVersion 1 stays untouched), so an FK would
- * break `/api/import`. Notes are cleaned up explicitly when a settlement is deleted.
+ * Deliberately has no foreign key to `settlements`: `/api/import` (schemaVersion 2)
+ * wipes and restores step_notes alongside settlements in one transaction, so an FK
+ * would add ceremony without value. Notes are cleaned up explicitly when a settlement
+ * is deleted.
  */
 @Entity
 @Table(

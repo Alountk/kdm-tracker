@@ -12,8 +12,8 @@ import jakarta.persistence.UniqueConstraint
  * One official step-6 milestone ticked for a settlement.
  *
  * Deliberately has no foreign key to `settlements` (same import-wipe pattern as [StepNote]):
- * `/api/import` replaces settlements wholesale without knowing about milestones, so an FK
- * would break it. Rows are purged explicitly when a settlement is deleted.
+ * `/api/import` (schemaVersion 2) wipes and restores milestones alongside settlements.
+ * Rows are purged explicitly when a settlement is deleted.
  *
  * Rows are created lazily on the first save; the panel displays all [MilestoneKey] entries
  * regardless (default false/false). No gating: a milestone can be reached at any point in

@@ -2,13 +2,21 @@ package io.kdmtracker.web
 
 import io.kdmtracker.domain.Innovation
 import io.kdmtracker.domain.LogEntry
+import io.kdmtracker.domain.Milestone
+import io.kdmtracker.domain.MilestoneKey
+import io.kdmtracker.domain.Principle
+import io.kdmtracker.domain.PrincipleCategory
 import io.kdmtracker.domain.Resource
 import io.kdmtracker.domain.SettlementPhase
+import io.kdmtracker.domain.StepNote
 import io.kdmtracker.domain.Survivor
 import io.kdmtracker.repository.InnovationRepository
 import io.kdmtracker.repository.LogEntryRepository
+import io.kdmtracker.repository.MilestoneRepository
+import io.kdmtracker.repository.PrincipleRepository
 import io.kdmtracker.repository.ResourceRepository
 import io.kdmtracker.repository.SettlementRepository
+import io.kdmtracker.repository.StepNoteRepository
 import io.kdmtracker.repository.SurvivorRepository
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -19,7 +27,9 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
+import tools.jackson.core.exc.StreamReadException
 import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.exc.MismatchedInputException
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
 import java.time.Instant
@@ -33,6 +43,9 @@ class TransferController(
     private val resourceRepository: ResourceRepository,
     private val innovationRepository: InnovationRepository,
     private val logEntryRepository: LogEntryRepository,
+    private val stepNoteRepository: StepNoteRepository,
+    private val milestoneRepository: MilestoneRepository,
+    private val principleRepository: PrincipleRepository,
     private val transferService: TransferService,
     private val homeViewBuilder: HomeViewBuilder,
 ) {
@@ -66,8 +79,15 @@ class TransferController(
         val document =
             try {
                 objectMapper.readValue(file.inputStream, ExportDocument::class.java)
-            } catch (e: Exception) {
+            } catch (e: StreamReadException) {
                 return importError(model, "Import failed: the uploaded file is not valid JSON.")
+            } catch (e: MismatchedInputException) {
+                return importError(
+                    model,
+                    "Import failed: the uploaded file has a value of the wrong type (${e.message}).",
+                )
+            } catch (e: Exception) {
+                return importError(model, "Import failed: the uploaded file could not be read (${e.message}).")
             }
         validate(document)?.let { return importError(model, it) }
         try {
@@ -83,6 +103,9 @@ class TransferController(
         val resources = resourceRepository.findAll()
         val innovations = innovationRepository.findAll()
         val logs = logEntryRepository.findAll()
+        val stepNotes = stepNoteRepository.findAll()
+        val milestones = milestoneRepository.findAll()
+        val principles = principleRepository.findAll()
         return settlementRepository.findAllByOrderByIdAsc().map { settlement ->
             ExportSettlement(
                 name = settlement.name,
@@ -94,13 +117,21 @@ class TransferController(
                 resources = resources.filter { it.settlementId == settlement.id }.map { it.toExport() },
                 innovations = innovations.filter { it.settlementId == settlement.id }.map { it.toExport() },
                 log = logs.filter { it.settlementId == settlement.id }.map { it.toExport() },
+                settlementEvent = settlement.settlementEvent,
+                endeavors = settlement.endeavors,
+                population = settlement.population,
+                stepNotes = stepNotes.filter { it.settlementId == settlement.id }.map { it.toExport() },
+                milestones = milestones.filter { it.settlementId == settlement.id }.map { it.toExport() },
+                principles = principles.filter { it.settlementId == settlement.id }.map { it.toExport() },
             )
         }
     }
 
     private fun validate(document: ExportDocument): String? {
-        if (document.schemaVersion != SCHEMA_VERSION) {
-            return "Import failed: unsupported schemaVersion (expected $SCHEMA_VERSION)."
+        val version = document.schemaVersion
+        if (version == null || version !in SUPPORTED_SCHEMA_VERSIONS) {
+            val supported = SUPPORTED_SCHEMA_VERSIONS.joinToString(" or ")
+            return "Import failed: unsupported schemaVersion (expected $supported)."
         }
         val settlements = document.settlements ?: return "Import failed: the settlements array is missing."
         settlements.forEachIndexed { index, settlement ->
@@ -137,6 +168,28 @@ class TransferController(
                     } catch (e: Exception) {
                         return "Import failed: settlements[$index].log[$i].createdAt '$raw' is not a valid date-time."
                     }
+                }
+            }
+            settlement.stepNotes.orEmpty().forEachIndexed { i, note ->
+                if (note.step == null) {
+                    return "Import failed: settlements[$index].stepNotes[$i].step is required."
+                }
+                if (note.text == null) {
+                    return "Import failed: settlements[$index].stepNotes[$i].text is required."
+                }
+            }
+            settlement.milestones.orEmpty().forEachIndexed { i, milestone ->
+                val key = milestone.key
+                if (key.isNullOrBlank() || MilestoneKey.entries.none { it.name == key }) {
+                    return "Import failed: settlements[$index].milestones[$i].key '$key' is unknown."
+                }
+            }
+            settlement.principles.orEmpty().forEachIndexed { i, principle ->
+                val category = principle.category
+                val known =
+                    category != null && PrincipleCategory.entries.any { it.name.equals(category, ignoreCase = true) }
+                if (!known) {
+                    return "Import failed: settlements[$index].principles[$i].category '$category' is unknown."
                 }
             }
         }
@@ -179,7 +232,15 @@ class TransferController(
     private fun LogEntry.toExport() =
         ExportLogEntry(lanternYear = lanternYear, title = title, body = body, createdAt = createdAt.toString())
 
+    private fun StepNote.toExport() = ExportStepNote(step = step, text = text)
+
+    private fun Milestone.toExport() = ExportMilestone(key = key, reached = reached, resolved = resolved)
+
+    private fun Principle.toExport() =
+        ExportPrinciple(category = category.name, choice = choice, chosenInYear = chosenInYear)
+
     companion object {
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
+        val SUPPORTED_SCHEMA_VERSIONS = listOf(1, 2)
     }
 }

@@ -16,6 +16,31 @@ data class ExportSettlement(
     val resources: List<ExportResource>? = null,
     val innovations: List<ExportInnovation>? = null,
     val log: List<ExportLogEntry>? = null,
+    // schemaVersion 2: step-cockpit and step-6 bookkeeping. Absent in v1 files,
+    // where import applies the legacy defaults (see TransferService.replaceAll).
+    val settlementEvent: String? = null,
+    val endeavors: Int? = null,
+    val population: Int? = null,
+    val stepNotes: List<ExportStepNote>? = null,
+    val milestones: List<ExportMilestone>? = null,
+    val principles: List<ExportPrinciple>? = null,
+)
+
+data class ExportStepNote(
+    val step: Int? = null,
+    val text: String? = null,
+)
+
+data class ExportMilestone(
+    val key: String? = null,
+    val reached: Boolean? = null,
+    val resolved: Boolean? = null,
+)
+
+data class ExportPrinciple(
+    val category: String? = null,
+    val choice: String? = null,
+    val chosenInYear: Int? = null,
 )
 
 data class ExportSurvivor(

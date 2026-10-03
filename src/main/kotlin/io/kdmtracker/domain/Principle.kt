@@ -13,7 +13,8 @@ import jakarta.persistence.UniqueConstraint
  * One principle choice per category for a settlement (step 6).
  *
  * Deliberately has no foreign key to `settlements` — same import-wipe pattern as
- * [StepNote]; rows are purged explicitly when a settlement is deleted. The unique
+ * [StepNote]: `/api/import` (schemaVersion 2) wipes and restores principles alongside
+ * settlements. Rows are purged explicitly when a settlement is deleted. The unique
  * (settlement, category) constraint makes re-saving an update, never a duplicate.
  */
 @Entity
