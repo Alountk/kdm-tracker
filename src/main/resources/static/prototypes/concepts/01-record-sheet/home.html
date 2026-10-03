@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record Sheet · Home · Concepts</title>
+<style>
+    /* ============ concept tokens: 01-record-sheet ============ */
+    :root {
+        --paper: #f4efe2;
+        --paper-raised: #fbf7ec;
+        --paper-sunken: #ebe4d3;
+        --ink: #2b2620;
+        --ink-2: #5b5245;
+        --ink-muted: #8a8071;
+        --rule: #d9d0bc;
+        --rule-strong: #b9ad93;
+        --accent: #8a5b08;
+        --accent-soft: #f0e4c8;
+        --accent-contrast: #ffffff;
+        --success: #3f6b3a;
+        --success-soft: #e6efe1;
+        --warning: #8a5b08;
+        --warning-soft: #f7ead0;
+        --danger: #9a3b2e;
+        --danger-soft: #f6e3de;
+        --info: #3c5a7d;
+        --info-soft: #e4ecf5;
+        --shadow: 0 1px 2px rgba(60, 48, 24, 0.10);
+        --font-sans: "Avenir Next", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+        --font-cond: "Avenir Next Condensed", "Roboto Condensed", "Segoe UI", var(--font-sans);
+        --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        --radius: 3px;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --paper: #17130d;
+            --paper-raised: #201a12;
+            --paper-sunken: #100d08;
+            --ink: #ece3d2;
+            --ink-2: #bdb19b;
+            --ink-muted: #8c8172;
+            --rule: #3a3225;
+            --rule-strong: #564a37;
+            --accent: #f0be63;
+            --accent-soft: #34290f;
+            --accent-contrast: #17130d;
+            --success: #8fc487;
+            --success-soft: #1b2a18;
+            --warning: #f0be63;
+            --warning-soft: #34290f;
+            --danger: #e89587;
+            --danger-soft: #351913;
+            --info: #9db8d8;
+            --info-soft: #17222f;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+        }
+    }
+    [data-theme="dark"] {
+        --paper: #17130d;
+        --paper-raised: #201a12;
+        --paper-sunken: #100d08;
+        --ink: #ece3d2;
+        --ink-2: #bdb19b;
+        --ink-muted: #8c8172;
+        --rule: #3a3225;
+        --rule-strong: #564a37;
+        --accent: #f0be63;
+        --accent-soft: #34290f;
+        --accent-contrast: #17130d;
+        --success: #8fc487;
+        --success-soft: #1b2a18;
+        --warning: #f0be63;
+        --warning-soft: #34290f;
+        --danger: #e89587;
+        --danger-soft: #351913;
+        --info: #9db8d8;
+        --info-soft: #17222f;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 1.5;
+        padding-bottom: 60px;
+    }
+    /* ruled-paper backdrop */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 27px,
+            var(--rule) 27px,
+            var(--rule) 28px
+        );
+        opacity: 0.35;
+        z-index: 0;
+    }
+    .layer { position: relative; z-index: 1; }
+
+    .sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 14px 26px;
+        background: var(--paper-raised);
+        border-bottom: 3px double var(--rule-strong);
+    }
+    .sheet-head .brand {
+        font-family: var(--font-cond);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 0.86rem;
+        color: var(--accent);
+        text-decoration: none;
+    }
+    .sheet-head nav { display: flex; gap: 16px; }
+    .sheet-head nav a {
+        color: var(--ink-2);
+        text-decoration: none;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.76rem;
+    }
+    .sheet-head nav a:hover { color: var(--accent); }
+    .sheet-head .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--paper-sunken);
+        color: var(--ink);
+        border: 1px solid var(--rule-strong);
+        border-radius: var(--radius);
+        padding: 5px 12px;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.72rem;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 26px 22px; }
+
+    .form-title {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        border-bottom: 1px solid var(--rule-strong);
+        padding-bottom: 10px;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
+    }
+    .form-title h1 {
+        margin: 0;
+        font-family: var(--font-cond);
+        font-size: 1.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+    }
+    .form-title .sub {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .crumbs { font-size: 0.78rem; color: var(--ink-muted); margin-bottom: 14px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+
+    .new-settlement {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        border: none;
+        border-radius: var(--radius);
+        padding: 9px 18px;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .new-settlement:hover { filter: brightness(1.08); }
+
+    /* ---- record table ---- */
+    .ledger { width: 100%; border-collapse: collapse; margin-top: 18px; background: var(--paper-raised); border: 1px solid var(--rule-strong); }
+    .ledger thead th {
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.68rem;
+        color: var(--ink-2);
+        background: var(--paper-sunken);
+        border-bottom: 2px solid var(--rule-strong);
+        padding: 9px 10px;
+        text-align: left;
+        font-weight: 700;
+    }
+    .ledger tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; transition: background 0.12s ease; }
+    .ledger tbody tr:hover { background: var(--accent-soft); }
+    .ledger tbody tr:last-child { border-bottom: none; }
+    .ledger td { padding: 13px 10px; vertical-align: middle; font-size: 0.88rem; }
+    .ledger td.num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--ink-muted);
+        width: 34px;
+        text-align: right;
+        border-right: 1px solid var(--rule);
+    }
+    .ledger .name {
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .ledger .name a { color: var(--ink); text-decoration: none; }
+    .ledger .name a:hover { color: var(--accent); }
+    .ledger .meta { font-size: 0.75rem; color: var(--ink-muted); font-family: var(--font-mono); }
+    .mono { font-family: var(--font-mono); }
+    .ly { font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; }
+
+    .chip {
+        display: inline-block;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.66rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border: 1px solid;
+        border-radius: var(--radius);
+        white-space: nowrap;
+    }
+    .chip.progress { background: var(--warning-soft); border-color: var(--warning); color: var(--warning); }
+    .chip.depart { background: var(--info-soft); border-color: var(--info); color: var(--info); }
+    .chip.hunting { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+
+    .legend {
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.7rem;
+        color: var(--ink-muted);
+    }
+    .footer-nav { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+    .footer-nav a {
+        color: var(--accent);
+        text-decoration: none;
+        font-family: var(--font-cond);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.76rem;
+        border-bottom: 1px solid var(--rule-strong);
+        padding-bottom: 2px;
+    }
+    @media (max-width: 720px) {
+        .ledger td.stat, .ledger th.stat { display: none; }
+    }
+</style>
+</head>
+<body>
+<div class="layer">
+    <header class="sheet-head">
+        <a class="brand" href="/prototypes/index.html">kdm-tracker</a>
+        <nav>
+            <a href="/prototypes/concepts/index.html">Concepts</a>
+            <a href="/prototypes/flows/index.html">Flows</a>
+            <a href="/prototypes/design-system/index.html">Design System</a>
+        </nav>
+        <span class="spacer"></span>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+    </header>
+
+    <main class="wrap">
+        <p class="crumbs"><a href="/prototypes/concepts/index.html">← Prototypes</a> / 01 Record Sheet / Home</p>
+
+        <div class="form-title">
+            <div>
+                <h1>Settlement Ledger</h1>
+                <span class="sub">Form RS-11 · settlements in progress</span>
+            </div>
+            <a class="new-settlement" href="#new">+ New settlement</a>
+        </div>
+
+        <table class="ledger">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Settlement</th>
+                    <th>LY</th>
+                    <th>Phase</th>
+                    <th>Current step</th>
+                    <th class="stat">Surv.</th>
+                    <th class="stat">Innov.</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr onclick="location.href='/prototypes/concepts/01-record-sheet/dashboard.html'">
+                    <td class="num">01</td>
+                    <td>
+                        <div class="name"><a href="/prototypes/concepts/01-record-sheet/dashboard.html">Kelona</a></div>
+                        <div class="meta">settlement phase · in progress</div>
+                    </td>
+                    <td class="ly">LY 3</td>
+                    <td class="mono">Settlement</td>
+                    <td>
+                        <span class="mono">4</span> — Update Timeline
+                        <div class="meta">step 4 of 11</div>
+                    </td>
+                    <td class="stat mono">7</td>
+                    <td class="stat mono">12</td>
+                    <td><span class="chip progress">In progress</span></td>
+                </tr>
+                <tr onclick="location.href='/prototypes/concepts/01-record-sheet/dashboard.html'">
+                    <td class="num">02</td>
+                    <td>
+                        <div class="name"><a href="/prototypes/concepts/01-record-sheet/dashboard.html">Dust Pawn</a></div>
+                        <div class="meta">settlement phase · ready to depart</div>
+                    </td>
+                    <td class="ly">LY 1</td>
+                    <td class="mono">Settlement</td>
+                    <td>
+                        <span class="mono">8</span> — Prepare Departing Survivors
+                        <div class="meta">step 8 of 11</div>
+                    </td>
+                    <td class="stat mono">4</td>
+                    <td class="stat mono">3</td>
+                    <td><span class="chip depart">Ready to depart</span></td>
+                </tr>
+                <tr onclick="location.href='/prototypes/concepts/01-record-sheet/dashboard.html'">
+                    <td class="num">03</td>
+                    <td>
+                        <div class="name"><a href="/prototypes/concepts/01-record-sheet/dashboard.html">Ashen Hollow</a></div>
+                        <div class="meta">hunt phase · quarry: White Lion lvl 2</div>
+                    </td>
+                    <td class="ly">LY 6</td>
+                    <td class="mono">Hunt</td>
+                    <td>
+                        <span class="mono">—</span> not applicable
+                        <div class="meta">hunt phase has no settlement steps</div>
+                    </td>
+                    <td class="stat mono">4</td>
+                    <td class="stat mono">9</td>
+                    <td><span class="chip hunting">Hunting</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="legend">
+            <span>Legend</span>
+            <span>LY = Lantern Year</span>
+            <span>Surv. = survivors</span>
+            <span>Innov. = innovations</span>
+            <span>Steps run 1–11, official order</span>
+        </div>
+
+        <div class="footer-nav">
+            <a href="/prototypes/concepts/index.html">← All concepts</a>
+            <a href="/prototypes/concepts/01-record-sheet/dashboard.html">Open Kelona dashboard →</a>
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

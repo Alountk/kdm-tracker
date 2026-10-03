@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concepts · Prototypes</title>
+<style>
+    :root {
+        --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef1f5;
+        --text: #1c2430; --text-2: #48546a; --muted: #6b7688;
+        --border: #d8dee7; --accent: #2f6fed;
+        --record: #8a5b08; --path: #2f6fed; --board: #8c1f2f; --bento: #4f46e5;
+        --shadow: 0 1px 3px rgba(16,24,40,.08);
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --bg: #12151c; --surface: #1a1f29; --surface-2: #232a37;
+            --text: #e7ebf2; --text-2: #b3bdcd; --muted: #8592a6;
+            --border: #303949; --accent: #6d9aff;
+            --record: #f0be63; --path: #6d9aff; --board: #e8a33f; --bento: #8b87ff;
+            --shadow: 0 1px 3px rgba(0,0,0,.4);
+        }
+    }
+    [data-theme="dark"] {
+        --bg: #12151c; --surface: #1a1f29; --surface-2: #232a37;
+        --text: #e7ebf2; --text-2: #b3bdcd; --muted: #8592a6;
+        --border: #303949; --accent: #6d9aff;
+        --record: #f0be63; --path: #6d9aff; --board: #e8a33f; --bento: #8b87ff;
+        --shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55; }
+    .topbar { display: flex; align-items: center; gap: 24px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; }
+    .brand { font-weight: 700; color: var(--accent); text-decoration: none; }
+    .topbar a.plain { color: var(--text-2); text-decoration: none; font-size: .92rem; }
+    .topbar a.plain:hover { color: var(--accent); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: .85rem; cursor: pointer; }
+    .theme-toggle:hover { border-color: var(--accent); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 80px; }
+    .crumbs { font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    .lede { color: var(--text-2); max-width: 780px; }
+    h2 { font-size: 1.12rem; margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .concept {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-top: 4px solid var(--c);
+        border-radius: 10px;
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .concept h3 { margin: 0; font-size: 1.05rem; color: var(--c); }
+    .concept .idx { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .74rem; color: var(--muted); }
+    .concept p { margin: 0; font-size: .89rem; color: var(--text-2); }
+    .concept ul { margin: 2px 0 0; padding-left: 18px; font-size: .85rem; color: var(--text-2); }
+    .concept li { margin: 3px 0; }
+    .screens { display: flex; gap: 8px; margin-top: 6px; }
+    .screens a {
+        flex: 1;
+        text-align: center;
+        font-size: .84rem;
+        text-decoration: none;
+        color: var(--c);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 7px 8px;
+        background: var(--surface-2);
+        transition: border-color .12s ease;
+    }
+    .screens a:hover { border-color: var(--c); }
+
+    table { border-collapse: collapse; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: .87rem; margin-top: 8px; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-2); font-weight: 600; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .back { display: inline-block; margin-top: 34px; padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 6px; text-decoration: none; font-size: .9rem; }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker · Prototypes</a>
+    <a class="plain" href="/prototypes/research/index.html">Research</a>
+    <a class="plain" href="/prototypes/flows/index.html">Flows</a>
+    <a class="plain" href="/prototypes/design-system/index.html">Design System</a>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/index.html">Prototypes</a> / Concepts</p>
+    <h1>Four design directions</h1>
+    <p class="lede">
+        Four competing concepts for the same two screens — Home (settlement list) and the
+        Settlement Dashboard (11-step tracking). Same data, four different layout systems,
+        typography voices and accents. Each is light- and dark-ready.
+    </p>
+
+    <h2>Shared sample data</h2>
+    <table>
+        <thead><tr><th>Settlement</th><th>Lantern Year</th><th>Phase</th><th>Step</th><th>Survivors</th><th>Innovations</th><th>Status</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Kelona</strong></td><td>LY 3</td><td>Settlement</td><td>4 · Update Timeline</td><td>7</td><td>12</td><td>In progress</td></tr>
+            <tr><td><strong>Dust Pawn</strong></td><td>LY 1</td><td>Settlement</td><td>8 · Prepare Departing Survivors</td><td>4</td><td>3</td><td>Ready to depart</td></tr>
+            <tr><td><strong>Ashen Hollow</strong></td><td>LY 6</td><td>Hunt</td><td>—</td><td>—</td><td>—</td><td>Hunting · White Lion Lvl 2</td></tr>
+        </tbody>
+    </table>
+
+    <h2>The concepts</h2>
+    <div class="grid">
+        <div class="concept" style="--c:var(--record)">
+            <span class="idx">01</span>
+            <h3>Record Sheet</h3>
+            <p>An homage to the official Settlement Record Sheet: warm paper, ruled lines, dense tabular fields, condensed small-caps headings and monospace numbers. A numbered left rail 1–11 reads like a printed form.</p>
+            <ul>
+                <li>Layout: single ruled column + numbered rail</li>
+                <li>Type: condensed / small caps + mono numerals</li>
+                <li>Dark mode: candlelit ledger — near-black brown, amber accent</li>
+            </ul>
+            <div class="screens">
+                <a href="/prototypes/concepts/01-record-sheet/home.html">Home</a>
+                <a href="/prototypes/concepts/01-record-sheet/dashboard.html">Dashboard</a>
+            </div>
+        </div>
+
+        <div class="concept" style="--c:var(--path)">
+            <span class="idx">02</span>
+            <h3>Guided Path</h3>
+            <p>A wizard: one step at a time. A huge "Step 4 of 11" progress header, a vertical stepper rail, and the current step as one large focused card with Prev/Next. Decision steps are visually distinct from bookkeeping ones.</p>
+            <ul>
+                <li>Layout: vertical stepper + focused card</li>
+                <li>Type: friendly rounded sans, generous whitespace</li>
+                <li>Dark mode: deep neutral + lantern-gold accent</li>
+            </ul>
+            <div class="screens">
+                <a href="/prototypes/concepts/02-guided-path/home.html">Home</a>
+                <a href="/prototypes/concepts/02-guided-path/dashboard.html">Dashboard</a>
+            </div>
+        </div>
+
+        <div class="concept" style="--c:var(--board)">
+            <span class="idx">03</span>
+            <h3>Board</h3>
+            <p>Tabletop-board-game flavor. A top pipeline of Settlement → Hunt → Showdown boards, the 11 steps as a tile strip with the active tile glowing, ivory/oxblood/gold palette and subtle decorative borders.</p>
+            <ul>
+                <li>Layout: phase pipeline + glowing tile constellation</li>
+                <li>Type: display headings with decorative borders</li>
+                <li>Dark mode: night tabletop — deep green-charcoal, gold glow</li>
+            </ul>
+            <div class="screens">
+                <a href="/prototypes/concepts/03-board/home.html">Home</a>
+                <a href="/prototypes/concepts/03-board/dashboard.html">Dashboard</a>
+            </div>
+        </div>
+
+        <div class="concept" style="--c:var(--bento)">
+            <span class="idx">04</span>
+            <h3>Bento</h3>
+            <p>A modern productivity app — Linear/Notion territory. Neutral gray scale, crisp sans, tight radii. The dashboard is a bento grid of widgets; the home is a clean card grid with status chips.</p>
+            <ul>
+                <li>Layout: bento widget grid, tight radii</li>
+                <li>Type: crisp neutral sans, compact density</li>
+                <li>Dark mode: true dark gray + indigo accent</li>
+            </ul>
+            <div class="screens">
+                <a href="/prototypes/concepts/04-bento/home.html">Home</a>
+                <a href="/prototypes/concepts/04-bento/dashboard.html">Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <h2>Comparison</h2>
+    <table>
+        <thead><tr><th>Concept</th><th>Layout system</th><th>Typographic voice</th><th>Accent</th><th>Best for</th></tr></thead>
+        <tbody>
+            <tr><td><span class="dot" style="background:var(--record)"></span><strong>01 Record Sheet</strong></td><td>Ruled column + numbered rail</td><td>Condensed / small caps, mono numbers</td><td>Amber (dark) / ochre (light)</td><td>Maximum fidelity to the physical sheet</td></tr>
+            <tr><td><span class="dot" style="background:var(--path)"></span><strong>02 Guided Path</strong></td><td>Stepper + single focused card</td><td>Friendly rounded sans, big numbers</td><td>Lantern gold / blue</td><td>The most guided and intuitive option</td></tr>
+            <tr><td><span class="dot" style="background:var(--board)"></span><strong>03 Board</strong></td><td>Phase pipeline + tile strip</td><td>Display headings, decorative borders</td><td>Gold / oxblood</td><td>Tabletop feel, phase awareness</td></tr>
+            <tr><td><span class="dot" style="background:var(--bento)"></span><strong>04 Bento</strong></td><td>Bento widget grid</td><td>Crisp neutral sans, compact</td><td>Indigo</td><td>Cleanest, most "product" feel</td></tr>
+        </tbody>
+    </table>
+
+    <a class="back" href="/prototypes/index.html">← Back to Prototypes</a>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

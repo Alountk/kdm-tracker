@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bento · Home · Concepts</title>
+<style>
+    /* ============ concept tokens: 04-bento ============ */
+    :root {
+        --bg: #fafafa;
+        --card: #ffffff;
+        --card-2: #f4f4f5;
+        --text: #18181b;
+        --text-2: #3f3f46;
+        --muted: #71717a;
+        --border: #e4e4e7;
+        --border-strong: #d4d4d8;
+        --accent: #4f46e5;
+        --accent-soft: #eef2ff;
+        --accent-contrast: #ffffff;
+        --success: #16a34a;
+        --success-soft: #ecfdf3;
+        --warning: #d97706;
+        --warning-soft: #fffbeb;
+        --danger: #dc2626;
+        --danger-soft: #fef2f2;
+        --info: #2563eb;
+        --info-soft: #eff6ff;
+        --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+        --shadow-md: 0 6px 20px rgba(24, 24, 27, 0.08);
+        --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --radius-sm: 6px;
+        --radius: 10px;
+        --radius-lg: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --bg: #111113;
+            --card: #1a1a1d;
+            --card-2: #232327;
+            --text: #f4f4f5;
+            --text-2: #c4c4cc;
+            --muted: #8b8b95;
+            --border: #2b2b30;
+            --border-strong: #3c3c43;
+            --accent: #818cf8;
+            --accent-soft: #26264a;
+            --accent-contrast: #111113;
+            --success: #4ade80;
+            --success-soft: #10241a;
+            --warning: #fbbf24;
+            --warning-soft: #2c2109;
+            --danger: #f87171;
+            --danger-soft: #2d1414;
+            --info: #60a5fa;
+            --info-soft: #131f33;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+    }
+    [data-theme="dark"] {
+        --bg: #111113;
+        --card: #1a1a1d;
+        --card-2: #232327;
+        --text: #f4f4f5;
+        --text-2: #c4c4cc;
+        --muted: #8b8b95;
+        --border: #2b2b30;
+        --border-strong: #3c3c43;
+        --accent: #818cf8;
+        --accent-soft: #26264a;
+        --accent-contrast: #111113;
+        --success: #4ade80;
+        --success-soft: #10241a;
+        --warning: #fbbf24;
+        --warning-soft: #2c2109;
+        --danger: #f87171;
+        --danger-soft: #2d1414;
+        --info: #60a5fa;
+        --info-soft: #131f33;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.55;
+        padding-bottom: 70px;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .brand { font-weight: 700; color: var(--text); text-decoration: none; font-size: 0.95rem; letter-spacing: -0.01em; }
+    .brand span { color: var(--accent); }
+    .topbar nav { display: flex; gap: 4px; }
+    .topbar nav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 6px 11px;
+        border-radius: var(--radius-sm);
+    }
+    .topbar nav a:hover { background: var(--card-2); color: var(--text); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--card-2);
+        color: var(--text-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--border-strong); }
+
+    .wrap { max-width: 1060px; margin: 0 auto; padding: 30px 22px; }
+    .crumbs { font-size: 0.83rem; color: var(--muted); margin-bottom: 12px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+
+    .head-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .head-row h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+    .head-row .count { color: var(--muted); font-size: 0.85rem; }
+    .head-row .spacer { flex: 1; }
+    .btn-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 9px 16px;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-new:hover { filter: brightness(1.06); }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+    }
+    .cell {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px 18px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-sm);
+        transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .cell:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+    .cell-top { display: flex; align-items: center; gap: 10px; }
+    .dot-av {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--radius);
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex: none;
+    }
+    .cell h2 { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
+    .cell .sub { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+    .cell-top .spacer { flex: 1; }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: var(--radius-pill);
+        white-space: nowrap;
+    }
+    .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .chip.progress { background: var(--warning-soft); color: var(--warning); }
+    .chip.depart { background: var(--info-soft); color: var(--info); }
+    .chip.hunting { background: var(--success-soft); color: var(--success); }
+
+    .situation {
+        background: var(--card-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 11px;
+        font-size: 0.8rem;
+        color: var(--text-2);
+    }
+    .situation b { color: var(--text); font-weight: 650; }
+    .situation .ph { color: var(--accent); font-weight: 600; }
+
+    .metrics { display: flex; gap: 8px; }
+    .metric {
+        flex: 1;
+        background: var(--card-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 7px 10px;
+    }
+    .metric .v { font-size: 1.05rem; font-weight: 700; font-family: var(--mono); }
+    .metric .k { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+
+    .open {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .footer-nav { display: flex; gap: 12px; margin-top: 34px; flex-wrap: wrap; }
+    .footer-nav a {
+        color: var(--text-2);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 15px;
+    }
+    .footer-nav a:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm<span>-tracker</span></a>
+    <nav>
+        <a href="/prototypes/concepts/index.html">Concepts</a>
+        <a href="/prototypes/flows/index.html">Flows</a>
+        <a href="/prototypes/design-system/index.html">Design System</a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/concepts/index.html">← Prototypes</a> / 04 Bento / Home</p>
+
+    <div class="head-row">
+        <h1>Settlements</h1>
+        <span class="count">3 total · 2 in Settlement Phase · 1 hunting</span>
+        <span class="spacer"></span>
+        <a class="btn-new" href="#new">+ New settlement</a>
+    </div>
+
+    <div class="grid">
+        <a class="cell" href="/prototypes/concepts/04-bento/dashboard.html">
+            <div class="cell-top">
+                <div class="dot-av">K</div>
+                <div>
+                    <h2>Kelona</h2>
+                    <div class="sub">LY 3 · Settlement Phase</div>
+                </div>
+                <span class="spacer"></span>
+                <span class="chip progress">In progress</span>
+            </div>
+            <div class="situation">
+                <b>Step 4 of 11</b> — <span class="ph">Update Timeline</span><br>
+                Advance year · settlement event · story events
+            </div>
+            <div class="metrics">
+                <div class="metric"><div class="v">7</div><div class="k">Survivors</div></div>
+                <div class="metric"><div class="v">12</div><div class="k">Innovations</div></div>
+                <div class="metric"><div class="v">7</div><div class="k">Endeavors</div></div>
+            </div>
+            <div class="open">Open dashboard →</div>
+        </a>
+
+        <a class="cell" href="/prototypes/concepts/04-bento/dashboard.html">
+            <div class="cell-top">
+                <div class="dot-av">D</div>
+                <div>
+                    <h2>Dust Pawn</h2>
+                    <div class="sub">LY 1 · Settlement Phase</div>
+                </div>
+                <span class="spacer"></span>
+                <span class="chip depart">Ready to depart</span>
+            </div>
+            <div class="situation">
+                <b>Step 8 of 11</b> — <span class="ph">Prepare Departing Survivors</span><br>
+                Choose 4 · allocate gear · recompute armor
+            </div>
+            <div class="metrics">
+                <div class="metric"><div class="v">4</div><div class="k">Survivors</div></div>
+                <div class="metric"><div class="v">3</div><div class="k">Innovations</div></div>
+                <div class="metric"><div class="v">4</div><div class="k">Endeavors</div></div>
+            </div>
+            <div class="open">Open dashboard →</div>
+        </a>
+
+        <a class="cell" href="/prototypes/concepts/04-bento/dashboard.html">
+            <div class="cell-top">
+                <div class="dot-av">A</div>
+                <div>
+                    <h2>Ashen Hollow</h2>
+                    <div class="sub">LY 6 · Hunt Phase</div>
+                </div>
+                <span class="spacer"></span>
+                <span class="chip hunting">Hunting</span>
+            </div>
+            <div class="situation">
+                <b>Hunt in progress</b> — quarry <span class="ph">White Lion Lvl 2</span><br>
+                Settlement steps resume after the showdown
+            </div>
+            <div class="metrics">
+                <div class="metric"><div class="v">4</div><div class="k">Survivors</div></div>
+                <div class="metric"><div class="v">9</div><div class="k">Innovations</div></div>
+                <div class="metric"><div class="v">13</div><div class="k">Storage</div></div>
+            </div>
+            <div class="open">Open dashboard →</div>
+        </a>
+    </div>
+
+    <div class="footer-nav">
+        <a href="/prototypes/concepts/index.html">← All concepts</a>
+        <a href="/prototypes/concepts/04-bento/dashboard.html">Open Kelona dashboard →</a>
+    </div>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototypes · kdm-tracker</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+    .proto-intro {
+        color: #6b7688;
+        font-size: 0.95rem;
+        max-width: 720px;
+        margin: 0 0 4px;
+    }
+    .toc {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+    }
+    .toc-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        background: #fff;
+        border: 1px solid #d8dee7;
+        border-radius: 8px;
+        padding: 16px 18px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .toc-item:hover {
+        border-color: #2f6fed;
+        box-shadow: 0 1px 4px rgba(16, 24, 40, 0.08);
+    }
+    .toc-num {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #6b7688;
+        background: #eef1f5;
+        border: 1px solid #d8dee7;
+        border-radius: 6px;
+        min-width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+    }
+    .toc-body {
+        flex: 1;
+        min-width: 0;
+    }
+    .toc-name {
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 3px;
+    }
+    .toc-purpose {
+        color: #48546a;
+        font-size: 0.9rem;
+    }
+    .toc-path {
+        color: #6b7688;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        margin-top: 6px;
+    }
+    .badge {
+        flex: none;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .badge.ready {
+        background: #e8f6ec;
+        border-color: #b7e3c3;
+        color: #1e7a41;
+    }
+    .badge.empty {
+        background: #f1f3f6;
+        border-color: #d8dee7;
+        color: #6b7688;
+    }
+    .theme-toggle {
+        background: #1c2430;
+        color: #dbe1ea;
+        border: 1px solid #33415a;
+        border-radius: 999px;
+        padding: 5px 13px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+        margin-left: auto;
+    }
+    .theme-toggle:hover { border-color: #ffd24a; color: #ffd24a; }
+    .topbar { justify-content: flex-start; }
+
+    /* ---- dark overrides (toggle writes data-theme on <html>) ---- */
+    [data-theme="dark"] body { background: #12151c; color: #e7ebf2; }
+    [data-theme="dark"] .page-head h1, [data-theme="dark"] h1, [data-theme="dark"] h2 { color: #e7ebf2; }
+    [data-theme="dark"] .proto-intro { color: #b3bdcd; }
+    [data-theme="dark"] .toc-item { background: #1a1f29; border-color: #303949; }
+    [data-theme="dark"] .toc-item:hover { border-color: #6d9aff; }
+    [data-theme="dark"] .toc-num { background: #232a37; border-color: #303949; color: #8592a6; }
+    [data-theme="dark"] .toc-purpose { color: #b3bdcd; }
+    [data-theme="dark"] .toc-path { color: #8592a6; }
+    [data-theme="dark"] .badge.ready { background: #14301f; border-color: #26543a; color: #6ede95; }
+    [data-theme="dark"] .badge.empty { background: #232a37; border-color: #303949; color: #8592a6; }
+    [data-theme="dark"] .muted { color: #8592a6; }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/">kdm-tracker</a>
+    <nav>
+        <a href="/">Dashboard</a>
+        <a href="/survivors">Survivors</a>
+        <a href="/resources">Resources</a>
+        <a href="/innovations">Innovations</a>
+        <a href="/log">Log</a>
+        <a href="/prototypes/index.html">Prototypes</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Prototypes</h1>
+    </div>
+    <p class="proto-intro">
+        Design workspace for kdm-tracker: research on the game's Lantern Year structure,
+        a visual flow map, the shared design tokens, and four competing interface
+        directions for Home and the Settlement Dashboard. Everything here is static
+        exploration — no application code is wired to it yet.
+    </p>
+
+    <h2>Contents</h2>
+    <div class="toc">
+        <a class="toc-item" href="/prototypes/research/index.html">
+            <span class="toc-num">1</span>
+            <span class="toc-body">
+                <span class="toc-name">Research</span>
+                <span class="toc-purpose">Deep research on the game's Lantern Year steps, with sources.</span>
+                <span class="toc-path">/prototypes/research/</span>
+            </span>
+            <span class="badge ready">Ready</span>
+        </a>
+
+        <a class="toc-item" href="/prototypes/flows/index.html">
+            <span class="toc-num">2</span>
+            <span class="toc-body">
+                <span class="toc-name">Flows</span>
+                <span class="toc-purpose">The visual map of a Lantern Year and the 11 settlement steps.</span>
+                <span class="toc-path">/prototypes/flows/</span>
+            </span>
+            <span class="badge ready">Ready</span>
+        </a>
+
+        <a class="toc-item" href="/prototypes/design-system/index.html">
+            <span class="toc-num">3</span>
+            <span class="toc-body">
+                <span class="toc-name">Design System</span>
+                <span class="toc-purpose">Shared tokens: color (light + dark), typography, spacing, components.</span>
+                <span class="toc-path">/prototypes/design-system/</span>
+            </span>
+            <span class="badge ready">Ready</span>
+        </a>
+
+        <a class="toc-item" href="/prototypes/concepts/index.html">
+            <span class="toc-num">4</span>
+            <span class="toc-body">
+                <span class="toc-name">Concepts</span>
+                <span class="toc-purpose">The four design directions for Home + Settlement Dashboard.</span>
+                <span class="toc-path">/prototypes/concepts/</span>
+            </span>
+            <span class="badge ready">Ready</span>
+        </a>
+
+        <a class="toc-item" href="/prototypes/archive/index.html">
+            <span class="toc-num">5</span>
+            <span class="toc-body">
+                <span class="toc-name">Archive</span>
+                <span class="toc-purpose">Superseded and discarded designs.</span>
+                <span class="toc-path">/prototypes/archive/</span>
+            </span>
+            <span class="badge empty">Empty</span>
+        </a>
+    </div>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme', 'dark');
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

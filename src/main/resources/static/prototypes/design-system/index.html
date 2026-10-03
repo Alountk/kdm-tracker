@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System · Prototypes</title>
+<link rel="stylesheet" href="/prototypes/design-system/tokens.css">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: var(--font-sans);
+        background: var(--surface-bg);
+        color: var(--text-primary);
+        font-size: 15px;
+        line-height: 1.55;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+    }
+    .brand { font-weight: 700; color: var(--accent); text-decoration: none; }
+    .topbar a.plain { color: var(--text-secondary); text-decoration: none; font-size: 0.92rem; }
+    .topbar a.plain:hover { color: var(--accent); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--surface-sunken);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        padding: 6px 14px;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: border-color var(--transition-fast);
+    }
+    .theme-toggle:hover { border-color: var(--accent); }
+
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 80px; }
+    .crumbs { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    .lede { color: var(--text-secondary); max-width: 760px; }
+    h2 {
+        font-size: 1.12rem;
+        margin: 36px 0 6px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid var(--border);
+    }
+    .section-note { color: var(--text-muted); font-size: 0.87rem; margin: 0 0 14px; }
+
+    .swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+    .swatch {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+    .swatch .chip {
+        height: 56px;
+        border-bottom: 1px solid var(--border);
+    }
+    .swatch .meta { padding: 9px 12px; }
+    .swatch .name { font-weight: 600; font-size: 0.87rem; }
+    .swatch .var {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--text-muted);
+        word-break: break-all;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 0.88rem;
+        margin-top: 12px;
+    }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-sunken); font-weight: 600; }
+    td code, p code {
+        font-family: var(--font-mono);
+        font-size: 0.82em;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 1px 5px;
+    }
+
+    .scale { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .scale-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    .scale-row .bar {
+        height: 16px;
+        background: var(--accent);
+        border-radius: var(--radius-sm);
+        display: inline-block;
+    }
+
+    .type-samples {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px 18px;
+        margin-top: 12px;
+    }
+    .type-samples .row {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        padding: 7px 0;
+        border-bottom: 1px dashed var(--border);
+    }
+    .type-samples .row:last-child { border-bottom: none; }
+    .type-samples .label {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        min-width: 210px;
+    }
+
+    .radius-demo { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+    .radius-demo div {
+        width: 84px; height: 60px;
+        background: var(--surface);
+        border: 2px solid var(--accent);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);
+    }
+
+    .shadow-demo { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+    .shadow-demo div {
+        width: 130px; height: 74px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted);
+    }
+
+    .how {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    .how ol { margin: 6px 0; padding-left: 20px; }
+    .how li { margin: 4px 0; }
+    pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        overflow-x: auto;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+    .back {
+        display: inline-block;
+        margin-top: 36px;
+        padding: 8px 14px;
+        background: var(--accent);
+        color: var(--accent-contrast);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    .footer-nav { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; align-items: center; }
+    .footer-nav a.plain {
+        color: var(--accent); text-decoration: none; font-size: 0.9rem;
+        border: 1px solid var(--border); border-radius: var(--radius-md);
+        padding: 8px 14px; background: var(--surface);
+    }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker · Prototypes</a>
+    <a class="plain" href="/prototypes/research/index.html">Research</a>
+    <a class="plain" href="/prototypes/flows/index.html">Flows</a>
+    <a class="plain" href="/prototypes/concepts/index.html">Concepts</a>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/index.html">Prototypes</a> / Design System</p>
+    <h1>Design tokens</h1>
+    <p class="lede">
+        Shared CSS custom properties for every prototype page. Defined once in
+        <code>tokens.css</code>, consumed by this page and referenced as guidance by the
+        four concepts. Every swatch below is rendered live — switch the theme to see both modes.
+    </p>
+
+    <div class="how">
+        <strong>How themes work</strong>
+        <ol>
+            <li><strong>Auto default:</strong> with no stored choice, the page follows the OS via
+                <code>@media (prefers-color-scheme: dark)</code> applied to <code>:root:not([data-theme])</code>.</li>
+            <li><strong>Toggle:</strong> the button in the header reads the effective theme, flips it, writes
+                <code>data-theme="dark"</code> or <code>data-theme="light"</code> on <code>&lt;html&gt;</code>,
+                and persists it in <code>localStorage</code> under <code>kdm-prototypes-theme</code>.</li>
+            <li><strong>Restoration:</strong> on load, the stored value is applied before first paint of the
+                toggle label, so your last choice wins over the OS.</li>
+            <li><strong>Precedence:</strong> stored choice → <code>[data-theme]</code> rule; otherwise OS →
+                <code>prefers-color-scheme</code> rule; otherwise light <code>:root</code> defaults.</li>
+        </ol>
+        <pre>// toggle behaviour (identical on every prototype page)
+var KEY = 'kdm-prototypes-theme';
+var saved = localStorage.getItem(KEY);           // 'dark' | 'light' | null
+if (saved) root.setAttribute('data-theme', saved);
+btn.addEventListener('click', function () {
+  var next = current === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem(KEY, next);
+});</pre>
+    </div>
+
+    <h2>Surface &amp; background</h2>
+    <p class="section-note">Base canvas, card surfaces, elevated layers, and sunken/inset areas.</p>
+    <div class="swatch-grid">
+        <div class="swatch"><div class="chip" style="background:var(--surface-bg)"></div><div class="meta"><div class="name">Background</div><div class="var">--surface-bg</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--surface)"></div><div class="meta"><div class="name">Surface</div><div class="var">--surface</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--surface-elevated)"></div><div class="meta"><div class="name">Elevated surface</div><div class="var">--surface-elevated</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--surface-sunken)"></div><div class="meta"><div class="name">Sunken surface</div><div class="var">--surface-sunken</div></div></div>
+    </div>
+
+    <h2>Text</h2>
+    <p class="section-note">Three levels of emphasis. Chips show the color against the current surface.</p>
+    <div class="swatch-grid">
+        <div class="swatch"><div class="chip" style="background:var(--text-primary)"></div><div class="meta"><div class="name">Text primary</div><div class="var">--text-primary</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--text-secondary)"></div><div class="meta"><div class="name">Text secondary</div><div class="var">--text-secondary</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--text-muted)"></div><div class="meta"><div class="name">Text muted</div><div class="var">--text-muted</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--border)"></div><div class="meta"><div class="name">Border</div><div class="var">--border</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--border-strong)"></div><div class="meta"><div class="name">Border strong</div><div class="var">--border-strong</div></div></div>
+    </div>
+
+    <h2>Accent</h2>
+    <p class="section-note">Default accent plus one dedicated accent per concept direction.</p>
+    <div class="swatch-grid">
+        <div class="swatch"><div class="chip" style="background:var(--accent)"></div><div class="meta"><div class="name">Accent (default)</div><div class="var">--accent</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent-soft)"></div><div class="meta"><div class="name">Accent soft</div><div class="var">--accent-soft</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent-record)"></div><div class="meta"><div class="name">Record Sheet</div><div class="var">--accent-record</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent-path)"></div><div class="meta"><div class="name">Guided Path</div><div class="var">--accent-path</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent-board)"></div><div class="meta"><div class="name">Board</div><div class="var">--accent-board</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent-bento)"></div><div class="meta"><div class="name">Bento</div><div class="var">--accent-bento</div></div></div>
+    </div>
+
+    <h2>Semantic</h2>
+    <p class="section-note">Status colors, each with a soft companion for backgrounds.</p>
+    <div class="swatch-grid">
+        <div class="swatch"><div class="chip" style="background:var(--success)"></div><div class="meta"><div class="name">Success</div><div class="var">--success / --success-soft</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--warning)"></div><div class="meta"><div class="name">Warning</div><div class="var">--warning / --warning-soft</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--danger)"></div><div class="meta"><div class="name">Danger</div><div class="var">--danger / --danger-soft</div></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--info)"></div><div class="meta"><div class="name">Info</div><div class="var">--info / --info-soft</div></div></div>
+    </div>
+
+    <h2>Spacing scale</h2>
+    <p class="section-note">A 4px base grid. Bars are rendered at their real pixel size.</p>
+    <div class="scale">
+        <div class="scale-row"><span class="bar" style="width:4px"></span>--space-1 · 4px</div>
+        <div class="scale-row"><span class="bar" style="width:8px"></span>--space-2 · 8px</div>
+        <div class="scale-row"><span class="bar" style="width:12px"></span>--space-3 · 12px</div>
+        <div class="scale-row"><span class="bar" style="width:16px"></span>--space-4 · 16px</div>
+        <div class="scale-row"><span class="bar" style="width:24px"></span>--space-5 · 24px</div>
+        <div class="scale-row"><span class="bar" style="width:32px"></span>--space-6 · 32px</div>
+        <div class="scale-row"><span class="bar" style="width:48px"></span>--space-7 · 48px</div>
+    </div>
+
+    <h2>Typography</h2>
+    <p class="section-note">System UI stack for prose; a mono stack for numbers, IDs and code.</p>
+    <div class="type-samples">
+        <div class="row"><span class="label">--font-sans</span><span style="font-family:var(--font-sans)">The quick brown fox — Settlement Phase</span></div>
+        <div class="row"><span class="label">--font-mono</span><span style="font-family:var(--font-mono)">LY 3 · 7 survivors · 12 innovations · 4,512</span></div>
+        <div class="row"><span class="label">body default 15px</span><span>Body copy uses --text-secondary on --surface.</span></div>
+    </div>
+    <table>
+        <thead><tr><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+        <tbody>
+            <tr><td><code>--font-sans</code></td><td>system UI stack</td><td>Body text, headings, buttons</td></tr>
+            <tr><td><code>--font-mono</code></td><td>ui-monospace / Menlo / Consolas</td><td>Numbers, resource counts, step indices, code</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Radii</h2>
+    <div class="radius-demo">
+        <div style="border-radius:var(--radius-sm)">sm 4</div>
+        <div style="border-radius:var(--radius-md)">md 8</div>
+        <div style="border-radius:var(--radius-lg)">lg 14</div>
+        <div style="border-radius:var(--radius-pill); width:110px">pill 999</div>
+    </div>
+
+    <h2>Elevation</h2>
+    <div class="shadow-demo">
+        <div style="box-shadow:var(--shadow-sm)">shadow-sm</div>
+        <div style="box-shadow:var(--shadow-md)">shadow-md</div>
+        <div style="box-shadow:var(--shadow-lg)">shadow-lg</div>
+    </div>
+
+    <h2>Motion</h2>
+    <table>
+        <thead><tr><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+        <tbody>
+            <tr><td><code>--transition-fast</code></td><td>120ms ease</td><td>Hover/focus feedback on chips and buttons</td></tr>
+            <tr><td><code>--transition-base</code></td><td>200ms ease</td><td>Panel and card state changes</td></tr>
+            <tr><td><code>--transition-slow</code></td><td>320ms ease</td><td>Step transitions, drawers, route-level motion</td></tr>
+        </tbody>
+    </table>
+
+    <div class="footer-nav">
+        <a class="back" href="/prototypes/index.html">← Back to Prototypes</a>
+        <a class="plain" href="/prototypes/concepts/index.html">See the concepts →</a>
+    </div>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') {
+        root.setAttribute('data-theme', saved);
+    }
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

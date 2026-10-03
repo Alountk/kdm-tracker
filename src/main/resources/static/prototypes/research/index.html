@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lantern Year steps · Research · Prototypes</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1c2430;
+        background: #f5f6f8;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 24px 20px 80px; }
+    .crumbs { font-size: 0.85rem; margin-bottom: 18px; }
+    .crumbs a { color: #2f6fed; text-decoration: none; }
+    .crumbs a:hover { text-decoration: underline; }
+    h1 { font-size: 1.7rem; margin: 0 0 6px; line-height: 1.25; }
+    .subtitle { color: #6b7688; font-size: 0.92rem; margin: 0 0 4px; }
+    h2 {
+        font-size: 1.25rem;
+        margin: 40px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #d8dee7;
+    }
+    h3 { font-size: 1.05rem; margin: 26px 0 8px; }
+    h4 { font-size: 0.95rem; margin: 18px 0 6px; }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    strong { color: #101828; }
+    code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.86em;
+        background: #eef1f5;
+        border: 1px solid #d8dee7;
+        border-radius: 4px;
+        padding: 1px 5px;
+    }
+    .method {
+        background: #fff;
+        border: 1px solid #d8dee7;
+        border-left: 4px solid #2f6fed;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin: 16px 0;
+        font-size: 0.92rem;
+        color: #48546a;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #d8dee7;
+        border-radius: 8px;
+        margin: 12px 0;
+        font-size: 0.9rem;
+    }
+    th, td {
+        border: 1px solid #d8dee7;
+        padding: 7px 10px;
+        text-align: left;
+        vertical-align: top;
+    }
+    th { background: #eef1f5; font-weight: 600; }
+    .step-card {
+        background: #fff;
+        border: 1px solid #d8dee7;
+        border-radius: 8px;
+        padding: 16px 18px;
+        margin: 14px 0;
+    }
+    .step-card h3 { margin-top: 0; }
+    .step-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 6px 0 10px;
+    }
+    .tag {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #eef1f5;
+        border: 1px solid #d8dee7;
+        color: #48546a;
+    }
+    .tag.decision { background: #fff4e0; border-color: #f2d9a4; color: #8a5b08; }
+    .tag.bookkeeping { background: #eef4ff; border-color: #c3d5fb; color: #2a4d9b; }
+    .tag.branching { background: #fdeeea; border-color: #f5c4bd; color: #9b2c1d; }
+    .quote {
+        background: #f7f8fa;
+        border-left: 4px solid #b7c0cf;
+        padding: 8px 14px;
+        margin: 10px 0;
+        color: #3a4457;
+        font-size: 0.93rem;
+    }
+    .corrections {
+        background: #fff;
+        border: 1px solid #d8dee7;
+        border-radius: 8px;
+        padding: 8px 18px 14px;
+    }
+    .sources li { font-size: 0.88rem; word-break: break-all; }
+    .sources a { color: #2f6fed; text-decoration: none; }
+    .sources a:hover { text-decoration: underline; }
+    .source-group { margin-top: 16px; }
+    .source-group h4 { color: #48546a; }
+    .back {
+        display: inline-block;
+        margin-top: 36px;
+        padding: 8px 14px;
+        background: #2f6fed;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    .back:hover { background: #245ac7; }
+    .aside-note { font-size: 0.88rem; color: #6b7688; }
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background: #101828;
+        padding: 11px 24px;
+    }
+    .topbar .brand { font-weight: 700; color: #ffd24a; text-decoration: none; font-size: 0.95rem; }
+    .topbar a.plain { color: #dbe1ea; text-decoration: none; font-size: 0.88rem; }
+    .topbar a.plain:hover { color: #ffd24a; }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: #1c2430;
+        color: #dbe1ea;
+        border: 1px solid #33415a;
+        border-radius: 999px;
+        padding: 5px 13px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: #ffd24a; color: #ffd24a; }
+    .wrap { padding-top: 24px; }
+
+    /* ---- dark overrides (toggle writes data-theme on <html>) ---- */
+    [data-theme="dark"] body { background: #12151c; color: #e7ebf2; }
+    [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 { color: #e7ebf2; }
+    [data-theme="dark"] strong { color: #f4f6fa; }
+    [data-theme="dark"] .subtitle, [data-theme="dark"] .aside-note { color: #8592a6; }
+    [data-theme="dark"] .method { background: #1a1f29; border-color: #303949; border-left-color: #6d9aff; color: #b3bdcd; }
+    [data-theme="dark"] .step-card { background: #1a1f29; border-color: #303949; }
+    [data-theme="dark"] .corrections { background: #1a1f29; border-color: #303949; }
+    [data-theme="dark"] table { background: #1a1f29; border-color: #303949; }
+    [data-theme="dark"] th, [data-theme="dark"] td { border-color: #303949; }
+    [data-theme="dark"] th { background: #232a37; }
+    [data-theme="dark"] .quote { background: #232a37; border-left-color: #46536a; color: #c9d1de; }
+    [data-theme="dark"] code { background: #232a37; border-color: #303949; color: #c9d1de; }
+    [data-theme="dark"] .tag { background: #232a37; border-color: #303949; color: #b3bdcd; }
+    [data-theme="dark"] .tag.bookkeeping { background: #1b2540; border-color: #33456f; color: #9dbaff; }
+    [data-theme="dark"] .tag.decision { background: #322613; border-color: #5d4820; color: #f0be63; }
+    [data-theme="dark"] .tag.branching { background: #3a1c17; border-color: #66322a; color: #ff9c8b; }
+    [data-theme="dark"] .crumbs a { color: #6d9aff; }
+    [data-theme="dark"] .sources a { color: #6d9aff; }
+    [data-theme="dark"] .back { background: #6d9aff; color: #0b1220; }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker · Prototypes</a>
+    <a class="plain" href="/prototypes/flows/index.html">Flows</a>
+    <a class="plain" href="/prototypes/design-system/index.html">Design System</a>
+    <a class="plain" href="/prototypes/concepts/index.html">Concepts</a>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+<div class="wrap">
+    <p class="crumbs"><a href="/prototypes/index.html">Prototypes</a> / Research</p>
+
+    <h1>Kingdom Death: Monster — Lantern Year structure</h1>
+    <p class="subtitle">Research artifact · rendered as HTML</p>
+
+    <div class="method">
+        <strong>Method.</strong> Content cross-checked across the Fandom wiki, the Miraheze
+        <code>kingdomdeath.wiki</code> (which cites the <strong>1.6 Core Rulebook by page</strong>),
+        and the <strong>official Settlement Record Sheet PDF</strong>. Every factual block is tagged
+        with its source. Lines without a fetched source are marked <code>[sin fuente]</code>. BGG
+        threads returned HTTP 403 to the fetcher; where only a search-result snippet was visible,
+        it is labeled as such.
+    </div>
+
+    <h2>1. The Lantern Year loop</h2>
+    <p>
+        A campaign session = one cycle of phases: <strong>Hunt → Showdown → Settlement</strong>,
+        repeated until the campaign finale (source: kingdomdeath.wiki <code>Campaign</code>, citing
+        <em>KDM 1.6 Core Rulebook pg. 36</em>). Expressed as a loop starting from a settled state:
+    </p>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Phase</th><th>One-line purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td><strong>Settlement Phase</strong></td>
+                <td>Resolve the year: heal returnees, advance the timeline, draw the settlement event, check milestones, spend endeavors/resources (craft, innovate, build), pick the next hunt party.</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><strong>Hunt Phase</strong></td>
+                <td>Choose quarry + level, lay out the hunt board, resolve hunt events space-by-space until the survivors reach (or are reached by) the monster — or the hunt fails.</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td><strong>Showdown Phase</strong></td>
+                <td>Battle the monster to victory or defeat; resolve the <strong>Aftermath</strong> (rewards, hunt XP, proficiency, deaths).</td>
+            </tr>
+            <tr>
+                <td>→</td>
+                <td>back to <strong>Settlement Phase</strong></td>
+                <td>The settlement "typically advances by one lantern year as part of each Settlement Phase" (Fandom <code>Lantern Year</code>).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Edge exits that still loop back:</strong></p>
+    <ul>
+        <li><strong>Hunt fails / all survivors perish on the hunt</strong> → "The lantern year is over, and a new Settlement Phase begins" (Fandom <code>Hunt Phase</code>; 1.6 rulebook pg. 63 per kingdomdeath.wiki <code>Hunt Phase</code>).</li>
+        <li><strong>Nemesis Encounter year</strong> → "Complete the settlement phase normally. Departing survivors skip the Hunt Phase" and go straight to the showdown (Fandom <code>Nemesis Monster</code>).</li>
+        <li><strong>Campaign end</strong> → milestones <code>Game Over</code> (population reaches 0) and the campaign finale monster (official Settlement Record Sheet PDF; Fandom <code>Settlement Phase</code> intro).</li>
+    </ul>
+
+    <h2>2. Settlement Phase — step by step (exhaustive, in official order)</h2>
+    <p class="aside-note">
+        Source unless noted: <a href="https://kingdomdeath.fandom.com/wiki/Settlement_Phase">kingdomdeath.fandom.com/wiki/Settlement_Phase</a>
+        (11 numbered steps). Step numbering is corroborated by Fandom <code>Nemesis Monster</code>
+        (links to "#5. Update the Death Count") and by a BGG-thread snippet quoting "Step 2 … Heal
+        returning survivors, remove tokens" (snippet only, page not directly fetchable).
+    </p>
+
+    <div class="step-card">
+        <h3>Step 1 — Set Up the Settlement</h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> Place Settlement Board; place gear grids + record sheets of returning survivors; place Settlement Record Sheet (pencil!); shuffle and place the Settlement Event deck face down; lay out built Settlement Locations; lay out current Innovations and Principles; shuffle the Innovation Deck (must contain exactly the consequence-innovations your settlement has unlocked) and place it on the board.</li>
+            <li><strong>Player decisions:</strong> None — pure setup. (Composition of the Innovation Deck is a <em>derived state</em> that must be correct.)</li>
+            <li><strong>Auto vs decision:</strong> 100% administrative.</li>
+            <li><strong>Tracker state:</strong> settlement name; current innovations list (+ weapon masteries); principles by category (Death / New Life / Society / Conviction); built settlement locations; survival limit; death count; timeline (years + story/special events); quarry list; nemesis list; Innovation Deck contents (which consequence cards are in the deck); settlement storage; unused-gear list. <em>(Sections enumerated from the official Settlement Record Sheet PDF.)</em></li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 2 — Survivors Return</h3>
+        <div class="step-meta"><span class="tag decision">Decision</span><span class="tag bookkeeping">Bookkeeping</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> All survivors who endured the previous showdown are <strong>returning survivors</strong>. Heal: erase filled light/heavy injury levels; remove <strong>all</strong> tokens. Survival and Insanity <strong>do not</strong> refill. Permanent injuries do <strong>not</strong> heal (some events/innovations may). Then apply return effects from principles, settlement events, and innovations (bonuses <em>and</em> penalties). Possible to have zero returnees.</li>
+            <li><strong>Player decisions:</strong> Nominate survivors when an effect says so (e.g., principle/settlement-event text); track which effects apply to whom.</li>
+            <li><strong>Auto vs decision:</strong> Healing/token removal = automatic. Principle/event applications = conditional, player-resolved.</li>
+            <li><strong>Tracker state:</strong> per-survivor injury level reset; token clearing (list of tokens removed); survival/insanity kept as-is; permanent injuries kept; flag "returning" vs "not returning" per survivor; any return-phase buffs/penalties applied.</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 3 — Gain Endeavors</h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> The settlement gains <strong>+1 endeavor per returning survivor</strong>. Innovations/principles may grant additional endeavors when criteria are met. Tracked with tokens.</li>
+            <li><strong>Player decisions:</strong> None (counting), but bonuses require checking innovation/principle conditions.</li>
+            <li><strong>Auto vs decision:</strong> Automatic + conditional bonuses.</li>
+            <li><strong>Tracker state:</strong> total settlement endeavors for this phase (base + bonuses, ideally with a breakdown of sources).</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 4 — Update Timeline <span class="aside-note">(three sub-events, in this order)</span></h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span><span class="tag decision">Decision</span><span class="tag branching">Branching</span></div>
+        <ol>
+            <li><strong>Advance the lantern year</strong> — fill the next unfilled lantern-year box on the timeline; this is the new current year. <em>(Automatic.)</em></li>
+            <li><strong>Draw + resolve the settlement event</strong> — draw the top Settlement Event card, perform it, leave it face up as a reminder of persistent effects (new endeavor sinks, crafting offers, lasting bonuses/restrictions). Timeline-preset settlement events are drawn <strong>in addition</strong>; the same event card cannot be played twice in one phase. <em>(Semi-automatic: draw is random, resolution usually contains player choices.)</em></li>
+            <li><strong>Trigger story events listed for this year</strong> — resolve one at a time in listed order. If the year shows a <strong>Nemesis Encounter</strong>, follow nemesis rules (choose monster + level per the four timeline formats: <code>Nemesis Encounter</code>, <code>- Lvl X</code>, <code>- Monster Name</code>, <code>- Monster Name Lvl X</code>; fill the chosen box on the record sheet).             <em>(Automatic trigger; the event text drives decisions.)</em></li>
+        </ol>
+        <ul>
+            <li><strong>Player decisions:</strong> whatever the drawn event/story event asks (votes, nominations, die rolls, spending endeavors); nemesis monster + level choice when the timeline entry is open.</li>
+            <li><strong>Tracker state:</strong> current lantern year; settlement event card ID + persistent effects; story events resolved this year (IDs + outcomes); nemesis selection (monster, level) recorded; new timeline entries added by events.</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 5 — Update the Death Count</h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span><span class="tag decision">Decision</span><span class="tag branching">Branching</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> Record every survivor who perished during the previous hunt/showdown <strong>or during the preceding settlement steps</strong>; if someone dies later in the phase, update <strong>immediately</strong>. <strong>First time the death count is ever updated → trigger the <code>Principle: Death</code> story event.</strong></li>
+            <li><strong>Player decisions:</strong> <code>Principle: Death</code> is a forced binary: <strong>The First Harvest → Cannibalize</strong> or <strong>The First Grave → Graves</strong>, then roll 1d10 for the follow-on effect (Fandom <code>Principle: Death</code>). Corpus handling = "what do we do with their first survivor corpse".</li>
+            <li><strong>Auto vs decision:</strong> Counting = administrative; the principle choice = hard player decision (one-time, permanent).</li>
+            <li><strong>Tracker state:</strong> death count total; list of dead survivor IDs (when/where they died); flag <code>death_count_first_update_done</code>; chosen Death principle + its roll outcome; population decrease (when population drops, players nominate which survivors die — Fandom <code>Population</code>).</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 6 — Check Milestones</h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span><span class="tag decision">Decision</span><span class="tag branching">Branching</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> Conditional story events printed below the timeline. Check the record sheet; if more than one is reached, resolve <strong>in any order</strong>; tick each box; trigger the event. If a milestone is reached <strong>later</strong> in the phase, resolve it immediately. With <strong>Strain Milestones</strong>: check them first, apply Permanent Effect, unlock strain fighting arts into the deck, then <strong>remove the reached strain card permanently</strong>. With <strong>Patterns</strong>: on the Insight milestone, draw a random pattern card and record it.</li>
+            <li><strong>Official milestone conditions</strong> (official Settlement Record Sheet PDF, "Milestone Story Events"): <code>Principle: Death</code> = 1 death · <code>Principle: New Life</code> = first child is born · <code>Principle: Society</code> = population reaches 15 · <code>Hooded Knight</code> = settlement has 5 innovations · <code>Game Over</code> = population reaches 0 (listed twice).</li>
+            <li><strong>Player decisions:</strong> <code>Principle: New Life</code> → <strong>Without Mercy → Survival of the Fittest</strong> or <strong>With Affection → Protect the Young</strong> (+1d10 effect) (Fandom <code>Principle: New Life</code>). <code>Principle: Society</code> → <strong>Collective Toil</strong> (−1 population, adds <code>Bone Witch</code> to timeline in 3 years) or <strong>Accept Darkness</strong> (+1d10 effect) (Fandom <code>Principle: Society</code>). Multiple milestone choices are permanent branching.</li>
+            <li><strong>Auto vs decision:</strong> Detection/ticking = automatic; each principle story event = major decision.</li>
+            <li><strong>Tracker state:</strong> milestone checkboxes (per lantern year); principles chosen by category; pattern cards gained; strain milestones consumed; side effects of each principle event (population delta, timeline additions, survivor buffs).</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 7 — Develop <span class="tag decision">the core decision step</span></h3>
+        <div class="step-meta"><span class="tag decision">Decision</span><span class="tag bookkeeping">Bookkeeping</span></div>
+        <div class="quote">"During this step players will decide, as a group, how to spend the settlement's resources. Players can craft gear, endeavor, innovate, and build." (Fandom <code>Settlement Phase</code>).</div>
+        <p>Four sub-activities, <strong>free-form and repeatable</strong> within the step:</p>
+        <ul>
+            <li><strong>Crafting Gear</strong> — spend resources (archived) at built settlement locations to gain gear cards; some gear instead has a printed <strong>gear recipe</strong> on the card (not location-bound) and may require innovations; Pattern cards can be crafted here with their own requirements/limits. Players decide pool-vs-individual resources.</li>
+            <li><strong>Endeavor</strong> — any <code>[endeavor]</code>-costed text on an Innovation, Settlement Location, or Settlement Event: nominate a survivor, −1 settlement endeavor, apply effect (usually to that survivor only).</li>
+            <li><strong>Innovate</strong> — at the campaign's starting settlement location (Lantern Hoard / The Sun / The Throne…), spend an endeavor + required resources. Canonical Lantern Hoard cost: <strong>1 endeavor + Bone + Organ + Hide, once per Settlement Phase, draw 2 innovation cards, keep 1, return the other</strong> (Fandom <code>Lantern Hoard</code>). Gaining an innovation: place it, update the record sheet, adjust survival limit if applicable, <strong>shuffle its consequence innovations into the Innovation Deck</strong> (Fandom <code>Innovations</code>; 1.6 rulebook pg. 84 per kingdomdeath.wiki).</li>
+            <li><strong>Build</strong> — spend resources (+ endeavors) to add a new permanent Settlement Location; record it. Locations can also be gained from story events or the <strong>first</strong> time a monster is defeated (Fandom <code>Settlement Locations</code>).</li>
+        </ul>
+        <p><strong>Notes for ordering:</strong> "Resources in the settlement storage may be spent <strong>at any time</strong> during the Settlement Phase" (Fandom <code>Settlement Phase</code>, step 10 text) — i.e., storage reads/writes are legal across the whole phase, not only in step 7.</p>
+        <ul>
+            <li><strong>Player decisions:</strong> Everything — what/where/for whom to craft, which innovation to keep, which location to build, which endeavor actions to take, whom to nominate.</li>
+            <li><strong>Auto vs decision:</strong> Resource archiving bookkeeping is automatic once chosen; deck reshuffling/consequence injection is automatic.</li>
+            <li><strong>Tracker state:</strong> endeavor ledger (spent → target → effect); resources consumed (storage delta); gear gained + assigned to survivor vs settlement storage; innovations gained (with deck consequences added); survival-limit changes; locations built; craft/innovate/build eligibility flags (prerequisites/locks); any population changes triggered by events (e.g., Intimacy 1d10 → +1/+2 population, or deaths on roll 1–3 — Fandom <code>Intimacy (Story Event)</code>).</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 8 — Prepare Departing Survivors</h3>
+        <div class="step-meta"><span class="tag decision">Decision</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> Decide to continue to the next hunt or end the session. If continuing: choose <strong>4 eligible departing survivors</strong> (if population &lt; 4, take as many as possible; with &lt; 4 players, players control multiple survivors). Remove returning survivors' gear; load departing survivors' gear grids; record armor points and attribute modifiers from gear; apply innovation/endeavor/event bonuses to departing survivors.</li>
+            <li><strong>Player decisions:</strong> Session end vs continue; <strong>which 4</strong> depart; gear allocation between survivors.</li>
+            <li><strong>Auto vs decision:</strong> Decision-heavy, with derived recompute (armor points, attribute modifiers).</li>
+            <li><strong>Tracker state:</strong> hunt party (4 IDs); per-slot gear grid; armor points per hit location; attribute modifiers; departing-survivor bonuses; "session continues" flag.</li>
+            <li><strong>Note:</strong> choosing the quarry is NOT here — that is the first substantive Hunt Phase step (see §3), except nemesis years where the timeline already dictates the monster.</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 9 — Special Showdown</h3>
+        <div class="step-meta"><span class="tag branching">Branching (loop)</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> If the timeline lists a <strong>Special Showdown</strong> for this year, departing survivors immediately fight it (multiple ones resolve in listed order). Afterward — win or lose — <strong>return to Step 5 (Update the Death Count)</strong>; heal and remove tokens, but those survivors are <strong>not</strong> "returning survivors"; do <strong>not</strong> repeat earlier steps (no new endeavors, no new settlement event, no timeline advance) (Fandom <code>Settlement Phase</code>; Fandom <code>Nemesis Monster</code> corroborates return-to-step-5).</li>
+            <li><strong>Player decisions:</strong> Fight resolution itself (play), then death-count handling.</li>
+            <li><strong>Auto vs decision:</strong> Loop control is automatic; combat is play.</li>
+            <li><strong>Tracker state:</strong> special showdown record (monster, level, outcome, deaths) + a <strong>loop pointer back to step 5</strong> in the UI flow.</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 10 — Record &amp; Archive Resources</h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> Write unspent resources into <strong>Settlement Storage</strong> on the record sheet and archive the physical cards (so decks stay complete for future draws). Storage entries are erased when spent.</li>
+            <li><strong>Player decisions:</strong> Which resources are kept vs already spent (reconciliation).</li>
+            <li><strong>Auto vs decision:</strong> Mostly bookkeeping with reconciliation decisions.</li>
+            <li><strong>Tracker state:</strong> settlement storage (resource → quantity); archive log for resources; this is also where showdown <strong>Rewards</strong> (basic + monster resources drawn in the Aftermath) become durable inventory.</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 11 — End Settlement Phase <span class="tag branching">hard commit point</span></h3>
+        <div class="step-meta"><span class="tag bookkeeping">Bookkeeping</span><span class="tag branching">Commit gate</span></div>
+        <ul>
+            <li><strong>Mechanics:</strong> <strong>Discard any unspent endeavors</strong> (they do not carry over); store settlement innovations/principles/masteries; store unused gear (a written gear list is allowed); clean up; <strong>proceed to the Hunt Phase</strong> (Fandom <code>Settlement Phase</code>).</li>
+            <li><strong>Player decisions:</strong> Implicit "are we done?" confirmation; any last-minute spending should happen <em>before</em> this.</li>
+            <li><strong>Auto vs decision:</strong> Automatic, but destructive (endeavors zeroed).</li>
+            <li><strong>Tracker state:</strong> endeavors → 0 (with explicit confirm); phase status = completed; persisted innovation/principle/mastery sets + gear list + storage snapshot; next phase = Hunt (or campaign end).</li>
+        </ul>
+    </div>
+
+    <h3>Corrections to common misconceptions</h3>
+    <div class="corrections">
+        <ol>
+            <li><strong>No dedicated population/procreation step</strong> exists in the settlement phase. Population changes come from story events (e.g., <code>Intimacy</code>), innovations, settlement events, principles, and milestone events; new survivors are added to the record sheet when population rises, and players nominate who dies when it falls (Fandom <code>Population</code>; <code>Intimacy (Story Event)</code>).</li>
+            <li><strong>Corpse handling is not a step</strong> — it is the one-time <code>Principle: Death</code> milestone fired from <strong>step 5</strong> (first death count update), plus death bookkeeping at step 5.</li>
+            <li><strong>Quarry selection &amp; hunt declaration are NOT settlement steps</strong> — they open the Hunt Phase (Fandom <code>Hunt Phase</code>, 1.6 rulebook pg. 61). The settlement-side equivalent is step 8 (choose the party) + the nemesis-encounter selection inside step 4.</li>
+            <li><strong>Rewards/loot are earned in the Showdown Aftermath</strong>, then formalized into storage at <strong>step 10</strong> — there is no separate "arrival rewards" step beyond steps 2/3 (heal, endeavors) and 10 (storage).</li>
+            <li>Special Showdown (step 9) is an <strong>interruption loop</strong>, not the terminal step; the terminal step is 11.</li>
+        </ol>
+    </div>
+
+    <h2>3. Hunt Phase — ordered steps (brief)</h2>
+    <p class="aside-note">Sources: Fandom <code>Hunt Phase</code>; kingdomdeath.wiki <code>Hunt Phase</code> (1.6 rulebook pg. 61–63).</p>
+    <table>
+        <thead><tr><th>#</th><th>Step</th><th>Detail</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td><strong>Table Setup</strong></td><td>Hunt board (reverse of settlement board), gear grids + record sheets of the hunt team. <em>Auto.</em></td></tr>
+            <tr><td>2</td><td><strong>Choose Your Quarry</strong></td><td>Pick from the Quarry list on the settlement record sheet. Story/nemesis-only monsters (Butcher, Slenderman, The Hand…) are not selectable. <strong>Nemesis year → skip hunt entirely, go to showdown.</strong> <em>Decision.</em></td></tr>
+            <tr><td>3</td><td><strong>Choose the Monster Level</strong></td><td>1/2/3 (higher = better loot, harder). <em>Decision.</em></td></tr>
+            <tr><td>4</td><td><strong>Set Up the Hunt</strong></td><td>13-space board (Start, Overwhelming Darkness, Starvation). Hunt-board diagram from the monster's showdown story event: place monster hunt-event cards on "E" spaces, fill remaining open spaces with basic hunt events, place special hunt events triggered by gear, Forest Gate over Overwhelming Darkness where required, place monster miniature by level, place departing survivors on Start. <em>Auto/derived.</em></td></tr>
+            <tr><td>5</td><td><strong>Hunt Your Quarry</strong></td><td>Survivors take turns as <strong>event revealer</strong>: draw top card of the current space → read → resolve → <strong>archive card</strong> → next revealer. No cards left in the space → move 1 space toward the monster and draw there. Must clear a space before moving unless an event compels movement. Empty space with no cards → <strong>roll 1d100 on the hunt event table</strong> (100 entries) before moving on. <em>Loop, mostly resolution; events contain decisions.</em></td></tr>
+            <tr><td>6</td><td><strong>Overwhelming Darkness</strong></td><td>First entry each hunt triggers that story event (cannot be skipped; re-entry later = blank/roll table). <em>Auto trigger + event decisions.</em></td></tr>
+            <tr><td>7</td><td><strong>Find the Quarry</strong></td><td>Move into the monster's space → <strong>hunt ends, showdown begins immediately</strong> (only Starvation resolves there). <em>Auto.</em></td></tr>
+            <tr><td>8</td><td><strong>Ambush (reverse)</strong></td><td>Monster moves into the survivors' space → end current events, start showdown; survivors <strong>skip their first turn</strong> (monster usually acts twice). Some events let survivors ambush the monster (survivors may choose to go first, terrain placed as players decide). <em>Conditional, decision on who goes first.</em></td></tr>
+            <tr><td>9</td><td><strong>In-hunt housekeeping (interleaved)</strong></td><td>Gear gained → add to grid or archive/replace (no grid rearrangement, no handing to another survivor); <strong>event damage</strong> is non-lethal but persists into the showdown (armor, insanity, light/heavy injuries; no severe injury/brain trauma except where an event says so); tokens persist through the showdown aftermath or next settlement start; special severe injuries/brain trauma per event; retire-on-hunt (fights the showdown, then retires forever); death-on-hunt → gear (except irreplaceable) returns to settlement storage.</td></tr>
+            <tr><td>10</td><td><strong>Starvation / The Hunt Fails / Run Away</strong></td><td>Fighting on the Starvation space: remove 1d5 resources from storage. All survivors perish → hunt fails, apply Starvation, <strong>lantern year over → new Settlement Phase</strong>. If <code>Pictographs</code> innovated → nominated survivors may trigger <code>Run Away</code> after an event resolves. <em>Conditional decisions.</em></td></tr>
+        </tbody>
+    </table>
+    <p><strong>Tracker sketch for hunt (later phase):</strong> quarry + level; party (4 IDs); board position; per-space event card resolved (or table roll result); revealers; accumulated damage/injuries/tokens; gear gained/lost; hunger state (Starvation reached?); outcome = showdown | ambush | fail | nemesis-skip.</p>
+
+    <h2>4. Showdown Phase — ordered steps (brief)</h2>
+    <p class="aside-note">Sources: Fandom <code>Showdown Phase</code>, <code>Turn</code>, <code>Act</code>, <code>Attack</code>, <code>Wound</code>, <code>AI_Deck</code>, <code>Rewards</code>, <code>Victory</code>, <code>Defeat</code>, <code>Aftermath</code>; example <code>Showdown: White Lion</code>.</p>
+    <table>
+        <thead><tr><th>#</th><th>Step</th><th>Detail</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td><strong>Table Setup</strong></td><td>Showdown board, monster control panel, participant gear grids + record sheets.</td></tr>
+            <tr><td>2</td><td><strong>Create the Monster</strong></td><td>Assemble <strong>AI deck</strong> per monster + level (shuffle Basic/Advanced/Legendary stacks separately, draw the indicated counts blind, combine, shuffle); place <strong>special AI / in-play cards</strong> + attribute tokens (not in deck); Basic Action/Reference card on the panel; shuffle <strong>basic resource deck</strong> and <strong>monster resource deck</strong>.</td></tr>
+            <tr><td>3</td><td><strong>Showdown Board Setup (Terrain &amp; Deployment)</strong></td><td>Specific terrain cards per diagram, then random terrain from the deck (follow each card's placement rule), then place monster and survivors per diagram. <em>(Ambush variants alter this.)</em> <strong>Showdown begins.</strong></td></tr>
+            <tr><td>4</td><td><strong>Round structure</strong></td><td>
+                Each round: <strong>Monster Turn first, then Survivors' Turn</strong> ("Unless otherwise stated, monsters always go first"). Monster controller tile rotates clockwise each round; controller's survivor targeted = +1 insanity bonus to that survivor.
+                <ul>
+                    <li><strong>Monster turn:</strong> Start-Turn effects → <strong>draw top AI card and perform all actions</strong> (target pick → move &amp; attack → etc.) → discard → End-Turn effects. Empty deck → reshuffle discard; no cards at all → Basic Action each turn. Persistent injuries can replace card actions; moods/traits stay in play.</li>
+                    <li><strong>Survivors' turn:</strong> survivors act <strong>one at a time, in any order</strong>; each survivor completes an <strong>act</strong> (movement + activation) before the next; unused movement/activations are lost.</li>
+                    <li><strong>Survivor attack:</strong> activate weapon → roll <code>speed</code> d10s vs weapon accuracy (± survivor accuracy / monster evasion) → each hit: draw a <strong>hit location card</strong>, then <strong>wound attempt</strong> = 1d10 + survivor strength + weapon strength vs monster toughness → success = <strong>wound</strong> (remove top AI deck card to the Wound Stack; AI deck exhaustion is how the monster dies).</li>
+                    <li><strong>Monster attack:</strong> AI/Basic Action supplies targeting + attack profile (speed/accuracy/damage) → roll speed d10s vs accuracy ± evasion → per hit roll <strong>hit location dice</strong>, apply damage to that location (armor points absorb first), plus triggers.</li>
+                </ul>
+            </td></tr>
+            <tr><td>5</td><td><strong>End condition</strong></td><td>Monster dead (<strong>Victory</strong>) or all survivors dead (<strong>Defeat</strong>); only then does the showdown end.</td></tr>
+            <tr><td>6</td><td><strong>Aftermath / Victory</strong></td><td>Per the monster's story event: e.g., White Lion L1: +1 Hunt XP, +1 Weapon Proficiency level, +Rewards (L1: 4 basic + 4 White Lion resources; L2: +6; L3: +8 + 1 strange resource); <strong>first</strong> White Lion defeat unlocks the <strong>Catarium</strong> location; Saga-triggered bonuses. Rewards are gained <strong>as a group, once per victorious showdown</strong> (Fandom <code>Rewards</code>). Record defeated monster (and nemesis entry) in the Defeated Monsters section (Fandom <code>Victory</code>).</td></tr>
+            <tr><td>7</td><td><strong>Aftermath / Defeat</strong></td><td>Follow the story event's defeat text (White Lion: roll 1d10, on 6+ archive a jewelry gear of choice); deaths feed the settlement's <strong>step 5 death count</strong> (Fandom <code>Defeat</code>; <code>Death Count</code>).</td></tr>
+            <tr><td>8</td><td><strong>Handoff</strong></td><td>Survivors who endured → <strong>returning survivors</strong> for settlement step 2; tokens last through this aftermath or until the next settlement phase begins, whichever is first.</td></tr>
+        </tbody>
+    </table>
+
+    <h2>5. Implications for a step-tracking UX</h2>
+
+    <h4>(a) Pure bookkeeping (auto-calc / one-tap confirm)</h4>
+    <p>step 1 setup loadout · step 2 injury/token healing · step 3 endeavor count · step 4a year increment · step 5 counting deaths · step 6 milestone box-ticking (condition detection) · step 7 archiving once a craft is chosen · step 10 storage write · step 11 cleanup.</p>
+
+    <h4>(b) Player decisions (must be explicit, auditable inputs)</h4>
+    <p>step 2 nominations · step 4b/4c event resolutions, story-event votes, nemesis monster+level · step 5 <code>Principle: Death</code> choice · step 6 <code>Principle: New Life</code> / <code>Principle: Society</code> / <code>Hooded Knight</code> choices · step 7 everything (craft what/for whom, innovate = draw-2-keep-1, build which location, which endeavor actions, whom to nominate) · step 8 party of 4 + gear allocation · hunt: quarry, level, run-away/ambush choices · showdown: no real tracker decisions (table-side), but rewards allocation to storage.</p>
+
+    <h4>(c) Branching / conditional (needs explicit state machines, not a flat checklist)</h4>
+    <ul>
+        <li>Special Showdown → <strong>loop back to step 5</strong> (must be re-enterable mid-flow).</li>
+        <li>Nemesis year → settlement runs normally, <strong>hunt step is skipped</strong>.</li>
+        <li>Milestones can trigger <strong>any time</strong> during the phase, not only at step 6.</li>
+        <li>Hunt failure/TPK → settlement phase starts with no returnees (step 3 yields 0 endeavors).</li>
+        <li>First-death / first-birth / population-15 gates (one-time, campaign-scoped flags).</li>
+        <li>Innovation deck composition changes as consequences are added (step 7 side effect).</li>
+        <li><code>Game Over</code> at population 0; campaign finale ends the loop.</li>
+    </ul>
+
+    <p><strong>Revisitable/editable steps:</strong> every step's outputs are corrections-prone (miscounted storage, wrong armor points, forgot a token, wrong gear grid) — allow <strong>back/forward navigation with recompute</strong>: derived values (armor points, attribute modifiers, endeavor totals, storage, survival limit) should be recomputed from primitives whenever an earlier step is edited, not hand-entered. Physical-game reality (pencil erasures on the record sheet) means players <strong>will</strong> fix mistakes mid-phase.</p>
+
+    <h4>Hard dependencies / gating</h4>
+    <ol>
+        <li>Step order is strictly sequential except the step-9 loop and mid-phase milestone interrupts.</li>
+        <li><strong>You cannot depart (step 8) before Develop (step 7)</strong> — the rulebook order enforces it; the UI should present "Prepare Departure" only after Develop is closed (or explicitly abandoned for session end).</li>
+        <li><strong>Step 11 discards unspent endeavors</strong> → make it a gated commit ("you are about to lose N endeavors").</li>
+        <li>Storage can be read/written any time in the phase, but crafting requires the resources to exist → validate against storage at the moment of craft.</li>
+        <li>Innovate is limited (Lantern Hoard: once per settlement phase) → enforce per-phase counters.</li>
+        <li>Quarry choice belongs to the Hunt Phase screen, but the app should surface the handoff at the end of step 11 (and pre-fill nemesis years).</li>
+        <li>Settlement-event/story-event persistent effects live "face up" for the whole phase → need a phase-scoped effects inbox, not one-shot toasts.</li>
+        <li>Prior art to learn from/avoid: <code>vibrantlantern.com/cm</code> (tabbed record sheets, milestone highlighting, survivor status flags: Departing/Hunting/Killed/Retired; explicitly "does not implement rules"), <code>kdm-manager.com</code>, <code>thewatcher.io</code>, <code>pgsgames.com/kdm</code> (all linked from Vibrant Lantern's overview).</li>
+    </ol>
+
+    <h2>6. Source list</h2>
+    <div class="sources">
+        <div class="source-group">
+            <h4>Fetched directly (content used above)</h4>
+            <ul>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Lantern_Year">https://kingdomdeath.fandom.com/wiki/Lantern_Year</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Settlement_Phase">https://kingdomdeath.fandom.com/wiki/Settlement_Phase</a> <em>(primary, 11 steps)</em></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Hunt_Phase">https://kingdomdeath.fandom.com/wiki/Hunt_Phase</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Showdown_Phase">https://kingdomdeath.fandom.com/wiki/Showdown_Phase</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Innovations">https://kingdomdeath.fandom.com/wiki/Innovations</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Principle">https://kingdomdeath.fandom.com/wiki/Principle</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Principle:_Death">https://kingdomdeath.fandom.com/wiki/Principle:_Death</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Principle:_New_Life">https://kingdomdeath.fandom.com/wiki/Principle:_New_Life</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Principle:_Society">https://kingdomdeath.fandom.com/wiki/Principle:_Society</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Milestone">https://kingdomdeath.fandom.com/wiki/Milestone</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Death_Count">https://kingdomdeath.fandom.com/wiki/Death_Count</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Intimacy_(Story_Event)">https://kingdomdeath.fandom.com/wiki/Intimacy_(Story_Event)</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Population">https://kingdomdeath.fandom.com/wiki/Population</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Nemesis_Monster">https://kingdomdeath.fandom.com/wiki/Nemesis_Monster</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Quarry">https://kingdomdeath.fandom.com/wiki/Quarry</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Departing_Survivors">https://kingdomdeath.fandom.com/wiki/Departing_Survivors</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Settlement_Locations">https://kingdomdeath.fandom.com/wiki/Settlement_Locations</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Lantern_Hoard">https://kingdomdeath.fandom.com/wiki/Lantern_Hoard</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Settlement_Event">https://kingdomdeath.fandom.com/wiki/Settlement_Event</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Settlement_Record_Sheet">https://kingdomdeath.fandom.com/wiki/Settlement_Record_Sheet</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Timeline">https://kingdomdeath.fandom.com/wiki/Timeline</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Endeavors">https://kingdomdeath.fandom.com/wiki/Endeavors</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Aftermath">https://kingdomdeath.fandom.com/wiki/Aftermath</a> · <a href="https://kingdomdeath.fandom.com/wiki/Rewards">/Rewards</a> · <a href="https://kingdomdeath.fandom.com/wiki/Victory">/Victory</a> · <a href="https://kingdomdeath.fandom.com/wiki/Defeat">/Defeat</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Turn">https://kingdomdeath.fandom.com/wiki/Turn</a> · <a href="https://kingdomdeath.fandom.com/wiki/Act">/Act</a> · <a href="https://kingdomdeath.fandom.com/wiki/Attack">/Attack</a> · <a href="https://kingdomdeath.fandom.com/wiki/Wound">/Wound</a> · <a href="https://kingdomdeath.fandom.com/wiki/AI_Deck">/AI_Deck</a></li>
+                <li><a href="https://kingdomdeath.fandom.com/wiki/Showdown:_White_Lion">https://kingdomdeath.fandom.com/wiki/Showdown:_White_Lion</a></li>
+                <li><a href="https://kingdomdeath.wiki/wiki/Campaign">https://kingdomdeath.wiki/wiki/Campaign</a> <em>(1.6 rulebook pg. 36, 235)</em></li>
+                <li><a href="https://kingdomdeath.wiki/wiki/Hunt_Phase">https://kingdomdeath.wiki/wiki/Hunt_Phase</a> <em>(1.6 rulebook pg. 61–63)</em></li>
+                <li><a href="https://kingdomdeath.wiki/wiki/Innovations">https://kingdomdeath.wiki/wiki/Innovations</a> <em>(1.6 rulebook pg. 38, 84)</em></li>
+                <li><a href="https://kingdomdeath.wiki/wiki/Settlement_Events">https://kingdomdeath.wiki/wiki/Settlement_Events</a> <em>(1.6 rulebook pg. 82, 234)</em></li>
+                <li><a href="https://www.datocms-assets.com/28070/1594237495-settlement-record-sheet-v6.pdf">https://www.datocms-assets.com/28070/1594237495-settlement-record-sheet-v6.pdf</a> <em>(official sheet)</em></li>
+                <li><a href="http://vibrantlantern.com/cm/">http://vibrantlantern.com/cm/</a> <em>(prior-art campaign managers list)</em></li>
+            </ul>
+        </div>
+        <div class="source-group">
+            <h4>Discovered but not directly fetchable (HTTP 403 / JS wall — snippet-only, treat as secondary)</h4>
+            <ul>
+                <li><a href="https://boardgamegeek.com/thread/1442781/outlines-of-phases-hunt-showdown-settlement">https://boardgamegeek.com/thread/1442781/outlines-of-phases-hunt-showdown-settlement</a></li>
+                <li><a href="https://boardgamegeek.com/thread/2333020/do-survivors-loose-bleeding-tokens-in-the-settlement">https://boardgamegeek.com/thread/2333020/do-survivors-loose-bleeding-tokens-in-the-settlement</a></li>
+                <li><a href="https://boardgamegeek.com/thread/1683147/new-to-kdm-everything-you-need-to-know-before-back">https://boardgamegeek.com/thread/1683147/new-to-kdm-everything-you-need-to-know-before-back</a></li>
+                <li><a href="https://www.scribd.com/document/827055859/KDM-Guided-Settlement-Booklet-v1-2">https://www.scribd.com/document/827055859/KDM-Guided-Settlement-Booklet-v1-2</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <a class="back" href="/prototypes/index.html">← Back to Prototypes</a>
+</div>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme', 'dark');
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board · Dashboard · Concepts</title>
+<style>
+    /* ============ concept tokens: 03-board ============ */
+    :root {
+        --felt: #f3ecdc;
+        --board: #fffdf6;
+        --board-2: #f7f1e2;
+        --ink: #2f2419;
+        --ink-2: #5f503c;
+        --muted: #8f7f66;
+        --edge: #e0d3ba;
+        --edge-strong: #c6b28d;
+        --gold: #a8791c;
+        --gold-soft: #f6ead0;
+        --oxblood: #8c1f2f;
+        --oxblood-soft: #f6e4e2;
+        --ivory: #fffdf6;
+        --success: #4a6b3a;
+        --success-soft: #eaf0df;
+        --warning: #8a5b08;
+        --warning-soft: #f7ead0;
+        --info: #3c5a7d;
+        --info-soft: #e7edf5;
+        --danger: #9a3b2e;
+        --danger-soft: #f6e3de;
+        --glow: rgba(168, 121, 28, 0.30);
+        --shadow-sm: 0 1px 2px rgba(70, 52, 22, 0.12);
+        --shadow-md: 0 6px 18px rgba(70, 52, 22, 0.16);
+        --font-display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+        --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --radius: 6px;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --felt: #161d18;
+            --board: #1e2620;
+            --board-2: #26302a;
+            --ink: #f0e9d8;
+            --ink-2: #c4bba4;
+            --muted: #94a08d;
+            --edge: #3a473d;
+            --edge-strong: #566551;
+            --gold: #e8b64a;
+            --gold-soft: #37300f;
+            --oxblood: #e0798a;
+            --oxblood-soft: #3a1a20;
+            --ivory: #f0e9d8;
+            --success: #9ec98a;
+            --success-soft: #1c2a17;
+            --warning: #e8b64a;
+            --warning-soft: #37300f;
+            --info: #a3bdd8;
+            --info-soft: #17222f;
+            --danger: #eb9789;
+            --danger-soft: #351913;
+            --glow: rgba(232, 182, 74, 0.35);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+        }
+    }
+    [data-theme="dark"] {
+        --felt: #161d18;
+        --board: #1e2620;
+        --board-2: #26302a;
+        --ink: #f0e9d8;
+        --ink-2: #c4bba4;
+        --muted: #94a08d;
+        --edge: #3a473d;
+        --edge-strong: #566551;
+        --gold: #e8b64a;
+        --gold-soft: #37300f;
+        --oxblood: #e0798a;
+        --oxblood-soft: #3a1a20;
+        --ivory: #f0e9d8;
+        --success: #9ec98a;
+        --success-soft: #1c2a17;
+        --warning: #e8b64a;
+        --warning-soft: #37300f;
+        --info: #a3bdd8;
+        --info-soft: #17222f;
+        --danger: #eb9789;
+        --danger-soft: #351913;
+        --glow: rgba(232, 182, 74, 0.35);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+        --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--felt);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.55;
+        padding-bottom: 70px;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: var(--board);
+        border-bottom: 3px double var(--edge-strong);
+        padding: 13px 26px;
+    }
+    .brand { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.05em; color: var(--gold); text-decoration: none; font-size: 1.05rem; }
+    .topbar nav { display: flex; gap: 18px; }
+    .topbar nav a { color: var(--ink-2); text-decoration: none; font-size: 0.88rem; }
+    .topbar nav a:hover { color: var(--oxblood); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--board-2);
+        color: var(--ink);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 6px 14px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 22px; }
+    .crumbs { font-size: 0.84rem; color: var(--muted); margin-bottom: 8px; }
+    .crumbs a { color: var(--gold); text-decoration: none; }
+
+    /* ---- phase pipeline ---- */
+    .pipeline {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+    .stage {
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        padding: 10px 20px;
+        min-width: 190px;
+        position: relative;
+    }
+    .stage:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .stage:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+    .stage + .stage { border-left: none; }
+    .stage .k {
+        font-family: var(--font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.66rem;
+        color: var(--muted);
+    }
+    .stage .v { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
+    .stage.on {
+        border-color: var(--gold);
+        background: var(--gold-soft);
+        box-shadow: 0 0 22px var(--glow);
+        z-index: 1;
+    }
+    .stage.on .v { color: var(--gold); }
+    .stage .sep { position: absolute; right: -13px; top: 50%; transform: translateY(-50%); z-index: 2; color: var(--muted); font-size: 1rem; }
+    .stage:last-child .sep { display: none; }
+
+    /* ---- header ---- */
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        border-radius: 10px;
+        padding: 16px 22px;
+        position: relative;
+    }
+    .header::before {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid var(--edge);
+        border-radius: 6px;
+        pointer-events: none;
+    }
+    .ly-plate {
+        width: 74px;
+        height: 74px;
+        flex: none;
+        border: 2px solid var(--gold);
+        border-radius: 8px;
+        background: var(--gold-soft);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 0 14px var(--glow);
+        position: relative;
+    }
+    .ly-plate .n { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; line-height: 1; color: var(--gold); }
+    .ly-plate .k { font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+    .header h1 { margin: 0; font-family: var(--font-display); font-size: 1.6rem; letter-spacing: 0.03em; }
+    .header .sub { color: var(--ink-2); font-size: 0.88rem; margin-top: 3px; }
+    .header .spacer { flex: 1; }
+    .home-link {
+        color: var(--gold);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        background: var(--board-2);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 9px 17px;
+        position: relative;
+    }
+    .home-link:hover { border-color: var(--gold); }
+
+    /* ---- tile strip ---- */
+    .strip-label {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin: 26px 0 10px;
+        flex-wrap: wrap;
+    }
+    .strip-label h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .strip-label .revisit { font-size: 0.78rem; color: var(--muted); }
+    .strip {
+        display: grid;
+        grid-template-columns: repeat(11, 1fr);
+        gap: 8px;
+    }
+    .tile {
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 9px 6px 8px;
+        text-align: center;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink-2);
+        position: relative;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+        min-height: 78px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+    }
+    .tile:hover { transform: translateY(-2px); }
+    .tile .tn {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--muted);
+    }
+    .tile .tt {
+        font-size: 0.6rem;
+        line-height: 1.25;
+        letter-spacing: 0.02em;
+    }
+    .tile .kind {
+        font-size: 0.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+    }
+    .tile.done { background: var(--success-soft); border-color: var(--success); }
+    .tile.done .tn { color: var(--success); }
+    .tile.done .tn::after { content: " ✓"; font-size: 0.6rem; }
+    .tile.future { opacity: 0.6; }
+    .tile.active {
+        background: var(--gold-soft);
+        border-color: var(--gold);
+        color: var(--ink);
+        box-shadow: 0 0 26px var(--glow), 0 0 60px var(--glow);
+        transform: translateY(-3px) scale(1.04);
+        z-index: 2;
+    }
+    .tile.active .tn { color: var(--gold); }
+
+    /* ---- main area ---- */
+    .layout { display: grid; grid-template-columns: 1fr 250px; gap: 18px; margin-top: 20px; align-items: start; }
+    .panel {
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    .panel::before {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid var(--edge);
+        border-radius: 6px;
+        pointer-events: none;
+    }
+    .panel-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        background: var(--board-2);
+        border-bottom: 2px solid var(--edge-strong);
+        flex-wrap: wrap;
+        position: relative;
+    }
+    .panel-head .no {
+        font-family: var(--font-display);
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: var(--gold);
+        line-height: 1;
+    }
+    .panel-head h3 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        letter-spacing: 0.05em;
+        flex: 1;
+        min-width: 170px;
+    }
+    .badge {
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        padding: 3px 9px;
+        border: 1px solid;
+        border-radius: var(--radius);
+    }
+    .badge.bookkeeping { background: var(--info-soft); border-color: var(--info); color: var(--info); }
+    .badge.decision { background: var(--gold-soft); border-color: var(--gold); color: var(--gold); }
+    .badge.branching { background: var(--oxblood-soft); border-color: var(--oxblood); color: var(--oxblood); }
+
+    .panel-body { padding: 18px 20px; position: relative; }
+    .lead { margin: 0 0 16px; font-size: 0.88rem; color: var(--ink-2); border-left: 3px solid var(--gold); padding-left: 11px; }
+    .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 14px; }
+    .fields .full { grid-column: 1 / -1; }
+    label.lbl {
+        display: block;
+        font-family: var(--font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.66rem;
+        color: var(--muted);
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+    input, select, textarea {
+        width: 100%;
+        background: var(--board-2);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.84rem;
+        color: var(--ink);
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px var(--glow);
+    }
+    textarea { min-height: 78px; resize: vertical; font-family: var(--font-sans); }
+    input[readonly] { color: var(--muted); }
+    .slot {
+        border: 1px dashed var(--edge-strong);
+        background: var(--board-2);
+        border-radius: var(--radius);
+        padding: 13px;
+        font-size: 0.85rem;
+        color: var(--ink-2);
+    }
+    .slot.filled { border-style: solid; background: var(--gold-soft); color: var(--ink); }
+    .slot strong { display: block; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.78rem; margin-bottom: 3px; }
+    .check { display: flex; align-items: center; gap: 9px; font-size: 0.86rem; margin-top: 7px; }
+    .check input { width: auto; }
+
+    .panel-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        background: var(--board-2);
+        border-top: 2px solid var(--edge-strong);
+        flex-wrap: wrap;
+        position: relative;
+    }
+    .nav-btn {
+        border: 2px solid var(--edge-strong);
+        background: var(--board);
+        color: var(--ink);
+        border-radius: var(--radius);
+        padding: 9px 20px;
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+    .nav-btn.primary { background: var(--oxblood); border-color: var(--oxblood); color: var(--ivory); margin-left: auto; }
+    .nav-btn.primary:hover:not(:disabled) { filter: brightness(1.1); color: var(--ivory); }
+    .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pos { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+    .side {
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    .side h4 {
+        margin: 0;
+        font-family: var(--font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.68rem;
+        color: var(--muted);
+        background: var(--board-2);
+        border-bottom: 2px solid var(--edge-strong);
+        padding: 10px 14px;
+        position: relative;
+    }
+    .side .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--edge);
+        font-size: 0.82rem;
+        position: relative;
+    }
+    .side .row:last-child { border-bottom: none; }
+    .side .row b { font-family: var(--font-mono); }
+    .side .note { padding: 10px 14px; font-size: 0.72rem; color: var(--muted); position: relative; }
+
+    .footer-nav { display: flex; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
+    .footer-nav a {
+        color: var(--gold);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        background: var(--board);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 9px 17px;
+    }
+    .footer-nav a:hover { border-color: var(--gold); }
+
+    @media (max-width: 1040px) {
+        .strip { grid-template-columns: repeat(6, 1fr); }
+        .layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+        .strip { grid-template-columns: repeat(3, 1fr); }
+    }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker</a>
+    <nav>
+        <a href="/prototypes/concepts/index.html">Concepts</a>
+        <a href="/prototypes/flows/index.html">Flows</a>
+        <a href="/prototypes/design-system/index.html">Design System</a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/concepts/index.html">← Prototypes</a> / 03 Board / Dashboard</p>
+
+    <div class="pipeline">
+        <div class="stage on"><div class="k">Phase I</div><div class="v">Settlement</div><span class="sep">→</span></div>
+        <div class="stage"><div class="k">Phase II</div><div class="v">Hunt</div><span class="sep">→</span></div>
+        <div class="stage"><div class="k">Phase III</div><div class="v">Showdown</div><span class="sep">↺</span></div>
+    </div>
+
+    <div class="header">
+        <div class="ly-plate"><span class="n">3</span><span class="k">Lantern Year</span></div>
+        <div>
+            <h1>Kelona</h1>
+            <div class="sub">Settlement Phase · 7 survivors · 12 innovations · status: In progress</div>
+        </div>
+        <span class="spacer"></span>
+        <a class="home-link" href="/prototypes/concepts/03-board/home.html">← Home</a>
+    </div>
+
+    <div class="strip-label">
+        <h2>Settlement Phase · 11 steps</h2>
+        <span class="revisit">Tiles stay live — click any step to re-open it (pencil-eraser rules apply).</span>
+    </div>
+    <div class="strip" id="strip"></div>
+
+    <div class="layout">
+        <section class="panel">
+            <div class="panel-head">
+                <span class="no" id="pNo">4</span>
+                <h3 id="pTitle">Update Timeline</h3>
+                <span class="badge bookkeeping" id="b1">bookkeeping</span>
+                <span class="badge decision" id="b2">decision</span>
+            </div>
+            <div class="panel-body">
+                <p class="lead" id="pLead"></p>
+                <div class="fields" id="pFields"></div>
+            </div>
+            <div class="panel-nav">
+                <button class="nav-btn" id="prevBtn" type="button">◀ Back</button>
+                <span class="pos" id="pos">step 4 / 11</span>
+                <button class="nav-btn primary" id="nextBtn" type="button">Advance ▶</button>
+            </div>
+        </section>
+
+        <aside class="side">
+            <h4>Settlement Storage</h4>
+            <div class="row"><span>Basic</span><b>14</b></div>
+            <div class="row"><span>White Lion</span><b>6</b></div>
+            <div class="row"><span>Strange</span><b>1</b></div>
+            <div class="row"><span>Endeavors</span><b>7</b></div>
+            <div class="note">Storage is readable and writable at any point in the phase.</div>
+            <h4>Party</h4>
+            <div class="row"><span>Returning</span><b>7</b></div>
+            <div class="row"><span>Planned departures</span><b>4</b></div>
+            <div class="row"><span>Dead</span><b>2</b></div>
+            <div class="note">Survival limit 4 · Principles 3 · Milestones 2/5 ticked</div>
+        </aside>
+    </div>
+
+    <div class="footer-nav">
+        <a href="/prototypes/concepts/index.html">← All concepts</a>
+        <a href="/prototypes/concepts/03-board/home.html">← Board home</a>
+    </div>
+</main>
+
+<script>
+(function () {
+    /* ---- theme ---- */
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+
+    var STEPS = [
+        { n: 'Set Up the Settlement', s: 'Set up', t: ['bookkeeping'],
+          lead: 'Place the board, sheets, event deck, locations and principles. Pure setup — but the Innovation Deck must be exactly right.',
+          f: '<div class="full"><label class="lbl">Setup checklist</label><div class="check"><input type="checkbox" checked> Board + record sheet placed</div><div class="check"><input type="checkbox" checked> Event deck shuffled, face down</div><div class="check"><input type="checkbox"> Innovation Deck verified</div></div>' },
+        { n: 'Survivors Return', s: 'Return', t: ['bookkeeping', 'decision'],
+          lead: 'Heal injuries, clear all tokens, keep survival and insanity as they are — then apply return effects.',
+          f: '<div><label class="lbl">Returning</label><input value="7"></div><div><label class="lbl">Tokens cleared</label><input value="all"></div><div class="full"><label class="lbl">Return effects</label><textarea placeholder="nominations and bonuses…"></textarea></div>' },
+        { n: 'Gain Endeavors', s: 'Endeavors', t: ['bookkeeping'],
+          lead: '+1 endeavor per returning survivor, plus innovation and principle bonuses.',
+          f: '<div><label class="lbl">Base</label><input value="7" readonly></div><div><label class="lbl">Bonuses</label><input value="0"></div><div><label class="lbl">Total</label><input value="7" readonly></div>' },
+        { n: 'Update Timeline', s: 'Timeline', t: ['bookkeeping', 'decision', 'branching'],
+          lead: 'Advance the Lantern Year, draw and resolve the settlement event, then fire this year’s story events — nemesis years included.',
+          f:
+            '<div><label class="lbl">1 · Advance year</label><input value="LY 2 → LY 3" readonly></div>' +
+            '<div><label class="lbl">New year</label><input value="LY 3" readonly></div>' +
+            '<div class="full"><label class="lbl">2 · Settlement event</label>' +
+            '<div class="slot filled"><strong>A Posture of Defense</strong>Keep face up all phase — −1 endeavor on builds.</div></div>' +
+            '<div class="full"><label class="lbl">3 · Story events for LY 3</label>' +
+            '<div class="slot"><strong>Add event</strong>Story event, milestone or Nemesis Encounter…</div></div>' +
+            '<div><label class="lbl">Nemesis choice</label><select><option>— not a nemesis year —</option><option>Butcher · Lvl 1</option></select></div>' },
+        { n: 'Update the Death Count', s: 'Deaths', t: ['bookkeeping', 'decision', 'branching'],
+          lead: 'Record every death — including later ones in this phase. First-ever update triggers Principle: Death.',
+          f: '<div><label class="lbl">Death count</label><input value="2" readonly></div><div><label class="lbl">This phase</label><input value="0"></div><div class="full"><label class="lbl">Dead</label><input value="S11, S04"></div><div><label class="lbl">Principle: Death</label><select><option>The First Grave → Graves</option><option>The First Harvest → Cannibalize</option></select></div>' },
+        { n: 'Check Milestones', s: 'Milestones', t: ['bookkeeping', 'decision', 'branching'],
+          lead: 'Tick reached milestones and resolve them — any order if several apply; later triggers fire immediately.',
+          f: '<div class="full"><label class="lbl">Milestones</label><div class="check"><input type="checkbox" checked> Principle: Death — 1 death</div><div class="check"><input type="checkbox" checked> Hooded Knight — 5 innovations</div><div class="check"><input type="checkbox"> Principle: Society — population 15</div><div class="check"><input type="checkbox"> Game Over — population 0</div></div>' },
+        { n: 'Develop', s: 'Develop', t: ['decision', 'bookkeeping'],
+          lead: 'Craft, endeavor, innovate and build — free-form and repeatable. Close this step before anyone departs.',
+          f: '<div><label class="lbl">Endeavors spent</label><input value="0"></div><div><label class="lbl">Innovations</label><input value="0"></div><div><label class="lbl">Locations</label><input value="0"></div><div><label class="lbl">Gear</label><input value="0"></div><div class="full"><label class="lbl">Endeavor ledger</label><textarea placeholder="spent → target → effect"></textarea></div><div class="full"><div class="check"><input type="checkbox"> Develop closed — step 8 unlocks</div></div>' },
+        { n: 'Prepare Departing Survivors', s: 'Depart', t: ['decision'],
+          lead: 'Choose the 4 who leave, load gear grids, recompute armor points and attribute modifiers.',
+          f: '<div><label class="lbl">Hunt party</label><input value="S01, S02, S05, S08"></div><div><label class="lbl">Session</label><select><option>Continue to hunt</option><option>End session</option></select></div><div><label class="lbl">Armor points</label><input value="recomputed" readonly></div><div><label class="lbl">Modifiers</label><input value="recomputed" readonly></div>' },
+        { n: 'Special Showdown', s: 'Showdown', t: ['branching'],
+          lead: 'Only when the timeline says so — fight now, then loop back to step 5.',
+          f: '<div class="full"><div class="slot"><strong>Not scheduled</strong>No Special Showdown on the LY 3 timeline.</div></div><div class="full"><div class="slot filled"><strong>Loop</strong>After resolution → step 5 · Update the Death Count</div></div>' },
+        { n: 'Record & Archive Resources', s: 'Archive', t: ['bookkeeping'],
+          lead: 'Write unspent resources into storage and archive the cards.',
+          f: '<div><label class="lbl">Into storage</label><input value="6"></div><div><label class="lbl">Archived</label><input value="6"></div><div class="full"><label class="lbl">Reconciliation</label><textarea placeholder="kept vs spent…"></textarea></div>' },
+        { n: 'End Settlement Phase', s: 'End phase', t: ['branching', 'bookkeeping'],
+          lead: 'Commit point: unspent endeavors are discarded and the phase is sealed.',
+          f: '<div class="full"><div class="slot filled"><strong>7 endeavors will be lost</strong>Spend them in Develop before committing.</div></div><div class="full"><div class="check"><input type="checkbox"> I understand endeavors are discarded</div></div><div><label class="lbl">Next phase</label><select><option>Hunt Phase</option><option>Campaign end</option></select></div>' }
+    ];
+    var current = 3;
+
+    var strip = document.getElementById('strip');
+    STEPS.forEach(function (s, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tile';
+        b.innerHTML = '<span class="tn">' + (i + 1) + '</span><span class="tt">' + s.s +
+            '</span><span class="kind">' + s.t[0] + '</span>';
+        b.title = s.n;
+        b.addEventListener('click', function () { select(i); });
+        strip.appendChild(b);
+    });
+
+    function select(i) {
+        if (i < 0 || i >= STEPS.length) return;
+        current = i;
+        var s = STEPS[i];
+        Array.prototype.forEach.call(strip.children, function (t, j) {
+            t.className = 'tile' + (j === i ? ' active' : (j < i ? ' done' : ' future'));
+        });
+        document.getElementById('pNo').textContent = (i + 1);
+        document.getElementById('pTitle').textContent = s.n;
+        document.getElementById('pLead').textContent = s.lead;
+        document.getElementById('pFields').innerHTML = s.f;
+        var b1 = document.getElementById('b1'), b2 = document.getElementById('b2');
+        b1.textContent = s.t[0]; b1.className = 'badge ' + s.t[0];
+        if (s.t[1]) { b2.style.display = ''; b2.textContent = s.t[1]; b2.className = 'badge ' + s.t[1]; }
+        else { b2.style.display = 'none'; }
+        document.getElementById('prevBtn').disabled = (i === 0);
+        document.getElementById('nextBtn').disabled = (i === STEPS.length - 1);
+        document.getElementById('pos').textContent = 'step ' + (i + 1) + ' / 11';
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', function () { select(current - 1); });
+    document.getElementById('nextBtn').addEventListener('click', function () { select(current + 1); });
+    select(current);
+})();
+</script>
+</body>
+</html>

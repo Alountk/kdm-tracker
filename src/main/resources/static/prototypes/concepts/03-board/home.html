@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board · Home · Concepts</title>
+<style>
+    /* ============ concept tokens: 03-board ============ */
+    :root {
+        --felt: #f3ecdc;
+        --board: #fffdf6;
+        --board-2: #f7f1e2;
+        --ink: #2f2419;
+        --ink-2: #5f503c;
+        --muted: #8f7f66;
+        --edge: #e0d3ba;
+        --edge-strong: #c6b28d;
+        --gold: #a8791c;
+        --gold-soft: #f6ead0;
+        --oxblood: #8c1f2f;
+        --oxblood-soft: #f6e4e2;
+        --ivory: #fffdf6;
+        --success: #4a6b3a;
+        --success-soft: #eaf0df;
+        --warning: #8a5b08;
+        --warning-soft: #f7ead0;
+        --info: #3c5a7d;
+        --info-soft: #e7edf5;
+        --danger: #9a3b2e;
+        --danger-soft: #f6e3de;
+        --glow: rgba(168, 121, 28, 0.30);
+        --shadow-sm: 0 1px 2px rgba(70, 52, 22, 0.12);
+        --shadow-md: 0 6px 18px rgba(70, 52, 22, 0.16);
+        --font-display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+        --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --radius: 6px;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --felt: #161d18;
+            --board: #1e2620;
+            --board-2: #26302a;
+            --ink: #f0e9d8;
+            --ink-2: #c4bba4;
+            --muted: #94a08d;
+            --edge: #3a473d;
+            --edge-strong: #566551;
+            --gold: #e8b64a;
+            --gold-soft: #37300f;
+            --oxblood: #e0798a;
+            --oxblood-soft: #3a1a20;
+            --ivory: #f0e9d8;
+            --success: #9ec98a;
+            --success-soft: #1c2a17;
+            --warning: #e8b64a;
+            --warning-soft: #37300f;
+            --info: #a3bdd8;
+            --info-soft: #17222f;
+            --danger: #eb9789;
+            --danger-soft: #351913;
+            --glow: rgba(232, 182, 74, 0.35);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+        }
+    }
+    [data-theme="dark"] {
+        --felt: #161d18;
+        --board: #1e2620;
+        --board-2: #26302a;
+        --ink: #f0e9d8;
+        --ink-2: #c4bba4;
+        --muted: #94a08d;
+        --edge: #3a473d;
+        --edge-strong: #566551;
+        --gold: #e8b64a;
+        --gold-soft: #37300f;
+        --oxblood: #e0798a;
+        --oxblood-soft: #3a1a20;
+        --ivory: #f0e9d8;
+        --success: #9ec98a;
+        --success-soft: #1c2a17;
+        --warning: #e8b64a;
+        --warning-soft: #37300f;
+        --info: #a3bdd8;
+        --info-soft: #17222f;
+        --danger: #eb9789;
+        --danger-soft: #351913;
+        --glow: rgba(232, 182, 74, 0.35);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+        --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--felt);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.55;
+        padding-bottom: 70px;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: var(--board);
+        border-bottom: 3px double var(--edge-strong);
+        padding: 13px 26px;
+    }
+    .brand {
+        font-family: var(--font-display);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--gold);
+        text-decoration: none;
+        font-size: 1.05rem;
+    }
+    .topbar nav { display: flex; gap: 18px; }
+    .topbar nav a { color: var(--ink-2); text-decoration: none; font-size: 0.88rem; }
+    .topbar nav a:hover { color: var(--oxblood); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--board-2);
+        color: var(--ink);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 6px 14px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+    .wrap { max-width: 1060px; margin: 0 auto; padding: 32px 22px; }
+    .crumbs { font-size: 0.84rem; color: var(--muted); margin-bottom: 8px; }
+    .crumbs a { color: var(--gold); text-decoration: none; }
+
+    .title-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 6px; }
+    .title-row h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+    .title-row p { margin: 4px 0 0; color: var(--ink-2); max-width: 520px; }
+    .title-row .spacer { flex: 1; }
+    .btn-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--oxblood);
+        color: var(--ivory);
+        border: 2px solid var(--oxblood);
+        border-radius: var(--radius);
+        padding: 11px 22px;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: var(--shadow-sm);
+    }
+    .btn-new:hover { filter: brightness(1.08); }
+
+    /* ---- phase pipeline (mini) ---- */
+    .pipeline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 22px 0 4px;
+        font-family: var(--font-display);
+        font-size: 0.8rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+    .pipeline .stage {
+        background: var(--board);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 5px 13px;
+        color: var(--ink-2);
+    }
+    .pipeline .stage.on { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 12px var(--glow); }
+    .pipeline .sep { color: var(--edge-strong); }
+
+    /* ---- settlement boards ---- */
+    .boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; margin-top: 24px; }
+    .settle-board {
+        position: relative;
+        background: var(--board);
+        border: 2px solid var(--edge-strong);
+        border-radius: 10px;
+        padding: 18px 20px 16px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .settle-board::before {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid var(--edge);
+        border-radius: 6px;
+        pointer-events: none;
+    }
+    .settle-board:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(70, 52, 22, 0.22); }
+    .settle-board .corner {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        font-family: var(--font-display);
+        font-size: 0.66rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+    .board-top { display: flex; align-items: center; gap: 16px; position: relative; }
+    .ly-plate {
+        width: 84px;
+        height: 84px;
+        flex: none;
+        border: 2px solid var(--gold);
+        border-radius: 8px;
+        background: var(--gold-soft);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 0 14px var(--glow);
+    }
+    .ly-plate .n { font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; line-height: 1; color: var(--gold); }
+    .ly-plate .k { font-size: 0.56rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+    .settle-board h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        letter-spacing: 0.03em;
+    }
+    .settle-board .phase-line { font-size: 0.82rem; color: var(--ink-2); margin-top: 4px; }
+    .settle-board .step-line { font-size: 0.82rem; color: var(--ink-2); margin-top: 2px; }
+    .settle-board .step-line b { color: var(--oxblood); }
+
+    .board-stats {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        position: relative;
+        flex-wrap: wrap;
+    }
+    .mini {
+        background: var(--board-2);
+        border: 1px solid var(--edge);
+        border-radius: var(--radius);
+        padding: 6px 12px;
+        font-size: 0.76rem;
+        color: var(--ink-2);
+        text-align: center;
+        min-width: 76px;
+    }
+    .mini b { display: block; font-family: var(--font-mono); font-size: 1rem; color: var(--ink); }
+    .chip {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 11px;
+        border-radius: var(--radius);
+        border: 1px solid;
+    }
+    .chip.progress { background: var(--warning-soft); border-color: var(--warning); color: var(--warning); }
+    .chip.depart { background: var(--info-soft); border-color: var(--info); color: var(--info); }
+    .chip.hunting { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+    .chip-row { margin-top: 14px; position: relative; display: flex; gap: 8px; align-items: center; }
+
+    .footer-nav { display: flex; gap: 14px; margin-top: 38px; flex-wrap: wrap; }
+    .footer-nav a {
+        color: var(--gold);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        background: var(--board);
+        border: 1px solid var(--edge-strong);
+        border-radius: var(--radius);
+        padding: 9px 17px;
+    }
+    .footer-nav a:hover { border-color: var(--gold); }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker</a>
+    <nav>
+        <a href="/prototypes/concepts/index.html">Concepts</a>
+        <a href="/prototypes/flows/index.html">Flows</a>
+        <a href="/prototypes/design-system/index.html">Design System</a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/concepts/index.html">← Prototypes</a> / 03 Board / Home</p>
+
+    <div class="title-row">
+        <div>
+            <h1>Your Table</h1>
+            <p>Each settlement is its own little board. Open one to keep playing its Lantern Year.</p>
+        </div>
+        <span class="spacer"></span>
+        <a class="btn-new" href="#new">⚑ New settlement</a>
+    </div>
+
+    <div class="pipeline">
+        <span class="stage">Settlement</span><span class="sep">→</span>
+        <span class="stage">Hunt</span><span class="sep">→</span>
+        <span class="stage">Showdown</span><span class="sep">↺</span>
+    </div>
+
+    <div class="boards">
+        <a class="settle-board" href="/prototypes/concepts/03-board/dashboard.html">
+            <span class="corner">Board I</span>
+            <div class="board-top">
+                <div class="ly-plate"><span class="n">3</span><span class="k">Lantern Year</span></div>
+                <div>
+                    <h2>Kelona</h2>
+                    <div class="phase-line">Phase: <strong>Settlement</strong></div>
+                    <div class="step-line">Step <b>4 / 11</b> — Update Timeline</div>
+                </div>
+            </div>
+            <div class="board-stats">
+                <div class="mini"><b>7</b>survivors</div>
+                <div class="mini"><b>12</b>innovations</div>
+                <div class="mini"><b>7</b>endeavors</div>
+            </div>
+            <div class="chip-row"><span class="chip progress">In progress</span></div>
+        </a>
+
+        <a class="settle-board" href="/prototypes/concepts/03-board/dashboard.html">
+            <span class="corner">Board II</span>
+            <div class="board-top">
+                <div class="ly-plate"><span class="n">1</span><span class="k">Lantern Year</span></div>
+                <div>
+                    <h2>Dust Pawn</h2>
+                    <div class="phase-line">Phase: <strong>Settlement</strong></div>
+                    <div class="step-line">Step <b>8 / 11</b> — Prepare Departing Survivors</div>
+                </div>
+            </div>
+            <div class="board-stats">
+                <div class="mini"><b>4</b>survivors</div>
+                <div class="mini"><b>3</b>innovations</div>
+                <div class="mini"><b>4</b>endeavors</div>
+            </div>
+            <div class="chip-row"><span class="chip depart">Ready to depart</span></div>
+        </a>
+
+        <a class="settle-board" href="/prototypes/concepts/03-board/dashboard.html">
+            <span class="corner">Board III</span>
+            <div class="board-top">
+                <div class="ly-plate"><span class="n">6</span><span class="k">Lantern Year</span></div>
+                <div>
+                    <h2>Ashen Hollow</h2>
+                    <div class="phase-line">Phase: <strong>Hunt</strong> · Quarry: White Lion Lvl 2</div>
+                    <div class="step-line">Settlement steps not active during the hunt</div>
+                </div>
+            </div>
+            <div class="board-stats">
+                <div class="mini"><b>4</b>survivors</div>
+                <div class="mini"><b>9</b>innovations</div>
+                <div class="mini"><b>13</b>storage</div>
+            </div>
+            <div class="chip-row"><span class="chip hunting">Hunting</span></div>
+        </a>
+    </div>
+
+    <div class="footer-nav">
+        <a href="/prototypes/concepts/index.html">← All concepts</a>
+        <a href="/prototypes/concepts/03-board/dashboard.html">Open Kelona board →</a>
+    </div>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

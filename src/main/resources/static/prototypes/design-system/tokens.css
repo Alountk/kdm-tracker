@@ -1,0 +1,156 @@
+/* ============================================================
+   kdm-tracker prototypes — shared design tokens
+   Light theme lives on :root, dark theme on [data-theme="dark"].
+   The OS preference is honored automatically for :root that has
+   NO explicit data-theme (i.e. no toggle choice was stored).
+   ============================================================ */
+
+:root {
+    /* --- surface / background --- */
+    --surface-bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --surface-sunken: #eef1f5;
+
+    /* --- text --- */
+    --text-primary: #1c2430;
+    --text-secondary: #48546a;
+    --text-muted: #6b7688;
+
+    /* --- lines --- */
+    --border: #d8dee7;
+    --border-strong: #b7c0cf;
+
+    /* --- accent --- */
+    --accent: #2f6fed;
+    --accent-contrast: #ffffff;
+    --accent-soft: #e8f0fe;
+
+    /* --- per-concept accents --- */
+    --accent-record: #8a5b08;
+    --accent-path: #2f6fed;
+    --accent-board: #8c1f2f;
+    --accent-bento: #4f46e5;
+
+    /* --- semantic --- */
+    --success: #1e7a41;
+    --success-soft: #e8f6ec;
+    --warning: #8a5b08;
+    --warning-soft: #fff4e0;
+    --danger: #c2413a;
+    --danger-soft: #fdecea;
+    --info: #2a4d9b;
+    --info-soft: #eef4ff;
+
+    /* --- spacing scale --- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+
+    /* --- radii --- */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 14px;
+    --radius-pill: 999px;
+
+    /* --- typography --- */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas,
+        "Liberation Mono", monospace;
+
+    /* --- elevation --- */
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.10);
+    --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
+
+    /* --- motion --- */
+    --transition-fast: 120ms ease;
+    --transition-base: 200ms ease;
+    --transition-slow: 320ms ease;
+}
+
+/* OS preference as the default when no explicit choice is stored */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --surface-bg: #12151c;
+        --surface: #1a1f29;
+        --surface-elevated: #212734;
+        --surface-sunken: #0d1016;
+
+        --text-primary: #e7ebf2;
+        --text-secondary: #b3bdcd;
+        --text-muted: #8592a6;
+
+        --border: #303949;
+        --border-strong: #46536a;
+
+        --accent: #6d9aff;
+        --accent-contrast: #0b1220;
+        --accent-soft: #1d2a48;
+
+        --accent-record: #f0be63;
+        --accent-path: #6d9aff;
+        --accent-board: #e8a33f;
+        --accent-bento: #8b87ff;
+
+        --success: #6ede95;
+        --success-soft: #14301f;
+        --warning: #f0be63;
+        --warning-soft: #322613;
+        --danger: #ff8f84;
+        --danger-soft: #3a1c17;
+        --info: #9dbaff;
+        --info-soft: #1b2540;
+
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.50);
+        --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+    }
+}
+
+/* Explicit dark choice written by the theme toggle */
+[data-theme="dark"] {
+    --surface-bg: #12151c;
+    --surface: #1a1f29;
+    --surface-elevated: #212734;
+    --surface-sunken: #0d1016;
+
+    --text-primary: #e7ebf2;
+    --text-secondary: #b3bdcd;
+    --text-muted: #8592a6;
+
+    --border: #303949;
+    --border-strong: #46536a;
+
+    --accent: #6d9aff;
+    --accent-contrast: #0b1220;
+    --accent-soft: #1d2a48;
+
+    --accent-record: #f0be63;
+    --accent-path: #6d9aff;
+    --accent-board: #e8a33f;
+    --accent-bento: #8b87ff;
+
+    --success: #6ede95;
+    --success-soft: #14301f;
+    --warning: #f0be63;
+    --warning-soft: #322613;
+    --danger: #ff8f84;
+    --danger-soft: #3a1c17;
+    --info: #9dbaff;
+    --info-soft: #1b2540;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.50);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* Explicit light choice written by the theme toggle */
+[data-theme="light"] {
+    color-scheme: light;
+}

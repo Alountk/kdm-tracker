@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flows · Prototypes</title>
+<style>
+    :root {
+        --bg: #f5f6f8;
+        --surface: #ffffff;
+        --surface-2: #eef1f5;
+        --text: #1c2430;
+        --text-2: #48546a;
+        --muted: #6b7688;
+        --border: #d8dee7;
+        --accent: #2f6fed;
+        --accent-soft: #e8f0fe;
+        --settle: #2a4d9b;
+        --settle-bg: #eef4ff;
+        --settle-border: #c3d5fb;
+        --hunt: #8a5b08;
+        --hunt-bg: #fff4e0;
+        --hunt-border: #f2d9a4;
+        --showdown: #9b2c1d;
+        --showdown-bg: #fdeeea;
+        --showdown-border: #f5c4bd;
+        --ok: #1e7a41;
+        --ok-bg: #e8f6ec;
+        --ok-border: #b7e3c3;
+        --shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --bg: #12151c;
+            --surface: #1a1f29;
+            --surface-2: #232a37;
+            --text: #e7ebf2;
+            --text-2: #b3bdcd;
+            --muted: #8592a6;
+            --border: #303949;
+            --accent: #6d9aff;
+            --accent-soft: #1d2a48;
+            --settle: #9dbaff;
+            --settle-bg: #1b2540;
+            --settle-border: #33456f;
+            --hunt: #f0be63;
+            --hunt-bg: #322613;
+            --hunt-border: #5d4820;
+            --showdown: #ff9c8b;
+            --showdown-bg: #3a1c17;
+            --showdown-border: #66322a;
+            --ok: #6ede95;
+            --ok-bg: #14301f;
+            --ok-border: #26543a;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+    }
+    [data-theme="dark"] {
+        --bg: #12151c;
+        --surface: #1a1f29;
+        --surface-2: #232a37;
+        --text: #e7ebf2;
+        --text-2: #b3bdcd;
+        --muted: #8592a6;
+        --border: #303949;
+        --accent: #6d9aff;
+        --accent-soft: #1d2a48;
+        --settle: #9dbaff;
+        --settle-bg: #1b2540;
+        --settle-border: #33456f;
+        --hunt: #f0be63;
+        --hunt-bg: #322613;
+        --hunt-border: #5d4820;
+        --showdown: #ff9c8b;
+        --showdown-bg: #3a1c17;
+        --showdown-border: #66322a;
+        --ok: #6ede95;
+        --ok-bg: #14301f;
+        --ok-border: #26543a;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.55;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+    }
+    .brand { font-weight: 700; color: var(--accent); text-decoration: none; }
+    .topbar a.plain { color: var(--text-2); text-decoration: none; font-size: 0.92rem; }
+    .topbar a.plain:hover { color: var(--accent); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--accent); }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+    .crumbs { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    .lede { color: var(--text-2); max-width: 780px; margin: 0 0 8px; }
+    h2 {
+        font-size: 1.15rem;
+        margin: 38px 0 14px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    /* ---------- Lantern Year loop ---------- */
+    .loop {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0;
+        flex-wrap: wrap;
+        margin: 20px 0 8px;
+    }
+    .phase {
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        min-width: 215px;
+        max-width: 250px;
+        box-shadow: var(--shadow);
+        position: relative;
+    }
+    .phase .num {
+        position: absolute;
+        top: -11px;
+        left: 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 1px 9px;
+        color: var(--muted);
+    }
+    .phase h3 { margin: 6px 0 6px; font-size: 1rem; }
+    .phase p { margin: 0; font-size: 0.83rem; color: var(--text-2); }
+    .phase.settlement { border-color: var(--settle-border); background: var(--settle-bg); }
+    .phase.hunt { border-color: var(--hunt-border); background: var(--hunt-bg); }
+    .phase.showdown { border-color: var(--showdown-border); background: var(--showdown-bg); }
+    .arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--muted);
+        padding: 0 6px;
+        font-weight: 700;
+    }
+    .loop-back {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--ok);
+        margin-top: 4px;
+    }
+
+    /* ---------- edge cases ---------- */
+    .edges {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+    .edge {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 11px 14px;
+        font-size: 0.87rem;
+        box-shadow: var(--shadow);
+    }
+    .edge strong { display: block; margin-bottom: 3px; color: var(--text); }
+    .edge span { color: var(--text-2); }
+
+    /* ---------- badges ---------- */
+    .badge {
+        display: inline-block;
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid;
+        white-space: nowrap;
+    }
+    .badge.bookkeeping { background: var(--settle-bg); border-color: var(--settle-border); color: var(--settle); }
+    .badge.decision { background: var(--hunt-bg); border-color: var(--hunt-border); color: var(--hunt); }
+    .badge.branching { background: var(--showdown-bg); border-color: var(--showdown-border); color: var(--showdown); }
+
+    .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 0.83rem;
+        color: var(--muted);
+        margin: 6px 0 18px;
+    }
+
+    /* ---------- step nodes ---------- */
+    .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        max-width: 860px;
+    }
+    .node {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 14px;
+    }
+    .rail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .dot {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--text-2);
+        flex: none;
+        font-family: var(--mono);
+    }
+    .line {
+        flex: 1;
+        width: 2px;
+        background: var(--border);
+        min-height: 14px;
+    }
+    .node:last-child .line { display: none; }
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+    }
+    .card-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .card-head h3 { margin: 0; font-size: 0.98rem; flex: 1; min-width: 200px; }
+    .card p { margin: 6px 0 0; font-size: 0.85rem; color: var(--text-2); }
+    .node.branch .card { border-color: var(--showdown-border); }
+    .node.branch .dot { border-color: var(--showdown-border); color: var(--showdown); }
+
+    /* ---------- callouts ---------- */
+    .callouts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .callout {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-top: 4px solid var(--accent);
+        border-radius: 10px;
+        padding: 13px 15px;
+        box-shadow: var(--shadow);
+    }
+    .callout.warn { border-top-color: var(--showdown); }
+    .callout.loop-c { border-top-color: var(--hunt); }
+    .callout h4 { margin: 0 0 5px; font-size: 0.92rem; }
+    .callout p { margin: 0; font-size: 0.85rem; color: var(--text-2); }
+    .callout code {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0 4px;
+    }
+    .back {
+        display: inline-block;
+        margin-top: 36px;
+        padding: 8px 14px;
+        background: var(--accent);
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker · Prototypes</a>
+    <a class="plain" href="/prototypes/research/index.html">Research</a>
+    <a class="plain" href="/prototypes/design-system/index.html">Design System</a>
+    <a class="plain" href="/prototypes/concepts/index.html">Concepts</a>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/index.html">Prototypes</a> / Flows</p>
+    <h1>Lantern Year map</h1>
+    <p class="lede">
+        A visual map of one Lantern Year and the 11 Settlement Phase steps in official order.
+        Step classifications follow §5 of the <a href="/prototypes/research/index.html">research artifact</a>.
+    </p>
+
+    <h2>The Lantern Year loop</h2>
+    <div class="loop">
+        <div class="phase settlement">
+            <span class="num">1</span>
+            <h3>Settlement Phase</h3>
+            <p>Heal returnees, advance the timeline, settlement event, milestones, develop, pick the hunt party — 11 steps.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="phase hunt">
+            <span class="num">2</span>
+            <h3>Hunt Phase</h3>
+            <p>Choose quarry + level, lay out the hunt board, resolve hunt events space-by-space — or the hunt fails.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="phase showdown">
+            <span class="num">3</span>
+            <h3>Showdown Phase</h3>
+            <p>Battle to victory or defeat; resolve the Aftermath: rewards, hunt XP, proficiency, deaths.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">↺</div>
+    </div>
+    <p class="loop-back">↺ back to Settlement Phase — the settlement typically advances by one Lantern Year per Settlement Phase.</p>
+
+    <div class="edges">
+        <div class="edge">
+            <strong>Hunt fails / all survivors perish</strong>
+            <span>"The lantern year is over, and a new Settlement Phase begins." (1.6 rulebook pg. 63) — still loops back to step 1.</span>
+        </div>
+        <div class="edge">
+            <strong>Nemesis Encounter year</strong>
+            <span>Settlement phase runs normally, but departing survivors <em>skip the Hunt Phase</em> and go straight to the showdown.</span>
+        </div>
+        <div class="edge">
+            <strong>Campaign end</strong>
+            <span><code>Game Over</code> milestone at population 0, or the campaign finale monster, ends the loop entirely.</span>
+        </div>
+    </div>
+
+    <h2>The 11 Settlement Phase steps</h2>
+    <div class="legend">
+        <span>Step types (research §5):</span>
+        <span class="badge bookkeeping">bookkeeping</span>
+        <span class="badge decision">decision</span>
+        <span class="badge branching">branching</span>
+        <span>— steps 1, 3, 4a, 10 are mostly bookkeeping; 2, 4, 5, 6, 7, 8 mix types; 5/6 contain branching principles.</span>
+    </div>
+
+    <div class="steps">
+        <div class="node">
+            <div class="rail"><div class="dot">1</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Set Up the Settlement</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                </div>
+                <p>Place the settlement board, record sheets, event deck, locations, innovations and principles. No decisions — but the Innovation Deck composition must be exactly correct.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">2</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Survivors Return</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                    <span class="badge decision">decision</span>
+                </div>
+                <p>Heal injury levels and remove all tokens from returning survivors (survival/insanity do not refill). Then apply principle/event/innovation return effects — some effects require nominating survivors.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">3</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Gain Endeavors</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                </div>
+                <p>+1 endeavor per returning survivor, plus conditional bonuses from innovations and principles.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">4</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Update Timeline</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                    <span class="badge decision">decision</span>
+                    <span class="badge branching">branching</span>
+                </div>
+                <p>4a Advance the lantern year (auto) → 4b draw + resolve the settlement event → 4c trigger the story events listed for this year, including any Nemesis Encounter (choose monster + level).</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">5</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Update the Death Count</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                    <span class="badge decision">decision</span>
+                    <span class="badge branching">branching</span>
+                </div>
+                <p>Record every death, including deaths that happen later in the phase (update immediately). The <strong>first</strong> death-count update ever fires the <code>Principle: Death</code> story event — a permanent one-time choice.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">6</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Check Milestones</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                    <span class="badge decision">decision</span>
+                    <span class="badge branching">branching</span>
+                </div>
+                <p>Tick reached milestone boxes and resolve their story events (any order if several). Principle choices here are permanent branching: New Life, Society, Hooded Knight.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">7</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Develop</h3>
+                    <span class="badge decision">decision</span>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                </div>
+                <p>The core decision step: craft gear, spend endeavors, innovate, build locations — free-form and repeatable. This step must close before you can depart (step 8).</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">8</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Prepare Departing Survivors</h3>
+                    <span class="badge decision">decision</span>
+                </div>
+                <p>Decide continue vs end session; choose the 4 departing survivors; allocate gear and recompute armor points / attribute modifiers. Quarry choice is <em>not</em> here — it opens the Hunt Phase.</p>
+            </div>
+        </div>
+
+        <div class="node branch">
+            <div class="rail"><div class="dot">9</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Special Showdown</h3>
+                    <span class="badge branching">branching · loop</span>
+                </div>
+                <p>If the timeline lists a Special Showdown, departing survivors fight it immediately. Win or lose, the flow <strong>loops back to step 5</strong> — no earlier steps repeat.</p>
+            </div>
+        </div>
+
+        <div class="node">
+            <div class="rail"><div class="dot">10</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>Record &amp; Archive Resources</h3>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                </div>
+                <p>Write unspent resources into Settlement Storage and archive the physical cards. This is where Showdown rewards become durable inventory.</p>
+            </div>
+        </div>
+
+        <div class="node branch">
+            <div class="rail"><div class="dot">11</div><div class="line"></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h3>End Settlement Phase</h3>
+                    <span class="badge branching">commit gate</span>
+                    <span class="badge bookkeeping">bookkeeping</span>
+                </div>
+                <p>Hard commit point: discard any unspent endeavors, store everything, then proceed to the Hunt Phase (or campaign end).</p>
+            </div>
+        </div>
+    </div>
+
+    <h2>Flow rules to respect in the UI</h2>
+    <div class="callouts">
+        <div class="callout loop-c">
+            <h4>Step 9 → loops to step 5</h4>
+            <p>After a Special Showdown, return to <code>Update the Death Count</code>. Steps 1–4 do <strong>not</strong> repeat: no new endeavors, no new settlement event, no timeline advance.</p>
+        </div>
+        <div class="callout warn">
+            <h4>Step 11 discards endeavors</h4>
+            <p>Unspent endeavors do not carry over. Make step 11 a gated commit: "you are about to lose N endeavors."</p>
+        </div>
+        <div class="callout warn">
+            <h4>No departure before Develop</h4>
+            <p>You cannot prepare departing survivors (step 8) before Develop (step 7) is closed — the rulebook order enforces it.</p>
+        </div>
+        <div class="callout">
+            <h4>Milestones can fire mid-phase</h4>
+            <p>Step 6 is the scheduled check, but if a milestone is reached <em>later</em> in the phase, it resolves immediately — the flow must accept interrupts.</p>
+        </div>
+    </div>
+
+    <a class="back" href="/prototypes/index.html">← Back to Prototypes</a>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') {
+        root.setAttribute('data-theme', saved);
+    }
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>

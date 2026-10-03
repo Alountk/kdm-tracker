@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive · Prototypes</title>
+<style>
+    :root {
+        --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef1f5;
+        --text: #1c2430; --text-2: #48546a; --muted: #6b7688;
+        --border: #d8dee7; --accent: #2f6fed;
+        --shadow: 0 1px 3px rgba(16,24,40,.08);
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+            --bg: #12151c; --surface: #1a1f29; --surface-2: #232a37;
+            --text: #e7ebf2; --text-2: #b3bdcd; --muted: #8592a6;
+            --border: #303949; --accent: #6d9aff;
+            --shadow: 0 1px 3px rgba(0,0,0,.4);
+        }
+    }
+    [data-theme="dark"] {
+        --bg: #12151c; --surface: #1a1f29; --surface-2: #232a37;
+        --text: #e7ebf2; --text-2: #b3bdcd; --muted: #8592a6;
+        --border: #303949; --accent: #6d9aff;
+        --shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55; }
+    .topbar { display: flex; align-items: center; gap: 24px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; }
+    .brand { font-weight: 700; color: var(--accent); text-decoration: none; }
+    .topbar a.plain { color: var(--text-2); text-decoration: none; font-size: .92rem; }
+    .topbar a.plain:hover { color: var(--accent); }
+    .topbar .spacer { flex: 1; }
+    .theme-toggle { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: .85rem; cursor: pointer; }
+    .theme-toggle:hover { border-color: var(--accent); }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+    .crumbs { font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+    .crumbs a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    .empty {
+        background: var(--surface);
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 54px 28px;
+        text-align: center;
+        margin-top: 26px;
+        box-shadow: var(--shadow);
+    }
+    .empty .glyph {
+        font-size: 2.4rem;
+        line-height: 1;
+        margin-bottom: 14px;
+        opacity: .5;
+    }
+    .empty h2 { margin: 0 0 8px; font-size: 1.15rem; border: none; padding: 0; }
+    .empty p { margin: 0 auto; max-width: 440px; color: var(--muted); font-size: .92rem; }
+    .empty .hint {
+        display: inline-block;
+        margin-top: 18px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: .78rem;
+        color: var(--muted);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 10px;
+    }
+    .back { display: inline-block; margin-top: 30px; padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 6px; text-decoration: none; font-size: .9rem; }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/prototypes/index.html">kdm-tracker · Prototypes</a>
+    <a class="plain" href="/prototypes/research/index.html">Research</a>
+    <a class="plain" href="/prototypes/flows/index.html">Flows</a>
+    <a class="plain" href="/prototypes/design-system/index.html">Design System</a>
+    <a class="plain" href="/prototypes/concepts/index.html">Concepts</a>
+    <span class="spacer"></span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Dark</button>
+</header>
+
+<main class="wrap">
+    <p class="crumbs"><a href="/prototypes/index.html">Prototypes</a> / Archive</p>
+    <h1>Archive</h1>
+
+    <div class="empty">
+        <div class="glyph" aria-hidden="true">🗒</div>
+        <h2>Descarted designs live here</h2>
+        <p>
+            Superseded layouts, rejected explorations and earlier versions of the concepts are
+            moved to this archive so the Concepts section only shows current work.
+        </p>
+        <span class="hint">0 archived designs</span>
+    </div>
+
+    <a class="back" href="/prototypes/index.html">← Back to Prototypes</a>
+</main>
+
+<script>
+(function () {
+    var KEY = 'kdm-prototypes-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    function label() {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btn.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    label();
+    btn.addEventListener('click', function () {
+        var t = root.getAttribute('data-theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var next = t === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        label();
+    });
+})();
+</script>
+</body>
+</html>
