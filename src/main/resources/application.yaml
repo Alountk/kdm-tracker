@@ -1,0 +1,14 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: kdm-tracker
+  datasource:
+    url: jdbc:h2:file:./data/kdm-tracker
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update

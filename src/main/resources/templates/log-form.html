@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Edit log entry')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1>Edit log entry</h1>
+    <form th:action="@{/log/{id}(id=${form.id})}" th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="lanternYear">Lantern year</label>
+            <input id="lanternYear" type="number" th:field="*{lanternYear}" min="1" required>
+            <span class="field-error" th:if="${#fields.hasErrors('lanternYear')}" th:errors="*{lanternYear}"></span>
+        </div>
+        <div class="span-two">
+            <label for="title">Title</label>
+            <input id="title" type="text" th:field="*{title}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+        </div>
+        <div class="span-full">
+            <label for="body">Body</label>
+            <textarea id="body" th:field="*{body}"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a class="button secondary" th:href="@{/log}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

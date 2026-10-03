@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Edit innovation')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1>Edit innovation</h1>
+    <form th:action="@{/innovations/{id}(id=${form.id})}" th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+        <div>
+            <label for="unlockedInYear">Unlocked in year</label>
+            <input id="unlockedInYear" type="number" th:field="*{unlockedInYear}" min="1">
+            <span class="field-error" th:if="${#fields.hasErrors('unlockedInYear')}" th:errors="*{unlockedInYear}"></span>
+        </div>
+        <div class="span-full">
+            <label for="notes">Notes</label>
+            <textarea id="notes" th:field="*{notes}"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a class="button secondary" th:href="@{/innovations}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

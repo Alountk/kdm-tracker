@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Survivor')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1 th:text="${form.id != null} ? 'Edit survivor' : 'New survivor'">New survivor</h1>
+    <form th:action="${form.id != null} ? @{/survivors/{id}(id=${form.id})} : @{/survivors}"
+          th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+        <div>
+            <label for="sex">Sex</label>
+            <select id="sex" th:field="*{sex}">
+                <option value="">—</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+            </select>
+        </div>
+        <div>
+            <label for="age">Age</label>
+            <input id="age" type="number" th:field="*{age}" min="0">
+            <span class="field-error" th:if="${#fields.hasErrors('age')}" th:errors="*{age}"></span>
+        </div>
+        <div class="span-full"><h2>Combat attributes</h2></div>
+        <div>
+            <label for="movement">Movement</label>
+            <input id="movement" type="number" th:field="*{movement}">
+            <span class="field-error" th:if="${#fields.hasErrors('movement')}" th:errors="*{movement}"></span>
+        </div>
+        <div>
+            <label for="speed">Speed</label>
+            <input id="speed" type="number" th:field="*{speed}">
+            <span class="field-error" th:if="${#fields.hasErrors('speed')}" th:errors="*{speed}"></span>
+        </div>
+        <div>
+            <label for="accuracy">Accuracy</label>
+            <input id="accuracy" type="number" th:field="*{accuracy}">
+            <span class="field-error" th:if="${#fields.hasErrors('accuracy')}" th:errors="*{accuracy}"></span>
+        </div>
+        <div>
+            <label for="strength">Strength</label>
+            <input id="strength" type="number" th:field="*{strength}">
+            <span class="field-error" th:if="${#fields.hasErrors('strength')}" th:errors="*{strength}"></span>
+        </div>
+        <div>
+            <label for="dexterity">Dexterity</label>
+            <input id="dexterity" type="number" th:field="*{dexterity}">
+            <span class="field-error" th:if="${#fields.hasErrors('dexterity')}" th:errors="*{dexterity}"></span>
+        </div>
+        <div>
+            <label for="evasion">Evasion</label>
+            <input id="evasion" type="number" th:field="*{evasion}">
+            <span class="field-error" th:if="${#fields.hasErrors('evasion')}" th:errors="*{evasion}"></span>
+        </div>
+        <div>
+            <label for="armor">Armor</label>
+            <input id="armor" type="number" th:field="*{armor}">
+            <span class="field-error" th:if="${#fields.hasErrors('armor')}" th:errors="*{armor}"></span>
+        </div>
+        <div class="span-full"><h2>Development</h2></div>
+        <div>
+            <label for="insanity">Insanity</label>
+            <input id="insanity" type="number" th:field="*{insanity}">
+            <span class="field-error" th:if="${#fields.hasErrors('insanity')}" th:errors="*{insanity}"></span>
+        </div>
+        <div>
+            <label for="courage">Courage</label>
+            <input id="courage" type="number" th:field="*{courage}">
+            <span class="field-error" th:if="${#fields.hasErrors('courage')}" th:errors="*{courage}"></span>
+        </div>
+        <div>
+            <label for="understanding">Understanding</label>
+            <input id="understanding" type="number" th:field="*{understanding}">
+            <span class="field-error" th:if="${#fields.hasErrors('understanding')}" th:errors="*{understanding}"></span>
+        </div>
+        <div>
+            <label for="xp">XP</label>
+            <input id="xp" type="number" th:field="*{xp}">
+            <span class="field-error" th:if="${#fields.hasErrors('xp')}" th:errors="*{xp}"></span>
+        </div>
+        <div class="span-full">
+            <label for="alive">Alive</label>
+            <input type="hidden" name="alive" value="false">
+            <input id="alive" type="checkbox" th:field="*{alive}">
+        </div>
+        <div class="span-full">
+            <label for="notes">Notes</label>
+            <textarea id="notes" th:field="*{notes}"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a class="button secondary" th:href="@{/survivors}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Survivors')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <div class="page-head">
+        <h1>Survivors</h1>
+        <a class="button" th:href="@{/survivors/new}">New survivor</a>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Sex</th>
+            <th>Age</th>
+            <th title="Movement">MV</th>
+            <th title="Speed">SP</th>
+            <th title="Accuracy">ACC</th>
+            <th title="Strength">STR</th>
+            <th title="Dexterity">DEX</th>
+            <th title="Evasion">EVA</th>
+            <th title="Armor">ARM</th>
+            <th title="Insanity">INS</th>
+            <th title="Courage">COU</th>
+            <th title="Understanding">UND</th>
+            <th>XP</th>
+            <th>Alive</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${survivors}">
+            <td th:text="${s.name}">Name</td>
+            <td th:text="${s.sex != null} ? ${s.sex} : '—'">—</td>
+            <td th:text="${s.age}">12</td>
+            <td th:text="${s.movement}">5</td>
+            <td th:text="${s.speed}">4</td>
+            <td th:text="${s.accuracy}">5</td>
+            <td th:text="${s.strength}">1</td>
+            <td th:text="${s.dexterity}">8</td>
+            <td th:text="${s.evasion}">0</td>
+            <td th:text="${s.armor}">0</td>
+            <td th:text="${s.insanity}">0</td>
+            <td th:text="${s.courage}">0</td>
+            <td th:text="${s.understanding}">0</td>
+            <td th:text="${s.xp}">0</td>
+            <td th:text="${s.alive ? 'Yes' : 'No'}">Yes</td>
+            <td class="actions">
+                <a th:href="@{/survivors/{id}/edit(id=${s.id})}">Edit</a>
+                <form th:action="@{/survivors/{id}/delete(id=${s.id})}" method="post" class="inline">
+                    <button type="submit" class="danger small">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(survivors)}">
+            <td colspan="16" class="muted">No survivors yet.</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: kdm-tracker
+  datasource:
+    url: jdbc:h2:mem:kdmtracker;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop

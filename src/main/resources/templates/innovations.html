@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Innovations')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1>Innovations</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Unlocked in year</th>
+            <th>Name</th>
+            <th>Notes</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="innovation : ${innovations}">
+            <td th:text="${innovation.unlockedInYear}">1</td>
+            <td th:text="${innovation.name}">Innovation</td>
+            <td th:text="${innovation.notes}">Notes</td>
+            <td class="actions">
+                <a th:href="@{/innovations/{id}/edit(id=${innovation.id})}">Edit</a>
+                <form th:action="@{/innovations/{id}/delete(id=${innovation.id})}" method="post" class="inline">
+                    <button type="submit" class="danger small">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(innovations)}">
+            <td colspan="4" class="muted">No innovations unlocked yet.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Unlock innovation</h2>
+    <form th:action="@{/innovations}" th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+        <div>
+            <label for="unlockedInYear">Unlocked in year</label>
+            <input id="unlockedInYear" type="number" th:field="*{unlockedInYear}" min="1">
+            <span class="field-error" th:if="${#fields.hasErrors('unlockedInYear')}" th:errors="*{unlockedInYear}"></span>
+        </div>
+        <div class="span-full">
+            <label for="notes">Notes</label>
+            <textarea id="notes" th:field="*{notes}"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Unlock</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

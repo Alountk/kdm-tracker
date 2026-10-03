@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1 th:text="${settlement.name}">New Settlement</h1>
+    <p class="muted">Lantern Year <strong th:text="${settlement.lanternYear}">1</strong></p>
+
+    <div class="cards">
+        <div class="card">
+            <div class="label">Survivors (alive / total)</div>
+            <div class="value" th:text="|${survivorAliveCount} / ${survivorTotalCount}|">0 / 0</div>
+        </div>
+        <div class="card">
+            <div class="label">Resource units</div>
+            <div class="value" th:text="${resourceTotalQuantity}">0</div>
+        </div>
+        <div class="card">
+            <div class="label">Innovations</div>
+            <div class="value" th:text="${innovationCount}">0</div>
+        </div>
+    </div>
+
+    <h2>Settlement profile</h2>
+    <form th:action="@{/settlement}" th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+        <div>
+            <label for="lanternYear">Lantern year</label>
+            <input id="lanternYear" type="number" th:field="*{lanternYear}" min="1" required>
+            <span class="field-error" th:if="${#fields.hasErrors('lanternYear')}" th:errors="*{lanternYear}"></span>
+        </div>
+        <div class="span-full">
+            <label for="notes">Notes</label>
+            <textarea id="notes" th:field="*{notes}"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save settlement</button>
+        </div>
+    </form>
+
+    <h2>Recent log entries</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Title</th>
+            <th>Created</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${recentLogs}">
+            <td th:text="${entry.lanternYear}">1</td>
+            <td th:text="${entry.title}">Title</td>
+            <td th:text="${entry.createdAt}">Timestamp</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(recentLogs)}">
+            <td colspan="3" class="muted">No log entries yet.</td>
+        </tr>
+        </tbody>
+    </table>
+    <p><a th:href="@{/log}">Open full log →</a></p>
+</main>
+</body>
+</html>

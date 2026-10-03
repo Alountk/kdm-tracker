@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Resources')}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="container">
+    <h1>Resources</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${resources}">
+            <td th:text="${r.name}">Bone</td>
+            <td th:text="${r.category}">BASIC</td>
+            <td th:text="${r.quantity}">0</td>
+            <td class="actions">
+                <form th:action="@{/resources/{id}/adjust(id=${r.id})}" method="post" class="inline">
+                    <input type="hidden" name="delta" value="-1">
+                    <button type="submit" class="small">−1</button>
+                </form>
+                <form th:action="@{/resources/{id}/adjust(id=${r.id})}" method="post" class="inline">
+                    <input type="hidden" name="delta" value="1">
+                    <button type="submit" class="small">+1</button>
+                </form>
+                <a th:href="@{/resources/{id}/edit(id=${r.id})}">Edit</a>
+                <form th:action="@{/resources/{id}/delete(id=${r.id})}" method="post" class="inline">
+                    <button type="submit" class="danger small">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(resources)}">
+            <td colspan="4" class="muted">No resources yet.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Add resource</h2>
+    <form th:action="@{/resources}" th:object="${form}" method="post" class="form-grid">
+        <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
+            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+        </div>
+        <div>
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+        <div>
+            <label for="category">Category</label>
+            <select id="category" th:field="*{category}">
+                <option value="BASIC">BASIC</option>
+                <option value="SPECIAL">SPECIAL</option>
+                <option value="MONSTER">MONSTER</option>
+            </select>
+        </div>
+        <div>
+            <label for="quantity">Quantity</label>
+            <input id="quantity" type="number" th:field="*{quantity}" min="0">
+            <span class="field-error" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></span>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Add resource</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>
