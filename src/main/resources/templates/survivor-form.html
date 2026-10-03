@@ -88,8 +88,13 @@
         </div>
         <div class="span-full">
             <label for="alive">Alive</label>
-            <input type="hidden" name="alive" value="false">
+            <!--
+              On this stack data binding keeps the FIRST repeated parameter value,
+              so the checkbox must render before the hidden fallback: checked ->
+              [true, false] -> true; unchecked -> [false] -> false.
+            -->
             <input id="alive" type="checkbox" th:field="*{alive}">
+            <input type="hidden" name="alive" value="false">
         </div>
         <div class="span-full">
             <label for="notes">Notes</label>

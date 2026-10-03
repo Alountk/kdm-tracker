@@ -5,6 +5,7 @@ import io.kdmtracker.domain.Survivor
 import io.kdmtracker.repository.SurvivorRepository
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,6 +62,32 @@ class SurvivorFlowTests {
             .perform(post("/survivors").param("name", "   "))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("field-error")))
+    }
+
+    @Test
+    fun aliveBindingKeepsFirstRepeatedParamValue() {
+        // Checked checkbox renders before the hidden fallback: alive=true&alive=false.
+        mockMvc
+            .perform(
+                post("/survivors")
+                    .param("name", "Checked Alive")
+                    .param("alive", "true")
+                    .param("alive", "false"),
+            ).andExpect(status().is3xxRedirection)
+
+        val checked = survivorRepository.findAll().first { it.name == "Checked Alive" }
+        assertTrue(checked.alive)
+
+        // Unchecked checkbox submits only the hidden fallback: alive=false.
+        mockMvc
+            .perform(
+                post("/survivors")
+                    .param("name", "Unchecked Alive")
+                    .param("alive", "false"),
+            ).andExpect(status().is3xxRedirection)
+
+        val unchecked = survivorRepository.findAll().first { it.name == "Unchecked Alive" }
+        assertFalse(unchecked.alive)
     }
 
     @Test
