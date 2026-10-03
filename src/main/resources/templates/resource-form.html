@@ -2,10 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Edit resource')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
     <h1>Edit resource</h1>
-    <form th:action="@{/resources/{id}(id=${form.id})}" th:object="${form}" method="post" class="form-grid">
+    <form th:action="@{/settlements/{id}/resources/{rid}(id=${settlementId}, rid=${form.id})}" th:object="${form}" method="post" class="form-grid">
         <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
             <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
         </div>
@@ -29,7 +29,7 @@
         </div>
         <div class="form-actions">
             <button type="submit">Save</button>
-            <a class="button secondary" th:href="@{/resources}">Cancel</a>
+            <a class="button secondary" th:href="@{/settlements/{id}/resources(id=${settlementId})}">Cancel</a>
         </div>
     </form>
 </main>

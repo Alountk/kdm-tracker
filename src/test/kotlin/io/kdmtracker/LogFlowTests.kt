@@ -1,7 +1,10 @@
 package io.kdmtracker
 
+import io.kdmtracker.domain.Settlement
+import io.kdmtracker.repository.SettlementRepository
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -19,6 +22,16 @@ class LogFlowTests {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
+    @Autowired
+    private lateinit var settlementRepository: SettlementRepository
+
+    private var settlementId: Long = 0L
+
+    @BeforeEach
+    fun createSettlement() {
+        settlementId = settlementRepository.save(Settlement(name = "Log Flow Settlement")).id!!
+    }
+
     @Test
     fun logEntriesAppearSortedByYearThenCreatedAt() {
         createEntry("3", "First winter record", "The settlement endured.")
@@ -27,7 +40,7 @@ class LogFlowTests {
 
         val page =
             mockMvc
-                .perform(get("/log"))
+                .perform(get("/settlements/$settlementId/log"))
                 .andExpect(status().isOk)
                 .andExpect(content().string(containsString("First winter record")))
                 .andReturn()
@@ -44,7 +57,7 @@ class LogFlowTests {
     @Test
     fun blankTitleIsRejectedAndListRerenders() {
         mockMvc
-            .perform(post("/log").param("lanternYear", "2").param("title", ""))
+            .perform(post("/settlements/$settlementId/log").param("lanternYear", "2").param("title", ""))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("field-error")))
     }
@@ -56,11 +69,11 @@ class LogFlowTests {
     ) {
         mockMvc
             .perform(
-                post("/log")
+                post("/settlements/$settlementId/log")
                     .param("lanternYear", year)
                     .param("title", title)
                     .param("body", body),
             ).andExpect(status().is3xxRedirection)
-            .andExpect(redirectedUrl("/log"))
+            .andExpect(redirectedUrl("/settlements/$settlementId/log"))
     }
 }

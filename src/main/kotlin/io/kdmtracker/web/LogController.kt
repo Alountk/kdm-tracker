@@ -16,79 +16,105 @@ import org.springframework.web.server.ResponseStatusException
 
 @Controller
 class LogController(
+    private val locator: SettlementLocator,
     private val logEntryRepository: LogEntryRepository,
 ) {
-    @GetMapping("/log")
-    fun list(model: Model): String {
-        fillList(model)
+    @GetMapping("/settlements/{id}/log")
+    fun list(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        locator.require(id)
+        fillList(id, model)
         model.addAttribute(FORM, LogForm())
         return "log"
     }
 
-    @PostMapping("/log")
+    @PostMapping("/settlements/{id}/log")
     fun create(
+        @PathVariable id: Long,
         @Valid @ModelAttribute(FORM) form: LogForm,
         bindingResult: BindingResult,
         model: Model,
     ): String {
+        locator.require(id)
+        fillList(id, model)
         if (bindingResult.hasErrors()) {
-            fillList(model)
             return "log"
         }
-        logEntryRepository.save(form.toEntity())
-        return "redirect:/log"
+        logEntryRepository.save(form.toEntity(id))
+        return "redirect:/settlements/$id/log"
     }
 
-    @GetMapping("/log/{id}/edit")
+    @GetMapping("/settlements/{id}/log/{lid}/edit")
     fun editForm(
         @PathVariable id: Long,
+        @PathVariable lid: Long,
         model: Model,
     ): String {
-        model.addAttribute(FORM, requireEntry(id).toForm())
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        model.addAttribute(FORM, requireEntry(id, lid).toForm())
         return "log-form"
     }
 
-    @PostMapping("/log/{id}")
+    @PostMapping("/settlements/{id}/log/{lid}")
     fun update(
         @PathVariable id: Long,
+        @PathVariable lid: Long,
         @Valid @ModelAttribute(FORM) form: LogForm,
         bindingResult: BindingResult,
+        model: Model,
     ): String {
-        val entry = requireEntry(id)
-        form.id = id
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        val entry = requireEntry(id, lid)
+        form.id = lid
         if (bindingResult.hasErrors()) {
             return "log-form"
         }
         form.applyTo(entry)
         logEntryRepository.save(entry)
-        return "redirect:/log"
+        return "redirect:/settlements/$id/log"
     }
 
-    @PostMapping("/log/{id}/delete")
+    @PostMapping("/settlements/{id}/log/{lid}/delete")
     fun delete(
         @PathVariable id: Long,
+        @PathVariable lid: Long,
     ): String {
-        if (logEntryRepository.existsById(id)) {
-            logEntryRepository.deleteById(id)
-        }
-        return "redirect:/log"
+        locator.require(id)
+        logEntryRepository.delete(requireEntry(id, lid))
+        return "redirect:/settlements/$id/log"
     }
 
-    private fun fillList(model: Model) {
-        model.addAttribute("entries", logEntryRepository.findAllByOrderByLanternYearDescCreatedAtDesc())
+    private fun fillList(
+        settlementId: Long,
+        model: Model,
+    ) {
+        model.addAttribute("settlementId", settlementId)
+        model.addAttribute(
+            "entries",
+            logEntryRepository.findAllBySettlementIdOrderByLanternYearDescCreatedAtDesc(settlementId),
+        )
     }
 
-    private fun requireEntry(id: Long): LogEntry =
-        logEntryRepository.findById(id).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Log entry $id not found")
+    private fun requireEntry(
+        settlementId: Long,
+        lid: Long,
+    ): LogEntry =
+        logEntryRepository.findById(lid).filter { it.settlementId == settlementId }.orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Log entry $lid not found")
         }
 
-    private fun LogForm.toEntity() =
+    private fun LogForm.toEntity(settlementId: Long) =
         LogEntry(
             lanternYear = lanternYear,
             title = title,
             body = body,
-        )
+        ).also {
+            it.settlementId = settlementId
+        }
 
     private fun LogForm.applyTo(target: LogEntry) {
         target.lanternYear = lanternYear

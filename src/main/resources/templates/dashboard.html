@@ -2,10 +2,19 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Dashboard')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
-    <h1 th:text="${settlement.name}">New Settlement</h1>
-    <p class="muted"><span class="chip accent">Lantern Year <strong th:text="${settlement.lanternYear}">1</strong></span></p>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${settlement.name}">New Settlement</h1>
+            <p class="muted">
+                <span class="chip accent">Lantern Year <strong th:text="${settlement.lanternYear}">1</strong></span>
+                <span class="chip" th:classappend="${phaseTone}" th:text="${settlement.phase}">SETTLEMENT</span>
+                <span th:text="${stepText}">Step 1/11</span>
+            </p>
+        </div>
+        <a class="button secondary" th:href="@{/}">← Settlements</a>
+    </div>
 
     <div class="cards">
         <div class="card">
@@ -20,10 +29,38 @@
             <div class="label">Innovations</div>
             <div class="value" th:text="${innovationCount}">0</div>
         </div>
+        <div class="card">
+            <div class="label">Last log entry</div>
+            <div class="value" th:text="${lastLog != null} ? ${lastLog.title} : '—'">—</div>
+        </div>
     </div>
 
+    <h2>Phase &amp; step</h2>
+    <div class="phase-row">
+        <span class="chip" th:classappend="${phaseTone}" th:text="${settlement.phase}">SETTLEMENT</span>
+        <strong th:text="${stepText}">Step 1/11</strong>
+        <span class="muted">Official settlement steps run 1–11.</span>
+    </div>
+    <form th:action="@{/settlements/{id}/phase-step(id=${settlementId})}" method="post" class="form-grid">
+        <div>
+            <label for="phase">Phase</label>
+            <select id="phase" name="phase">
+                <option th:each="p : ${phases}" th:value="${p}" th:text="${p}"
+                        th:selected="${settlement.phase == p}">SETTLEMENT</option>
+            </select>
+        </div>
+        <div>
+            <label for="currentStep">Settlement step (1–11)</label>
+            <input id="currentStep" type="number" name="currentStep" min="1" max="11"
+                   th:value="${settlement.currentStep}">
+        </div>
+        <div class="form-actions">
+            <button type="submit">Update phase &amp; step</button>
+        </div>
+    </form>
+
     <h2>Settlement profile</h2>
-    <form th:action="@{/settlement}" th:object="${form}" method="post" class="form-grid">
+    <form th:action="@{/settlements/{id}(id=${settlementId})}" th:object="${form}" method="post" class="form-grid">
         <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
             <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
         </div>
@@ -66,7 +103,14 @@
         </tr>
         </tbody>
     </table>
-    <p><a th:href="@{/log}">Open full log →</a></p>
+    <p><a th:href="@{/settlements/{id}/log(id=${settlementId})}">Open full log →</a></p>
+
+    <div class="danger-zone">
+        <form th:action="@{/settlements/{id}/delete(id=${settlementId})}" method="post">
+            <button type="submit" class="danger">Delete settlement</button>
+            <span class="muted">Removes this settlement and all of its survivors, resources, innovations and log entries.</span>
+        </form>
+    </div>
 </main>
 </body>
 </html>

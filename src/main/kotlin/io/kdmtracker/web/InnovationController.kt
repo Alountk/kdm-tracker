@@ -16,76 +16,101 @@ import org.springframework.web.server.ResponseStatusException
 
 @Controller
 class InnovationController(
+    private val locator: SettlementLocator,
     private val innovationRepository: InnovationRepository,
 ) {
-    @GetMapping("/innovations")
-    fun list(model: Model): String {
-        fillList(model)
+    @GetMapping("/settlements/{id}/innovations")
+    fun list(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        locator.require(id)
+        fillList(id, model)
         model.addAttribute(FORM, InnovationForm())
         return "innovations"
     }
 
-    @PostMapping("/innovations")
+    @PostMapping("/settlements/{id}/innovations")
     fun create(
+        @PathVariable id: Long,
         @Valid @ModelAttribute(FORM) form: InnovationForm,
         bindingResult: BindingResult,
         model: Model,
     ): String {
+        locator.require(id)
+        fillList(id, model)
         if (bindingResult.hasErrors()) {
-            fillList(model)
             return "innovations"
         }
-        innovationRepository.save(form.toEntity())
-        return "redirect:/innovations"
+        innovationRepository.save(form.toEntity(id))
+        return "redirect:/settlements/$id/innovations"
     }
 
-    @GetMapping("/innovations/{id}/edit")
+    @GetMapping("/settlements/{id}/innovations/{iid}/edit")
     fun editForm(
         @PathVariable id: Long,
+        @PathVariable iid: Long,
         model: Model,
     ): String {
-        model.addAttribute(FORM, requireInnovation(id).toForm())
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        model.addAttribute(FORM, requireInnovation(id, iid).toForm())
         return "innovation-form"
     }
 
-    @PostMapping("/innovations/{id}")
+    @PostMapping("/settlements/{id}/innovations/{iid}")
     fun update(
         @PathVariable id: Long,
+        @PathVariable iid: Long,
         @Valid @ModelAttribute(FORM) form: InnovationForm,
         bindingResult: BindingResult,
+        model: Model,
     ): String {
-        val innovation = requireInnovation(id)
-        form.id = id
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        val innovation = requireInnovation(id, iid)
+        form.id = iid
         if (bindingResult.hasErrors()) {
             return "innovation-form"
         }
         form.applyTo(innovation)
         innovationRepository.save(innovation)
-        return "redirect:/innovations"
+        return "redirect:/settlements/$id/innovations"
     }
 
-    @PostMapping("/innovations/{id}/delete")
+    @PostMapping("/settlements/{id}/innovations/{iid}/delete")
     fun delete(
         @PathVariable id: Long,
+        @PathVariable iid: Long,
     ): String {
-        if (innovationRepository.existsById(id)) {
-            innovationRepository.deleteById(id)
-        }
-        return "redirect:/innovations"
+        locator.require(id)
+        innovationRepository.delete(requireInnovation(id, iid))
+        return "redirect:/settlements/$id/innovations"
     }
 
-    private fun fillList(model: Model) {
-        model.addAttribute("innovations", innovationRepository.findAllByOrderByUnlockedInYearDescNameAsc())
+    private fun fillList(
+        settlementId: Long,
+        model: Model,
+    ) {
+        model.addAttribute("settlementId", settlementId)
+        model.addAttribute(
+            "innovations",
+            innovationRepository.findAllBySettlementIdOrderByUnlockedInYearDescNameAsc(settlementId),
+        )
     }
 
-    private fun requireInnovation(id: Long): Innovation =
-        innovationRepository.findById(id).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Innovation $id not found")
+    private fun requireInnovation(
+        settlementId: Long,
+        iid: Long,
+    ): Innovation =
+        innovationRepository.findById(iid).filter { it.settlementId == settlementId }.orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Innovation $iid not found")
         }
 
-    private fun InnovationForm.toEntity() =
+    private fun InnovationForm.toEntity(settlementId: Long) =
         Innovation().also {
             applyTo(it)
+            it.settlementId = settlementId
         }
 
     private fun InnovationForm.applyTo(target: Innovation) {

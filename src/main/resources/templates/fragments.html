@@ -21,15 +21,16 @@
     </script>
 </head>
 <body>
-<header th:fragment="header">
+<header th:fragment="header(settlementId)">
     <div class="topbar">
         <a class="brand" th:href="@{/}">kdm-tracker</a>
         <nav>
-            <a th:href="@{/}">Dashboard</a>
-            <a th:href="@{/survivors}">Survivors</a>
-            <a th:href="@{/resources}">Resources</a>
-            <a th:href="@{/innovations}">Innovations</a>
-            <a th:href="@{/log}">Log</a>
+            <a th:href="@{/}">Settlements</a>
+            <a th:if="${settlementId != null}" th:href="@{/settlements/{id}(id=${settlementId})}">Dashboard</a>
+            <a th:if="${settlementId != null}" th:href="@{/settlements/{id}/survivors(id=${settlementId})}">Survivors</a>
+            <a th:if="${settlementId != null}" th:href="@{/settlements/{id}/resources(id=${settlementId})}">Resources</a>
+            <a th:if="${settlementId != null}" th:href="@{/settlements/{id}/innovations(id=${settlementId})}">Innovations</a>
+            <a th:if="${settlementId != null}" th:href="@{/settlements/{id}/log(id=${settlementId})}">Log</a>
             <a th:href="@{/prototypes/index.html}">Prototypes</a>
         </nav>
         <span class="spacer"></span>

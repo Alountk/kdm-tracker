@@ -1,11 +1,16 @@
 package io.kdmtracker.domain
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 @Entity
@@ -28,7 +33,18 @@ class Survivor(
     var xp: Int = 0,
     var alive: Boolean = true,
     var notes: String = "",
+    @field:Column(name = "settlement_id")
     var settlementId: Long = 1L,
+    // Read-only association on the same column: declares the real foreign key to
+    // settlements while settlementId stays the writable property used by the app.
+    @field:ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @field:JoinColumn(
+        name = "settlement_id",
+        insertable = false,
+        updatable = false,
+        foreignKey = ForeignKey(name = "fk_survivors_settlement"),
+    )
+    var settlement: Settlement? = null,
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Campaign log')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
     <h1>Campaign log</h1>
     <table>
@@ -22,8 +22,8 @@
             <td th:text="${entry.body}">Body</td>
             <td th:text="${entry.createdAt}">Timestamp</td>
             <td class="actions">
-                <a th:href="@{/log/{id}/edit(id=${entry.id})}">Edit</a>
-                <form th:action="@{/log/{id}/delete(id=${entry.id})}" method="post" class="inline">
+                <a th:href="@{/settlements/{id}/log/{lid}/edit(id=${settlementId}, lid=${entry.id})}">Edit</a>
+                <form th:action="@{/settlements/{id}/log/{lid}/delete(id=${settlementId}, lid=${entry.id})}" method="post" class="inline">
                     <button type="submit" class="danger small">Delete</button>
                 </form>
             </td>
@@ -35,7 +35,7 @@
     </table>
 
     <h2>Add log entry</h2>
-    <form th:action="@{/log}" th:object="${form}" method="post" class="form-grid">
+    <form th:action="@{/settlements/{id}/log(id=${settlementId})}" th:object="${form}" method="post" class="form-grid">
         <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
             <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
         </div>

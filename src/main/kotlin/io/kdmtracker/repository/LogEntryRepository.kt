@@ -4,7 +4,11 @@ import io.kdmtracker.domain.LogEntry
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LogEntryRepository : JpaRepository<LogEntry, Long> {
-    fun findAllByOrderByLanternYearDescCreatedAtDesc(): List<LogEntry>
+    fun findAllBySettlementIdOrderByLanternYearDescCreatedAtDesc(settlementId: Long): List<LogEntry>
 
-    fun findTop5ByOrderByLanternYearDescCreatedAtDesc(): List<LogEntry>
+    fun findAllBySettlementId(settlementId: Long): List<LogEntry>
+
+    fun findTop5BySettlementIdOrderByLanternYearDescCreatedAtDesc(settlementId: Long): List<LogEntry>
+
+    fun findFirstBySettlementIdOrderByLanternYearDescCreatedAtDesc(settlementId: Long): LogEntry?
 }

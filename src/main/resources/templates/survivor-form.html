@@ -2,10 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Survivor')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
     <h1 th:text="${form.id != null} ? 'Edit survivor' : 'New survivor'">New survivor</h1>
-    <form th:action="${form.id != null} ? @{/survivors/{id}(id=${form.id})} : @{/survivors}"
+    <form th:action="${form.id != null} ? @{/settlements/{id}/survivors/{sid}(id=${settlementId}, sid=${form.id})} : @{/settlements/{id}/survivors(id=${settlementId})}"
           th:object="${form}" method="post" class="form-grid">
         <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
             <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
@@ -102,7 +102,7 @@
         </div>
         <div class="form-actions">
             <button type="submit">Save</button>
-            <a class="button secondary" th:href="@{/survivors}">Cancel</a>
+            <a class="button secondary" th:href="@{/settlements/{id}/survivors(id=${settlementId})}">Cancel</a>
         </div>
     </form>
 </main>

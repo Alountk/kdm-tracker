@@ -1,12 +1,15 @@
 package io.kdmtracker
 
+import io.kdmtracker.domain.Settlement
 import io.kdmtracker.domain.Sex
 import io.kdmtracker.domain.Survivor
+import io.kdmtracker.repository.SettlementRepository
 import io.kdmtracker.repository.SurvivorRepository
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -25,17 +28,27 @@ class SurvivorFlowTests {
     private lateinit var mockMvc: MockMvc
 
     @Autowired
+    private lateinit var settlementRepository: SettlementRepository
+
+    @Autowired
     private lateinit var survivorRepository: SurvivorRepository
+
+    private var settlementId: Long = 0L
+
+    @BeforeEach
+    fun createSettlement() {
+        settlementId = settlementRepository.save(Settlement(name = "Survivor Flow Settlement")).id!!
+    }
 
     @Test
     fun createSurvivorAppliesKdmDefaults() {
         mockMvc
-            .perform(post("/survivors").param("name", "Ashen"))
+            .perform(post("/settlements/$settlementId/survivors").param("name", "Ashen"))
             .andExpect(status().is3xxRedirection)
-            .andExpect(redirectedUrl("/survivors"))
+            .andExpect(redirectedUrl("/settlements/$settlementId/survivors"))
 
         mockMvc
-            .perform(get("/survivors"))
+            .perform(get("/settlements/$settlementId/survivors"))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("Ashen")))
 
@@ -53,13 +66,13 @@ class SurvivorFlowTests {
         assertEquals(0, survivor.understanding)
         assertEquals(0, survivor.xp)
         assertTrue(survivor.alive)
-        assertEquals(1L, survivor.settlementId)
+        assertEquals(settlementId, survivor.settlementId)
     }
 
     @Test
     fun blankNameIsRejectedAndFormRerenders() {
         mockMvc
-            .perform(post("/survivors").param("name", "   "))
+            .perform(post("/settlements/$settlementId/survivors").param("name", "   "))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("field-error")))
     }
@@ -69,7 +82,7 @@ class SurvivorFlowTests {
         // Checked checkbox renders before the hidden fallback: alive=true&alive=false.
         mockMvc
             .perform(
-                post("/survivors")
+                post("/settlements/$settlementId/survivors")
                     .param("name", "Checked Alive")
                     .param("alive", "true")
                     .param("alive", "false"),
@@ -81,7 +94,7 @@ class SurvivorFlowTests {
         // Unchecked checkbox submits only the hidden fallback: alive=false.
         mockMvc
             .perform(
-                post("/survivors")
+                post("/settlements/$settlementId/survivors")
                     .param("name", "Unchecked Alive")
                     .param("alive", "false"),
             ).andExpect(status().is3xxRedirection)
@@ -92,16 +105,16 @@ class SurvivorFlowTests {
 
     @Test
     fun editSurvivorPersistsChanges() {
-        val survivor = survivorRepository.save(Survivor(name = "To Rename"))
+        val survivor = survivorRepository.save(Survivor(name = "To Rename", settlementId = settlementId))
 
         mockMvc
-            .perform(get("/survivors/${survivor.id}/edit"))
+            .perform(get("/settlements/$settlementId/survivors/${survivor.id}/edit"))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("To Rename")))
 
         mockMvc
             .perform(
-                post("/survivors/${survivor.id}")
+                post("/settlements/$settlementId/survivors/${survivor.id}")
                     .param("name", "Renamed")
                     .param("sex", "FEMALE")
                     .param("age", "15")
@@ -119,7 +132,7 @@ class SurvivorFlowTests {
                     .param("alive", "true")
                     .param("notes", "Survived the first hunt"),
             ).andExpect(status().is3xxRedirection)
-            .andExpect(redirectedUrl("/survivors"))
+            .andExpect(redirectedUrl("/settlements/$settlementId/survivors"))
 
         val reloaded = survivorRepository.findById(survivor.id!!).orElseThrow()
         assertEquals("Renamed", reloaded.name)

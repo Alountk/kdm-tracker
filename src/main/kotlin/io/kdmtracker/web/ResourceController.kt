@@ -18,87 +18,111 @@ import org.springframework.web.server.ResponseStatusException
 
 @Controller
 class ResourceController(
+    private val locator: SettlementLocator,
     private val resourceRepository: ResourceRepository,
 ) {
-    @GetMapping("/resources")
-    fun list(model: Model): String {
-        fillList(model)
+    @GetMapping("/settlements/{id}/resources")
+    fun list(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        locator.require(id)
+        fillList(id, model)
         model.addAttribute(FORM, ResourceForm())
         return "resources"
     }
 
-    @PostMapping("/resources")
+    @PostMapping("/settlements/{id}/resources")
     fun create(
+        @PathVariable id: Long,
         @Valid @ModelAttribute(FORM) form: ResourceForm,
         bindingResult: BindingResult,
         model: Model,
     ): String {
+        locator.require(id)
+        fillList(id, model)
         if (bindingResult.hasErrors()) {
-            fillList(model)
             return "resources"
         }
-        resourceRepository.save(form.toEntity())
-        return "redirect:/resources"
+        resourceRepository.save(form.toEntity(id))
+        return "redirect:/settlements/$id/resources"
     }
 
-    @PostMapping("/resources/{id}/adjust")
+    @PostMapping("/settlements/{id}/resources/{rid}/adjust")
     fun adjust(
         @PathVariable id: Long,
+        @PathVariable rid: Long,
         @RequestParam delta: Int,
     ): String {
-        val resource = requireResource(id)
+        locator.require(id)
+        val resource = requireResource(id, rid)
         resource.quantity = (resource.quantity + delta).coerceAtLeast(0)
         resourceRepository.save(resource)
-        return "redirect:/resources"
+        return "redirect:/settlements/$id/resources"
     }
 
-    @GetMapping("/resources/{id}/edit")
+    @GetMapping("/settlements/{id}/resources/{rid}/edit")
     fun editForm(
         @PathVariable id: Long,
+        @PathVariable rid: Long,
         model: Model,
     ): String {
-        model.addAttribute(FORM, requireResource(id).toForm())
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        model.addAttribute(FORM, requireResource(id, rid).toForm())
         return "resource-form"
     }
 
-    @PostMapping("/resources/{id}")
+    @PostMapping("/settlements/{id}/resources/{rid}")
     fun update(
         @PathVariable id: Long,
+        @PathVariable rid: Long,
         @Valid @ModelAttribute(FORM) form: ResourceForm,
         bindingResult: BindingResult,
+        model: Model,
     ): String {
-        val resource = requireResource(id)
-        form.id = id
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        val resource = requireResource(id, rid)
+        form.id = rid
         if (bindingResult.hasErrors()) {
             return "resource-form"
         }
         form.applyTo(resource)
         resourceRepository.save(resource)
-        return "redirect:/resources"
+        return "redirect:/settlements/$id/resources"
     }
 
-    @PostMapping("/resources/{id}/delete")
+    @PostMapping("/settlements/{id}/resources/{rid}/delete")
     fun delete(
         @PathVariable id: Long,
+        @PathVariable rid: Long,
     ): String {
-        if (resourceRepository.existsById(id)) {
-            resourceRepository.deleteById(id)
-        }
-        return "redirect:/resources"
+        locator.require(id)
+        resourceRepository.delete(requireResource(id, rid))
+        return "redirect:/settlements/$id/resources"
     }
 
-    private fun fillList(model: Model) {
-        model.addAttribute("resources", resourceRepository.findAllByOrderByNameAsc())
+    private fun fillList(
+        settlementId: Long,
+        model: Model,
+    ) {
+        model.addAttribute("settlementId", settlementId)
+        model.addAttribute("resources", resourceRepository.findAllBySettlementIdOrderByNameAsc(settlementId))
     }
 
-    private fun requireResource(id: Long): Resource =
-        resourceRepository.findById(id).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Resource $id not found")
+    private fun requireResource(
+        settlementId: Long,
+        rid: Long,
+    ): Resource =
+        resourceRepository.findById(rid).filter { it.settlementId == settlementId }.orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Resource $rid not found")
         }
 
-    private fun ResourceForm.toEntity() =
+    private fun ResourceForm.toEntity(settlementId: Long) =
         Resource().also {
             applyTo(it)
+            it.settlementId = settlementId
         }
 
     private fun ResourceForm.applyTo(target: Resource) {

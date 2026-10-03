@@ -26,6 +26,7 @@
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --radius-sm: 6px;
     --radius: 8px;
+    --radius-lg: 14px;
     --radius-pill: 999px;
 }
 
@@ -253,6 +254,7 @@ h2 {
     font-weight: 700;
     font-family: var(--mono);
     letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
 }
 
 /* ============ chips ============ */
@@ -576,5 +578,230 @@ button.small {
 
     h1 {
         font-size: 1.2rem;
+    }
+}
+
+/* ============ home: settlement situation cards (04-bento) ============ */
+.head-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.head-row h1 {
+    margin: 0;
+}
+
+.head-row .count {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.head-row .spacer {
+    flex: 1;
+}
+
+.import-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+}
+
+.import-bar form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.import-bar input[type="file"] {
+    width: auto;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+}
+
+.import-warning {
+    color: var(--warning);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.cell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    color: var(--text);
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.cell:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.cell-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dot-av {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex: none;
+}
+
+.cell h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.cell .sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 1px;
+}
+
+.cell-top .spacer {
+    flex: 1;
+}
+
+.situation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 11px;
+    font-size: 0.8rem;
+    color: var(--text-2);
+}
+
+.situation b {
+    color: var(--text);
+    font-weight: 650;
+}
+
+.metrics {
+    display: flex;
+    gap: 8px;
+}
+
+.metric {
+    flex: 1;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    min-width: 0;
+}
+
+.metric .v {
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    overflow-wrap: anywhere;
+}
+
+.metric .k {
+    font-size: 0.66rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.open {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 34px 18px;
+    margin-top: 18px;
+}
+
+/* ============ dashboard: phase & step, danger zone ============ */
+.phase-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 12px;
+}
+
+.phase-row strong {
+    font-family: var(--mono);
+}
+
+.danger-zone {
+    margin-top: 30px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+}
+
+.danger-zone form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+    .head-row .spacer {
+        display: none;
+    }
+
+    .metrics {
+        flex-wrap: wrap;
+    }
+
+    .metric {
+        flex-basis: calc(50% - 8px);
     }
 }

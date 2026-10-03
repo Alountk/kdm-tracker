@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Settlements')}"></head>
+<body>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
+<main class="container">
+    <div class="head-row">
+        <h1>Settlements</h1>
+        <span class="count" th:text="|${#lists.size(cards)} total|">0 total</span>
+        <span class="spacer"></span>
+        <a class="button secondary" th:href="@{/api/export}">Export JSON</a>
+        <a class="button" th:href="@{/settlements/new}">+ New settlement</a>
+    </div>
+
+    <div class="import-bar">
+        <form th:action="@{/api/import}" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".json,application/json" required>
+            <button type="submit" class="secondary">Import JSON</button>
+            <span class="import-warning">Importing REPLACES all data in this tracker.</span>
+        </form>
+    </div>
+
+    <div class="errors" th:if="${errorMessage != null}" th:text="${errorMessage}">Error</div>
+
+    <div class="grid" th:if="${!#lists.isEmpty(cards)}">
+        <a class="cell" th:each="c : ${cards}" th:href="@{/settlements/{id}(id=${c.settlement.id})}">
+            <div class="cell-top">
+                <div class="dot-av" th:text="${#strings.toUpperCase(#strings.substring(c.settlement.name, 0, 1))}">K</div>
+                <div>
+                    <h2 th:text="${c.settlement.name}">Settlement</h2>
+                    <div class="sub" th:text="|Lantern Year ${c.settlement.lanternYear}|">Lantern Year 1</div>
+                </div>
+                <span class="spacer"></span>
+                <span class="chip" th:classappend="${c.statusTone}" th:text="${c.statusLabel}">In progress</span>
+            </div>
+            <div class="situation">
+                <span class="chip" th:classappend="${c.phaseTone}" th:text="${c.settlement.phase}">SETTLEMENT</span>
+                <b th:text="${c.situationText}">Step 1/11</b>
+            </div>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="v" th:text="|${c.survivorAliveCount}/${c.survivorTotalCount}|">0/0</div>
+                    <div class="k">Survivors (alive/total)</div>
+                </div>
+                <div class="metric">
+                    <div class="v" th:text="${c.innovationCount}">0</div>
+                    <div class="k">Innovations</div>
+                </div>
+                <div class="metric">
+                    <div class="v" th:text="${c.resourceUnits}">0</div>
+                    <div class="k">Resource units</div>
+                </div>
+            </div>
+            <div class="open">Open dashboard →</div>
+        </a>
+    </div>
+
+    <div class="empty-state card" th:if="${#lists.isEmpty(cards)}">
+        <p class="muted">No settlements yet. Create your first settlement to start tracking a lantern year.</p>
+        <a class="button" th:href="@{/settlements/new}">+ New settlement</a>
+    </div>
+</main>
+</body>
+</html>

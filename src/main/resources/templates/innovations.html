@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Innovations')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
     <h1>Innovations</h1>
     <table>
@@ -20,8 +20,8 @@
             <td th:text="${innovation.name}">Innovation</td>
             <td th:text="${innovation.notes}">Notes</td>
             <td class="actions">
-                <a th:href="@{/innovations/{id}/edit(id=${innovation.id})}">Edit</a>
-                <form th:action="@{/innovations/{id}/delete(id=${innovation.id})}" method="post" class="inline">
+                <a th:href="@{/settlements/{id}/innovations/{iid}/edit(id=${settlementId}, iid=${innovation.id})}">Edit</a>
+                <form th:action="@{/settlements/{id}/innovations/{iid}/delete(id=${settlementId}, iid=${innovation.id})}" method="post" class="inline">
                     <button type="submit" class="danger small">Delete</button>
                 </form>
             </td>
@@ -33,7 +33,7 @@
     </table>
 
     <h2>Unlock innovation</h2>
-    <form th:action="@{/innovations}" th:object="${form}" method="post" class="form-grid">
+    <form th:action="@{/settlements/{id}/innovations(id=${settlementId})}" th:object="${form}" method="post" class="form-grid">
         <div class="errors span-full" th:if="${#fields.hasAnyErrors()}">
             <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
         </div>

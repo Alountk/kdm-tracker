@@ -17,76 +17,102 @@ import org.springframework.web.server.ResponseStatusException
 
 @Controller
 class SurvivorController(
+    private val locator: SettlementLocator,
     private val survivorRepository: SurvivorRepository,
 ) {
-    @GetMapping("/survivors")
-    fun list(model: Model): String {
-        model.addAttribute("survivors", survivorRepository.findAllByOrderByAliveDescNameAsc())
+    @GetMapping("/settlements/{id}/survivors")
+    fun list(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        model.addAttribute("survivors", survivorRepository.findAllBySettlementIdOrderByAliveDescNameAsc(id))
         model.addAttribute(FORM, SurvivorForm())
         return "survivors"
     }
 
-    @GetMapping("/survivors/new")
-    fun createForm(model: Model): String {
+    @GetMapping("/settlements/{id}/survivors/new")
+    fun createForm(
+        @PathVariable id: Long,
+        model: Model,
+    ): String {
+        locator.require(id)
+        model.addAttribute("settlementId", id)
         model.addAttribute(FORM, SurvivorForm())
         return "survivor-form"
     }
 
-    @PostMapping("/survivors")
+    @PostMapping("/settlements/{id}/survivors")
     fun create(
+        @PathVariable id: Long,
         @Valid @ModelAttribute(FORM) form: SurvivorForm,
         bindingResult: BindingResult,
+        model: Model,
     ): String {
+        locator.require(id)
+        model.addAttribute("settlementId", id)
         if (bindingResult.hasErrors()) {
             return "survivor-form"
         }
-        survivorRepository.save(form.toEntity())
-        return "redirect:/survivors"
+        survivorRepository.save(form.toEntity(id))
+        return "redirect:/settlements/$id/survivors"
     }
 
-    @GetMapping("/survivors/{id}/edit")
+    @GetMapping("/settlements/{id}/survivors/{sid}/edit")
     fun editForm(
         @PathVariable id: Long,
+        @PathVariable sid: Long,
         model: Model,
     ): String {
-        model.addAttribute(FORM, requireSurvivor(id).toForm())
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        model.addAttribute(FORM, requireSurvivor(id, sid).toForm())
         return "survivor-form"
     }
 
-    @PostMapping("/survivors/{id}")
+    @PostMapping("/settlements/{id}/survivors/{sid}")
     fun update(
         @PathVariable id: Long,
+        @PathVariable sid: Long,
         @Valid @ModelAttribute(FORM) form: SurvivorForm,
         bindingResult: BindingResult,
+        model: Model,
     ): String {
-        val survivor = requireSurvivor(id)
-        form.id = id
+        locator.require(id)
+        model.addAttribute("settlementId", id)
+        val survivor = requireSurvivor(id, sid)
+        form.id = sid
         if (bindingResult.hasErrors()) {
             return "survivor-form"
         }
         form.applyTo(survivor)
         survivorRepository.save(survivor)
-        return "redirect:/survivors"
+        return "redirect:/settlements/$id/survivors"
     }
 
-    @PostMapping("/survivors/{id}/delete")
+    @PostMapping("/settlements/{id}/survivors/{sid}/delete")
     fun delete(
         @PathVariable id: Long,
+        @PathVariable sid: Long,
     ): String {
-        if (survivorRepository.existsById(id)) {
-            survivorRepository.deleteById(id)
-        }
-        return "redirect:/survivors"
+        locator.require(id)
+        survivorRepository.delete(requireSurvivor(id, sid))
+        return "redirect:/settlements/$id/survivors"
     }
 
-    private fun requireSurvivor(id: Long): Survivor =
-        survivorRepository.findById(id).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Survivor $id not found")
+    private fun requireSurvivor(
+        settlementId: Long,
+        sid: Long,
+    ): Survivor =
+        survivorRepository.findById(sid).filter { it.settlementId == settlementId }.orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Survivor $sid not found")
         }
 
-    private fun SurvivorForm.toEntity() =
-        Survivor().also { form ->
-            applyTo(form)
+    private fun SurvivorForm.toEntity(settlementId: Long) =
+        Survivor().also { survivor ->
+            applyTo(survivor)
+            survivor.settlementId = settlementId
         }
 
     private fun SurvivorForm.applyTo(target: Survivor) {

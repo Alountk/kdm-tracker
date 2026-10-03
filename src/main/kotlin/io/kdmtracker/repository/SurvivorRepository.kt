@@ -4,7 +4,11 @@ import io.kdmtracker.domain.Survivor
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface SurvivorRepository : JpaRepository<Survivor, Long> {
-    fun findAllByOrderByAliveDescNameAsc(): List<Survivor>
+    fun findAllBySettlementIdOrderByAliveDescNameAsc(settlementId: Long): List<Survivor>
 
-    fun countByAliveTrue(): Long
+    fun findAllBySettlementId(settlementId: Long): List<Survivor>
+
+    fun countBySettlementId(settlementId: Long): Long
+
+    fun countBySettlementIdAndAliveTrue(settlementId: Long): Long
 }

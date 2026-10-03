@@ -1,0 +1,35 @@
+package io.kdmtracker.seed
+
+import org.springframework.boot.ApplicationArguments
+import org.springframework.boot.ApplicationRunner
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.stereotype.Component
+
+/**
+ * Startup repair for databases created before multi-settlement support.
+ *
+ * JPA adds the new `phase` and `current_step` columns as NULL on existing rows;
+ * [fixLegacyRows] backfills the defaults (idempotent) before anything reads them,
+ * and makes sure the settlement id sequence exists and starts above the highest
+ * existing settlement id (legacy databases assigned ids manually starting at 1).
+ */
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@Component
+class DataInitializer(
+    private val jdbcTemplate: JdbcTemplate,
+) : ApplicationRunner {
+    override fun run(args: ApplicationArguments) {
+        fixLegacyRows()
+    }
+
+    fun fixLegacyRows() {
+        jdbcTemplate.update(
+            "UPDATE settlements SET phase = 'SETTLEMENT', current_step = 1 WHERE phase IS NULL OR current_step IS NULL",
+        )
+        jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS settlement_seq")
+        val maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) FROM settlements", Long::class.java) ?: 0L
+        jdbcTemplate.execute("ALTER SEQUENCE settlement_seq RESTART WITH ${maxId + 1}")
+    }
+}

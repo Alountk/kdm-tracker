@@ -2,11 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Survivors')}"></head>
 <body>
-<header th:replace="~{fragments :: header}"></header>
+<header th:replace="~{fragments :: header(${settlementId})}"></header>
 <main class="container">
     <div class="page-head">
         <h1>Survivors</h1>
-        <a class="button" th:href="@{/survivors/new}">New survivor</a>
+        <a class="button" th:href="@{/settlements/{id}/survivors/new(id=${settlementId})}">New survivor</a>
     </div>
     <table>
         <thead>
@@ -47,8 +47,8 @@
             <td th:text="${s.xp}">0</td>
             <td th:text="${s.alive ? 'Yes' : 'No'}">Yes</td>
             <td class="actions">
-                <a th:href="@{/survivors/{id}/edit(id=${s.id})}">Edit</a>
-                <form th:action="@{/survivors/{id}/delete(id=${s.id})}" method="post" class="inline">
+                <a th:href="@{/settlements/{id}/survivors/{sid}/edit(id=${settlementId}, sid=${s.id})}">Edit</a>
+                <form th:action="@{/settlements/{id}/survivors/{sid}/delete(id=${settlementId}, sid=${s.id})}" method="post" class="inline">
                     <button type="submit" class="danger small">Delete</button>
                 </form>
             </td>
