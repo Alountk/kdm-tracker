@@ -26,7 +26,7 @@ data class PrincipleGroup(
 )
 
 /**
- * Read models for the step-6 panel (milestones + principles) and the step-1 summary.
+ * Read models for the step-6 panel (milestones + principles).
  *
  * The milestone hint is derived at render time from survivor/population/innovation data —
  * it is a hint only and never gates anything: milestones are ticked manually when reached.
@@ -66,11 +66,6 @@ object StepSixViews {
                 year = row?.chosenInYear ?: lanternYear,
             )
         }
-
-    fun principleSummaries(saved: List<Principle>): List<String> =
-        saved
-            .sortedBy { it.category.ordinal }
-            .map { "${it.category.label} · ${it.choice} (LY ${it.chosenInYear})" }
 
     private fun hintFor(
         key: MilestoneKey,

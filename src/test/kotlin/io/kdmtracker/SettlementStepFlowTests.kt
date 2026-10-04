@@ -72,6 +72,28 @@ class SettlementStepFlowTests {
     }
 
     @Test
+    fun dashboardRendersTheSidebarWithAVerticalStepList() {
+        val id = settlementRepository.save(Settlement(name = "Sidebar Hold", currentStep = 6)).id!!
+
+        val page =
+            mockMvc
+                .perform(get("/settlements/$id"))
+                .andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+
+        assertTrue(page.contains("<aside class=\"side-rail"), "left sidebar container rendered")
+        assertTrue(page.contains("dash-grid"), "two-column dashboard grid")
+        assertTrue(page.contains("class=\"rail rail-vertical\""), "steps stack vertically in the sidebar")
+        assertEquals(11, page.split("class=\"step-item").size - 1, "sidebar lists all 11 steps")
+        assertTrue(page.contains("Step 6/11"), "sidebar nav shows the current position")
+        assertTrue(page.contains("/steps/prev"), "compact prev button at the bottom of the list")
+        assertTrue(page.contains("/steps/next"), "compact next button at the bottom of the list")
+        assertTrue(page.contains("/settlements/$id/steps/6/go"), "each row posts the step-go endpoint")
+    }
+
+    @Test
     fun goNextPrevMoveCurrentStepWithClampsAndNoOps() {
         val id = settlementRepository.save(Settlement(name = "Nav Hold", currentStep = 1)).id!!
 
@@ -248,7 +270,10 @@ class SettlementStepFlowTests {
             .andExpect(content().string(containsString("Hunt in progress")))
             .andExpect(content().string(containsString("7/11")))
             .andExpect(content().string(containsString("Resume settlement phase")))
-            .andExpect(content().string(not(containsString("class=\"step-item"))))
+            // The sidebar keeps all 11 rows visible for orientation — dimmed and disabled.
+            .andExpect(content().string(containsString("class=\"side-rail paused\"")))
+            .andExpect(content().string(containsString("class=\"step-item")))
+            .andExpect(content().string(containsString("disabled=\"disabled\"")))
             .andExpect(content().string(not(containsString("stroke-dashoffset"))))
 
         mockMvc

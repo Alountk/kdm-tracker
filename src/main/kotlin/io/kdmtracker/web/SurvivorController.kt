@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.server.ResponseStatusException
 
 @Controller
@@ -89,6 +90,27 @@ class SurvivorController(
         form.applyTo(survivor)
         survivorRepository.save(survivor)
         return "redirect:/settlements/$id/survivors"
+    }
+
+    @PostMapping("/settlements/{id}/survivors/{sid}/dev-update")
+    fun devUpdate(
+        @PathVariable id: Long,
+        @PathVariable sid: Long,
+        @RequestParam(defaultValue = "0") courage: Int,
+        @RequestParam(defaultValue = "0") understanding: Int,
+        @RequestParam(defaultValue = "0") insanity: Int,
+    ): String {
+        locator.require(id)
+        // Step 1 · Update survivors: dev gains from the hunt, clamped at 0 like every
+        // other numeric bookkeeping input. Severe injuries live in the survivor's notes
+        // until an injury entity exists (see the dashboard step-1 TODO).
+        val survivor = requireSurvivor(id, sid)
+        survivor.courage = courage.coerceAtLeast(0)
+        survivor.understanding = understanding.coerceAtLeast(0)
+        survivor.insanity = insanity.coerceAtLeast(0)
+        survivorRepository.save(survivor)
+        // PRG back to the dashboard: the caller stays on the current step (step 1).
+        return "redirect:/settlements/$id"
     }
 
     @PostMapping("/settlements/{id}/survivors/{sid}/delete")

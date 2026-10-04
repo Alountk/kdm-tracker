@@ -340,7 +340,6 @@ class DashboardController(
         )
         model.addAttribute("principleGroups", StepSixViews.principleGroups(principles, settlement.lanternYear))
         model.addAttribute("principleCount", principles.size)
-        model.addAttribute("principleSummaries", StepSixViews.principleSummaries(principles))
         val ringDone = stepNo - 1
         model.addAttribute("ringDone", ringDone)
         model.addAttribute("ringOffset", ((1.0 - ringDone.toDouble() / SettlementSteps.TOTAL) * RING_C).roundToInt())

@@ -48,7 +48,7 @@ class StepBookkeepingFlowTests {
     private lateinit var principleRepository: PrincipleRepository
 
     @Test
-    fun stepOneSummaryShowsTheDerivedRecordSheetState() {
+    fun stepOneSummaryRendersAsCompactChips() {
         val id =
             settlementRepository
                 .save(Settlement(name = "Setup Hold", currentStep = 1, lanternYear = 6, population = 13))
@@ -58,8 +58,6 @@ class StepBookkeepingFlowTests {
         survivorRepository.save(Survivor(name = "Setup Dead Dave", alive = false, settlementId = id))
         innovationRepository.save(Innovation(name = "Setup Drums", settlementId = id))
         innovationRepository.save(Innovation(name = "Setup Paint", settlementId = id))
-        resourceRepository.save(Resource(name = "Setup Bone", quantity = 7, settlementId = id))
-        resourceRepository.save(Resource(name = "Setup Hide", quantity = 4, settlementId = id))
         principleRepository.save(
             Principle(
                 settlementId = id,
@@ -69,30 +67,24 @@ class StepBookkeepingFlowTests {
             ),
         )
 
+        // The setup summary shrinks to one row of chips — the update table is the star.
         mockMvc
             .perform(get("/settlements/$id"))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("Settlement summary")))
-            .andExpect(content().string(containsString("Population")))
-            .andExpect(content().string(containsString("<b>13</b>")))
-            .andExpect(content().string(containsString("Survivors (alive / total)")))
-            .andExpect(content().string(containsString("<b>2 / 3</b>")))
-            .andExpect(content().string(containsString("Innovations")))
-            .andExpect(content().string(containsString("<b>2</b>")))
-            .andExpect(content().string(containsString("Storage units")))
-            .andExpect(content().string(containsString("<b>11</b>")))
-            .andExpect(content().string(containsString("Deaths (dead survivors)")))
-            .andExpect(content().string(containsString("<b>1</b>")))
+            .andExpect(content().string(containsString("chip-row")))
+            .andExpect(content().string(containsString("Population <b>13</b>")))
+            .andExpect(content().string(containsString("Survivors <b>2 / 3</b>")))
+            .andExpect(content().string(containsString("Innovations <b>2</b>")))
+            .andExpect(content().string(containsString("Deaths <b>1</b>")))
             .andExpect(content().string(containsString("Principles chosen: 1")))
-            .andExpect(content().string(containsString("The First Grave — Graves (LY 3)")))
 
-        // A settlement without principles says "none" instead of listing anything.
+        // A settlement without principles still shows the chip with a zero count.
         val bare = settlementRepository.save(Settlement(name = "Bare Hold")).id!!
         mockMvc
             .perform(get("/settlements/$bare"))
             .andExpect(status().isOk)
             .andExpect(content().string(containsString("Principles chosen: 0")))
-            .andExpect(content().string(containsString(">none<")))
     }
 
     @Test
