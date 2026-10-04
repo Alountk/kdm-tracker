@@ -1,5 +1,8 @@
 package io.kdmtracker.web
 
+import io.kdmtracker.domain.HuntMember
+import io.kdmtracker.domain.HuntRecord
+import io.kdmtracker.domain.HuntStatus
 import io.kdmtracker.domain.Milestone
 import io.kdmtracker.domain.MilestoneKey
 import io.kdmtracker.domain.Principle
@@ -8,6 +11,8 @@ import io.kdmtracker.domain.Settlement
 import io.kdmtracker.domain.SettlementPhase
 import io.kdmtracker.domain.SettlementSteps
 import io.kdmtracker.domain.StepNote
+import io.kdmtracker.repository.HuntMemberRepository
+import io.kdmtracker.repository.HuntRecordRepository
 import io.kdmtracker.repository.InnovationRepository
 import io.kdmtracker.repository.LogEntryRepository
 import io.kdmtracker.repository.MilestoneRepository
@@ -41,6 +46,8 @@ class DashboardController(
     private val stepNoteRepository: StepNoteRepository,
     private val milestoneRepository: MilestoneRepository,
     private val principleRepository: PrincipleRepository,
+    private val huntRecordRepository: HuntRecordRepository,
+    private val huntMemberRepository: HuntMemberRepository,
 ) {
     @GetMapping("/settlements/{id}")
     fun dashboard(
@@ -273,6 +280,164 @@ class DashboardController(
         return "redirect:/settlements/$id"
     }
 
+    // ---- Hunt phase companion (research §3): setup → board → outcome → history ----
+
+    @PostMapping("/settlements/{id}/hunt/start")
+    fun startHunt(
+        @PathVariable id: Long,
+        @RequestParam(required = false) quarry: String?,
+        @RequestParam(defaultValue = "1") level: Int,
+        @RequestParam(required = false) members: List<Long>?,
+        model: Model,
+    ): String {
+        val settlement = locator.require(id)
+        val selected = members.orEmpty()
+        val error = huntStartError(settlement, quarry, level, selected)
+        if (error != null) {
+            // Re-render the dashboard with the error and the submitted values (PRG only on success).
+            model.addAttribute(HUNT_ERROR, error)
+            model.addAttribute(HUNT_QUARRY, quarry ?: "")
+            model.addAttribute(HUNT_LEVEL, level)
+            model.addAttribute(HUNT_SELECTED, selected)
+            fillModel(settlement, model)
+            if (!model.containsAttribute(FORM)) {
+                model.addAttribute(FORM, settlement.toForm())
+            }
+            return "dashboard"
+        }
+        val hunt =
+            huntRecordRepository.save(
+                HuntRecord(
+                    settlementId = id,
+                    quarry = quarry!!.trim(),
+                    level = level,
+                    status = HuntStatus.ACTIVE,
+                    lanternYear = settlement.lanternYear,
+                ),
+            )
+        selected.forEachIndexed { index, survivorId ->
+            huntMemberRepository.save(HuntMember(huntId = hunt.id!!, survivorId = survivorId, seat = index))
+        }
+        // Defensive: normally step-11 end-phase already moved the settlement into HUNT.
+        if (settlement.phase == SettlementPhase.SETTLEMENT) {
+            settlement.phase = SettlementPhase.HUNT
+            settlementRepository.save(settlement)
+        }
+        return "redirect:/settlements/$id"
+    }
+
+    @PostMapping("/settlements/{id}/hunt/advance")
+    fun advanceHunt(
+        @PathVariable id: Long,
+    ): String {
+        locator.require(id)
+        // The currentSpace setter clamps at 13, so advancing at Starvation is a no-op.
+        huntRecordRepository.findBySettlementIdAndStatus(id, HuntStatus.ACTIVE)?.let { hunt ->
+            hunt.currentSpace = hunt.currentSpace + 1
+            huntRecordRepository.save(hunt)
+        }
+        return "redirect:/settlements/$id"
+    }
+
+    @PostMapping("/settlements/{id}/hunt/notes")
+    fun saveHuntNotes(
+        @PathVariable id: Long,
+        @RequestParam text: String,
+    ): String {
+        locator.require(id)
+        huntRecordRepository.findBySettlementIdAndStatus(id, HuntStatus.ACTIVE)?.let { hunt ->
+            hunt.notes = text
+            huntRecordRepository.save(hunt)
+        }
+        return "redirect:/settlements/$id"
+    }
+
+    @PostMapping("/settlements/{id}/hunt/found")
+    fun foundQuarry(
+        @PathVariable id: Long,
+    ): String = huntOutcome(id, HuntStatus.QUARRY_FOUND, SettlementPhase.SHOWDOWN, resetStep = false)
+
+    @PostMapping("/settlements/{id}/hunt/ambush")
+    fun ambushHunt(
+        @PathVariable id: Long,
+    ): String = huntOutcome(id, HuntStatus.AMBUSH, SettlementPhase.SHOWDOWN, resetStep = false)
+
+    @PostMapping("/settlements/{id}/hunt/failed")
+    fun failedHunt(
+        @PathVariable id: Long,
+    ): String = huntOutcome(id, HuntStatus.FAILED, SettlementPhase.SETTLEMENT, resetStep = true)
+
+    @PostMapping("/settlements/{id}/hunt/run-away")
+    fun runAwayHunt(
+        @PathVariable id: Long,
+    ): String = huntOutcome(id, HuntStatus.RUN_AWAY, SettlementPhase.SETTLEMENT, resetStep = true)
+
+    @PostMapping("/settlements/{id}/hunt/resolve")
+    fun resolveShowdown(
+        @PathVariable id: Long,
+    ): String {
+        val settlement = locator.require(id)
+        // Showdown aftermath closed: the hunt keeps its outcome status in the history
+        // and a new Settlement Phase begins at step 1 (research §1 loop).
+        settlement.phase = SettlementPhase.SETTLEMENT
+        settlement.currentStep = 1
+        settlementRepository.save(settlement)
+        return "redirect:/settlements/$id"
+    }
+
+    private fun huntOutcome(
+        id: Long,
+        status: HuntStatus,
+        phase: SettlementPhase,
+        resetStep: Boolean,
+    ): String {
+        val settlement = locator.require(id)
+        huntRecordRepository.findBySettlementIdAndStatus(id, HuntStatus.ACTIVE)?.let { hunt ->
+            hunt.status = status
+            huntRecordRepository.save(hunt)
+            settlement.phase = phase
+            if (resetStep) {
+                // Hunt failed / run away: the lantern year is over, a new Settlement Phase begins.
+                settlement.currentStep = 1
+            }
+            settlementRepository.save(settlement)
+        }
+        return "redirect:/settlements/$id"
+    }
+
+    private fun huntStartError(
+        settlement: Settlement,
+        quarry: String?,
+        level: Int,
+        members: List<Long>,
+    ): String? {
+        if (huntRecordRepository.findBySettlementIdAndStatus(settlement.id!!, HuntStatus.ACTIVE) != null) {
+            return "This settlement already has an active hunt — resolve it before starting another."
+        }
+        if (quarry.isNullOrBlank()) {
+            return "Choose a quarry — enter the monster the party is hunting."
+        }
+        if (level !in 1..3) {
+            return "Monster level must be 1, 2 or 3."
+        }
+        if (members.isEmpty()) {
+            return "Pick at least 1 survivor for the hunt party."
+        }
+        if (members.size > 4) {
+            return "A hunt party can have at most 4 survivors."
+        }
+        val aliveIds =
+            survivorRepository
+                .findAllBySettlementId(settlement.id!!)
+                .filter { it.alive }
+                .mapNotNull { it.id }
+                .toSet()
+        if (members.distinct().size != members.size || members.any { it !in aliveIds }) {
+            return "The hunt party must be unique, alive survivors of this settlement."
+        }
+        return null
+    }
+
     @PostMapping("/settlements/{id}/delete")
     fun delete(
         @PathVariable id: Long,
@@ -286,6 +451,10 @@ class DashboardController(
         // Milestones and principles have no FK (import-wipe pattern), so purge explicitly.
         milestoneRepository.deleteAll(milestoneRepository.findAllBySettlementId(id))
         principleRepository.deleteAll(principleRepository.findAllBySettlementId(id))
+        // Hunt tables have no FK either: members first, then the hunt records.
+        val hunts = huntRecordRepository.findAllBySettlementId(id)
+        huntMemberRepository.deleteAll(huntMemberRepository.findAllByHuntIdIn(hunts.mapNotNull { it.id }))
+        huntRecordRepository.deleteAll(hunts)
         settlementRepository.deleteById(id)
         return "redirect:/"
     }
@@ -340,6 +509,42 @@ class DashboardController(
         )
         model.addAttribute("principleGroups", StepSixViews.principleGroups(principles, settlement.lanternYear))
         model.addAttribute("principleCount", principles.size)
+        // Hunt companion: the dash-main column renders by phase (cockpit / hunt board / showdown).
+        val activeHunt = huntRecordRepository.findBySettlementIdAndStatus(id, HuntStatus.ACTIVE)
+        val allHunts = huntRecordRepository.findAllBySettlementIdOrderByIdDesc(id)
+        val showdownHunt =
+            if (settlement.phase == SettlementPhase.SHOWDOWN) {
+                allHunts.firstOrNull { it.status == HuntStatus.QUARRY_FOUND || it.status == HuntStatus.AMBUSH }
+            } else {
+                null
+            }
+        model.addAttribute("activeHunt", activeHunt)
+        model.addAttribute(
+            "huntParty",
+            activeHunt
+                ?.let { HuntViews.party(huntMemberRepository.findAllByHuntIdOrderBySeat(it.id!!), survivors) }
+                ?: emptyList<HuntPartyMember>(),
+        )
+        model.addAttribute("showdownHunt", showdownHunt)
+        model.addAttribute(
+            "showdownParty",
+            showdownHunt
+                ?.let { HuntViews.party(huntMemberRepository.findAllByHuntIdOrderBySeat(it.id!!), survivors) }
+                ?: emptyList<HuntPartyMember>(),
+        )
+        model.addAttribute("showdownAmbush", showdownHunt?.status == HuntStatus.AMBUSH)
+        model.addAttribute(
+            "huntHistory",
+            HuntViews.history(allHunts.filter { it.status != HuntStatus.ACTIVE }.take(HUNT_HISTORY_LIMIT)),
+        )
+        model.addAttribute("inHuntPhase", settlement.phase == SettlementPhase.HUNT)
+        model.addAttribute("inShowdownPhase", settlement.phase == SettlementPhase.SHOWDOWN)
+        if (!model.containsAttribute(HUNT_ERROR)) {
+            model.addAttribute(HUNT_ERROR, null)
+            model.addAttribute(HUNT_QUARRY, "")
+            model.addAttribute(HUNT_LEVEL, 1)
+            model.addAttribute(HUNT_SELECTED, emptyList<Long>())
+        }
         val ringDone = stepNo - 1
         model.addAttribute("ringDone", ringDone)
         model.addAttribute("ringOffset", ((1.0 - ringDone.toDouble() / SettlementSteps.TOTAL) * RING_C).roundToInt())
@@ -368,6 +573,13 @@ class DashboardController(
     companion object {
         private const val FORM = "form"
         private const val END_PHASE_ERROR = "endPhaseError"
+
+        // Hunt panel model attributes (error + submitted values are pre-seeded on re-render).
+        private const val HUNT_ERROR = "huntError"
+        private const val HUNT_QUARRY = "huntQuarry"
+        private const val HUNT_LEVEL = "huntLevel"
+        private const val HUNT_SELECTED = "huntSelected"
+        private const val HUNT_HISTORY_LIMIT = 10
 
         // SVG ring circumference used by the progress widget (2·π·36, as in the bento prototype).
         private const val RING_C = 226.0

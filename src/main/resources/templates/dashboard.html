@@ -28,13 +28,25 @@
                     </div>
                 </div>
 
-                <!-- Outside the settlement phase: phase card + resume shortcut; the step list
-                     stays visible (dimmed and disabled) so orientation is never lost. -->
+                <!-- Outside the settlement phase: phase card + hunt context; the step list
+                     stays visible (dimmed and disabled) so orientation is never lost.
+                     Escape hatch decision: Resume (back to SETTLEMENT, step kept) is offered
+                     from SHOWDOWN only — during HUNT the escape is the outcome buttons on
+                     the hunt board (found / ambush / failed / run away). -->
                 <div class="side-phase" th:unless="${inSettlementPhase}">
                     <h3 th:text="${stepText}">Hunt in progress</h3>
+                    <p class="muted" th:if="${inHuntPhase and activeHunt != null}"
+                       th:text="|${activeHunt.quarry} · Lvl ${activeHunt.level}|">White Lion · Lvl 1</p>
+                    <p class="muted" th:if="${inHuntPhase and activeHunt == null}">No hunt started yet — the quarry
+                        is chosen on the hunt board.</p>
+                    <p class="muted" th:if="${inShowdownPhase and showdownHunt != null}"
+                       th:text="|${showdownHunt.quarry} · Lvl ${showdownHunt.level} · outcome pending|">White Lion · Lvl 1 · outcome pending</p>
+                    <p class="muted" th:if="${inShowdownPhase and showdownHunt == null}">Showdown without a linked
+                        hunt record.</p>
                     <p class="muted">The settlement steps are paused while this phase runs. Your place at step
                         <span th:text="|${settlement.currentStep}/${totalSteps}|">1/11</span> is kept.</p>
-                    <form method="post" th:action="@{/settlements/{id}/steps/resume(id=${settlementId})}">
+                    <form method="post" th:action="@{/settlements/{id}/steps/resume(id=${settlementId})}"
+                          th:if="${inShowdownPhase}">
                         <button type="submit">Resume settlement phase</button>
                     </form>
                 </div>
@@ -74,6 +86,12 @@
         </aside>
 
         <div class="dash-main">
+            <!-- Hunt start-validation errors surface above whatever panel the phase renders
+                 (e.g. the duplicate-active rejection re-renders while a hunt is running). -->
+            <div class="errors" th:if="${huntError != null}">
+                <p th:text="${huntError}">Error</p>
+            </div>
+
             <!-- Current step detail panel: rendered only while the settlement phase is active. -->
             <section class="cockpit" th:if="${inSettlementPhase}">
                 <div class="cockpit-card">
@@ -374,6 +392,202 @@
                 </div>
             </section>
 
+            <!-- ================= HUNT PHASE =================
+                 The main column becomes a hunt board while the settlement's phase is HUNT:
+                 setup form when no hunt is running, the 13-space board + outcomes while one
+                 is active, history below (research §3: quarry → level → 13 spaces → outcome). -->
+            <section class="cockpit" th:if="${inHuntPhase}">
+                <!-- A · No ACTIVE hunt → setup: quarry, level, party (max 4 alive survivors). -->
+                <div class="cockpit-card" th:if="${activeHunt == null}">
+                    <div class="detail-head">
+                        <h3>Hunt phase · choose your quarry</h3>
+                        <span class="type-pill type-decision">DECISION</span>
+                    </div>
+                    <p class="lead">Pick the quarry and monster level, then send 1–4 alive survivors. The hunt board
+                        opens at Space 1.</p>
+                    <form class="step-form" method="post" th:action="@{/settlements/{id}/hunt/start(id=${settlementId})}">
+                        <div>
+                            <label for="quarry">Quarry</label>
+                            <!-- Free text with a datalist hint: only selectable quarry-list monsters are offered.
+                                 Story/nemesis-only monsters (Butcher, The Hand, Slenderman…) are NOT selectable
+                                 quarry-list entries per the rules, so they are deliberately not listed. -->
+                            <input id="quarry" type="text" name="quarry" list="quarry-options" th:value="${huntQuarry}"
+                                   placeholder="White Lion" required>
+                            <datalist id="quarry-options">
+                                <option value="White Lion"></option>
+                                <option value="Antelope"></option>
+                                <option value="Phoenix"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label for="huntLevel">Monster level</label>
+                            <select id="huntLevel" name="level">
+                                <option value="1" th:selected="${huntLevel == 1}">1</option>
+                                <option value="2" th:selected="${huntLevel == 2}">2</option>
+                                <option value="3" th:selected="${huntLevel == 3}">3</option>
+                            </select>
+                        </div>
+                        <div class="span-full">
+                            <label>Hunt party (max 4)</label>
+                            <label class="check" th:each="s : ${aliveSurvivors}">
+                                <input type="checkbox" name="members" th:value="${s.id}"
+                                       th:checked="${#lists.contains(huntSelected, s.id)}">
+                                <span th:text="${s.name}">Name</span>
+                            </label>
+                            <p class="muted" th:if="${#lists.isEmpty(aliveSurvivors)}">No alive survivors — the hunt
+                                cannot start.</p>
+                            <p class="muted" th:unless="${#lists.isEmpty(aliveSurvivors)}">Fewer than 4 alive? Send as
+                                many as you have (the rules take as many as possible).</p>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit">Start the hunt</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- B · ACTIVE hunt → the 13-space hunt board with notes and outcome buttons. -->
+                <div class="cockpit-card" th:if="${activeHunt != null}">
+                    <div class="detail-head">
+                        <h3>
+                            <span th:text="|Hunting ${activeHunt.quarry}|">Hunting White Lion</span>
+                            <span class="sep">·</span>
+                            <span th:text="|Lvl ${activeHunt.level}|">Lvl 1</span>
+                        </h3>
+                        <span class="type-pill type-branching">HUNT</span>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip" th:each="m : ${huntParty}">
+                            <a th:href="@{/settlements/{id}/survivors/{sid}/edit(id=${settlementId}, sid=${m.survivorId})}"
+                               th:text="${m.name}">Name</a>
+                        </span>
+                        <span class="chip accent" th:text="|Started LY ${activeHunt.lanternYear}|">Started LY 1</span>
+                        <span class="chip" th:text="|Space ${activeHunt.currentSpace}/13|">Space 1/13</span>
+                    </div>
+                    <p class="lead" th:if="${#lists.isEmpty(huntParty)}">No party members recorded for this hunt.</p>
+
+                    <div class="step-block">
+                        <div class="mini-head">Hunt board — 13 spaces</div>
+                        <div class="hunt-spaces">
+                            <div class="hunt-space"
+                                 th:each="n : ${#numbers.sequence(1, 13)}"
+                                 th:classappend="${(n == activeHunt.currentSpace ? 'current ' : '') + (n == 7 || n == 13 ? 'marker' : '')}">
+                                <b th:text="${n}">1</b>
+                            </div>
+                        </div>
+                        <ul class="hunt-markers">
+                            <li>Space 7: Overwhelming Darkness</li>
+                            <li>Space 13: Starvation</li>
+                        </ul>
+                        <form method="post" th:action="@{/settlements/{id}/hunt/advance(id=${settlementId})}">
+                            <div class="form-actions">
+                                <button type="submit" th:disabled="${activeHunt.currentSpace >= 13}">Advance space →</button>
+                                <span class="muted">Resolve the space's event first — clear it before moving on.</span>
+                            </div>
+                        </form>
+                        <div class="warn-box info" th:if="${activeHunt.currentSpace >= 7}">
+                            Overwhelming Darkness story event triggers on first entry
+                        </div>
+                        <div class="warn-box" th:if="${activeHunt.currentSpace >= 13}">
+                            Starvation: remove 1d5 resources from storage —
+                            <a th:href="@{/settlements/{id}/resources(id=${settlementId})}">open resources →</a>
+                        </div>
+                    </div>
+
+                    <div class="step-block">
+                        <div class="mini-head">Hunt event log</div>
+                        <form class="step-form" method="post" th:action="@{/settlements/{id}/hunt/notes(id=${settlementId})}">
+                            <div class="span-full">
+                                <label for="huntNotes">Notes — event outcomes, d100 results, housekeeping</label>
+                                <textarea id="huntNotes" name="text" th:text="${activeHunt.notes}"
+                                          placeholder="What happened on each space…"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit">Save notes</button>
+                                <span class="muted">Saved to this hunt — stays on the board.</span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="step-block">
+                        <div class="mini-head">Hunt outcome</div>
+                        <div class="hunt-outcomes">
+                            <form method="post" th:action="@{/settlements/{id}/hunt/found(id=${settlementId})}">
+                                <button type="submit">Found the quarry</button>
+                            </form>
+                            <form method="post" th:action="@{/settlements/{id}/hunt/ambush(id=${settlementId})}">
+                                <button type="submit">Ambush!</button>
+                            </form>
+                            <form method="post" th:action="@{/settlements/{id}/hunt/failed(id=${settlementId})}"
+                                  onsubmit="return confirm('The hunt failed and every departing survivor is lost. End the hunt?');">
+                                <button type="submit" class="danger">The hunt failed (all lost)</button>
+                            </form>
+                            <form method="post" th:action="@{/settlements/{id}/hunt/run-away(id=${settlementId})}"
+                                  onsubmit="return confirm('Run away and end the hunt?');">
+                                <button type="submit" class="secondary">Run away (Pictographs)</button>
+                            </form>
+                        </div>
+                        <p class="muted">Found or ambush → showdown. Failed or run away → a new settlement phase
+                            begins at step 1.</p>
+                    </div>
+                </div>
+
+                <!-- C · History: previous hunts, newest first (max 10), with outcome labels. -->
+                <div class="cockpit-card">
+                    <div class="detail-head">
+                        <h3>Hunt history</h3>
+                    </div>
+                    <ul class="mini-list" th:unless="${#lists.isEmpty(huntHistory)}">
+                        <li th:each="h : ${huntHistory}">
+                            <span class="mini-name"
+                                  th:text="|LY ${h.lanternYear} · ${h.quarry} · Lvl ${h.level} · ${h.outcome}|">LY 1 · White Lion · Lvl 1 · hunt failed</span>
+                            <a th:if="${h.fallenLink}"
+                               th:href="@{/settlements/{id}/survivors(id=${settlementId})}">mark fallen survivors as not alive</a>
+                        </li>
+                    </ul>
+                    <p class="muted" th:if="${#lists.isEmpty(huntHistory)}">No previous hunts yet.</p>
+                </div>
+            </section>
+
+            <!-- ================= SHOWDOWN PHASE =================
+                 Placeholder: the showdown is played at the table, so this panel only tracks
+                 the quarry/party summary, the official reminders and the aftermath handoff.
+                 TODO(unit): no AI/round tracking here — a future work unit owns the showdown. -->
+            <section class="cockpit" th:if="${inShowdownPhase}">
+                <div class="cockpit-card">
+                    <div class="detail-head">
+                        <h3>Showdown in progress</h3>
+                        <span class="type-pill type-branching">SHOWDOWN</span>
+                    </div>
+                    <p class="lead">Fight the showdown at the table, then resolve the aftermath and return to the
+                        settlement.</p>
+                    <div class="step-block">
+                        <div class="chip-row" th:if="${showdownHunt != null}">
+                            <span class="chip danger"
+                                  th:text="|${showdownHunt.quarry} · Lvl ${showdownHunt.level}|">White Lion · Lvl 1</span>
+                            <span class="chip" th:each="m : ${showdownParty}">
+                                <a th:href="@{/settlements/{id}/survivors/{sid}/edit(id=${settlementId}, sid=${m.survivorId})}"
+                                   th:text="${m.name}">Name</a>
+                            </span>
+                            <span class="chip" th:text="|Started LY ${showdownHunt.lanternYear}|">Started LY 1</span>
+                        </div>
+                        <p class="muted" th:if="${showdownHunt == null}">No hunt record is linked to this showdown —
+                            the phase was set directly.</p>
+                        <div class="warn-box info">The monster acts first — unless otherwise stated, monsters always
+                            go first.</div>
+                        <div class="warn-box" th:if="${showdownAmbush}">
+                            Ambush: survivors skip their first turn (the monster usually acts twice).
+                        </div>
+                    </div>
+                    <form method="post" th:action="@{/settlements/{id}/hunt/resolve(id=${settlementId})}">
+                        <div class="form-actions">
+                            <button type="submit">Resolve aftermath → return to settlement</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Widgets, profile and danger zone belong to the settlement phase only. -->
+            <th:block th:if="${inSettlementPhase}">
             <h2>Overview</h2>
             <div class="bento">
                 <!-- 1 · steps progress -->
@@ -488,10 +702,11 @@
             <div class="danger-zone">
                 <form th:action="@{/settlements/{id}/delete(id=${settlementId})}" method="post">
                     <button type="submit" class="danger">Delete settlement</button>
-                    <span class="muted">Removes this settlement and all of its survivors, resources, innovations, log entries
-                        and step notes.</span>
+                    <span class="muted">Removes this settlement and all of its survivors, resources, innovations, log entries,
+                        step notes, hunts and hunt members.</span>
                 </form>
             </div>
+            </th:block>
         </div>
     </div>
 </main>

@@ -12,6 +12,8 @@ import io.kdmtracker.domain.SettlementPhase
 import io.kdmtracker.domain.Sex
 import io.kdmtracker.domain.StepNote
 import io.kdmtracker.domain.Survivor
+import io.kdmtracker.repository.HuntMemberRepository
+import io.kdmtracker.repository.HuntRecordRepository
 import io.kdmtracker.repository.InnovationRepository
 import io.kdmtracker.repository.LogEntryRepository
 import io.kdmtracker.repository.MilestoneRepository
@@ -34,18 +36,25 @@ class TransferService(
     private val stepNoteRepository: StepNoteRepository,
     private val milestoneRepository: MilestoneRepository,
     private val principleRepository: PrincipleRepository,
+    private val huntRecordRepository: HuntRecordRepository,
+    private val huntMemberRepository: HuntMemberRepository,
 ) {
     /**
      * Replaces ALL data with the uploaded document. Runs in one transaction: any
      * failure rolls back to the previous dataset instead of leaving a partial import.
-     * step_notes, milestones and principles have no foreign keys, so they are wiped
-     * here explicitly — otherwise an import would leave orphaned rows behind.
+     * step_notes, milestones, principles and the hunt tables have no foreign keys,
+     * so they are wiped here explicitly — otherwise an import would leave orphaned
+     * rows behind. TODO(export v3): hunts are not part of schema v2 yet, so they are
+     * wiped but never restored; export format stays v2 until v3 lands.
      */
     @Transactional
     fun replaceAll(document: ExportDocument) {
         stepNoteRepository.deleteAllInBatch()
         milestoneRepository.deleteAllInBatch()
         principleRepository.deleteAllInBatch()
+        // Hunt members before hunt records (same replace-all wipe, no FKs).
+        huntMemberRepository.deleteAllInBatch()
+        huntRecordRepository.deleteAllInBatch()
         survivorRepository.deleteAllInBatch()
         resourceRepository.deleteAllInBatch()
         innovationRepository.deleteAllInBatch()

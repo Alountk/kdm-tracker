@@ -259,15 +259,18 @@ class SettlementStepFlowTests {
 
     @Test
     fun resumeReturnsToSettlementPhaseKeepingTheStep() {
+        // M7 decision: Resume is offered from SHOWDOWN only — during HUNT the escape is
+        // the hunt outcome buttons (found / ambush / failed / run away) on the hunt board.
+        // The previous HUNT-phase expectation was moved here with that justification.
         val id =
             settlementRepository
-                .save(Settlement(name = "Hunt Hold", currentStep = 7, phase = SettlementPhase.HUNT))
+                .save(Settlement(name = "Hunt Hold", currentStep = 7, phase = SettlementPhase.SHOWDOWN))
                 .id!!
 
         mockMvc
             .perform(get("/settlements/$id"))
             .andExpect(status().isOk)
-            .andExpect(content().string(containsString("Hunt in progress")))
+            .andExpect(content().string(containsString("Showdown in progress")))
             .andExpect(content().string(containsString("7/11")))
             .andExpect(content().string(containsString("Resume settlement phase")))
             // The sidebar keeps all 11 rows visible for orientation — dimmed and disabled.

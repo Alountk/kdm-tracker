@@ -240,6 +240,9 @@ class TransferController(
         ExportPrinciple(category = category.name, choice = choice, chosenInYear = chosenInYear)
 
     companion object {
+        // TODO(export v3): hunts (hunt_records + hunt_members) are wiped on import but
+        // not exported yet — bump to v3 when the hunt model joins the document; v1/v2
+        // files must keep importing exactly as they do today.
         const val SCHEMA_VERSION = 2
         val SUPPORTED_SCHEMA_VERSIONS = listOf(1, 2)
     }

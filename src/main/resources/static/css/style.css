@@ -1403,6 +1403,69 @@ label.check {
     min-width: 0;
 }
 
+/* ============ hunt phase companion (space tracker, markers, outcomes) ============ */
+.hunt-spaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hunt-space {
+    width: 42px;
+    padding: 7px 0;
+    text-align: center;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+.hunt-space.current {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.hunt-space.marker {
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.hunt-markers {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.hunt-outcomes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.hunt-outcomes form {
+    display: inline-flex;
+}
+
+.hunt-outcomes button {
+    white-space: nowrap;
+}
+
+/* Info variant of the warn box (Overwhelming Darkness / monster-acts-first reminders). */
+.warn-box.info {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
 /* ============ step-1 update survivors: compact chips + dev-stat table ============ */
 .chip-row {
     display: flex;
