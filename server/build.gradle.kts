@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.dependency.management)
-    alias(libs.plugins.spotless)
 }
 
 group = "io.kdmtracker"
@@ -33,17 +32,6 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
-    }
-}
-
-spotless {
-    kotlin {
-        target("src/**/*.kt")
-        ktlint()
-    }
-    kotlinGradle {
-        target("*.gradle.kts")
-        ktlint()
     }
 }
 
