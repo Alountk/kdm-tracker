@@ -9,9 +9,11 @@ COPY build.gradle.kts settings.gradle.kts ./
 
 RUN ./gradlew --no-daemon --version
 
+COPY .editorconfig ./
+COPY core/ core/
 COPY server/ server/
 
-RUN ./gradlew --no-daemon :server:bootJar
+RUN ./gradlew --no-daemon :core:jvmTest :server:test :server:spotlessCheck :server:bootJar
 
 # Stage 2: runtime
 FROM eclipse-temurin:21-jre AS runtime
