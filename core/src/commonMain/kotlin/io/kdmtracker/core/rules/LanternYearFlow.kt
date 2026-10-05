@@ -21,33 +21,62 @@ data class FlowContext(
 /**
  * The lantern-year phase/step state machine.
  *
- * This task implements only forward navigation through the Settlement phase's steps.
- * The special-showdown loop, hunt and showdown branches arrive in a later task; here
- * [next] returns a safe [FlowTransition.Blocked] for those unfinished branches instead
- * of crashing.
+ * Forward navigation moves one Settlement step at a time; the last Settlement step
+ * commits to the Hunt (or straight to the Showdown on a nemesis year). The branch and
+ * loop semantics come from spec §7: the Special Showdown loops back to the death-count
+ * step, a failed Hunt restarts the settlement year, and the Showdown Aftermath resolves
+ * into the next settlement year.
+ *
+ * [FlowTransition.Blocked] is reserved for genuinely invalid input (a Settlement step
+ * outside `1..total`), never for a legitimate phase transition.
  */
 object LanternYearFlow {
+    /**
+     * Rulebook anchors inside the Settlement phase: step 9 is the Special Showdown and
+     * step 5 is the death-count update it loops back to. The steps' content lives in
+     * [SettlementStepCatalog]; only their positions are needed here.
+     */
+    private const val SPECIAL_SHOWDOWN_STEP = 9
+    private const val DEATH_COUNT_STEP = 5
+
     fun next(
         current: PhaseStep,
         context: FlowContext,
-    ): FlowTransition {
-        if (current.phase != SettlementPhase.SETTLEMENT) {
-            return FlowTransition.Blocked("phase ${current.phase} flow is not implemented yet")
+    ): FlowTransition =
+        when (current.phase) {
+            SettlementPhase.SETTLEMENT -> nextSettlementStep(current.step, context)
+            SettlementPhase.HUNT -> nextHuntStep(context)
+            SettlementPhase.SHOWDOWN ->
+                FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, 1))
         }
 
+    private fun nextSettlementStep(
+        step: Int,
+        context: FlowContext,
+    ): FlowTransition {
         val total = context.ruleset.settlementSteps.size
+        if (step !in 1..total) {
+            return FlowTransition.Blocked("unknown settlement step $step")
+        }
         return when {
-            current.step in 1 until total ->
-                FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, current.step + 1))
+            step == SPECIAL_SHOWDOWN_STEP && context.hasSpecialShowdown ->
+                FlowTransition.LoopBack(PhaseStep(SettlementPhase.SETTLEMENT, DEATH_COUNT_STEP))
 
-            current.step == total -> {
+            step < total ->
+                FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, step + 1))
+
+            else -> {
                 val nextPhase =
                     if (context.isNemesisYear) SettlementPhase.SHOWDOWN else SettlementPhase.HUNT
                 FlowTransition.Commit(PhaseStep(nextPhase, 1), context.unspentEndeavors)
             }
-
-            else -> FlowTransition.Blocked("unknown settlement step ${current.step}")
         }
+    }
+
+    private fun nextHuntStep(context: FlowContext): FlowTransition {
+        val nextPhase =
+            if (context.huntFailed) SettlementPhase.SETTLEMENT else SettlementPhase.SHOWDOWN
+        return FlowTransition.Advance(PhaseStep(nextPhase, 1))
     }
 
     /**
