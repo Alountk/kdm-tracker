@@ -1,0 +1,25 @@
+CREATE TABLE settlement (
+  id TEXT NOT NULL PRIMARY KEY,
+  campaignId TEXT NOT NULL,
+  name TEXT NOT NULL,
+  lanternYear INTEGER NOT NULL,
+  phase TEXT NOT NULL,
+  currentStep INTEGER NOT NULL,
+  endeavors INTEGER NOT NULL,
+  population INTEGER NOT NULL,
+  settlementEvent TEXT,
+  updatedAtMillis INTEGER NOT NULL,
+  updatedAtCounter INTEGER NOT NULL,
+  rev INTEGER NOT NULL,
+  deletedAtMillis INTEGER,
+  deletedAtCounter INTEGER
+);
+
+upsertSettlement:
+INSERT OR REPLACE INTO settlement VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+
+selectSettlementsByCampaign:
+SELECT * FROM settlement WHERE campaignId = ? AND deletedAtMillis IS NULL;
+
+selectSettlementById:
+SELECT * FROM settlement WHERE id = ?;
