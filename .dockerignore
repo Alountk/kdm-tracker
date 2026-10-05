@@ -1,10 +1,7 @@
 .git
 .gradle
 build
-.idea
-*.iml
-.env
-local.properties
-.kotlin
-out
+**/build
 data
+.superpowers
+.atl

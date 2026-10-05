@@ -1,15 +1,6 @@
-package io.kdmtracker.domain
+package io.kdmtracker.core.rules
 
-/** Classification of a settlement step (research §5: bookkeeping / decision / branching). */
-enum class StepType { BOOKKEEPING, DECISION, BRANCHING }
-
-/** One official Settlement Phase step. */
-data class SettlementStep(
-    val number: Int,
-    val title: String,
-    val summary: String,
-    val type: StepType,
-)
+import io.kdmtracker.core.domain.StepType
 
 /**
  * The 11 official Settlement Phase steps in rulebook order.
@@ -18,7 +9,7 @@ data class SettlementStep(
  * §5 UX classification) and copied here as plain English constants — the markdown is a
  * research artifact and is never parsed at runtime.
  */
-object SettlementSteps {
+object SettlementStepCatalog {
     const val TOTAL = 11
 
     val ALL: List<SettlementStep> =

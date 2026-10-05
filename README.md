@@ -51,8 +51,11 @@ basic resource inventory (Bone, Hide, Sinew, Amber, Cloth, Iron, Pigment, Scrap 
 
 ## Quickstart (Docker)
 
+The build context is the repository **root** (the image copies both `core/` and `server/`),
+while the Dockerfile itself lives under `server/`:
+
 ```bash
-docker build -t bp-kdm-tracker .
+docker build -t bp-kdm-tracker -f server/Dockerfile .
 docker run -d --name bp-kdm-tracker -p 8703:8080 -v kdm-data:/app/data bp-kdm-tracker
 
 curl -fsS -o /dev/null -w "%{http_code}" http://localhost:8703/
@@ -71,44 +74,60 @@ database — campaign data survives container replacement.
 
 ```text
 kdm-tracker/
-├── src/
-│   ├── main/kotlin/io/kdmtracker/
-│   │   ├── KdmTrackerApplication.kt   # @SpringBootApplication entry point
-│   │   ├── domain/                    # Settlement, Survivor, Resource, Innovation, LogEntry + enums
-│   │   ├── repository/                # Spring Data JPA repositories
-│   │   ├── seed/DatabaseSeeder.kt     # First-run seed: settlement + basic resources
-│   │   └── web/                       # Controllers (dashboard, survivors, resources, innovations, log, health)
-│   │       └── form/                  # Validated form-backing objects
-│   ├── main/resources/
-│   │   ├── application.yaml           # H2 file DB (./data/kdm-tracker), ddl-auto: update, ${PORT:8080}
-│   │   ├── static/css/style.css       # Hand-written stylesheet (no CDN)
-│   │   └── templates/                 # Thymeleaf views (+ shared fragments)
-│   ├── test/kotlin/io/kdmtracker/     # Smoke test + one flow test per entity (MockMvc)
-│   └── test/resources/application.yaml # In-memory H2 for fast tests
+├── core/                              # platform-agnostic domain + rules (Kotlin multiplatform, jvm target)
+│   ├── build.gradle.kts
+│   └── src/
+│       ├── commonMain/kotlin/io/kdmtracker/core/
+│       │   ├── CoreModule.kt          # version marker for the pure core
+│       │   ├── domain/                # Settlement, Campaign + value objects (Ulid, HLC, enums)
+│       │   ├── rules/                 # LanternYearFlow, SettlementStepCatalog, DerivedValues
+│       │   ├── ruleset/               # Ruleset, Core16Ruleset, RulesetOverrides
+│       │   ├── transfer/              # TransferDocument/TransferMapper (schema v3)
+│       │   └── usecase/               # AdvanceStep (lantern-year transition use case)
+│       └── commonTest/kotlin/io/kdmtracker/core/  # unit tests for the above
+├── server/                            # Spring Boot app (web, persistence, seeding)
+│   ├── build.gradle.kts
+│   ├── Dockerfile                     # Multi-stage: build+test+lint gate, non-root runtime with /app/data
+│   ├── .env.example
+│   └── src/
+│       ├── main/kotlin/io/kdmtracker/
+│       │   ├── KdmTrackerApplication.kt   # @SpringBootApplication entry point
+│       │   ├── domain/                    # Settlement, Survivor, Resource, Innovation, LogEntry + enums
+│       │   ├── repository/                # Spring Data JPA repositories
+│       │   ├── seed/DatabaseSeeder.kt     # First-run seed: settlement + basic resources
+│       │   └── web/                       # Controllers (dashboard, survivors, resources, innovations, log, health)
+│       │       └── form/                  # Validated form-backing objects
+│       ├── main/resources/
+│       │   ├── application.yaml           # H2 file DB (./data/kdm-tracker), ddl-auto: update, ${PORT:8080}
+│       │   ├── static/css/style.css       # Hand-written stylesheet (no CDN)
+│       │   └── templates/                 # Thymeleaf views (+ shared fragments)
+│       ├── test/kotlin/io/kdmtracker/     # Smoke test + one flow test per entity (MockMvc)
+│       └── test/resources/application.yaml # In-memory H2 for fast tests
 ├── .githooks/
 │   └── pre-commit                     # ./gradlew -q spotlessCheck (enable via git config)
-├── .dockerignore
+├── .dockerignore                      # build-context root; ignores .git, build, data, .superpowers, ...
 ├── .editorconfig                      # drives ktlint (utf-8, indent 4, max line 120)
-├── .env.example
 ├── .gitignore                         # ignores ./data (local H2 files)
-├── Dockerfile                         # Multi-stage: build+test+lint gate, non-root runtime with /app/data
 ├── LICENSE
 ├── README.md
-├── build.gradle.kts                   # plugins, dependencies, Spotless, bootJar name
+├── build.gradle.kts                   # root: applies Spotless to every subproject
 ├── gradlew / gradlew.bat              # Gradle wrapper (pinned 9.7.1)
-├── gradle/wrapper/                    # wrapper jar + properties
-└── settings.gradle.kts                # rootProjectName = kdm-tracker
+├── gradle/
+│   ├── libs.versions.toml             # version catalog (single source of versions)
+│   └── wrapper/                       # wrapper jar + properties
+└── settings.gradle.kts                # rootProjectName = kdm-tracker; includes :core and :server
 ```
 
 ## Scripts
 
-| Script                   | Command                 | Description                                  |
-| ------------------------ | ----------------------- | -------------------------------------------- |
-| `./gradlew bootRun`      | Start the dev server    | Runs the app on `PORT` (default 8080)        |
-| `./gradlew build`        | Compile + test + jar    | Runs tests, lint, and produces the boot jar  |
-| `./gradlew test`         | Run tests               | MockMvc smoke + entity flow tests            |
-| `./gradlew spotlessCheck`| Lint                    | ktlint style check (driven by `.editorconfig`) |
-| `./gradlew spotlessApply`| Format                  | Auto-fix ktlint violations                   |
+| Script                    | Command              | Description                                    |
+| ------------------------- | -------------------- | ---------------------------------------------- |
+| `./gradlew :server:bootRun` | Start the dev server | Runs the app on `PORT` (default 8080)        |
+| `./gradlew build`         | Compile + test + jar | Runs tests, lint, and produces the boot jar    |
+| `./gradlew :core:jvmTest` | Core tests           | Pure domain/rules/use-case unit tests          |
+| `./gradlew :server:test`  | Server tests         | MockMvc smoke + entity flow tests              |
+| `./gradlew spotlessCheck` | Lint                 | ktlint style check (driven by `.editorconfig`) |
+| `./gradlew spotlessApply` | Format               | Auto-fix ktlint violations                     |
 
 ## Environment variables
 
@@ -119,11 +138,12 @@ kdm-tracker/
 ## Tests
 
 ```bash
-./gradlew test
+./gradlew :core:jvmTest :server:test
 ```
 
-The suite boots the app with `@SpringBootTest` + MockMvc against an in-memory H2 database and runs
-without sleeps:
+The `:core` suite is pure Kotlin unit tests (domain invariants, the lantern-year flow, the ruleset
+seam and the transfer mapper). The `:server` suite boots the app with `@SpringBootTest` + MockMvc
+against an in-memory H2 database and runs without sleeps:
 
 - Smoke: `GET /` renders the dashboard (200), `GET /health` returns `{"status":"ok"}`.
 - Survivor flow: create via POST → appears in the list with KDM defaults (age 12, MOV 5, SPD 4,
