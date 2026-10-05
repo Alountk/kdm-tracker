@@ -16,11 +16,12 @@ import io.kdmtracker.core.ruleset.RulesetOverrides
  * persistence or sync logic lives here yet.
  */
 class SettlementRepository {
-    private val settlementId: Ulid = Ulid.generate(0L) { 0 }
+    private val campaignId: Ulid = Ulid.generate(0L) { 0 }
+    private val settlementId: Ulid = Ulid.generate(1L) { 1 }
 
     val campaign: Campaign =
         Campaign(
-            id = Ulid.generate(0L) { 0 },
+            id = campaignId,
             name = "Walking Skeleton",
             rulesetId = Core16Ruleset.id,
             rulesetOverrides = RulesetOverrides(),
