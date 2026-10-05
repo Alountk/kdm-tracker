@@ -65,4 +65,5 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.ui)
     implementation(libs.androidx.activity.compose)
+    testImplementation(libs.kotlin.test)
 }
