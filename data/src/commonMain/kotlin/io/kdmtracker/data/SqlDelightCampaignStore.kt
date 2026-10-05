@@ -20,7 +20,8 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  * Each method maps between generated row types and the `:core` domain aggregates. Rows are
  * keyed by their ULID, so `INSERT OR REPLACE` transparently upserts. Ruleset overrides are
  * stored as a JSON blob; the remaining columns map one-to-one onto the aggregates, and the
- * four sync columns rebuild [SyncMeta].
+ * four sync columns rebuild [SyncMeta]. A campaign's `settlementIds` is derived from the
+ * settlements loaded for it, since ownership lives in `settlement.campaignId`.
  */
 class SqlDelightCampaignStore(
     private val database: KdmDatabase,
@@ -30,13 +31,14 @@ class SqlDelightCampaignStore(
             .selectAllCampaigns()
             .executeAsList()
             .map { row ->
+                val settlements =
+                    database.settlementQueries
+                        .selectSettlementsByCampaign(row.id)
+                        .executeAsList()
+                        .map { it.toDomain() }
                 CampaignSnapshot(
-                    campaign = row.toDomain(),
-                    settlements =
-                        database.settlementQueries
-                            .selectSettlementsByCampaign(row.id)
-                            .executeAsList()
-                            .map { it.toDomain() },
+                    campaign = row.toDomain(settlements.map { it.id }),
+                    settlements = settlements,
                 )
             }
 
@@ -75,13 +77,13 @@ class SqlDelightCampaignStore(
         )
     }
 
-    private fun CampaignRow.toDomain(): Campaign =
+    private fun CampaignRow.toDomain(settlementIds: List<Ulid>): Campaign =
         Campaign(
             id = Ulid.parse(id),
             name = name,
             rulesetId = rulesetId,
             rulesetOverrides = json.decodeFromString(RulesetOverrides.serializer(), rulesetOverridesJson),
-            settlementIds = emptyList(),
+            settlementIds = settlementIds,
             sync =
                 syncMeta(
                     updatedAtMillis = updatedAtMillis,

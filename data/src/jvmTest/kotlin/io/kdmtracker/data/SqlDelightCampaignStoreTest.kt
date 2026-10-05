@@ -12,6 +12,7 @@ import io.kdmtracker.core.ruleset.RulesetOverrides
 import io.kdmtracker.data.db.KdmDatabase
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class SqlDelightCampaignStoreTest {
     private fun ulid(seed: Long): Ulid = Ulid.generate(seed) { 0 }
@@ -22,13 +23,14 @@ class SqlDelightCampaignStoreTest {
     private fun campaign(
         seed: Long,
         name: String = "Grey Havens",
+        settlementIds: List<Ulid> = emptyList(),
     ): Campaign =
         Campaign(
             id = ulid(seed),
             name = name,
             rulesetId = "core-1.6",
             rulesetOverrides = RulesetOverrides(survivalLimit = 12),
-            settlementIds = emptyList(),
+            settlementIds = settlementIds,
             sync = SyncMeta(HybridLogicalClock(1_700_000_000_000, 3), rev = 7),
         )
 
@@ -36,6 +38,7 @@ class SqlDelightCampaignStoreTest {
         seed: Long,
         campaignId: Ulid,
         name: String = "First Lantern",
+        settlementEvent: String? = "Murder",
     ): Settlement =
         Settlement(
             id = ulid(seed),
@@ -46,15 +49,16 @@ class SqlDelightCampaignStoreTest {
             currentStep = 5,
             endeavors = 2,
             population = 9,
-            settlementEvent = "Murder",
+            settlementEvent = settlementEvent,
             sync = SyncMeta(HybridLogicalClock(1_700_000_000_500, 4), rev = 11),
         )
 
     @Test
     fun secondStoreInstanceOverTheSameDatabaseRoundTripsTheAggregate() {
         val database = inMemoryDatabase()
-        val writtenCampaign = campaign(1)
-        val writtenSettlement = settlement(2, writtenCampaign.id)
+        val baseCampaign = campaign(1)
+        val writtenSettlement = settlement(2, baseCampaign.id)
+        val writtenCampaign = baseCampaign.copy(settlementIds = listOf(writtenSettlement.id))
 
         SqlDelightCampaignStore(database).apply {
             upsertCampaign(writtenCampaign)
@@ -67,6 +71,21 @@ class SqlDelightCampaignStoreTest {
             listOf(CampaignSnapshot(writtenCampaign, listOf(writtenSettlement))),
             reloaded,
         )
+    }
+
+    @Test
+    fun roundTripsASettlementWithNoSettlementEvent() {
+        val database = inMemoryDatabase()
+        val store = SqlDelightCampaignStore(database)
+        val parent = campaign(1)
+        val child = settlement(2, parent.id, settlementEvent = null)
+        store.upsertCampaign(parent)
+        store.upsertSettlement(child)
+
+        val reloaded = SqlDelightCampaignStore(database).loadSnapshots().single()
+
+        assertEquals(listOf(child), reloaded.settlements)
+        assertNull(reloaded.settlements.single().settlementEvent)
     }
 
     @Test
