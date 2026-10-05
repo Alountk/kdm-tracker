@@ -60,6 +60,7 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":data"))
     implementation(compose.runtime)
     implementation(compose.foundation)
     implementation(compose.material3)

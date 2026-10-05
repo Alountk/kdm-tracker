@@ -30,7 +30,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":core"))
-            implementation(libs.sqldelight.runtime)
+            api(libs.sqldelight.runtime)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
@@ -40,7 +40,7 @@ kotlin {
             implementation(libs.sqldelight.sqlite.driver)
         }
         androidMain.dependencies {
-            implementation(libs.sqldelight.android.driver)
+            api(libs.sqldelight.android.driver)
         }
     }
 }

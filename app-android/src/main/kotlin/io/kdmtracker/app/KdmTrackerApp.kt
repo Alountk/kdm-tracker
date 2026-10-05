@@ -9,13 +9,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
 
 @Composable
-fun KdmTrackerApp(viewModel: LanternYearViewModel = viewModel()) {
+fun KdmTrackerApp(
+    viewModel: LanternYearViewModel =
+        viewModel(factory = LanternYearViewModel.factory(LocalContext.current)),
+) {
     val state by viewModel.state.collectAsState()
 
     MaterialTheme {

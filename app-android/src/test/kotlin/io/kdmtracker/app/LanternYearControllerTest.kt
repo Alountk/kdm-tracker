@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 class LanternYearControllerTest {
     @Test
     fun initialStateIsTheOpeningSettlementStep() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         val state = controller.state.value
 
@@ -26,7 +26,7 @@ class LanternYearControllerTest {
 
     @Test
     fun exposesTheElevenSettlementStepsInOrder() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         assertEquals(SettlementStepCatalog.ALL, controller.state.value.steps)
         assertEquals(11, controller.state.value.steps.size)
@@ -34,7 +34,7 @@ class LanternYearControllerTest {
 
     @Test
     fun derivesStepsAndTitleFromTheInjectedRuleset() {
-        val controller = LanternYearController(SettlementRepository(), SingleStepRuleset())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()), SingleStepRuleset())
 
         val state = controller.state.value
 
@@ -78,7 +78,7 @@ class LanternYearControllerTest {
 
     @Test
     fun previousIsFlooredAtTheFirstStep() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         controller.previous()
 
@@ -87,7 +87,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepAppliesTheNextStep() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         controller.selectStep(2)
 
@@ -96,7 +96,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepIgnoresAStepThatSkipsForward() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         controller.selectStep(11)
 
@@ -114,7 +114,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepIgnoresNumbersOutsideTheRulesetRange() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         controller.selectStep(0)
         assertEquals(1, controller.state.value.currentStep)
@@ -125,13 +125,13 @@ class LanternYearControllerTest {
 
     @Test
     fun reachableStepsExposeOnlyEnterableSteps() {
-        val controller = LanternYearController(SettlementRepository())
+        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
 
         assertEquals(setOf(1, 2), controller.state.value.reachableSteps)
     }
 
     private fun controllerAt(step: Int): LanternYearController {
-        val repository = SettlementRepository()
+        val repository = SettlementRepository(FakeCampaignStore())
         repository.update(repository.settlement.copy(currentStep = step))
         return LanternYearController(repository)
     }

@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 class LanternYearViewModelTest {
     @Test
     fun initialStateIsTheOpeningSettlementStep() {
-        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository()))
+        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(FakeCampaignStore())))
 
         val state = viewModel.state.value
 
@@ -26,7 +26,7 @@ class LanternYearViewModelTest {
 
     @Test
     fun advancingUpdatesTheExposedState() {
-        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository()))
+        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(FakeCampaignStore())))
 
         viewModel.advance()
 

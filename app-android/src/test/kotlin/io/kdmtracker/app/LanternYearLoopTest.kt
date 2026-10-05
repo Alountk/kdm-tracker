@@ -18,7 +18,7 @@ class LanternYearLoopTest {
         phase: SettlementPhase,
         step: Int,
     ): LanternYearController {
-        val repository = SettlementRepository()
+        val repository = SettlementRepository(FakeCampaignStore())
         repository.update(repository.settlement.copy(phase = phase, currentStep = step))
         return LanternYearController(repository)
     }
@@ -75,7 +75,7 @@ class LanternYearLoopTest {
 
     @Test
     fun aFailedHuntDiscardsUnspentEndeavors() {
-        val repository = SettlementRepository()
+        val repository = SettlementRepository(FakeCampaignStore())
         repository.update(
             repository.settlement.copy(
                 phase = SettlementPhase.HUNT,
