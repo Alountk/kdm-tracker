@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,7 +15,7 @@ import kotlin.test.assertEquals
 class LanternYearViewModelTest {
     @Test
     fun initialStateIsTheOpeningSettlementStep() {
-        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(FakeCampaignStore())))
+        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(InMemoryCampaignStore())))
 
         val state = viewModel.state.value
 
@@ -26,7 +27,7 @@ class LanternYearViewModelTest {
 
     @Test
     fun advancingUpdatesTheExposedState() {
-        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(FakeCampaignStore())))
+        val viewModel = LanternYearViewModel(LanternYearController(SettlementRepository(InMemoryCampaignStore())))
 
         viewModel.advance()
 

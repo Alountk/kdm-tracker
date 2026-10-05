@@ -50,6 +50,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+
+    sourceSets {
+        getByName("test").java.srcDir(rootProject.file("testing/shared-kotlin"))
+    }
 }
 
 kotlin {

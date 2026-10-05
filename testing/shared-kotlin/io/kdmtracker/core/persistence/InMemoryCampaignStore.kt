@@ -1,18 +1,17 @@
-package io.kdmtracker.app
+package io.kdmtracker.core.persistence
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Settlement
-import io.kdmtracker.core.persistence.CampaignSnapshot
-import io.kdmtracker.core.persistence.CampaignStore
 
 /**
- * In-memory [CampaignStore] for JVM tests: no SQLite, no Android driver.
+ * In-memory [CampaignStore] shared by the contract suite and the app/`:data` tests.
  *
- * Mirrors the observable semantics of the SQLDelight store: records are keyed by ULID so an
- * upsert replaces in place, and a campaign's `settlementIds` is derived from the settlements
- * loaded for it rather than the stored value.
+ * Records are keyed by ULID so an upsert replaces in place, and each campaign's
+ * `settlementIds` is derived from the settlements loaded for it rather than the stored value,
+ * matching the SQLDelight store. [transaction] runs [block] directly: an in-memory write cannot
+ * fail halfway.
  */
-class FakeCampaignStore : CampaignStore {
+class InMemoryCampaignStore : CampaignStore {
     private val campaigns = LinkedHashMap<String, Campaign>()
     private val settlements = LinkedHashMap<String, Settlement>()
 
@@ -32,4 +31,6 @@ class FakeCampaignStore : CampaignStore {
     override fun upsertSettlement(settlement: Settlement) {
         settlements[settlement.id.value] = settlement
     }
+
+    override fun <T> transaction(block: () -> T): T = block()
 }

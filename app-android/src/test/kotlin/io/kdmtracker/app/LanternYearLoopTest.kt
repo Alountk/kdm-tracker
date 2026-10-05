@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +19,7 @@ class LanternYearLoopTest {
         phase: SettlementPhase,
         step: Int,
     ): LanternYearController {
-        val repository = SettlementRepository(FakeCampaignStore())
+        val repository = SettlementRepository(InMemoryCampaignStore())
         repository.update(repository.settlement.copy(phase = phase, currentStep = step))
         return LanternYearController(repository)
     }
@@ -75,7 +76,7 @@ class LanternYearLoopTest {
 
     @Test
     fun aFailedHuntDiscardsUnspentEndeavors() {
-        val repository = SettlementRepository(FakeCampaignStore())
+        val repository = SettlementRepository(InMemoryCampaignStore())
         repository.update(
             repository.settlement.copy(
                 phase = SettlementPhase.HUNT,

@@ -3,11 +3,15 @@ package io.kdmtracker.data
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
+import io.kdmtracker.core.ruleset.MilestoneDefinition
+import io.kdmtracker.core.ruleset.PrincipleChoice
 import io.kdmtracker.core.ruleset.RulesetOverrides
 import io.kdmtracker.data.db.KdmDatabase
 import kotlin.test.Test
@@ -17,8 +21,11 @@ import kotlin.test.assertNull
 class SqlDelightCampaignStoreTest {
     private fun ulid(seed: Long): Ulid = Ulid.generate(seed) { 0 }
 
-    private fun inMemoryDatabase(): KdmDatabase =
-        KdmDatabaseFactory.create(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
+    private fun inMemoryDatabase(): KdmDatabase {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        KdmDatabase.Schema.create(driver)
+        return KdmDatabase(driver)
+    }
 
     private fun campaign(
         seed: Long,
@@ -120,5 +127,53 @@ class SqlDelightCampaignStoreTest {
         )
 
         assertEquals(listOf(live), store.loadSnapshots().map { it.campaign })
+    }
+
+    @Test
+    fun softDeletedSettlementsAreExcludedFromSnapshots() {
+        val database = inMemoryDatabase()
+        val store = SqlDelightCampaignStore(database)
+        val parent = campaign(1)
+        val live = settlement(2, parent.id, name = "Live")
+        val removed = settlement(3, parent.id, name = "Removed")
+        store.upsertCampaign(parent)
+        store.upsertSettlement(live)
+        store.upsertSettlement(
+            removed.copy(
+                sync = removed.sync.copy(deletedAt = HybridLogicalClock(1_700_000_002_000, 0)),
+            ),
+        )
+
+        val snapshot = store.loadSnapshots().single()
+        assertEquals(listOf(live), snapshot.settlements)
+        assertEquals(listOf(live.id), snapshot.campaign.settlementIds)
+    }
+
+    @Test
+    fun roundTripsRulesetOverridesWithMilestonesAndPrinciples() {
+        val database = inMemoryDatabase()
+        val store = SqlDelightCampaignStore(database)
+        val overrides =
+            RulesetOverrides(
+                survivalLimit = 9,
+                specialShowdownStep = 8,
+                extraMilestones =
+                    listOf(
+                        MilestoneDefinition(MilestoneKey.GAME_OVER, "the population reaches zero"),
+                    ),
+                principleOverrides =
+                    mapOf(
+                        PrincipleCategory.DEATH to
+                            listOf(
+                                PrincipleChoice(PrincipleCategory.DEATH, "Grave Digger", "+1 endeavor"),
+                            ),
+                    ),
+            )
+        val parent = campaign(1).copy(rulesetOverrides = overrides)
+        store.upsertCampaign(parent)
+
+        val reloaded = store.loadSnapshots().single().campaign
+
+        assertEquals(overrides, reloaded.rulesetOverrides)
     }
 }

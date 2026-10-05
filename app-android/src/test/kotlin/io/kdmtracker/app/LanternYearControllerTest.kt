@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import io.kdmtracker.core.rules.SettlementStepCatalog
 import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.Ruleset
@@ -11,7 +12,7 @@ import kotlin.test.assertNull
 class LanternYearControllerTest {
     @Test
     fun initialStateIsTheOpeningSettlementStep() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         val state = controller.state.value
 
@@ -26,7 +27,7 @@ class LanternYearControllerTest {
 
     @Test
     fun exposesTheElevenSettlementStepsInOrder() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         assertEquals(SettlementStepCatalog.ALL, controller.state.value.steps)
         assertEquals(11, controller.state.value.steps.size)
@@ -34,7 +35,7 @@ class LanternYearControllerTest {
 
     @Test
     fun derivesStepsAndTitleFromTheInjectedRuleset() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()), SingleStepRuleset())
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()), SingleStepRuleset())
 
         val state = controller.state.value
 
@@ -78,7 +79,7 @@ class LanternYearControllerTest {
 
     @Test
     fun previousIsFlooredAtTheFirstStep() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         controller.previous()
 
@@ -87,7 +88,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepAppliesTheNextStep() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         controller.selectStep(2)
 
@@ -96,7 +97,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepIgnoresAStepThatSkipsForward() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         controller.selectStep(11)
 
@@ -114,7 +115,7 @@ class LanternYearControllerTest {
 
     @Test
     fun selectStepIgnoresNumbersOutsideTheRulesetRange() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         controller.selectStep(0)
         assertEquals(1, controller.state.value.currentStep)
@@ -125,13 +126,13 @@ class LanternYearControllerTest {
 
     @Test
     fun reachableStepsExposeOnlyEnterableSteps() {
-        val controller = LanternYearController(SettlementRepository(FakeCampaignStore()))
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
         assertEquals(setOf(1, 2), controller.state.value.reachableSteps)
     }
 
     private fun controllerAt(step: Int): LanternYearController {
-        val repository = SettlementRepository(FakeCampaignStore())
+        val repository = SettlementRepository(InMemoryCampaignStore())
         repository.update(repository.settlement.copy(currentStep = step))
         return LanternYearController(repository)
     }

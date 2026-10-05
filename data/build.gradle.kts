@@ -33,11 +33,14 @@ kotlin {
             api(libs.sqldelight.runtime)
             implementation(libs.kotlinx.serialization.json)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
+        }
+        jvmTest {
+            kotlin.srcDir(rootProject.file("testing/shared-kotlin"))
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
         }
         androidMain.dependencies {
             api(libs.sqldelight.android.driver)
