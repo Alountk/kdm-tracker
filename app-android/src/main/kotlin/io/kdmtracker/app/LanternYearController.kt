@@ -31,12 +31,32 @@ class LanternYearController(
 
     /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
+        applyStep(FlowContext(ruleset = ruleset))
+    }
+
+    /**
+     * Records a failed hunt (for example a total party kill) and restarts the settlement year.
+     *
+     * The restart is produced entirely by `:core`'s hunt-failure branch; the controller only
+     * supplies the [FlowContext] that selects it, so the settlement re-enters at step 1.
+     */
+    fun failHunt() {
+        applyStep(FlowContext(ruleset = ruleset, huntFailed = true))
+    }
+
+    /**
+     * Runs one `:core` transition for [context] and mirrors the resulting settlement.
+     *
+     * This is the single path both [advance] and [failHunt] take; neither reimplements any step or
+     * phase rule — the target always comes from `:core`.
+     */
+    private fun applyStep(context: FlowContext) {
         val settlement = repository.settlement
         val result =
             AdvanceStep.run(
                 settlement = settlement,
                 returnedSurvivors = settlement.population,
-                context = FlowContext(ruleset = ruleset),
+                context = context,
             )
         repository.update(result.settlement)
         _state.value = uiState(result.settlement, result.transition.describe())
