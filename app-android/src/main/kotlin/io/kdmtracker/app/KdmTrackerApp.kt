@@ -8,16 +8,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
 
 @Composable
-fun KdmTrackerApp() {
-    val controller = remember { LanternYearController(SettlementRepository()) }
-    val state by controller.state.collectAsState()
+fun KdmTrackerApp(viewModel: LanternYearViewModel = viewModel()) {
+    val state by viewModel.state.collectAsState()
 
     MaterialTheme {
         Scaffold { innerPadding ->
@@ -31,19 +30,20 @@ fun KdmTrackerApp() {
                     Screen.Settlement ->
                         SettlementScreen(
                             state = state,
-                            onAdvance = controller::advance,
-                            onPrevious = controller::previous,
-                            onSelectStep = controller::selectStep,
+                            onAdvance = viewModel::advance,
+                            onPrevious = viewModel::previous,
+                            onSelectStep = viewModel::selectStep,
                         )
                     Screen.Hunt ->
                         HuntScreen(
                             state = state,
-                            onAdvance = controller::advance,
+                            onAdvance = viewModel::advance,
+                            onFail = viewModel::failHunt,
                         )
                     Screen.Showdown ->
                         ShowdownScreen(
                             state = state,
-                            onAdvance = controller::advance,
+                            onAdvance = viewModel::advance,
                         )
                 }
             }

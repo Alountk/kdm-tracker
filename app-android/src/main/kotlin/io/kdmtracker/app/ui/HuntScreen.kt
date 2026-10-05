@@ -3,11 +3,13 @@ package io.kdmtracker.app.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,12 +21,13 @@ import io.kdmtracker.app.UiState
  * Stateless Hunt Phase stub.
  *
  * The Hunt Phase has no screens yet, so this renders a prominent "Pendiente" marker and the
- * advance control; the real hunt flow arrives in a later plan. No state and no rules live here.
+ * resolve/fail controls; the real hunt flow arrives in a later plan. No state and no rules live here.
  */
 @Composable
 fun HuntScreen(
     state: UiState,
     onAdvance: () -> Unit,
+    onFail: () -> Unit,
 ) {
     Column(
         modifier =
@@ -48,8 +51,16 @@ fun HuntScreen(
         ) {
             PendientePlaceholder(modifier = Modifier.fillMaxWidth())
         }
-        Button(onClick = onAdvance, modifier = Modifier.fillMaxWidth()) {
-            Text("Advance")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(onClick = onFail, modifier = Modifier.weight(1f)) {
+                Text("Fail Hunt")
+            }
+            Button(onClick = onAdvance, modifier = Modifier.weight(1f)) {
+                Text("Advance")
+            }
         }
     }
 }
