@@ -22,10 +22,10 @@ data class SettlementStep(
 object SettlementSteps {
     const val TOTAL = SettlementStepCatalog.TOTAL
 
-    val ALL: List<SettlementStep> =
-        SettlementStepCatalog.ALL.map {
-            SettlementStep(it.number, it.title, it.summary, StepType.valueOf(it.type.name))
-        }
+    val ALL: List<SettlementStep> = SettlementStepCatalog.ALL.map { it.toServerStep() }
 
-    fun byNumber(number: Int): SettlementStep = ALL.first { it.number == number }
+    fun byNumber(number: Int): SettlementStep = SettlementStepCatalog.byNumber(number).toServerStep()
+
+    private fun io.kdmtracker.core.rules.SettlementStep.toServerStep(): SettlementStep =
+        SettlementStep(number, title, summary, StepType.valueOf(type.name))
 }
