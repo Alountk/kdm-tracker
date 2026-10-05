@@ -16,6 +16,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":core"))
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.spring.boot.starter.thymeleaf)
     implementation(libs.spring.boot.starter.data.jpa)
