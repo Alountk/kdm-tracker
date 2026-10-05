@@ -37,8 +37,8 @@ class AdvanceStepTest {
         )
 
     @Test
-    fun advancingFromStepSevenMovesToStepEightAndRecomputesEndeavors() {
-        val result = AdvanceStep.run(settlement(SettlementPhase.SETTLEMENT, 7, endeavors = 0), 3, context)
+    fun advancingWithinTheSettlementPhasePreservesTheUnspentPool() {
+        val result = AdvanceStep.run(settlement(SettlementPhase.SETTLEMENT, 7, endeavors = 4), 3, context)
 
         assertEquals(
             FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, 8)),
@@ -46,11 +46,11 @@ class AdvanceStepTest {
         )
         assertEquals(8, result.settlement.currentStep)
         assertEquals(SettlementPhase.SETTLEMENT, result.settlement.phase)
-        assertEquals(3, result.settlement.endeavors)
+        assertEquals(4, result.settlement.endeavors)
     }
 
     @Test
-    fun committingFromFinalStepDiscardsUnspentEndeavorsAndMovesToHunt() {
+    fun committingFromFinalStepDiscardsTheUnspentPoolAndMovesToHunt() {
         val result = AdvanceStep.run(settlement(SettlementPhase.SETTLEMENT, 11, endeavors = 5), 3, context)
 
         val commit = assertIs<FlowTransition.Commit>(result.transition)
@@ -58,5 +58,24 @@ class AdvanceStepTest {
         assertEquals(PhaseStep(SettlementPhase.HUNT, 1), commit.to)
         assertEquals(SettlementPhase.HUNT, result.settlement.phase)
         assertEquals(1, result.settlement.currentStep)
+        assertEquals(0, result.settlement.endeavors)
+    }
+
+    @Test
+    fun failedHuntStartsTheNewYearWithAnEmptyPool() {
+        val result =
+            AdvanceStep.run(
+                settlement(SettlementPhase.HUNT, 1, endeavors = 7),
+                0,
+                context.copy(huntFailed = true),
+            )
+
+        assertEquals(
+            FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, 1)),
+            result.transition,
+        )
+        assertEquals(SettlementPhase.SETTLEMENT, result.settlement.phase)
+        assertEquals(1, result.settlement.currentStep)
+        assertEquals(0, result.settlement.endeavors)
     }
 }
