@@ -33,4 +33,10 @@ interface CampaignStore {
 
     /** Inserts [settlement] or replaces the stored settlement sharing its id. */
     fun upsertSettlement(settlement: Settlement)
+
+    /**
+     * Runs [block] as one atomic unit: every write it performs commits together, and a failure
+     * rolls the whole unit back so no partially written aggregate is ever observable.
+     */
+    fun <T> transaction(block: () -> T): T
 }
