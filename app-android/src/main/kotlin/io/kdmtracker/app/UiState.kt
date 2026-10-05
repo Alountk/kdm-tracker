@@ -22,5 +22,6 @@ data class UiState(
     val population: Int,
     val endeavors: Int,
     val steps: List<SettlementStep>,
+    val reachableSteps: Set<Int>,
     val lastTransition: String?,
 )

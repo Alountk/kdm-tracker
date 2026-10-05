@@ -1,6 +1,5 @@
 package io.kdmtracker.app.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -18,9 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.rules.SettlementStep
+
+/** Standard Material disabled alpha, so an unreachable step reads as non-interactive. */
+private const val DISABLED_ALPHA = 0.38f
 
 /**
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
@@ -53,6 +58,7 @@ fun SettlementScreen(
             SettlementStepRail(
                 steps = state.steps,
                 currentStep = state.currentStep,
+                reachableSteps = state.reachableSteps,
                 onSelectStep = onSelectStep,
                 modifier =
                     Modifier
@@ -107,6 +113,7 @@ private fun SettlementHeader(state: UiState) {
 private fun SettlementStepRail(
     steps: List<SettlementStep>,
     currentStep: Int,
+    reachableSteps: Set<Int>,
     onSelectStep: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,6 +125,7 @@ private fun SettlementStepRail(
             SettlementStepRailItem(
                 step = step,
                 selected = step.number == currentStep,
+                enabled = step.number in reachableSteps,
                 onClick = { onSelectStep(step.number) },
             )
         }
@@ -128,6 +136,7 @@ private fun SettlementStepRail(
 private fun SettlementStepRailItem(
     step: SettlementStep,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val containerColor =
@@ -146,7 +155,13 @@ private fun SettlementStepRailItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
+                .selectable(
+                    selected = selected,
+                    enabled = enabled,
+                    role = Role.Tab,
+                    onClick = onClick,
+                ),
         color = containerColor,
         contentColor = contentColor,
         shape = MaterialTheme.shapes.small,
@@ -165,37 +180,6 @@ private fun SettlementStepRailItem(
                 text = step.title,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 2,
-            )
-        }
-    }
-}
-
-/**
- * The shared "Pendiente" marker for any step whose real screen arrives in a later plan.
- *
- * Declared once so every skeleton screen renders the same non-empty placeholder; callers pass a
- * [Modifier] to size or center it for their own layout.
- */
-@Composable
-internal fun PendientePlaceholder(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(text = "Pendiente", style = MaterialTheme.typography.titleLarge)
-            Text(
-                text = "This screen is not implemented yet.",
-                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }

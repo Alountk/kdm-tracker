@@ -4,7 +4,8 @@ import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.rules.FlowContext
 import io.kdmtracker.core.rules.FlowTransition
-import io.kdmtracker.core.rules.SettlementStepCatalog
+import io.kdmtracker.core.rules.LanternYearFlow
+import io.kdmtracker.core.rules.PhaseStep
 import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AdvanceStep
@@ -74,9 +75,17 @@ class LanternYearController(
         moveToStep(settlement.currentStep - 1)
     }
 
-    /** Jumps to [number] when it is a valid settlement step, otherwise a no-op. */
+    /**
+     * Jumps to [number] when `:core`'s flow allows entering it from the current position.
+     *
+     * The gate is [LanternYearFlow.canEnterStep]: a step may not be skipped forward (step 11 from
+     * step 1 is ignored), while revisiting the current step or any earlier one is allowed. The
+     * controller never decides this itself.
+     */
     fun selectStep(number: Int) {
-        if (number !in 1..SettlementStepCatalog.TOTAL) return
+        val settlement = repository.settlement
+        val from = PhaseStep(settlement.phase, settlement.currentStep)
+        if (!LanternYearFlow.canEnterStep(number, from, FlowContext(ruleset = ruleset))) return
         moveToStep(number)
     }
 
@@ -89,18 +98,30 @@ class LanternYearController(
     private fun uiState(
         settlement: Settlement,
         lastTransition: String?,
-    ): UiState =
-        UiState(
+    ): UiState {
+        val from = PhaseStep(settlement.phase, settlement.currentStep)
+        val context = FlowContext(ruleset = ruleset)
+        return UiState(
             screen = settlement.phase.toScreen(),
             lanternYear = settlement.lanternYear,
             phase = settlement.phase,
             currentStep = settlement.currentStep,
-            stepTitle = SettlementStepCatalog.byNumber(settlement.currentStep).title,
+            stepTitle =
+                ruleset.settlementSteps
+                    .firstOrNull { it.number == settlement.currentStep }
+                    ?.title
+                    .orEmpty(),
             population = settlement.population,
             endeavors = settlement.endeavors,
-            steps = SettlementStepCatalog.ALL,
+            steps = ruleset.settlementSteps,
+            reachableSteps =
+                ruleset.settlementSteps
+                    .filter { LanternYearFlow.canEnterStep(it.number, from, context) }
+                    .map { it.number }
+                    .toSet(),
             lastTransition = lastTransition,
         )
+    }
 }
 
 private fun SettlementPhase.toScreen(): Screen =
