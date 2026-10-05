@@ -6,6 +6,10 @@ dependencyManagement = "1.1.7"
 kotlinxSerialization = "1.11.0"
 kotlinxDatetime = "0.8.0-0.6.x-compat"
 kotlinxCoroutines = "1.11.0"
+agp = "9.4.1"
+android-compileSdk = "36"
+android-minSdk = "24"
+android-targetSdk = "36"
 
 [libraries]
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
@@ -32,3 +36,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 dependency-management = { id = "io.spring.dependency-management", version.ref = "dependencyManagement" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+android-library = { id = "com.android.library", version.ref = "agp" }
