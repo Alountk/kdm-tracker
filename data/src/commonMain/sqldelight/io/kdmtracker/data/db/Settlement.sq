@@ -20,6 +20,3 @@ INSERT OR REPLACE INTO settlement VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 
 selectSettlementsByCampaign:
 SELECT * FROM settlement WHERE campaignId = ? AND deletedAtMillis IS NULL;
-
-selectSettlementById:
-SELECT * FROM settlement WHERE id = ?;

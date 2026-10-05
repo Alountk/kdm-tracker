@@ -15,6 +15,3 @@ INSERT OR REPLACE INTO campaign VALUES (?,?,?,?,?,?,?,?,?);
 
 selectAllCampaigns:
 SELECT * FROM campaign WHERE deletedAtMillis IS NULL;
-
-selectCampaignById:
-SELECT * FROM campaign WHERE id = ?;

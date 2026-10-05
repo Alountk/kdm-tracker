@@ -1,25 +1,28 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.Campaign
-import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
 import io.kdmtracker.core.persistence.CampaignStore
+import io.kdmtracker.core.persistence.SyncClock
 import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.RulesetOverrides
 
 /**
  * Holder of the campaign and settlement the UI currently renders, backed by a [CampaignStore].
  *
- * On construction it loads the first stored snapshot. If the store is empty it seeds a single
- * "Walking Skeleton" campaign and its first settlement and writes them through the store, so a
- * fresh device starts with state the UI can draw. [update] writes the new settlement through the
- * store and exposes it. No rules or sync logic live here; the controller drives the loop.
+ * On construction it loads the first stored snapshot. If the store is empty — or a campaign exists
+ * with no live settlement, which can only result from an interrupted seed — it seeds a single
+ * "Walking Skeleton" campaign and its first settlement atomically through the store. [update]
+ * stamps the incoming settlement with a fresh [SyncClock] value and an incremented revision before
+ * writing, so last-write-wins has an ordering signal. No rules live here; the controller drives the
+ * loop.
  */
 class SettlementRepository(
     private val store: CampaignStore,
+    private val clock: SyncClock = SyncClock.system(),
 ) {
     val campaign: Campaign
 
@@ -27,21 +30,33 @@ class SettlementRepository(
         private set
 
     init {
-        val existing = store.loadSnapshots().firstOrNull() ?: seed()
-        campaign = existing.campaign
-        settlement = existing.settlements.first()
+        val existing = store.loadSnapshots().firstOrNull()
+        val snapshot = if (existing == null || existing.settlements.isEmpty()) seed() else existing
+        campaign = snapshot.campaign
+        settlement = snapshot.settlements.first()
     }
 
     fun update(next: Settlement) {
-        store.upsertSettlement(next)
-        settlement = next
+        val previous = settlement.sync
+        val stamped =
+            next.copy(
+                sync =
+                    next.sync.copy(
+                        updatedAt = clock.tick(previous.updatedAt),
+                        rev = previous.rev + 1,
+                    ),
+            )
+        store.upsertSettlement(stamped)
+        settlement = stamped
     }
 
     /**
-     * Writes the sample campaign and settlement and returns them as the initial snapshot.
+     * Writes the sample campaign and settlement in one transaction and returns them as the initial
+     * snapshot.
      *
-     * Only called when the store has no snapshots, so the write is idempotent across runs: a
-     * second construction over the same store loads the persisted state instead of reseeding.
+     * The campaign and its settlement commit together, so a crash cannot leave a campaign row with
+     * no settlement behind. A later construction that finds such an orphan reseeds over it rather
+     * than crashing.
      */
     private fun seed(): CampaignSnapshot {
         val campaignId = Ulid.generate(0L) { 0 }
@@ -53,16 +68,16 @@ class SettlementRepository(
                 rulesetId = Core16Ruleset.id,
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
-                sync = SyncMeta(HybridLogicalClock(0, 0)),
+                sync = SyncMeta(clock.tick(null), rev = 1),
             )
         val settlement =
-            Settlement.new(
-                id = settlementId,
-                campaignId = campaignId,
-                name = "New Settlement",
-            )
-        store.upsertCampaign(campaign)
-        store.upsertSettlement(settlement)
+            Settlement
+                .new(id = settlementId, campaignId = campaignId, name = "New Settlement")
+                .copy(sync = SyncMeta(clock.tick(null), rev = 1))
+        store.transaction {
+            store.upsertCampaign(campaign)
+            store.upsertSettlement(settlement)
+        }
         return CampaignSnapshot(campaign, listOf(settlement))
     }
 }

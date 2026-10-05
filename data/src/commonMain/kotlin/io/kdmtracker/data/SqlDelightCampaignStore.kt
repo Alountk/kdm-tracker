@@ -77,6 +77,8 @@ class SqlDelightCampaignStore(
         )
     }
 
+    override fun <T> transaction(block: () -> T): T = database.transactionWithResult { block() }
+
     private fun CampaignRow.toDomain(settlementIds: List<Ulid>): Campaign =
         Campaign(
             id = Ulid.parse(id),
