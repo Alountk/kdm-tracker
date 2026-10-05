@@ -32,31 +32,43 @@ class LanternYearController(
 
     /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
-        applyStep(FlowContext(ruleset = ruleset))
+        applyStep(
+            returnees = repository.settlement.population,
+            context = FlowContext(ruleset = ruleset),
+        )
     }
 
     /**
      * Records a failed hunt (for example a total party kill) and restarts the settlement year.
      *
      * The restart is produced entirely by `:core`'s hunt-failure branch; the controller only
-     * supplies the [FlowContext] that selects it, so the settlement re-enters at step 1.
+     * supplies the [FlowContext] that selects it, so the settlement re-enters at step 1. No
+     * survivors return from a failed hunt, so [returnees] is zero.
      */
     fun failHunt() {
-        applyStep(FlowContext(ruleset = ruleset, huntFailed = true))
+        applyStep(
+            returnees = 0,
+            context = FlowContext(ruleset = ruleset, huntFailed = true),
+        )
     }
 
     /**
-     * Runs one `:core` transition for [context] and mirrors the resulting settlement.
+     * Runs one `:core` transition for [context] with [returnees] returning survivors and mirrors
+     * the resulting settlement.
      *
      * This is the single path both [advance] and [failHunt] take; neither reimplements any step or
-     * phase rule — the target always comes from `:core`.
+     * phase rule — the target always comes from `:core`. The returnee count is passed through so a
+     * TPK can express "0 returning survivors" instead of silently reusing the population.
      */
-    private fun applyStep(context: FlowContext) {
+    private fun applyStep(
+        returnees: Int,
+        context: FlowContext,
+    ) {
         val settlement = repository.settlement
         val result =
             AdvanceStep.run(
                 settlement = settlement,
-                returnedSurvivors = settlement.population,
+                returnedSurvivors = returnees,
                 context = context,
             )
         repository.update(result.settlement)

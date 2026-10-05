@@ -72,4 +72,24 @@ class LanternYearLoopTest {
         assertEquals(SettlementPhase.SETTLEMENT, state.phase)
         assertEquals(1, state.currentStep)
     }
+
+    @Test
+    fun aFailedHuntDiscardsUnspentEndeavors() {
+        val repository = SettlementRepository()
+        repository.update(
+            repository.settlement.copy(
+                phase = SettlementPhase.HUNT,
+                currentStep = 1,
+                endeavors = 3,
+            ),
+        )
+        val controller = LanternYearController(repository)
+
+        controller.failHunt()
+
+        val state = controller.state.value
+        assertEquals(SettlementPhase.SETTLEMENT, state.phase)
+        assertEquals(1, state.currentStep)
+        assertEquals(0, state.endeavors)
+    }
 }
