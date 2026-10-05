@@ -160,12 +160,14 @@ kdm-tracker/
 │   └── src/
 │       ├── commonMain/
 │       │   ├── kotlin/io/kdmtracker/data/
-│       │   │   ├── KdmDatabaseFactory.kt       # idempotent schema creation over any driver
 │       │   │   └── SqlDelightCampaignStore.kt  # :core CampaignStore port over the generated DB
 │       │   └── sqldelight/io/kdmtracker/data/db/
 │       │       ├── Campaign.sq                 # campaign table + sync columns
 │       │       └── Settlement.sq               # settlement table + sync columns
-│       └── jvmTest/kotlin/io/kdmtracker/data/  # driver + campaign-store tests
+│       ├── androidMain/kotlin/io/kdmtracker/data/
+│       │   └── KdmDatabaseFactory.kt           # opens the on-device DB; driver owns migrations
+│       └── jvmTest/kotlin/io/kdmtracker/data/  # schema, store, contract and durability tests
+├── testing/shared-kotlin/             # shared CampaignStore contract + in-memory fake (test-only)
 ├── server/                            # Spring Boot app (web, persistence, seeding)
 │   ├── build.gradle.kts
 │   ├── Dockerfile                     # Multi-stage: build+test+lint gate, non-root runtime with /app/data
@@ -240,8 +242,9 @@ kdm-tracker/
 ```
 
 The `:core` suite is pure Kotlin unit tests (domain invariants, the lantern-year flow, the ruleset
-seam and the transfer mapper). The `:data` suite exercises the SQLDelight schema and the
-`SqlDelightCampaignStore` against an in-memory driver. The `:app-android` suite covers the
+seam and the transfer mapper). The `:data` suite runs the shared `CampaignStore` contract against
+`SqlDelightCampaignStore` over a temp-file database, plus schema, soft-delete, JSON round-trip and
+reopen-durability tests. The `:app-android` suite covers the
 lantern-year controller, the end-to-end loop and the store-backed settlement repository. The
 `:server` suite boots the app with
 `@SpringBootTest` + MockMvc against an in-memory H2 database and runs without sleeps:
