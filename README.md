@@ -21,26 +21,43 @@ The in-game session companion is planned for a later milestone (v2).
 ## Requirements
 
 - JDK 21+ (the build targets 21; any newer JDK works — the local daemon here runs on JDK 25)
+- Android SDK (command-line tools) — **required for every Gradle invocation**, not only the app
 - Docker (optional, for the container workflow)
 
 No global Gradle install is required — use the committed wrapper (`./gradlew`).
 
-### Android (`:app-android`)
+### Android SDK (repo-wide build prerequisite)
 
-Building the app requires the Android SDK (command-line tools). This workspace uses SDK root
-`/opt/homebrew/share/android-commandlinetools` with:
+`:core` applies the Android Gradle Plugin to publish its `androidTarget`, so **the Android SDK is a
+prerequisite for the whole repository**. Without it, even the JVM-only tasks fail at configuration:
+`./gradlew :core:jvmTest`, `./gradlew :server:test` and `./gradlew build` all abort before running a
+single test. Set the SDK up first.
 
-- `platform-tools`
-- `platforms;android-37.0`
+Required SDK packages (install with `sdkmanager`):
+
+- `platform-tools` (adb)
+- `platforms;android-37.0` (compileSdk 37)
 - `build-tools;36.0.0`
 
-Point Gradle at it with a repository-root `local.properties` (git-ignored — never commit it):
+Point Gradle at the SDK in either of two ways:
 
-```properties
-sdk.dir=/opt/homebrew/share/android-commandlinetools
-```
+1. **`ANDROID_HOME`** environment variable (portable; recommended for CI):
 
-The module uses the same JDK 21 toolchain and Gradle 9.7.1 wrapper as the rest of the repo.
+   ```bash
+   export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+   ```
+
+2. **`local.properties`** at the repository root (git-ignored — never commit it), for a
+   machine-local path:
+
+   ```properties
+   sdk.dir=/opt/homebrew/share/android-commandlinetools
+   ```
+
+`ANDROID_SDK_ROOT` is accepted as a legacy alias, but `ANDROID_HOME` is preferred. This workspace
+uses SDK root `/opt/homebrew/share/android-commandlinetools`.
+
+The app module uses the same JDK 21 toolchain and Gradle 9.7.1 wrapper as the rest of the repo.
 
 ## Quickstart (local)
 
