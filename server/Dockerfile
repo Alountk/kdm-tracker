@@ -9,10 +9,9 @@ COPY build.gradle.kts settings.gradle.kts ./
 
 RUN ./gradlew --no-daemon --version
 
-COPY .editorconfig ./
-COPY src/ src/
+COPY server/ server/
 
-RUN ./gradlew --no-daemon build spotlessCheck
+RUN ./gradlew --no-daemon :server:bootJar
 
 # Stage 2: runtime
 FROM eclipse-temurin:21-jre AS runtime
@@ -22,7 +21,7 @@ WORKDIR /app
 RUN groupadd --system app && useradd --system --gid app --home /app app \
     && mkdir -p /app/data && chown app:app /app/data
 
-COPY --from=build --chown=app:app /app/build/libs/kdm-tracker.jar /app/app.jar
+COPY --from=build --chown=app:app /app/server/build/libs/kdm-tracker.jar /app/app.jar
 
 USER app
 
