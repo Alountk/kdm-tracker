@@ -2,6 +2,8 @@ package io.kdmtracker.core.rules
 
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.ruleset.Core16Ruleset
+import io.kdmtracker.core.ruleset.RulesetOverrides
+import io.kdmtracker.core.ruleset.applyOverrides
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -29,6 +31,18 @@ class LanternYearFlowBranchesTest {
         assertEquals(
             FlowTransition.LoopBack(PhaseStep(SettlementPhase.SETTLEMENT, 5)),
             fromSettlement(9, FlowContext(Core16Ruleset, hasSpecialShowdown = true)),
+        )
+    }
+
+    @Test
+    fun showdownAnchorAndLoopBackTargetComeFromTheRuleset() {
+        val ruleset =
+            Core16Ruleset.applyOverrides(
+                RulesetOverrides(specialShowdownStep = 8, deathCountStep = 3),
+            )
+        assertEquals(
+            FlowTransition.LoopBack(PhaseStep(SettlementPhase.SETTLEMENT, 3)),
+            fromSettlement(8, FlowContext(ruleset, hasSpecialShowdown = true)),
         )
     }
 

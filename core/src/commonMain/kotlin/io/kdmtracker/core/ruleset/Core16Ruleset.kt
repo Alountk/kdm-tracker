@@ -18,6 +18,10 @@ object Core16Ruleset : Ruleset {
     override val version: String = "1.6"
     override val settlementSteps: List<SettlementStep> = SettlementStepCatalog.ALL
 
+    override val specialShowdownStep: Int = 9
+    override val deathCountStep: Int = 5
+    override val endeavorsPerReturnee: Int = 1
+
     /**
      * The 1.6 baseline survival limit for a new settlement.
      *

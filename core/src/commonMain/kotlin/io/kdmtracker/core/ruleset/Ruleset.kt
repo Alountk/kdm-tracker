@@ -27,6 +27,16 @@ interface Ruleset {
     val id: String
     val version: String
     val settlementSteps: List<SettlementStep>
+
+    /** Settlement step number of the Special Showdown (rulebook 1.6: 9). */
+    val specialShowdownStep: Int
+
+    /** Settlement step number the Special Showdown loops back to (rulebook 1.6: 5). */
+    val deathCountStep: Int
+
+    /** Endeavors earned per returning survivor at the Gain Endeavors step (rulebook 1.6: 1). */
+    val endeavorsPerReturnee: Int
+
     val survivalLimit: Int
     val milestones: List<MilestoneDefinition>
     val principles: Map<PrincipleCategory, List<PrincipleChoice>>
@@ -36,12 +46,15 @@ interface Ruleset {
  * Returns a new [Ruleset] with [overrides] applied, leaving this receiver unchanged.
  *
  * A no-op [overrides] (all defaults) short-circuits and returns this exact instance.
- * Otherwise the survival limit is replaced when set, [RulesetOverrides.extraMilestones]
+ * Otherwise each scalar field is replaced when set, [RulesetOverrides.extraMilestones]
  * are appended to the base milestones, and [RulesetOverrides.principleOverrides] replace
  * whole per-category choice lists while untouched categories are kept.
  */
 fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
     if (overrides.survivalLimit == null &&
+        overrides.specialShowdownStep == null &&
+        overrides.deathCountStep == null &&
+        overrides.endeavorsPerReturnee == null &&
         overrides.extraMilestones.isEmpty() &&
         overrides.principleOverrides.isEmpty()
     ) {
@@ -51,6 +64,9 @@ fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
         id = id,
         version = version,
         settlementSteps = settlementSteps,
+        specialShowdownStep = overrides.specialShowdownStep ?: specialShowdownStep,
+        deathCountStep = overrides.deathCountStep ?: deathCountStep,
+        endeavorsPerReturnee = overrides.endeavorsPerReturnee ?: endeavorsPerReturnee,
         survivalLimit = overrides.survivalLimit ?: survivalLimit,
         milestones = milestones + overrides.extraMilestones,
         principles = principles + overrides.principleOverrides,
@@ -61,6 +77,9 @@ private data class OverrideRuleset(
     override val id: String,
     override val version: String,
     override val settlementSteps: List<SettlementStep>,
+    override val specialShowdownStep: Int,
+    override val deathCountStep: Int,
+    override val endeavorsPerReturnee: Int,
     override val survivalLimit: Int,
     override val milestones: List<MilestoneDefinition>,
     override val principles: Map<PrincipleCategory, List<PrincipleChoice>>,

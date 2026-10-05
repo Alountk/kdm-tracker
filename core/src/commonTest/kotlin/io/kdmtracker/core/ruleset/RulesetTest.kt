@@ -18,6 +18,45 @@ class RulesetTest {
     }
 
     @Test
+    fun stepCatalogParityWithCore16Ruleset() {
+        assertEquals(SettlementStepCatalog.ALL, Core16Ruleset.settlementSteps)
+        assertEquals(SettlementStepCatalog.TOTAL, Core16Ruleset.settlementSteps.size)
+    }
+
+    @Test
+    fun core16UsesOfficialStepAnchorsAndEndeavorRate() {
+        assertEquals(9, Core16Ruleset.specialShowdownStep)
+        assertEquals(5, Core16Ruleset.deathCountStep)
+        assertEquals(1, Core16Ruleset.endeavorsPerReturnee)
+    }
+
+    @Test
+    fun ruleAnchorsAndEndeavorRateAreOverridableWithoutMutatingBase() {
+        val overridden =
+            Core16Ruleset.applyOverrides(
+                RulesetOverrides(
+                    specialShowdownStep = 10,
+                    deathCountStep = 6,
+                    endeavorsPerReturnee = 2,
+                ),
+            )
+        assertEquals(10, overridden.specialShowdownStep)
+        assertEquals(6, overridden.deathCountStep)
+        assertEquals(2, overridden.endeavorsPerReturnee)
+        assertEquals(9, Core16Ruleset.specialShowdownStep)
+        assertEquals(5, Core16Ruleset.deathCountStep)
+        assertEquals(1, Core16Ruleset.endeavorsPerReturnee)
+    }
+
+    @Test
+    fun partialRuleOverrideKeepsOtherAnchorsFromBase() {
+        val overridden = Core16Ruleset.applyOverrides(RulesetOverrides(endeavorsPerReturnee = 3))
+        assertEquals(3, overridden.endeavorsPerReturnee)
+        assertEquals(9, overridden.specialShowdownStep)
+        assertEquals(5, overridden.deathCountStep)
+    }
+
+    @Test
     fun core16HasFiveOfficialMilestones() {
         assertEquals(5, Core16Ruleset.milestones.size)
         assertEquals(

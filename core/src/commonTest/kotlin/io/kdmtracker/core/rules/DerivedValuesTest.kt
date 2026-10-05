@@ -39,6 +39,14 @@ class DerivedValuesTest {
     }
 
     @Test
+    fun endeavorsForUsesTheRulesetRatePerReturnee() {
+        val ruleset = Core16Ruleset.applyOverrides(RulesetOverrides(endeavorsPerReturnee = 2))
+        val breakdown = DerivedValues.endeavorsFor(3, ruleset)
+        assertEquals(6, breakdown.base)
+        assertEquals(6, breakdown.total)
+    }
+
+    @Test
     fun recomputeDiscardsStaleEndeavorsAndUsesReturnedSurvivors() {
         val recomputed = recompute(settlement(endeavors = 99), returnedSurvivors = 2, ruleset = Core16Ruleset)
         assertEquals(2, recomputed.endeavors)

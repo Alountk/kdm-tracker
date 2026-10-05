@@ -27,14 +27,19 @@ object DerivedValues {
     /**
      * Endeavors earned this lantern year for [returnedSurvivors].
      *
-     * The rule is one endeavor per returning survivor. Bonuses are deliberately
-     * empty: no innovation or principle model exists yet, so the [EndeavorBreakdown.bonuses]
-     * list is the seam future rules plug into rather than a hardcoded number.
+     * The base is `returnedSurvivors * ruleset.endeavorsPerReturnee`. Bonuses are
+     * deliberately empty: no innovation or principle model exists yet, so the
+     * [EndeavorBreakdown.bonuses] list is the seam future rules plug into rather than a
+     * hardcoded number.
      */
     fun endeavorsFor(
         returnedSurvivors: Int,
         ruleset: Ruleset,
-    ): EndeavorBreakdown = EndeavorBreakdown(base = returnedSurvivors, bonuses = emptyList())
+    ): EndeavorBreakdown =
+        EndeavorBreakdown(
+            base = returnedSurvivors * ruleset.endeavorsPerReturnee,
+            bonuses = emptyList(),
+        )
 
     /** Survival limit: the ruleset base plus any [innovationBonus]. */
     fun survivalLimit(

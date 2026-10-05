@@ -31,14 +31,6 @@ data class FlowContext(
  * outside `1..total`), never for a legitimate phase transition.
  */
 object LanternYearFlow {
-    /**
-     * Rulebook anchors inside the Settlement phase: step 9 is the Special Showdown and
-     * step 5 is the death-count update it loops back to. The steps' content lives in
-     * [SettlementStepCatalog]; only their positions are needed here.
-     */
-    private const val SPECIAL_SHOWDOWN_STEP = 9
-    private const val DEATH_COUNT_STEP = 5
-
     fun next(
         current: PhaseStep,
         context: FlowContext,
@@ -59,8 +51,8 @@ object LanternYearFlow {
             return FlowTransition.Blocked("unknown settlement step $step")
         }
         return when {
-            step == SPECIAL_SHOWDOWN_STEP && context.hasSpecialShowdown ->
-                FlowTransition.LoopBack(PhaseStep(SettlementPhase.SETTLEMENT, DEATH_COUNT_STEP))
+            step == context.ruleset.specialShowdownStep && context.hasSpecialShowdown ->
+                FlowTransition.LoopBack(PhaseStep(SettlementPhase.SETTLEMENT, context.ruleset.deathCountStep))
 
             step < total ->
                 FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, step + 1))
