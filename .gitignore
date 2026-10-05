@@ -6,4 +6,8 @@ build/
 local.properties
 .kotlin/
 out/
-data/
+
+# Server H2 file-database artifacts (the :data/ directory is a tracked KMP module)
+**/data/*.mv.db
+**/data/*.trace.db
+**/data/*.lock.db

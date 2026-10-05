@@ -1,6 +1,7 @@
 package io.kdmtracker.core.ruleset
 
 import io.kdmtracker.core.domain.PrincipleCategory
+import kotlinx.serialization.Serializable
 
 /**
  * Per-campaign overrides applied on top of a base [Ruleset].
@@ -8,6 +9,7 @@ import io.kdmtracker.core.domain.PrincipleCategory
  * Every field defaults to "no change", so `RulesetOverrides()` is a no-op and
  * [applyOverrides] returns the base ruleset unchanged.
  */
+@Serializable
 data class RulesetOverrides(
     val survivalLimit: Int? = null,
     val specialShowdownStep: Int? = null,

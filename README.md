@@ -13,7 +13,8 @@ The in-game session companion is planned for a later milestone (v2).
 | Kotlin      | 2.3.21                                                  |
 | Gradle      | 9.7.1 (wrapper, Kotlin DSL)                             |
 | JDK         | Target 21 LTS (via `jvmToolchain(21)`); local daemon runs on JDK 25 |
-| Persistence | Spring Data JPA + H2 file database (in `./data/`)       |
+| Persistence (server) | Spring Data JPA + H2 file database (in `./data/`) |
+| Persistence (app)    | SQLDelight (SQLite) in `:data` — typed on-device mirror of `:core` |
 | Views       | Thymeleaf (server-side rendering)                       |
 | Android app | Compose Multiplatform 1.12.1 + Material 3 (AGP 9.4.1)   |
 | Lint        | ktlint via Spotless (`com.diffplug.spotless`) 7.0.4     |
@@ -109,8 +110,9 @@ database — campaign data survives container replacement.
 
 The `:app-android` module is a Compose Multiplatform Android app that consumes `:core`. It is
 currently a **walking skeleton**: a navigable lantern-year loop (Settlement → Hunt → Showdown)
-driven by `:core` rules, with "Pendiente" stubs for the step bodies — offline persistence and the
-real step UIs arrive in later plans.
+driven by `:core` rules, with "Pendiente" stubs for the step bodies. State now persists locally
+through `:data` (see [Persistence](#persistence)); network sync and the real step UIs arrive in
+later plans.
 
 Build the debug APK:
 
@@ -124,6 +126,19 @@ Install it on a connected device or emulator:
 ```bash
 adb install -r app-android/build/outputs/apk/debug/app-debug.apk
 ```
+
+## Persistence
+
+The Android app is **offline-first**: campaigns and settlements are stored locally on the device
+through SQLDelight (SQLite), behind the `:core` `CampaignStore` port and implemented by
+`SqlDelightCampaignStore` in `:data`. `:core` stays pure — it declares the port and the domain and
+owns no database dependency. The on-device database is `kdm-tracker.db`, created in the app's
+private storage (`/data/data/io.kdmtracker.app/databases/`) and seeded with a sample campaign on
+first launch.
+
+Every table carries sync columns (`updatedAtMillis`, `updatedAtCounter`, `rev`, `deletedAtMillis`,
+`deletedAtCounter`) so records can be reconciled later. The **outbox**, **sync cursor**, and the
+network pull/push engine are the next plan (3b); this milestone only persists locally.
 
 ## Project structure
 
@@ -140,6 +155,19 @@ kdm-tracker/
 │       │   ├── transfer/              # TransferDocument/TransferMapper (schema v3)
 │       │   └── usecase/               # AdvanceStep (lantern-year transition use case)
 │       └── commonTest/kotlin/io/kdmtracker/core/  # unit tests for the above
+├── data/                              # SQLDelight local persistence (Kotlin multiplatform: jvm + android)
+│   ├── build.gradle.kts
+│   └── src/
+│       ├── commonMain/
+│       │   ├── kotlin/io/kdmtracker/data/
+│       │   │   └── SqlDelightCampaignStore.kt  # :core CampaignStore port over the generated DB
+│       │   └── sqldelight/io/kdmtracker/data/db/
+│       │       ├── Campaign.sq                 # campaign table + sync columns
+│       │       └── Settlement.sq               # settlement table + sync columns
+│       ├── androidMain/kotlin/io/kdmtracker/data/
+│       │   └── KdmDatabaseFactory.kt           # opens the on-device DB; driver owns migrations
+│       └── jvmTest/kotlin/io/kdmtracker/data/  # schema, store, contract and durability tests
+├── testing/shared-kotlin/             # shared CampaignStore contract + in-memory fake (test-only)
 ├── server/                            # Spring Boot app (web, persistence, seeding)
 │   ├── build.gradle.kts
 │   ├── Dockerfile                     # Multi-stage: build+test+lint gate, non-root runtime with /app/data
@@ -167,15 +195,16 @@ kdm-tracker/
 │       │       ├── MainActivity.kt          # ComponentActivity entry point
 │       │       ├── KdmTrackerApp.kt         # root composable; renders by state.screen
 │       │       ├── LanternYearController.kt # plain-Kotlin loop state machine over :core
-│       │       ├── SettlementRepository.kt  # in-memory settlement holder
+│       │       ├── LanternYearViewModel.kt  # retains the loop; opens the on-device SQLDelight DB
+│       │       ├── SettlementRepository.kt  # settlement/campaign holder backed by CampaignStore
 │       │       ├── UiState.kt               # UiState + Screen sealed interface
 │       │       └── ui/                      # stateless Compose screens (Settlement/Hunt/Showdown)
-│       └── test/kotlin/io/kdmtracker/app/   # controller, loop and repository unit tests
+│       └── test/kotlin/io/kdmtracker/app/   # controller, loop and store-backed repository tests
 ├── .githooks/
 │   └── pre-commit                     # ./gradlew -q spotlessCheck (enable via git config)
 ├── .dockerignore                      # build-context root; ignores .git, build, data, .superpowers, ...
 ├── .editorconfig                      # drives ktlint (utf-8, indent 4, max line 120)
-├── .gitignore                         # ignores ./data (local H2 files), local.properties and build output
+├── .gitignore                         # ignores local H2 file artifacts, local.properties and build output
 ├── LICENSE
 ├── README.md
 ├── build.gradle.kts                   # root: applies Spotless to every subproject
@@ -183,7 +212,7 @@ kdm-tracker/
 ├── gradle/
 │   ├── libs.versions.toml             # version catalog (single source of versions)
 │   └── wrapper/                       # wrapper jar + properties
-└── settings.gradle.kts                # rootProjectName = kdm-tracker; includes :core, :server and :app-android
+└── settings.gradle.kts                # rootProjectName = kdm-tracker; includes :core, :data, :server and :app-android
 ```
 
 ## Scripts
@@ -193,6 +222,7 @@ kdm-tracker/
 | `./gradlew :server:bootRun` | Start the dev server | Runs the app on `PORT` (default 8080)        |
 | `./gradlew build`         | Compile + test + jar | Runs tests, lint, and assembles every module   |
 | `./gradlew :core:jvmTest` | Core tests           | Pure domain/rules/use-case unit tests          |
+| `./gradlew :data:jvmTest` | Data tests           | SQLDelight schema + campaign-store tests       |
 | `./gradlew :server:test`  | Server tests         | MockMvc smoke + entity flow tests              |
 | `./gradlew :app-android:assembleDebug` | Build debug APK | Compiles the app into `app-debug.apk`      |
 | `./gradlew :app-android:testDebugUnitTest` | App tests | Controller, loop and repository tests    |
@@ -208,12 +238,15 @@ kdm-tracker/
 ## Tests
 
 ```bash
-./gradlew :core:jvmTest :app-android:testDebugUnitTest :server:test
+./gradlew :core:jvmTest :data:jvmTest :app-android:testDebugUnitTest :server:test
 ```
 
 The `:core` suite is pure Kotlin unit tests (domain invariants, the lantern-year flow, the ruleset
-seam and the transfer mapper). The `:app-android` suite covers the lantern-year controller, the
-end-to-end loop and the in-memory settlement repository. The `:server` suite boots the app with
+seam and the transfer mapper). The `:data` suite runs the shared `CampaignStore` contract against
+`SqlDelightCampaignStore` over a temp-file database, plus schema, soft-delete, JSON round-trip and
+reopen-durability tests. The `:app-android` suite covers the
+lantern-year controller, the end-to-end loop and the store-backed settlement repository. The
+`:server` suite boots the app with
 `@SpringBootTest` + MockMvc against an in-memory H2 database and runs without sleeps:
 
 - Smoke: `GET /` renders the dashboard (200), `GET /health` returns `{"status":"ok"}`.

@@ -33,8 +33,11 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.coroutines.core)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+        commonTest {
+            kotlin.srcDir(rootProject.file("testing/shared-kotlin"))
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
         }
     }
 }

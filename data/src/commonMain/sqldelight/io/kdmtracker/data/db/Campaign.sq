@@ -1,0 +1,17 @@
+CREATE TABLE campaign (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  rulesetId TEXT NOT NULL,
+  rulesetOverridesJson TEXT NOT NULL,
+  updatedAtMillis INTEGER NOT NULL,
+  updatedAtCounter INTEGER NOT NULL,
+  rev INTEGER NOT NULL,
+  deletedAtMillis INTEGER,
+  deletedAtCounter INTEGER
+);
+
+upsertCampaign:
+INSERT OR REPLACE INTO campaign VALUES (?,?,?,?,?,?,?,?,?);
+
+selectAllCampaigns:
+SELECT * FROM campaign WHERE deletedAtMillis IS NULL;

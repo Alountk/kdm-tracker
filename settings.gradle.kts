@@ -17,4 +17,5 @@ rootProject.name = "kdm-tracker"
 
 include(":server")
 include(":core")
+include(":data")
 include(":app-android")

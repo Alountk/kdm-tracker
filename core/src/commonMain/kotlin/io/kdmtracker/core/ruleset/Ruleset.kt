@@ -3,14 +3,17 @@ package io.kdmtracker.core.ruleset
 import io.kdmtracker.core.domain.MilestoneKey
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.rules.SettlementStep
+import kotlinx.serialization.Serializable
 
 /** A milestone whose [condition] triggers a story event when reached. */
+@Serializable
 data class MilestoneDefinition(
     val key: MilestoneKey,
     val condition: String,
 )
 
 /** One selectable side of a principle story event, with its rulebook [effect]. */
+@Serializable
 data class PrincipleChoice(
     val category: PrincipleCategory,
     val label: String,
