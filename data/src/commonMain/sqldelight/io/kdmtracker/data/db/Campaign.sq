@@ -1,0 +1,7 @@
+CREATE TABLE campaign (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+selectAllCampaigns:
+SELECT * FROM campaign;
