@@ -21,3 +21,7 @@ deleteOutbox:
 DELETE FROM outbox
 WHERE campaignId = ? AND entityType = ? AND entityId = ?
   AND updatedAtMillis = ? AND updatedAtCounter = ?;
+
+deleteOutboxByKey:
+DELETE FROM outbox
+WHERE campaignId = ? AND entityType = ? AND entityId = ?;
