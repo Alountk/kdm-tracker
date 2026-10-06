@@ -254,6 +254,55 @@ who wants in calls `POST /api/v1/campaigns/join` with `{"inviteCode"}` and becom
 (joining is idempotent and never downgrades an existing member). Creating a campaign makes the
 caller its `OWNER` (see the endpoint table below).
 
+## Content packs
+
+Game content is **data, not code**. `:core` ships a modular content-catalog seam
+(`io.kdmtracker.core.content`) so the rules engine stays generic while the cards,
+locations, quarries, nemeses and resources a campaign can use live in selectable
+**content packs**. Nothing about the settlement record is hardcoded in `rules/`.
+
+A `ContentPack` is identified by a stable string id and declares what it provides:
+
+```kotlin
+@Serializable
+data class ContentPack(
+    val id: String,                 // e.g. "core-1.6", "gorm"
+    val version: String,
+    val name: String,
+    val requires: List<String> = emptyList(),   // pack ids that must also be enabled
+    val provideInnovations: List<String> = emptyList(),
+    val provideLocations: List<String> = emptyList(),
+    val provideQuarries: List<String> = emptyList(),
+    val provideNemeses: List<String> = emptyList(),
+    val provideResources: List<String> = emptyList(),
+)
+```
+
+Two pack kinds share one model:
+
+- **Edition packs** — a base game edition (`core-1.6`), with no `requires`.
+- **Expansion packs** — additions (e.g. `gorm`, `dragon-king`), declaring the packs
+  they build on via `requires`.
+
+`ContentCatalogComposer.compose(packs)` validates that every `requires` id is present
+(returning `CatalogResult.MissingRequirement` otherwise) and, on success, merges the
+packs into a `ContentCatalog` whose `innovations`/`locations`/`quarries`/`nemeses`/
+`resources` are the **deduped, sorted union** across packs — so composition is
+order-independent and deterministic.
+
+```kotlin
+val result = ContentCatalogComposer.compose(listOf(Core16Content.pack, gorm.pack))
+// CatalogResult.Ok(catalog) — or MissingRequirement(packId, missing)
+```
+
+A campaign **selects** the packs it plays with through its `enabledPacks` list
+(alongside `rulesetId` and `rulesetOverrides`), so the same settlement record model
+serves any edition + expansion combination. `Core16Content.pack` is the shipped
+`core-1.6` **seed** — the location tree, the initial innovation `Language`, the base
+resources, and the core quarries and nemeses. It is deliberately not exhaustive: the
+full 1.5/1.6 card sets arrive later through the content-ingestion pipeline, split
+across edition and expansion packs.
+
 ## Sync hub (server)
 
 The server exposes a small JSON sync API under `/api/v1`. Every route except `/api/v1/auth/*`
@@ -351,6 +400,7 @@ kdm-tracker/
 │       ├── commonMain/kotlin/io/kdmtracker/core/
 │       │   ├── CoreModule.kt          # version marker for the pure core
 │       │   ├── domain/                # Settlement, Campaign + value objects (Ulid, HLC, enums)
+│       │   ├── content/               # ContentPack, ContentCatalog, Core16Content (seed pack)
 │       │   ├── rules/                 # LanternYearFlow, SettlementStepCatalog, DerivedValues
 │       │   ├── ruleset/               # Ruleset, Core16Ruleset, RulesetOverrides
 │       │   ├── sync/                  # SyncApi/SyncStore ports, MergePolicy (LWW), SyncEngine

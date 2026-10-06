@@ -33,6 +33,7 @@ data class CampaignDto(
     val settlementIds: List<String> = emptyList(),
     val sync: SyncMetaDto = SyncMetaDto(),
     val settlements: List<SettlementDto> = emptyList(),
+    val enabledPacks: List<String> = emptyList(),
 )
 
 /** Transfer representation of a [io.kdmtracker.core.domain.Settlement]. */

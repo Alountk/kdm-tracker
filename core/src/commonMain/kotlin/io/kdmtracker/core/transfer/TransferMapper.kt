@@ -29,6 +29,7 @@ object TransferMapper {
             settlementIds = campaign.settlementIds.map { it.value },
             sync = campaign.sync.toDto(),
             settlements = settlements.map { it.toDto() },
+            enabledPacks = campaign.enabledPacks,
         )
 
     /**
@@ -46,6 +47,7 @@ object TransferMapper {
                 rulesetOverrides = dto.rulesetOverrides.toDomain(),
                 settlementIds = dto.settlementIds.map { Ulid.parse(it) },
                 sync = dto.sync.toDomain(),
+                enabledPacks = dto.enabledPacks,
             )
         return campaign to dto.settlements.map { it.toDomain() }
     }
