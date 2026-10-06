@@ -2,6 +2,7 @@ package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
@@ -29,6 +30,7 @@ object TransferMapper {
             settlementIds = campaign.settlementIds.map { it.value },
             sync = campaign.sync.toDto(),
             settlements = settlements.map { it.toDto() },
+            enabledPacks = campaign.enabledPacks,
         )
 
     /**
@@ -46,6 +48,7 @@ object TransferMapper {
                 rulesetOverrides = dto.rulesetOverrides.toDomain(),
                 settlementIds = dto.settlementIds.map { Ulid.parse(it) },
                 sync = dto.sync.toDomain(),
+                enabledPacks = dto.enabledPacks,
             )
         return campaign to dto.settlements.map { it.toDomain() }
     }
@@ -82,7 +85,9 @@ object TransferMapper {
         RulesetOverridesDto(
             survivalLimit = survivalLimit,
             extraMilestones =
-                extraMilestones.map { MilestoneDefinitionDto(key = it.key, condition = it.condition) },
+                extraMilestones.map {
+                    MilestoneDefinitionDto(id = it.id.value, condition = it.condition, description = it.description)
+                },
             principleOverrides =
                 principleOverrides.mapValues { (_, choices) ->
                     choices.map { PrincipleChoiceDto(category = it.category, label = it.label, effect = it.effect) }
@@ -93,7 +98,13 @@ object TransferMapper {
         RulesetOverrides(
             survivalLimit = survivalLimit,
             extraMilestones =
-                extraMilestones.map { MilestoneDefinition(key = it.key, condition = it.condition) },
+                extraMilestones.map {
+                    MilestoneDefinition(
+                        id = MilestoneId(it.id),
+                        condition = it.condition,
+                        description = it.description,
+                    )
+                },
             principleOverrides =
                 principleOverrides.mapValues { (_, choices) ->
                     choices.map { PrincipleChoice(category = it.category, label = it.label, effect = it.effect) }

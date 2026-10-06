@@ -8,6 +8,8 @@ import io.kdmtracker.core.ruleset.RulesetOverrides
  * @property rulesetId the identifier of the base [io.kdmtracker.core.ruleset.Ruleset] in effect.
  * @property rulesetOverrides per-campaign adjustments applied on top of the base ruleset.
  * @property settlementIds the settlements belonging to this campaign, in no particular order.
+ * @property enabledPacks the ids of the [io.kdmtracker.core.content.ContentPack]s selected for this
+ *   campaign. Defaults to empty: content ingestion selects the packs later.
  */
 data class Campaign(
     val id: Ulid,
@@ -16,4 +18,5 @@ data class Campaign(
     val rulesetOverrides: RulesetOverrides,
     val settlementIds: List<Ulid>,
     val sync: SyncMeta,
+    val enabledPacks: List<String> = emptyList(),
 )

@@ -1,13 +1,15 @@
 package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HybridLogicalClock
-import io.kdmtracker.core.domain.MilestoneKey
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
+import io.kdmtracker.core.rules.MilestoneConditionSpec
+import io.kdmtracker.core.rules.MilestoneMetric
 import io.kdmtracker.core.ruleset.MilestoneDefinition
 import io.kdmtracker.core.ruleset.PrincipleChoice
 import io.kdmtracker.core.ruleset.RulesetOverrides
@@ -32,7 +34,13 @@ class TransferDocumentTest {
                 RulesetOverrides(
                     survivalLimit = 12,
                     extraMilestones =
-                        listOf(MilestoneDefinition(MilestoneKey.GAME_OVER, "house rule game over")),
+                        listOf(
+                            MilestoneDefinition(
+                                Core16Milestones.GAME_OVER,
+                                MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0),
+                                "house rule game over",
+                            ),
+                        ),
                     principleOverrides =
                         mapOf(
                             PrincipleCategory.DEATH to
@@ -128,7 +136,7 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV3() {
-        assertEquals(listOf(1, 2, 3), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV4() {
+        assertEquals(listOf(1, 2, 3, 4), TransferDocument.SUPPORTED_VERSIONS)
     }
 }

@@ -1,15 +1,17 @@
 package io.kdmtracker.core.ruleset
 
-import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
+import io.kdmtracker.core.rules.MilestoneConditionSpec
 import io.kdmtracker.core.rules.SettlementStep
 import kotlinx.serialization.Serializable
 
-/** A milestone whose [condition] triggers a story event when reached. */
+/** A milestone story event: a stable [id], its checkable [condition] and its [description]. */
 @Serializable
 data class MilestoneDefinition(
-    val key: MilestoneKey,
-    val condition: String,
+    val id: MilestoneId,
+    val condition: MilestoneConditionSpec,
+    val description: String,
 )
 
 /** One selectable side of a principle story event, with its rulebook [effect]. */
@@ -50,8 +52,10 @@ interface Ruleset {
  *
  * A no-op [overrides] (all defaults) short-circuits and returns this exact instance.
  * Otherwise each scalar field is replaced when set, [RulesetOverrides.extraMilestones]
- * are appended to the base milestones, and [RulesetOverrides.principleOverrides] replace
- * whole per-category choice lists while untouched categories are kept.
+ * replace a base milestone with the same [MilestoneDefinition.id] (so a changed
+ * threshold takes effect) and append the ones with new ids, and
+ * [RulesetOverrides.principleOverrides] replace whole per-category choice lists while
+ * untouched categories are kept.
  */
 fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
     if (overrides.survivalLimit == null &&
@@ -71,9 +75,24 @@ fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
         deathCountStep = overrides.deathCountStep ?: deathCountStep,
         endeavorsPerReturnee = overrides.endeavorsPerReturnee ?: endeavorsPerReturnee,
         survivalLimit = overrides.survivalLimit ?: survivalLimit,
-        milestones = milestones + overrides.extraMilestones,
+        milestones = mergeMilestones(milestones, overrides.extraMilestones),
         principles = principles + overrides.principleOverrides,
     )
+}
+
+/**
+ * Merges [extra] into [base] by [MilestoneDefinition.id]: a base milestone whose id
+ * appears in [extra] is replaced, and the remaining extras are appended in order.
+ */
+private fun mergeMilestones(
+    base: List<MilestoneDefinition>,
+    extra: List<MilestoneDefinition>,
+): List<MilestoneDefinition> {
+    if (extra.isEmpty()) return base
+    val byId = extra.associateBy { it.id }
+    val overridden = base.map { byId[it.id] ?: it }
+    val baseIds = base.mapTo(mutableSetOf()) { it.id }
+    return overridden + extra.filter { it.id !in baseIds }
 }
 
 private data class OverrideRuleset(
