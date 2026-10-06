@@ -40,11 +40,38 @@ interface SyncStore {
     fun pending(campaignId: String): List<ChangeRecord>
 
     /**
+     * The canonical local record for the entity, or `null` when the store holds none.
+     *
+     * The outbox alone is not the truth: once the hub acknowledges an edit the pending entry is
+     * cleared while the canonical row remains. Merging a remote change must compare against this
+     * record (Ruling AD), otherwise an already-acknowledged local edit looks absent and a stale
+     * remote silently reverts it.
+     */
+    fun local(
+        campaignId: String,
+        entityType: String,
+        entityId: String,
+    ): ChangeRecord?
+
+    /**
+     * Records [record] as a pending outbox entry for its `(entityType, entityId)`.
+     *
+     * Used to re-enqueue a canonical local winner the hub has not seen: when a remote change is
+     * older than the canonical local record, the local record wins the merge but its outbox entry
+     * was already cleared, so without re-enqueuing the hub would never converge (Ruling AD).
+     */
+    fun enqueue(
+        campaignId: String,
+        record: ChangeRecord,
+    )
+
+    /**
      * Applies a winning merged record to the canonical state.
      *
      * A merged record supersedes any pending outbox entry for the same `(entityType, entityId)`, so
      * the entry is removed as part of applying it (Ruling Y). This prevents re-pushing an edit the
-     * remote has already overwritten.
+     * remote has already overwritten. An unknown entity type is skipped, not fatal (Ruling AF), so
+     * one unrecognised record cannot wedge the whole sync pass.
      */
     fun applyMerged(
         campaignId: String,

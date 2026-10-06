@@ -61,6 +61,52 @@ class SyncEngineTest {
     }
 
     @Test
+    fun canonicalLocalNewerThanStaleRemoteIsPreservedAndReEnqueued() {
+        // The local edit was already acknowledged (outbox empty); only the canonical record remains.
+        val canonicalLocal = record(updatedAtMillis = 1_700_000_000_500L, payload = """{"name":"Local acked"}""")
+        val staleRemote = record(updatedAtMillis = 1_700_000_000_100L, payload = """{"name":"Remote"}""", rev = 6)
+        val api = FakeSyncApi()
+        api.pullResponse = PullResponse(latestRev = 6, records = listOf(staleRemote))
+        val store = FakeSyncStore()
+        store.seedCanonical(canonicalLocal)
+        assertTrue(store.pending(campaignId).isEmpty(), "precondition: the local edit is not in the outbox")
+        val engine = SyncEngine(api, store)
+
+        val outcome = engine.sync(campaignId)
+
+        assertEquals(
+            """{"name":"Local acked"}""",
+            store.canonicalPayload("settlement", "settlement-1"),
+            "the canonical local winner must not be overwritten by the stale remote",
+        )
+        assertEquals(
+            listOf(canonicalLocal),
+            api.pushedSets.single().records,
+            "the canonical local winner must be re-enqueued and pushed so the hub converges",
+        )
+        assertEquals(1, outcome.pushed)
+        assertTrue(store.pending(campaignId).isEmpty(), "the re-enqueued entry is cleared once acked")
+    }
+
+    @Test
+    fun canonicalLocalOlderThanRemoteIsOverwrittenAndNotReEnqueued() {
+        val canonicalLocal = record(updatedAtMillis = 1_700_000_000_100L, payload = """{"name":"Local old"}""")
+        val newerRemote = record(updatedAtMillis = 1_700_000_000_500L, payload = """{"name":"Remote"}""", rev = 8)
+        val api = FakeSyncApi()
+        api.pullResponse = PullResponse(latestRev = 8, records = listOf(newerRemote))
+        val store = FakeSyncStore()
+        store.seedCanonical(canonicalLocal)
+        val engine = SyncEngine(api, store)
+
+        val outcome = engine.sync(campaignId)
+
+        assertEquals("""{"name":"Remote"}""", store.canonicalPayload("settlement", "settlement-1"))
+        assertTrue(store.pending(campaignId).isEmpty(), "a canonical record the remote beat must not be re-enqueued")
+        assertTrue(api.pushedSets.isEmpty())
+        assertEquals(0, outcome.pushed)
+    }
+
+    @Test
     fun newerLocalIsPreservedAndPushedThenClearedOnAck() {
         val local = record(updatedAtMillis = 1_700_000_000_300L, payload = """{"name":"Local"}""")
         val remote = record(updatedAtMillis = 1_700_000_000_100L, payload = """{"name":"Remote"}""", rev = 4)
@@ -170,6 +216,19 @@ class SyncEngineTest {
 
         override fun pending(campaignId: String): List<ChangeRecord> = outbox.values.toList()
 
+        override fun local(
+            campaignId: String,
+            entityType: String,
+            entityId: String,
+        ): ChangeRecord? = canonical[entityType to entityId]
+
+        override fun enqueue(
+            campaignId: String,
+            record: ChangeRecord,
+        ) {
+            outbox[record.entityType to record.entityId] = record
+        }
+
         override fun applyMerged(
             campaignId: String,
             record: ChangeRecord,
@@ -191,6 +250,11 @@ class SyncEngineTest {
             val key = record.entityType to record.entityId
             outbox[key] = record
             canonical[key] = record
+        }
+
+        /** Seeds the canonical row only, as it is after an acknowledged local edit (outbox empty). */
+        fun seedCanonical(record: ChangeRecord) {
+            canonical[record.entityType to record.entityId] = record
         }
 
         fun canonicalPayload(

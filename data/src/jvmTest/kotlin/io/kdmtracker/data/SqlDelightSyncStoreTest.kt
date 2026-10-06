@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class SqlDelightSyncStoreTest {
@@ -343,6 +344,160 @@ class SqlDelightSyncStoreTest {
 
         syncStore.setCursor("first", 43L)
         assertEquals(43L, syncStore.cursor("first"))
+    }
+
+    @Test
+    fun localReadsTheCanonicalSettlementRowEvenWhenItIsNotPending() {
+        val database = inMemoryDatabase()
+        val campaignStore = SqlDelightCampaignStore(database)
+        val syncStore = SqlDelightSyncStore(database)
+        val parent = campaign(1)
+        val child = settlement(2, parent.id, name = "Canonical")
+        campaignStore.upsertCampaign(parent)
+        campaignStore.upsertSettlement(child)
+        syncStore.clearAcknowledged(parent.id.value, syncStore.pending(parent.id.value))
+
+        val local = syncStore.local(parent.id.value, "settlement", child.id.value)
+
+        assertNotNull(local)
+        assertEquals(child.id.value, local.entityId)
+        assertEquals(child.campaignId.value, local.campaignId)
+        assertEquals(child.sync.rev, local.rev)
+        assertEquals("Canonical", json.decodeFromString(SettlementDto.serializer(), local.payload).name)
+        assertTrue(syncStore.pending(parent.id.value).isEmpty(), "local() must not depend on the outbox")
+    }
+
+    @Test
+    fun localReadsTheCanonicalCampaignRow() {
+        val database = inMemoryDatabase()
+        val campaignStore = SqlDelightCampaignStore(database)
+        val syncStore = SqlDelightSyncStore(database)
+        val parent = campaign(1, name = "Grey Havens")
+        campaignStore.upsertCampaign(parent)
+
+        val local = syncStore.local(parent.id.value, "campaign", parent.id.value)
+
+        assertNotNull(local)
+        assertEquals(parent.id.value, local.entityId)
+        assertEquals(parent.name, json.decodeFromString(CampaignDto.serializer(), local.payload).name)
+    }
+
+    @Test
+    fun localReturnsNullForAnUnknownEntityTypeOrMissingRow() {
+        val syncStore = SqlDelightSyncStore(inMemoryDatabase())
+
+        assertEquals(null, syncStore.local("c1", "survivor", "s1"))
+        assertEquals(null, syncStore.local("c1", "settlement", "missing"))
+    }
+
+    @Test
+    fun enqueueAddsAPendingOutboxEntry() {
+        val database = inMemoryDatabase()
+        val campaignStore = SqlDelightCampaignStore(database)
+        val syncStore = SqlDelightSyncStore(database)
+        val parent = campaign(1)
+        val child = settlement(2, parent.id)
+        campaignStore.upsertCampaign(parent)
+        syncStore.clearAcknowledged(parent.id.value, syncStore.pending(parent.id.value))
+        assertTrue(syncStore.pending(parent.id.value).isEmpty())
+
+        val enqueued =
+            settlementRecord(
+                campaignId = parent.id,
+                settlementId = child.id,
+                name = "Re-enqueued",
+                updatedAt = HybridLogicalClock(1_700_000_777_000, 1),
+                rev = 5,
+            )
+        syncStore.enqueue(parent.id.value, enqueued)
+
+        val pending = syncStore.pending(parent.id.value)
+        assertEquals(listOf(child.id.value), pending.map { it.entityId })
+        assertEquals(1_700_000_777_000, pending.single().updatedAtMillis)
+    }
+
+    @Test
+    fun applyMergedPersistsTheRecordRevRatherThanThePayloadRev() {
+        val database = inMemoryDatabase()
+        val campaignStore = SqlDelightCampaignStore(database)
+        val syncStore = SqlDelightSyncStore(database)
+        val parent = campaign(1)
+        val local = settlement(2, parent.id, name = "Local")
+        campaignStore.upsertCampaign(parent)
+        campaignStore.upsertSettlement(local)
+
+        // The payload still carries rev = 7; the authoritative server rev on the record is 99.
+        val remote =
+            settlementRecord(
+                campaignId = parent.id,
+                settlementId = local.id,
+                name = "Remote",
+                updatedAt = HybridLogicalClock(1_700_000_999_000, 5),
+                rev = 7,
+            ).copy(rev = 99)
+        syncStore.applyMerged(parent.id.value, remote)
+
+        assertEquals(
+            99,
+            database.settlementQueries
+                .selectSettlementById(local.id.value)
+                .executeAsOne()
+                .rev,
+            "the domain rev must come from ChangeRecord.rev, not the payload's sync.rev",
+        )
+    }
+
+    @Test
+    fun applyMergedSkipsAnUnknownEntityTypeInsteadOfThrowing() {
+        val database = inMemoryDatabase()
+        val skipped = mutableListOf<String>()
+        val syncStore = SqlDelightSyncStore(database, log = skipped::add)
+        val record =
+            ChangeRecord(
+                campaignId = "c1",
+                entityType = "survivor",
+                entityId = "s1",
+                op = ChangeOp.UPSERT,
+                baseRev = null,
+                payload = "{}",
+                updatedAtMillis = 1L,
+                updatedAtCounter = 0,
+            )
+
+        syncStore.applyMerged("c1", record)
+
+        assertTrue(skipped.single().contains("survivor"), "the skipped type must be logged")
+    }
+
+    @Test
+    fun applyMergedIgnoresUnknownPayloadKeys() {
+        val database = inMemoryDatabase()
+        val campaignStore = SqlDelightCampaignStore(database)
+        val syncStore = SqlDelightSyncStore(database)
+        val parent = campaign(1)
+        val local = settlement(2, parent.id, name = "Local")
+        campaignStore.upsertCampaign(parent)
+        campaignStore.upsertSettlement(local)
+
+        val remote =
+            settlementRecord(
+                campaignId = parent.id,
+                settlementId = local.id,
+                name = "Remote",
+                updatedAt = HybridLogicalClock(1_700_000_999_000, 5),
+                rev = 42,
+            )
+        val withExtraKey =
+            remote.copy(payload = remote.payload.dropLast(1) + ""","serverOnlyField":true}""")
+        syncStore.applyMerged(parent.id.value, withExtraKey)
+
+        assertEquals(
+            "Remote",
+            database.settlementQueries
+                .selectSettlementById(local.id.value)
+                .executeAsOne()
+                .name,
+        )
     }
 
     @Test
