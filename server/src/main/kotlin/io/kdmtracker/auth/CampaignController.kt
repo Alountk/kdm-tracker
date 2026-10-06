@@ -3,6 +3,7 @@ package io.kdmtracker.auth
 import io.kdmtracker.core.domain.Ulid
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -25,9 +26,17 @@ data class CampaignResponse(
     val role: String,
 )
 
+data class CampaignSummaryResponse(
+    val id: String,
+    val name: String,
+    val role: String,
+    val ownerUsername: String,
+    val sharedWith: List<String>,
+)
+
 /**
- * Campaign lifecycle for the sync hub. Both routes are behind the bearer filter (they live under
- * `/api/v1/campaigns`) and require a valid token. Creating a campaign makes the caller its `OWNER`;
+ * Campaign lifecycle for the sync hub. Every route is behind the bearer filter (they live under
+ * `/api/v1/campaigns`) and requires a valid token. Creating a campaign makes the caller its `OWNER`;
  * joining by invite code makes the caller an `EDITOR`. Without these, a freshly registered user has
  * no membership and every change-log call would be `403`, so the hub would be unusable end to end.
  */
@@ -36,8 +45,53 @@ data class CampaignResponse(
 class CampaignController(
     private val campaigns: CampaignRepository,
     private val members: CampaignMemberRepository,
+    private val users: UserRepository,
 ) {
     private val random = SecureRandom()
+
+    /**
+     * Lists every campaign the caller belongs to, whether they own it or joined it. Each summary
+     * reports the caller's [CampaignSummaryResponse.role], the campaign's `OWNER` username, and the
+     * usernames of the other members — the caller is deliberately excluded from
+     * [CampaignSummaryResponse.sharedWith] (Ruling AL). The result is ordered by name then id so the
+     * app's campaign picker is stable.
+     */
+    @GetMapping
+    fun list(httpRequest: HttpServletRequest): List<CampaignSummaryResponse> {
+        val userId = httpRequest.requireAuthenticatedUserId()
+        val myMemberships = members.findByUserId(userId)
+        if (myMemberships.isEmpty()) return emptyList()
+        val campaignsById = campaigns.findAllById(myMemberships.map { it.campaignId }).associateBy { it.id }
+        val campaignMembers =
+            myMemberships.associate { membership ->
+                membership.campaignId to members.findByCampaignId(membership.campaignId)
+            }
+        val usernamesById =
+            users
+                .findAllById(
+                    campaignMembers.values
+                        .flatten()
+                        .map { it.userId }
+                        .toSet(),
+                ).associate { it.id!! to it.username }
+        return myMemberships
+            .mapNotNull { membership ->
+                val campaign = campaignsById[membership.campaignId] ?: return@mapNotNull null
+                val members = campaignMembers[membership.campaignId].orEmpty()
+                CampaignSummaryResponse(
+                    id = campaign.id,
+                    name = campaign.name,
+                    role = membership.role,
+                    ownerUsername =
+                        members.firstOrNull { it.role == OWNER_ROLE }?.userId?.let { usernamesById[it] } ?: "",
+                    sharedWith =
+                        members
+                            .filter { it.userId != userId }
+                            .mapNotNull { usernamesById[it.userId] }
+                            .sorted(),
+                )
+            }.sortedWith(compareBy({ it.name }, { it.id }))
+    }
 
     @PostMapping
     fun create(
