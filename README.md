@@ -66,7 +66,9 @@ The app module uses the same JDK 21 toolchain and Gradle 9.7.1 wrapper as the re
 # Enable the plain pre-commit hook (runs `./gradlew -q spotlessCheck`):
 git config core.hooksPath .githooks
 
-./gradlew bootRun
+# Local dev: the server refuses to boot on the committed default JWT secret, so opt into the
+# `dev` profile (or export a real SYNC_JWT_SECRET).
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
 > Commit messages follow **Conventional Commits by convention** — this project intentionally ships
@@ -92,7 +94,9 @@ while the Dockerfile itself lives under `server/`:
 
 ```bash
 docker build -t bp-kdm-tracker -f server/Dockerfile .
-docker run -d --name bp-kdm-tracker -p 8703:8080 -v kdm-data:/app/data bp-kdm-tracker
+# The container refuses to boot on the default JWT secret — pass a real one:
+docker run -d --name bp-kdm-tracker -p 8703:8080 -v kdm-data:/app/data \
+  -e SYNC_JWT_SECRET="change-me-to-a-long-random-secret" bp-kdm-tracker
 
 curl -fsS -o /dev/null -w "%{http_code}" http://localhost:8703/
 # Expected: 200
@@ -155,6 +159,18 @@ Authentication:
 
 Identity — `GET /api/v1/me` → `{"userId":<id>}` (protected).
 
+Campaigns — a valid token is required. Creating a campaign makes the caller its `OWNER`; joining by
+invite code makes the caller an `EDITOR`. Without this, a freshly registered user has no membership
+and every change-log call is `403`, so the hub is unusable end to end:
+
+| Route | Method | Body | Response |
+| ----- | ------ | ---- | -------- |
+| `/api/v1/campaigns` | POST | `{"name"}` | `{"id","name","inviteCode","role"}` (`role="OWNER"`; `400` on a blank name) |
+| `/api/v1/campaigns/join` | POST | `{"inviteCode"}` | `{"id","name","inviteCode","role"}` (`role="EDITOR"`; `404` on an unknown code) |
+
+Campaign ids are server-generated 26-character Crockford ULIDs; invite codes are unique random
+strings. Joining is idempotent and never downgrades an existing member's role.
+
 Change log, per campaign. The caller must be a member of the campaign or the request is `403`:
 
 | Route | Method | Body / query | Response |
@@ -168,18 +184,46 @@ The wire contract lives in `:core` (`io.kdmtracker.core.sync`). Each record carr
 (`maxRev + 1`); replaying an identical `(campaignId, entityType, entityId)` with the same payload is a
 no-op — no duplicate row and no revision bump.
 
+Pull reads the campaign high-water mark **before** the records and clamps the returned records to
+`rev <= latestRev`. A push that commits between the two reads therefore cannot make `latestRev`
+outrun the returned records, so a client cursor never skips a change.
+
+**Conflict model (Ruling W — recorded decision).** The server does **not** implement
+last-write-wins or any merge. It stores the most recent push for each
+`(campaignId, entityType, entityId)` triple as-is. `baseRev` is carried on the wire and persisted
+verbatim but never interpreted server-side; it stays reserved for the client's conflict detection.
+LWW/conflict resolution is deferred to **plan 3c**, where the client merges using `baseRev` to detect
+that the revision it computed against has since been replaced.
+
 ### Migrating existing data
 
-Legacy relational rows (settlements, survivors, resources, innovations, log entries) predate
-campaigns and accounts. `io.kdmtracker.migration.LegacyToChangeLogMigration.migrate()` reads every
-legacy row, folds it into a single deterministic campaign
-(`LegacyToChangeLogMigration.CAMPAIGN_ID`), and pushes one `UPSERT` per row so existing data becomes
-visible to sync clients. The campaign is owned by a synthetic `legacy-migration` account.
+Legacy relational rows (settlements, survivors, resources, innovations, log entries, step notes,
+milestones, principles — the full schema-v2 set) predate campaigns and accounts.
+`io.kdmtracker.migration.LegacyToChangeLogMigration.migrate()` reads every legacy row, folds it into
+a single deterministic campaign (`LegacyToChangeLogMigration.CAMPAIGN_ID`, a fixed Crockford-valid
+ULID), and pushes one `UPSERT` per row so existing data becomes visible to sync clients. Each table
+gets a stable `entityType` (`settlement`, `survivor`, `resource`, `innovation`, `log`, `step_note`,
+`milestone`, `principle`). The campaign is owned by a synthetic `legacy-migration` account, and that
+username is reserved so no real user can register it.
 
 `migrate()` is a **one-shot, explicitly invoked** entry point — not an always-on startup hook — and is
 idempotent: because it routes through the push path, a second run over unchanged legacy data writes
-nothing and does not bump `rev`. It is exposed as a Spring bean (`LegacyToChangeLogMigration`) and
-returns a `MigrationReport` with per-entity counts, `changesApplied` and the campaign's `latestRev`.
+nothing and does not bump `rev`. Timestamps derived from legacy rows use a fixed UTC zone, so a replay
+on a host in another time zone is still a no-op. It is exposed as a Spring bean
+(`LegacyToChangeLogMigration`) returning a `MigrationReport` with per-entity counts, `changesApplied`
+and the campaign's `latestRev`.
+
+**Production runbook (invocation path).** `LegacyMigrationRunner` calls `migrate()` on startup **only**
+when `sync.migration.run-on-startup` is true (default `false`), so ordinary boots never migrate
+silently. To run the one-shot in production:
+
+```bash
+SYNC_JWT_SECRET="<strong-secret>" SYNC_MIGRATION_RUN_ON_STARTUP=true java -jar app.jar
+# watch the logs for the migration summary, then restart WITHOUT SYNC_MIGRATION_RUN_ON_STARTUP
+```
+
+Because the migration is idempotent, a second boot with the flag still set is safe but unnecessary;
+unset it after the run. (A first re-run after new legacy rows is added will emit only the new rows.)
 
 ## Project structure
 
@@ -278,6 +322,9 @@ kdm-tracker/
 | Variable | Default | Description            |
 | -------- | ------- | ---------------------- |
 | `PORT`   | `8080`  | HTTP listen port       |
+| `SYNC_JWT_SECRET` | dev default (non-production) | HS256 signing secret for bearer tokens. Required outside dev/test: boot fails fast if the committed default is still in use and no `dev`/`test` profile is active. |
+| `SYNC_JWT_EXPIRY_SECONDS` | `86400` | Bearer-token lifetime in seconds. |
+| `SYNC_MIGRATION_RUN_ON_STARTUP` | `false` | When `true`, runs the one-shot legacy migration on boot (see the migration runbook). Undefined/`false` for normal boots. |
 
 ## Tests
 

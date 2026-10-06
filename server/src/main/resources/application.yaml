@@ -17,3 +17,5 @@ sync:
   jwt:
     secret: ${SYNC_JWT_SECRET:dev-only-insecure-secret-change-me}
     expiry-seconds: ${SYNC_JWT_EXPIRY_SECONDS:86400}
+  migration:
+    run-on-startup: ${SYNC_MIGRATION_RUN_ON_STARTUP:false}

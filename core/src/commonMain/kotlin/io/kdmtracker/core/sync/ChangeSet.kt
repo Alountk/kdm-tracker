@@ -12,8 +12,11 @@ enum class ChangeOp {
  * One entity mutation in the sync wire protocol.
  *
  * [baseRev] is the revision the change was computed against, or `null` when the change does not
- * depend on a prior revision. [rev] is the server-assigned revision and is `0` for client-originated
- * records that have not yet been acknowledged.
+ * depend on a prior revision. It is carried on the wire but the server does not interpret it yet:
+ * conflict resolution (last-write-wins/merge) is deferred to plan 3c and will run client-side, using
+ * [baseRev] to detect whether the server has replaced the revision the change was computed against.
+ * [rev] is the server-assigned revision and is `0` for client-originated records that have not yet
+ * been acknowledged.
  */
 @Serializable
 data class ChangeRecord(
