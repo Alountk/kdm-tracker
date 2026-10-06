@@ -25,7 +25,7 @@
 1. **Sign-in syncs everything**: after sign-in the app lists and syncs **every** campaign the user owns or that is shared with them — not just one.
 2. **The badge is correct**: `OWNER` with no others → "Tuyo"; `OWNER` with others → "Compartido con …"; non-owner → "Compartido con vos por …" (owner username). It never mislabels an owner as a sharee or vice-versa.
 3. **Selecting a campaign is isolated**: opening one campaign's settlement never reads or writes another campaign's rows/cursor.
-4. **Creating a campaign works offline-then-sync**: create seeds a local settlement, is pushed, and appears in the list; a failure leaves no half-created state.
+4. **Creating a campaign is online-only for now**: the hub owns the campaign id (`POST /api/v1/campaigns`), so `create` requires a reachable, authenticated hub; it persists the server-issued campaign and its settlement locally and pushes them, and the new campaign appears in the list. A failure surfaces inline and leaves no half-created state. **Offline creation is deferred** — the client never mints an id it intends to sync. The Home card list refresh is **independent of sync success**: one campaign failing to sync must not hide the campaigns that did sync.
 5. **The cockpit shows the settlement name** so a remote rename is visible.
 
 ---
@@ -126,8 +126,8 @@ app-android/src/main/kotlin/io/kdmtracker/app/
 - Produces:
   - `data class CampaignCard(val campaignId: String, val name: String, val lanternYear: Int, val population: Int, val banner: CampaignBanner)`
   - `SettlementRepository.listCards(): List<CampaignCard>` — one card per stored campaign (settlement) joined with its `membership` banner.
-  - `SettlementRepository.select(campaignId: String): Boolean` and `SettlementRepository.create(name: String): CampaignCard` (seeds a local settlement for a new campaignId + upserts membership as `OWNER`).
-  - `SyncCoordinator.syncAll()` — `api.listCampaigns()`, upsert each membership, then `engine.sync(campaignId)` for each; failures per campaign do not abort the rest (Review Focus 1/3).
+  - `SettlementRepository.select(campaignId: String): Boolean` and `SettlementRepository.create(name: String): CampaignCard` (round-trips `POST /api/v1/campaigns` for the server-issued id, then persists that campaign + a `Settlement.new` + the OWNER membership; online-only, no client-minted id).
+  - `SyncCoordinator.syncAll()` — `api.listCampaigns()`, upsert each membership, then `engine.sync(campaignId)` for each hub-listed or hub-created campaign; the local first-run seed is never submitted. Failures per campaign do not abort the rest (Review Focus 1/3).
 - `HttpSyncApi.listCampaigns()` GETs `/api/v1/campaigns` and decodes `List<CampaignSummary>`.
 - Test (JVM, fakes): `listCards` returns one card per campaign with the right banner; `select` scopes the settlement; `syncAll` syncs every listed campaign (assert each cursor advanced); a failure in one campaign does not stop the others.
 
