@@ -8,6 +8,9 @@ import io.kdmtracker.auth.CampaignRepository
 import io.kdmtracker.auth.JwtService
 import io.kdmtracker.auth.UserEntity
 import io.kdmtracker.auth.UserRepository
+import io.kdmtracker.core.sync.ChangeOp
+import io.kdmtracker.core.sync.ChangeRecord
+import io.kdmtracker.core.sync.ChangeSet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +22,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,6 +44,9 @@ class PushChangesTest {
 
     @Autowired
     private lateinit var changeRecords: ChangeRecordRepository
+
+    @Autowired
+    private lateinit var changeRecordService: ChangeRecordService
 
     @Autowired
     private lateinit var jwtService: JwtService
@@ -216,11 +226,104 @@ class PushChangesTest {
         assertEquals(0, recordsFor(OTHER_CAMPAIGN).size)
     }
 
+    @Test
+    fun changedPayloadOnSameTripleAssignsANewRev() {
+        val user = seedUser("push-update-ada")
+        val campaign = seedCampaign(CAMPAIGN_UPDATE, "INVITE-PUSH-UPDATE")
+        seedMembership(campaign.id, user.id!!)
+        val token = jwtService.issueToken(user.id!!)
+
+        fun pushPayload(payload: String): Int {
+            val body =
+                mockMvc
+                    .perform(
+                        post(changesUrl(campaign.id))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(changeSetJson(recordJson(campaign.id, "settlement-1", payload)))
+                            .header("Authorization", "Bearer $token"),
+                    ).andExpect(status().isOk)
+                    .andReturn()
+                    .response
+                    .contentAsString
+            return JsonPath.read(body, "$.latestRev")
+        }
+
+        assertEquals(1, pushPayload("""{"name":"A"}"""))
+        assertEquals(2, pushPayload("""{"name":"B"}"""))
+
+        val stored = recordsFor(campaign.id)
+        assertEquals(1, stored.size)
+        assertEquals(2L, stored.single().rev)
+        assertEquals("""{"name":"B"}""", stored.single().payload)
+
+        mockMvc
+            .perform(
+                get(changesUrl(campaign.id))
+                    .param("since", "1")
+                    .header("Authorization", "Bearer $token"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.latestRev").value(2))
+            .andExpect(jsonPath("$.records.length()").value(1))
+            .andExpect(jsonPath("$.records[0].rev").value(2))
+            .andExpect(jsonPath("$.records[0].payload").value("""{"name":"B"}"""))
+    }
+
+    @Test
+    fun concurrentPushesToSameCampaignGetDistinctAscendingRevs() {
+        val campaign = seedCampaign(CAMPAIGN_CONCURRENT, "INVITE-PUSH-CONCURRENT")
+        val ready = CountDownLatch(2)
+        val go = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val tasks =
+                listOf("settlement-1", "settlement-2").map { entityId ->
+                    Callable {
+                        ready.countDown()
+                        go.await()
+                        changeRecordService.push(
+                            campaign.id,
+                            ChangeSet(listOf(wireRecord(campaign.id, entityId, """{"name":"$entityId"}"""))),
+                        )
+                    }
+                }
+            val futures = tasks.map { pool.submit(it) }
+            ready.await()
+            go.countDown()
+            val returnedRevs = futures.map { it.get(10, TimeUnit.SECONDS) }
+
+            assertEquals(setOf(1L, 2L), returnedRevs.toSet())
+            assertEquals(2L, changeRecords.maxRev(campaign.id))
+            assertEquals(setOf(1L, 2L), recordsFor(campaign.id).map { it.rev }.toSet())
+            assertEquals(2, recordsFor(campaign.id).size)
+        } finally {
+            pool.shutdownNow()
+        }
+    }
+
+    private fun wireRecord(
+        campaignId: String,
+        entityId: String,
+        payload: String,
+    ): ChangeRecord =
+        ChangeRecord(
+            campaignId = campaignId,
+            entityType = "settlement",
+            entityId = entityId,
+            op = ChangeOp.UPSERT,
+            baseRev = null,
+            payload = payload,
+            updatedAtMillis = 1_700_000_000_000,
+            updatedAtCounter = 1,
+            rev = 0,
+        )
+
     private companion object {
         const val CAMPAIGN_SEQ = "01J0PUSH0000000000000000AA"
         const val CAMPAIGN_REPLAY = "01J0PUSH0000000000000000BB"
         const val CAMPAIGN_OUTSIDER = "01J0PUSH0000000000000000CC"
         const val CAMPAIGN_SCOPE = "01J0PUSH0000000000000000DD"
         const val OTHER_CAMPAIGN = "01J0PUSH0000000000000000EE"
+        const val CAMPAIGN_UPDATE = "01J0PUSH0000000000000000FF"
+        const val CAMPAIGN_CONCURRENT = "01J0PUSH0000000000000000GG"
     }
 }

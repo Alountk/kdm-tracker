@@ -13,13 +13,15 @@ import jakarta.persistence.UniqueConstraint
  * Server-side change-log row keyed by `(campaignId, entityType, entityId)`.
  *
  * [op] stores the [io.kdmtracker.core.sync.ChangeOp] name as text so this persistence type stays
- * decoupled from the `:core` wire enum. [rev] is server-assigned and monotonic per campaign.
+ * decoupled from the `:core` wire enum. [rev] is server-assigned and monotonic per campaign, backed
+ * by a unique `(campaignId, rev)` constraint so two writers can never publish the same revision.
  */
 @Entity
 @Table(
     name = "change_records",
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["campaignId", "entityType", "entityId"]),
+        UniqueConstraint(columnNames = ["campaignId", "rev"]),
     ],
 )
 class ChangeRecordEntity(

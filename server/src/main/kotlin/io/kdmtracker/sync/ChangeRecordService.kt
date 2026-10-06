@@ -1,5 +1,6 @@
 package io.kdmtracker.sync
 
+import io.kdmtracker.auth.CampaignRepository
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ChangeRecordService(
     private val changeRecords: ChangeRecordRepository,
+    private val campaigns: CampaignRepository,
 ) {
     /**
      * Returns every change for [campaignId] with `rev > since`, ordered by ascending `rev`, plus the
@@ -41,12 +43,16 @@ class ChangeRecordService(
      * one whose op/payload/updatedAt differ from the stored row, is stamped with the next
      * per-campaign `rev` (`maxRev + 1`); an identical record is a no-op. Replaying a batch is
      * therefore idempotent — no duplicate rows and no revision bump.
+     *
+     * The campaign row is locked `PESSIMISTIC_WRITE` for the whole transaction, so concurrent pushes
+     * to the same campaign serialize and cannot both assign the same `rev` from a stale `maxRev`.
      */
     @Transactional
     fun push(
         campaignId: String,
         changeSet: ChangeSet,
     ): Long {
+        campaigns.findWithLockById(campaignId)
         var latestRev = changeRecords.maxRev(campaignId) ?: 0
         for (record in changeSet.records) {
             val stored =
