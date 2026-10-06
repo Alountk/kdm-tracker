@@ -183,6 +183,9 @@ class SyncEngineTest {
 
         override fun listCampaigns(): List<CampaignSummary> = emptyList()
 
+        override fun createCampaign(name: String): CampaignSummary =
+            throw UnsupportedOperationException("createCampaign is not exercised by SyncEngineTest")
+
         override fun pull(
             campaignId: String,
             since: Long,

@@ -35,6 +35,9 @@ class SyncSignInTest {
             object : SyncApi {
                 override fun listCampaigns(): List<CampaignSummary> = emptyList()
 
+                override fun createCampaign(name: String): CampaignSummary =
+                    throw UnsupportedOperationException("createCampaign is not exercised by SyncSignInTest")
+
                 override fun pull(
                     campaignId: String,
                     since: Long,
@@ -79,6 +82,9 @@ class SyncSignInTest {
                         api =
                             object : SyncApi {
                                 override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
+                                override fun createCampaign(name: String): CampaignSummary =
+                                    throw UnsupportedOperationException("unused")
 
                                 override fun pull(
                                     campaignId: String,

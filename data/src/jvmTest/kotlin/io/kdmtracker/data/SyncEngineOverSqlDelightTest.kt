@@ -117,6 +117,9 @@ class SyncEngineOverSqlDelightTest {
 
         override fun listCampaigns(): List<CampaignSummary> = emptyList()
 
+        override fun createCampaign(name: String): CampaignSummary =
+            throw UnsupportedOperationException("createCampaign is not exercised by SyncEngineOverSqlDelightTest")
+
         override fun pull(
             campaignId: String,
             since: Long,

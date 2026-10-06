@@ -47,11 +47,19 @@ data class CampaignCard(
  * optional offline membership cache used to badge [listCards] and to record the caller's `OWNER`
  * membership on create; when omitted (a test that does not exercise sharing) every campaign is
  * badged as owned.
+ *
+ * [createCampaign] is the hub round-trip [create] calls to obtain a server-owned campaign id. It is
+ * injected (in production, `HttpSyncApi::createCampaign`) so the repository stays JVM-testable; the
+ * client never mints an id it intends to sync, because the change-log endpoints only accept
+ * server-issued campaign ids.
  */
 class SettlementRepository(
     private val store: CampaignStore,
     private val clock: SyncClock = SyncClock.system(),
     private val memberships: MembershipStore? = null,
+    private val createCampaign: (String) -> CampaignSummary = { name ->
+        throw IllegalStateException("Cannot create campaign '$name': no sync hub is configured")
+    },
 ) {
     var campaign: Campaign
         private set
@@ -103,21 +111,27 @@ class SettlementRepository(
     }
 
     /**
-     * Creates a campaign named [name] with its opening settlement and the caller's `OWNER`
-     * membership, then opens it.
+     * Creates a campaign named [name] on the hub, then persists and opens its local state.
+     *
+     * The hub round-trip happens **first**: it owns campaign-id generation, so only the id it
+     * returns is accepted by the change-log endpoints. An offline or unauthenticated create throws
+     * before any write, so a failure leaves no half-created local campaign behind (Review Focus 4).
+     * The returned [CampaignSummary] carries the fresh `OWNER` role, which is cached as the local
+     * membership.
      *
      * The campaign, settlement and membership are written inside one [CampaignStore.transaction], so
-     * a failure cannot leave a campaign row with no settlement (or an unbadged campaign) behind
-     * (Review Focus 4). The returned card reflects the freshly created state; the campaign is also
-     * listed by [listCards] from now on.
+     * a store failure cannot leave a campaign row with no settlement (or an unbadged campaign)
+     * behind. The returned card reflects the freshly created state; the campaign is also listed by
+     * [listCards] from now on.
      */
     fun create(name: String): CampaignCard {
-        val campaignId = Ulid.generate(clock.tick(null).millis) { Random.nextInt() }
+        val summary = createCampaign(name)
+        val campaignId = Ulid.parse(summary.id)
         val settlementId = Ulid.generate(clock.tick(null).millis) { Random.nextInt() }
         val campaign =
             Campaign(
                 id = campaignId,
-                name = name,
+                name = summary.name,
                 rulesetId = Core16Ruleset.id,
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
@@ -125,16 +139,8 @@ class SettlementRepository(
             )
         val settlement =
             Settlement
-                .new(id = settlementId, campaignId = campaignId, name = name)
+                .new(id = settlementId, campaignId = campaignId, name = summary.name)
                 .copy(sync = SyncMeta(clock.tick(null), rev = 1))
-        val summary =
-            CampaignSummary(
-                id = campaignId.value,
-                name = name,
-                role = "OWNER",
-                ownerUsername = "",
-                sharedWith = emptyList(),
-            )
         store.transaction {
             store.upsertCampaign(campaign)
             store.upsertSettlement(settlement)

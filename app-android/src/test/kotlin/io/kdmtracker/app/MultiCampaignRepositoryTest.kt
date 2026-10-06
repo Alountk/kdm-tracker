@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
@@ -125,26 +126,57 @@ class MultiCampaignRepositoryTest {
     }
 
     @Test
-    fun createAddsACardAndOpensIt() {
+    fun createUsesTheServerReturnedIdAndOpensIt() {
         val store = InMemoryCampaignStore()
         val memberships = FakeMembershipStore()
-        val repository = SettlementRepository(store, memberships = memberships)
+        val serverId = nextId().value
+        var requestedName: String? = null
+        val repository =
+            SettlementRepository(
+                store,
+                memberships = memberships,
+                createCampaign = { name ->
+                    requestedName = name
+                    CampaignSummary(serverId, name, "OWNER", "", emptyList())
+                },
+            )
 
         val card = repository.create("Gloom")
 
+        assertEquals("Gloom", requestedName, "create must round-trip the hub")
+        assertEquals(serverId, card.campaignId, "the card must use the server-issued id")
         assertEquals("Gloom", card.name)
-        assertEquals(card.campaignId, repository.campaign.id.value)
-        assertEquals(card.campaignId, repository.settlement.campaignId.value)
+        assertEquals(serverId, repository.campaign.id.value)
+        assertEquals(serverId, repository.settlement.campaignId.value)
         assertEquals(1, repository.settlement.lanternYear)
         assertEquals(4, repository.settlement.population)
         assertEquals(CampaignBadge.OWNED, card.banner.badge)
 
-        val stored = store.loadSnapshots().single { it.campaign.id.value == card.campaignId }
+        val stored = store.loadSnapshots().single { it.campaign.id.value == serverId }
         assertEquals(listOf(repository.settlement.id), stored.settlements.map { it.id })
-        assertEquals("OWNER", memberships.membership(card.campaignId)?.role)
+        assertEquals("OWNER", memberships.membership(serverId)?.role)
 
-        val fromList = repository.listCards().single { it.campaignId == card.campaignId }
+        val fromList = repository.listCards().single { it.campaignId == serverId }
         assertEquals("Gloom", fromList.name)
+    }
+
+    @Test
+    fun createFailureLeavesNoLocalCampaign() {
+        val store = InMemoryCampaignStore()
+        val memberships = FakeMembershipStore()
+        val repository =
+            SettlementRepository(
+                store,
+                memberships = memberships,
+                createCampaign = { throw IOException("hub down") },
+            )
+        val before = store.loadSnapshots().map { it.campaign.id.value }.toSet()
+
+        assertFailsWith<IOException> { repository.create("Gloom") }
+
+        assertEquals(before, store.loadSnapshots().map { it.campaign.id.value }.toSet())
+        assertTrue(memberships.memberships().isEmpty(), "no membership may be cached for a failed create")
+        assertEquals(before.single(), repository.campaign.id.value, "the prior selection must be kept")
     }
 
     @Test
@@ -273,6 +305,9 @@ class MultiCampaignRepositoryTest {
         private val failPullFor: String? = null,
     ) : SyncApi {
         override fun listCampaigns(): List<CampaignSummary> = summaries
+
+        override fun createCampaign(name: String): CampaignSummary =
+            throw UnsupportedOperationException("createCampaign is injected as a lambda in this test")
 
         override fun pull(
             campaignId: String,
