@@ -22,6 +22,8 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.h2)
+    implementation(libs.java.jwt)
+    implementation(libs.spring.security.crypto)
     implementation(libs.kotlin.reflect)
     implementation(libs.jackson.module.kotlin)
     testImplementation(libs.spring.boot.starter.webmvc.test)

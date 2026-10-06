@@ -9,3 +9,8 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: create-drop
+
+sync:
+  jwt:
+    secret: test-secret-not-for-production
+    expiry-seconds: 3600

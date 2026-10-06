@@ -14,8 +14,11 @@ android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "36"
 sqldelight = "2.4.0"
+javaJwt = "4.5.0"
 
 [libraries]
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
