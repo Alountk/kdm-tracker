@@ -2,6 +2,7 @@ package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
@@ -84,7 +85,9 @@ object TransferMapper {
         RulesetOverridesDto(
             survivalLimit = survivalLimit,
             extraMilestones =
-                extraMilestones.map { MilestoneDefinitionDto(key = it.key, condition = it.condition) },
+                extraMilestones.map {
+                    MilestoneDefinitionDto(id = it.id.value, condition = it.condition, description = it.description)
+                },
             principleOverrides =
                 principleOverrides.mapValues { (_, choices) ->
                     choices.map { PrincipleChoiceDto(category = it.category, label = it.label, effect = it.effect) }
@@ -95,7 +98,13 @@ object TransferMapper {
         RulesetOverrides(
             survivalLimit = survivalLimit,
             extraMilestones =
-                extraMilestones.map { MilestoneDefinition(key = it.key, condition = it.condition) },
+                extraMilestones.map {
+                    MilestoneDefinition(
+                        id = MilestoneId(it.id),
+                        condition = it.condition,
+                        description = it.description,
+                    )
+                },
             principleOverrides =
                 principleOverrides.mapValues { (_, choices) ->
                     choices.map { PrincipleChoice(category = it.category, label = it.label, effect = it.effect) }

@@ -1,7 +1,10 @@
 package io.kdmtracker.core.ruleset
 
-import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.Core16Milestones
+import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
+import io.kdmtracker.core.rules.MilestoneConditionSpec
+import io.kdmtracker.core.rules.MilestoneMetric
 import io.kdmtracker.core.rules.SettlementStepCatalog
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,32 +60,33 @@ class RulesetTest {
     }
 
     @Test
-    fun core16HasFiveOfficialMilestones() {
+    fun core16HasFiveOfficialMilestonesWithTypedConditions() {
         assertEquals(5, Core16Ruleset.milestones.size)
         assertEquals(
-            MilestoneKey.entries.toSet(),
-            Core16Ruleset.milestones.map { it.key }.toSet(),
+            Core16Milestones.ALL.toSet(),
+            Core16Ruleset.milestones.map { it.id }.toSet(),
         )
-        assertEquals(
-            "1 death",
-            Core16Ruleset.milestones.first { it.key == MilestoneKey.PRINCIPLE_DEATH }.condition,
-        )
-        assertEquals(
-            "first child is born",
-            Core16Ruleset.milestones.first { it.key == MilestoneKey.PRINCIPLE_NEW_LIFE }.condition,
-        )
-        assertEquals(
-            "population reaches 15",
-            Core16Ruleset.milestones.first { it.key == MilestoneKey.PRINCIPLE_SOCIETY }.condition,
-        )
-        assertEquals(
-            "settlement has 5 innovations",
-            Core16Ruleset.milestones.first { it.key == MilestoneKey.HOODED_KNIGHT }.condition,
-        )
-        assertEquals(
-            "population reaches 0",
-            Core16Ruleset.milestones.first { it.key == MilestoneKey.GAME_OVER }.condition,
-        )
+
+        val byId = Core16Ruleset.milestones.associateBy { it.id }
+        val death = byId.getValue(Core16Milestones.PRINCIPLE_DEATH)
+        assertEquals(MilestoneConditionSpec.AtLeast(MilestoneMetric.DEATHS, 1), death.condition)
+        assertEquals("1 death", death.description)
+
+        val newLife = byId.getValue(Core16Milestones.PRINCIPLE_NEW_LIFE)
+        assertEquals(MilestoneConditionSpec.AtLeast(MilestoneMetric.BIRTHS, 1), newLife.condition)
+        assertEquals("first child is born", newLife.description)
+
+        val society = byId.getValue(Core16Milestones.PRINCIPLE_SOCIETY)
+        assertEquals(MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 15), society.condition)
+        assertEquals("population reaches 15", society.description)
+
+        val hoodedKnight = byId.getValue(Core16Milestones.HOODED_KNIGHT)
+        assertEquals(MilestoneConditionSpec.AtLeast(MilestoneMetric.INNOVATIONS, 5), hoodedKnight.condition)
+        assertEquals("settlement has 5 innovations", hoodedKnight.description)
+
+        val gameOver = byId.getValue(Core16Milestones.GAME_OVER)
+        assertEquals(MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0), gameOver.condition)
+        assertEquals("population reaches 0", gameOver.description)
     }
 
     @Test
@@ -132,8 +136,13 @@ class RulesetTest {
     }
 
     @Test
-    fun extraMilestonesAppendWithoutDroppingBase() {
-        val extra = MilestoneDefinition(MilestoneKey.GAME_OVER, "house rule game over")
+    fun extraMilestoneWithANewIdIsAppendedWithoutDroppingBase() {
+        val extra =
+            MilestoneDefinition(
+                MilestoneId("house-rule-game-over"),
+                MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0),
+                "house rule game over",
+            )
         val overridden =
             Core16Ruleset.applyOverrides(
                 RulesetOverrides(extraMilestones = listOf(extra)),
@@ -141,5 +150,26 @@ class RulesetTest {
         assertEquals(6, overridden.milestones.size)
         assertTrue(overridden.milestones.containsAll(Core16Ruleset.milestones))
         assertEquals(Core16Ruleset.milestones + extra, overridden.milestones)
+    }
+
+    @Test
+    fun extraMilestoneWithTheSameIdReplacesOnlyThatThreshold() {
+        val extra =
+            MilestoneDefinition(
+                Core16Milestones.PRINCIPLE_SOCIETY,
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 20),
+                "population reaches 20",
+            )
+        val overridden =
+            Core16Ruleset.applyOverrides(
+                RulesetOverrides(extraMilestones = listOf(extra)),
+            )
+
+        assertEquals(5, overridden.milestones.size)
+        assertEquals(extra, overridden.milestones.first { it.id == Core16Milestones.PRINCIPLE_SOCIETY })
+        assertEquals(
+            MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 15),
+            Core16Ruleset.milestones.first { it.id == Core16Milestones.PRINCIPLE_SOCIETY }.condition,
+        )
     }
 }

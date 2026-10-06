@@ -1,7 +1,9 @@
 package io.kdmtracker.core.ruleset
 
-import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.PrincipleCategory
+import io.kdmtracker.core.rules.MilestoneConditionSpec
+import io.kdmtracker.core.rules.MilestoneMetric
 import io.kdmtracker.core.rules.SettlementStep
 import io.kdmtracker.core.rules.SettlementStepCatalog
 
@@ -32,11 +34,31 @@ object Core16Ruleset : Ruleset {
 
     override val milestones: List<MilestoneDefinition> =
         listOf(
-            MilestoneDefinition(MilestoneKey.PRINCIPLE_DEATH, "1 death"),
-            MilestoneDefinition(MilestoneKey.PRINCIPLE_NEW_LIFE, "first child is born"),
-            MilestoneDefinition(MilestoneKey.PRINCIPLE_SOCIETY, "population reaches 15"),
-            MilestoneDefinition(MilestoneKey.HOODED_KNIGHT, "settlement has 5 innovations"),
-            MilestoneDefinition(MilestoneKey.GAME_OVER, "population reaches 0"),
+            MilestoneDefinition(
+                Core16Milestones.PRINCIPLE_DEATH,
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.DEATHS, 1),
+                "1 death",
+            ),
+            MilestoneDefinition(
+                Core16Milestones.PRINCIPLE_NEW_LIFE,
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.BIRTHS, 1),
+                "first child is born",
+            ),
+            MilestoneDefinition(
+                Core16Milestones.PRINCIPLE_SOCIETY,
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 15),
+                "population reaches 15",
+            ),
+            MilestoneDefinition(
+                Core16Milestones.HOODED_KNIGHT,
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.INNOVATIONS, 5),
+                "settlement has 5 innovations",
+            ),
+            MilestoneDefinition(
+                Core16Milestones.GAME_OVER,
+                MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0),
+                "population reaches 0",
+            ),
         )
 
     override val principles: Map<PrincipleCategory, List<PrincipleChoice>> =

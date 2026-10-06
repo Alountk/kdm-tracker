@@ -1,7 +1,10 @@
 package io.kdmtracker.core.rules
 
-import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.ruleset.Core16Ruleset
+import io.kdmtracker.core.ruleset.MilestoneDefinition
+import io.kdmtracker.core.ruleset.RulesetOverrides
+import io.kdmtracker.core.ruleset.applyOverrides
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,81 +21,108 @@ class MilestoneConditionsTest {
 
     @Test
     fun deathReachedAtFirstDeath() {
-        assertFalse(MilestoneConditions.death.reached(state(deaths = 0)))
-        assertTrue(MilestoneConditions.death.reached(state(deaths = 1)))
+        assertFalse(
+            MilestoneConditions.evaluate(state(deaths = 0), MilestoneConditionSpec.AtLeast(MilestoneMetric.DEATHS, 1)),
+        )
+        assertTrue(
+            MilestoneConditions.evaluate(state(deaths = 1), MilestoneConditionSpec.AtLeast(MilestoneMetric.DEATHS, 1)),
+        )
     }
 
     @Test
     fun newLifeReachedAtFirstBirth() {
-        assertFalse(MilestoneConditions.newLife.reached(state(births = 0)))
-        assertTrue(MilestoneConditions.newLife.reached(state(births = 1)))
+        assertFalse(
+            MilestoneConditions.evaluate(state(births = 0), MilestoneConditionSpec.AtLeast(MilestoneMetric.BIRTHS, 1)),
+        )
+        assertTrue(
+            MilestoneConditions.evaluate(state(births = 1), MilestoneConditionSpec.AtLeast(MilestoneMetric.BIRTHS, 1)),
+        )
     }
 
     @Test
     fun societyReachedAtFifteenPopulation() {
-        assertFalse(MilestoneConditions.society.reached(state(population = 14)))
-        assertTrue(MilestoneConditions.society.reached(state(population = 15)))
+        assertFalse(
+            MilestoneConditions.evaluate(
+                state(population = 14),
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 15),
+            ),
+        )
+        assertTrue(
+            MilestoneConditions.evaluate(
+                state(population = 15),
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 15),
+            ),
+        )
     }
 
     @Test
     fun hoodedKnightReachedAtFiveInnovations() {
-        assertFalse(MilestoneConditions.hoodedKnight.reached(state(innovations = 4)))
-        assertTrue(MilestoneConditions.hoodedKnight.reached(state(innovations = 5)))
+        assertFalse(
+            MilestoneConditions.evaluate(
+                state(innovations = 4),
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.INNOVATIONS, 5),
+            ),
+        )
+        assertTrue(
+            MilestoneConditions.evaluate(
+                state(innovations = 5),
+                MilestoneConditionSpec.AtLeast(MilestoneMetric.INNOVATIONS, 5),
+            ),
+        )
     }
 
     @Test
     fun gameOverReachedAtZeroPopulationAndBelow() {
-        assertFalse(MilestoneConditions.gameOver.reached(state(population = 1)))
-        assertTrue(MilestoneConditions.gameOver.reached(state(population = 0)))
-        assertTrue(MilestoneConditions.gameOver.reached(state(population = -1)))
+        val spec = MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0)
+        assertFalse(MilestoneConditions.evaluate(state(population = 1), spec))
+        assertTrue(MilestoneConditions.evaluate(state(population = 0), spec))
+        assertTrue(MilestoneConditions.evaluate(state(population = -1), spec))
     }
 
     @Test
-    fun forKeyReturnsTheMatchingCondition() {
-        assertTrue(MilestoneConditions.forKey(MilestoneKey.PRINCIPLE_DEATH).reached(state(deaths = 1)))
-        assertTrue(MilestoneConditions.forKey(MilestoneKey.PRINCIPLE_NEW_LIFE).reached(state(births = 1)))
-        assertTrue(MilestoneConditions.forKey(MilestoneKey.PRINCIPLE_SOCIETY).reached(state(population = 15)))
-        assertTrue(MilestoneConditions.forKey(MilestoneKey.HOODED_KNIGHT).reached(state(innovations = 5)))
-        assertTrue(MilestoneConditions.forKey(MilestoneKey.GAME_OVER).reached(state(population = 0)))
+    fun reachedMilestonesReadsTheRulesetDefinitions() {
+        val reached = reachedMilestones(state(deaths = 1, population = 15), Core16Ruleset.milestones)
+
+        assertEquals(
+            setOf(Core16Milestones.PRINCIPLE_DEATH, Core16Milestones.PRINCIPLE_SOCIETY),
+            reached,
+        )
     }
 
     @Test
-    fun reachedMilestonesReturnsExactlyTheReachedSet() {
-        val reached = reachedMilestones(state(deaths = 1, population = 15), MilestoneKey.entries)
-        assertEquals(setOf(MilestoneKey.PRINCIPLE_DEATH, MilestoneKey.PRINCIPLE_SOCIETY), reached)
-    }
+    fun reachedMilestonesHonoursTheSuppliedDefinitionSubset() {
+        val subset = Core16Ruleset.milestones.filter { it.id == Core16Milestones.PRINCIPLE_DEATH }
+        val reached = reachedMilestones(state(deaths = 1, population = 15), subset)
 
-    @Test
-    fun reachedMilestonesHonoursTheSuppliedKeySubset() {
-        val reached = reachedMilestones(state(deaths = 1, population = 15), listOf(MilestoneKey.PRINCIPLE_DEATH))
-        assertEquals(setOf(MilestoneKey.PRINCIPLE_DEATH), reached)
+        assertEquals(setOf(Core16Milestones.PRINCIPLE_DEATH), reached)
     }
 
     @Test
     fun reachedMilestonesIsEmptyWhenNothingIsReached() {
-        assertTrue(reachedMilestones(state(population = 1), MilestoneKey.entries).isEmpty())
+        assertTrue(reachedMilestones(state(population = 1), Core16Ruleset.milestones).isEmpty())
     }
 
     @Test
-    fun thresholdsMatchCore16RulesetDeclaredMilestoneConditions() {
-        val declared = Core16Ruleset.milestones.associate { it.key to it.condition }
+    fun anOverrideChangesTheSocietyThreshold() {
+        val overridden =
+            Core16Ruleset.applyOverrides(
+                RulesetOverrides(
+                    extraMilestones =
+                        listOf(
+                            MilestoneDefinition(
+                                Core16Milestones.PRINCIPLE_SOCIETY,
+                                MilestoneConditionSpec.AtLeast(MilestoneMetric.POPULATION, 20),
+                                "population reaches 20",
+                            ),
+                        ),
+                ),
+            )
 
-        assertEquals(MilestoneConditions.DEATHS, declared.numberFor(MilestoneKey.PRINCIPLE_DEATH))
-        assertEquals(MilestoneConditions.SOCIETY_POPULATION, declared.numberFor(MilestoneKey.PRINCIPLE_SOCIETY))
-        assertEquals(MilestoneConditions.HOODED_KNIGHT_INNOVATIONS, declared.numberFor(MilestoneKey.HOODED_KNIGHT))
-        assertEquals(MilestoneConditions.GAME_OVER_POPULATION, declared.numberFor(MilestoneKey.GAME_OVER))
-
-        assertEquals(1, MilestoneConditions.BIRTHS)
-        assertTrue(
-            declared.getValue(MilestoneKey.PRINCIPLE_NEW_LIFE).startsWith("first"),
-            "1.6 declares the first birth as the New Life milestone",
+        assertFalse(
+            Core16Milestones.PRINCIPLE_SOCIETY in reachedMilestones(state(population = 15), overridden.milestones),
         )
-    }
-
-    private fun Map<MilestoneKey, String>.numberFor(key: MilestoneKey): Int {
-        val declared = getValue(key)
-        return requireNotNull(Regex("\\d+").find(declared)?.value?.toInt()) {
-            "Core16Ruleset declares no numeric threshold for $key: '$declared'"
-        }
+        assertTrue(
+            Core16Milestones.PRINCIPLE_SOCIETY in reachedMilestones(state(population = 20), overridden.milestones),
+        )
     }
 }

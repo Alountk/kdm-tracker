@@ -3,6 +3,7 @@ package io.kdmtracker.core.domain
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class DomainEnumsTest {
     @Test
@@ -46,25 +47,26 @@ class DomainEnumsTest {
     }
 
     @Test
-    fun principleCategoryEntries() {
+    fun principleCategoryEntriesIncludeConviction() {
         assertContentEquals(
-            listOf("DEATH", "NEW_LIFE", "SOCIETY"),
+            listOf("DEATH", "NEW_LIFE", "SOCIETY", "CONVICTION"),
             PrincipleCategory.entries.map { it.name },
         )
     }
 
     @Test
-    fun milestoneKeyEntries() {
+    fun core16MilestoneIdsAreStableAndOpenToNewOnes() {
         assertContentEquals(
             listOf(
-                "PRINCIPLE_DEATH",
-                "PRINCIPLE_NEW_LIFE",
-                "PRINCIPLE_SOCIETY",
-                "HOODED_KNIGHT",
-                "GAME_OVER",
+                "principle-death",
+                "principle-new-life",
+                "principle-society",
+                "hooded-knight",
+                "game-over",
             ),
-            MilestoneKey.entries.map { it.name },
+            Core16Milestones.ALL.map { it.value },
         )
-        assertEquals(5, MilestoneKey.entries.size)
+        assertEquals(5, Core16Milestones.ALL.size)
+        assertNotEquals(Core16Milestones.GAME_OVER, MilestoneId("house-rule-game-over"))
     }
 }

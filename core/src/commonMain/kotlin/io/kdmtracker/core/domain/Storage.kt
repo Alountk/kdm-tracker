@@ -1,5 +1,7 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.Serializable
+
 /**
  * A single append-only entry in the resource ledger.
  *
@@ -7,10 +9,23 @@ package io.kdmtracker.core.domain
  * @property category the sheet grouping the resource belongs to.
  * @property delta the change in quantity: positive when gained, negative when spent.
  */
+@Serializable
 data class ResourceEntry(
     val name: String,
-    val category: String,
+    val category: ResourceCategory,
     val delta: Int,
+)
+
+/**
+ * A resource the settlement can store, with the sheet [category] it belongs to.
+ *
+ * Content packs carry these definitions, so a resource's category is content, never
+ * inferred from its name.
+ */
+@Serializable
+data class ResourceDefinition(
+    val name: String,
+    val category: ResourceCategory,
 )
 
 /**
@@ -22,7 +37,7 @@ data class ResourceEntry(
  */
 data class StorageLine(
     val name: String,
-    val category: String,
+    val category: ResourceCategory,
     val quantity: Int,
 )
 
@@ -54,6 +69,6 @@ object Storage {
     /** Projects [entries], returning only the lines whose category equals [category]. */
     fun forCategory(
         entries: List<ResourceEntry>,
-        category: String,
+        category: ResourceCategory,
     ): List<StorageLine> = project(entries).filter { it.category == category }
 }

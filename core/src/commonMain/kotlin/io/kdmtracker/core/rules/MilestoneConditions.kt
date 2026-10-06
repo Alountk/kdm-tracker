@@ -1,8 +1,41 @@
 package io.kdmtracker.core.rules
 
-import io.kdmtracker.core.domain.MilestoneKey
+import io.kdmtracker.core.domain.MilestoneId
+import io.kdmtracker.core.ruleset.MilestoneDefinition
+import kotlinx.serialization.Serializable
 
-/** Snapshot of the settlement counters a [MilestoneCondition] inspects. */
+/** The settlement counter a milestone condition measures. */
+enum class MilestoneMetric {
+    DEATHS,
+    BIRTHS,
+    POPULATION,
+    INNOVATIONS,
+}
+
+/**
+ * A machine-checkable milestone trigger, declared as content by a ruleset.
+ *
+ * The threshold and comparison live in the spec, never in the mechanism, so an
+ * override can change when a milestone fires without editing `rules/`.
+ */
+@Serializable
+sealed interface MilestoneConditionSpec {
+    /** The metric is at least [value] (`deaths >= 1`, `population >= 15`). */
+    @Serializable
+    data class AtLeast(
+        val metric: MilestoneMetric,
+        val value: Int,
+    ) : MilestoneConditionSpec
+
+    /** The metric is at most [value] (`population <= 0` for Game Over). */
+    @Serializable
+    data class AtMost(
+        val metric: MilestoneMetric,
+        val value: Int,
+    ) : MilestoneConditionSpec
+}
+
+/** Snapshot of the settlement counters a milestone condition inspects. */
 data class MilestoneState(
     val deaths: Int,
     val births: Int,
@@ -10,46 +43,40 @@ data class MilestoneState(
     val innovations: Int,
 )
 
-/** A milestone story event's trigger, evaluated against a [MilestoneState]. */
-fun interface MilestoneCondition {
-    fun reached(state: MilestoneState): Boolean
-}
-
 /**
- * Machine-checkable predicates for `Core16Ruleset`'s milestone story events,
- * replacing the prose conditions the ruleset declares.
+ * Evaluates the typed milestone conditions a ruleset declares.
  *
- * The thresholds are named constants rather than values read from a ruleset at
- * call time: [forKey] receives only a [MilestoneKey], so no ruleset is in scope.
- * `MilestoneConditionsTest.thresholdsMatchCore16RulesetDeclaredMilestoneConditions`
- * guards them against silently drifting from the declared content.
+ * No threshold is hardcoded here: every value and comparison comes from the
+ * [MilestoneConditionSpec] the caller supplies.
  */
 object MilestoneConditions {
-    const val DEATHS: Int = 1
-    const val BIRTHS: Int = 1
-    const val SOCIETY_POPULATION: Int = 15
-    const val HOODED_KNIGHT_INNOVATIONS: Int = 5
-    const val GAME_OVER_POPULATION: Int = 0
+    /** Whether [state] satisfies [spec]. */
+    fun evaluate(
+        state: MilestoneState,
+        spec: MilestoneConditionSpec,
+    ): Boolean =
+        when (spec) {
+            is MilestoneConditionSpec.AtLeast -> valueFor(state, spec.metric) >= spec.value
+            is MilestoneConditionSpec.AtMost -> valueFor(state, spec.metric) <= spec.value
+        }
 
-    val death: MilestoneCondition = MilestoneCondition { it.deaths >= DEATHS }
-    val newLife: MilestoneCondition = MilestoneCondition { it.births >= BIRTHS }
-    val society: MilestoneCondition = MilestoneCondition { it.population >= SOCIETY_POPULATION }
-    val hoodedKnight: MilestoneCondition = MilestoneCondition { it.innovations >= HOODED_KNIGHT_INNOVATIONS }
-    val gameOver: MilestoneCondition = MilestoneCondition { it.population <= GAME_OVER_POPULATION }
-
-    /** The condition that fires [key]'s milestone story event. */
-    fun forKey(key: MilestoneKey): MilestoneCondition =
-        when (key) {
-            MilestoneKey.PRINCIPLE_DEATH -> death
-            MilestoneKey.PRINCIPLE_NEW_LIFE -> newLife
-            MilestoneKey.PRINCIPLE_SOCIETY -> society
-            MilestoneKey.HOODED_KNIGHT -> hoodedKnight
-            MilestoneKey.GAME_OVER -> gameOver
+    private fun valueFor(
+        state: MilestoneState,
+        metric: MilestoneMetric,
+    ): Int =
+        when (metric) {
+            MilestoneMetric.DEATHS -> state.deaths
+            MilestoneMetric.BIRTHS -> state.births
+            MilestoneMetric.POPULATION -> state.population
+            MilestoneMetric.INNOVATIONS -> state.innovations
         }
 }
 
-/** Exactly the [keys] whose condition is reached in [state]. */
+/** Exactly the ids whose ruleset [definitions] [state] has reached. */
 fun reachedMilestones(
     state: MilestoneState,
-    keys: Collection<MilestoneKey>,
-): Set<MilestoneKey> = keys.filter { MilestoneConditions.forKey(it).reached(state) }.toSet()
+    definitions: List<MilestoneDefinition>,
+): Set<MilestoneId> =
+    definitions
+        .filter { MilestoneConditions.evaluate(state, it.condition) }
+        .mapTo(mutableSetOf()) { it.id }

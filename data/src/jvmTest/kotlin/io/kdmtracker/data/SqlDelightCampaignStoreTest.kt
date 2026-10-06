@@ -2,14 +2,16 @@ package io.kdmtracker.data
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HybridLogicalClock
-import io.kdmtracker.core.domain.MilestoneKey
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
+import io.kdmtracker.core.rules.MilestoneConditionSpec
+import io.kdmtracker.core.rules.MilestoneMetric
 import io.kdmtracker.core.ruleset.MilestoneDefinition
 import io.kdmtracker.core.ruleset.PrincipleChoice
 import io.kdmtracker.core.ruleset.RulesetOverrides
@@ -159,7 +161,11 @@ class SqlDelightCampaignStoreTest {
                 specialShowdownStep = 8,
                 extraMilestones =
                     listOf(
-                        MilestoneDefinition(MilestoneKey.GAME_OVER, "the population reaches zero"),
+                        MilestoneDefinition(
+                            Core16Milestones.GAME_OVER,
+                            MilestoneConditionSpec.AtMost(MilestoneMetric.POPULATION, 0),
+                            "the population reaches zero",
+                        ),
                     ),
                 principleOverrides =
                     mapOf(
