@@ -11,6 +11,7 @@ import io.kdmtracker.app.sync.DEFAULT_SYNC_BASE_URL
 import io.kdmtracker.app.sync.HttpSyncApi
 import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
+import io.kdmtracker.app.sync.SyncHttpException
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
 import io.kdmtracker.core.sync.SyncEngine
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -67,12 +69,29 @@ class LanternYearViewModel(
     private val _state = MutableStateFlow<UiState?>(null)
     val state: StateFlow<UiState?> = _state.asStateFlow()
 
+    /** The Home campaign list, one card per stored campaign, refreshed after loads, creates and syncs. */
+    private val _homeCards = MutableStateFlow<List<CampaignCard>>(emptyList())
+    val homeCards: StateFlow<List<CampaignCard>> = _homeCards.asStateFlow()
+
+    /** Set when [create] hits an [IOException]/[SyncHttpException], so the Home can show it inline. */
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError.asStateFlow()
+
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
     /** Set when the initial load fails, so the UI can show an error instead of spinning forever. */
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
+
+    /**
+     * Whether the Home is the visible destination (Ruling AK). The app starts here; [select] and
+     * [create] leave it for the cockpit, and every controller frame is published with
+     * [Screen.Home] while it is set. Volatile because the UI thread flips it while the IO collector
+     * reads it on each emission.
+     */
+    @Volatile
+    private var onHome = true
 
     /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
@@ -100,12 +119,76 @@ class LanternYearViewModel(
                 }
             components.set(loaded)
             if (cleared.get()) loaded.close()
-            _state.value = loaded.controller.state.value
-            launch { loaded.controller.state.collect { _state.value = it } }
+            _homeCards.value = loaded.controller.cards()
+            _state.value =
+                loaded.controller.state.value
+                    .forDisplay()
+            launch { loaded.controller.state.collect { _state.value = it.forDisplay() } }
             loaded.syncCoordinator?.let { coordinator ->
-                launch { coordinator.state.collect { _syncState.value = it } }
+                launch {
+                    coordinator.state.collect { syncState ->
+                        _syncState.value = syncState
+                        if (syncState is SyncState.Idle && syncState.lastSyncedAtMillis != null) {
+                            _homeCards.value = loaded.controller.cards()
+                        }
+                    }
+                }
             }
         }
+    }
+
+    /** Overrides the phase-derived screen with [Screen.Home] while the Home is showing (Ruling AK). */
+    private fun UiState.forDisplay(): UiState = if (onHome) copy(screen = Screen.Home) else this
+
+    /**
+     * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
+     *
+     * Runs on [dispatcher] (the repository read is blocking) and triggers a sync of the newly
+     * selected campaign. An unknown id is a no-op, leaving the Home in place.
+     */
+    fun select(campaignId: String) {
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            if (!loaded.controller.selectCampaign(campaignId)) return@launch
+            onHome = false
+            loaded.syncCoordinator?.rebind(campaignId)
+            _state.value = loaded.controller.state.value
+            loaded.syncCoordinator?.syncNow()
+        }
+    }
+
+    /**
+     * Creates a settlement named [name] through the hub and opens it.
+     *
+     * The hub round-trip runs on [dispatcher]; an [IOException] (including [SyncHttpException])
+     * surfaces as [actionError] and the Home stays put with no half-created state (Review Focus 4).
+     */
+    fun create(name: String) {
+        if (name.isBlank()) return
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            try {
+                val card = loaded.controller.createCampaign(name)
+                _actionError.value = null
+                _homeCards.value = loaded.controller.cards()
+                onHome = false
+                loaded.syncCoordinator?.rebind(card.campaignId)
+                _state.value = loaded.controller.state.value
+                loaded.syncCoordinator?.syncNow()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: SyncHttpException) {
+                _actionError.value = failure.message ?: "Could not create the settlement"
+            } catch (failure: IOException) {
+                _actionError.value = failure.message ?: "Could not create the settlement"
+            }
+        }
+    }
+
+    /** Syncs every campaign the user can reach; the Home's Sync control (Review Focus 1). */
+    fun syncAll() {
+        val loaded = components.get() ?: return
+        loaded.syncCoordinator?.syncAll { loaded.controller.cards().map { it.campaignId } }
     }
 
     fun advance() = mutate { it.advance() }
@@ -134,7 +217,7 @@ class LanternYearViewModel(
             val signIn = loaded.signIn ?: return@launch
             try {
                 signIn.signIn(username, password)
-                loaded.syncCoordinator?.syncNow()
+                loaded.syncCoordinator?.syncAll { loaded.controller.cards().map { it.campaignId } }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {

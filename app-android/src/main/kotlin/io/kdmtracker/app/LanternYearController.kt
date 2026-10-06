@@ -30,6 +30,33 @@ class LanternYearController(
 
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    /** Every stored campaign as a Home card, joined with its sharing badge (Ruling AJ/AK). */
+    fun cards(): List<CampaignCard> = repository.listCards()
+
+    /**
+     * Swaps the held campaign and settlement to [campaignId]'s and republishes the cockpit.
+     *
+     * Returns `false` and changes nothing when no stored campaign has that id (Review Focus 3).
+     */
+    fun selectCampaign(campaignId: String): Boolean {
+        if (!repository.select(campaignId)) return false
+        reload()
+        return true
+    }
+
+    /**
+     * Creates [name] on the hub, persists and opens it, and returns its Home card.
+     *
+     * The hub round-trip and any local write live in [SettlementRepository.create]; a thrown
+     * failure escapes unchanged so the caller can surface it, and the prior selection is kept
+     * (Review Focus 4).
+     */
+    fun createCampaign(name: String): CampaignCard {
+        val card = repository.create(name)
+        reload()
+        return card
+    }
+
     /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
         applyStep(
@@ -129,6 +156,7 @@ class LanternYearController(
             screen = settlement.phase.toScreen(),
             lanternYear = settlement.lanternYear,
             phase = settlement.phase,
+            settlementName = settlement.name,
             currentStep = settlement.currentStep,
             stepTitle =
                 ruleset.settlementSteps

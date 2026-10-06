@@ -46,8 +46,8 @@ sealed interface SyncState {
  * dispatcher default.
  */
 class SyncCoordinator(
+    campaignId: String,
     private val engine: SyncEngine,
-    private val campaignId: String,
     private val memberships: MembershipStore,
     private val scope: CoroutineScope,
     private val tokenProvider: () -> String? = { null },
@@ -55,6 +55,22 @@ class SyncCoordinator(
     private val clock: () -> Long = System::currentTimeMillis,
     private val onSynced: () -> Unit = {},
 ) {
+    /**
+     * The campaign a [syncNow] pass operates on.
+     *
+     * Re-bound by [rebind] when the Home selection changes (Ruling AJ): the id is captured at
+     * construction, so a selection must move the sync target or [syncNow] would keep syncing the
+     * campaign the app started on. Volatile because the UI thread rebinds while an IO pass reads.
+     */
+    @Volatile
+    var campaignId: String = campaignId
+        private set
+
+    /** Points [syncNow] at [campaignId]'s campaign after a Home selection. */
+    fun rebind(campaignId: String) {
+        this.campaignId = campaignId
+    }
+
     private val _state = MutableStateFlow<SyncState>(SyncState.Idle())
 
     val state: StateFlow<SyncState> = _state.asStateFlow()

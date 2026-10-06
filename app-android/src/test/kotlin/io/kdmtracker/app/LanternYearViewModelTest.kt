@@ -18,13 +18,14 @@ import kotlin.test.assertEquals
  */
 class LanternYearViewModelTest {
     @Test
-    fun initialStateIsTheOpeningSettlementStep() {
+    fun initialStateOpensOnHomeWithTheSeededSettlement() {
         val viewModel = viewModel()
 
         val state = viewModel.state.value
 
-        assertEquals(Screen.Settlement, state?.screen)
+        assertEquals(Screen.Home, state?.screen, "the app must start on Home (Ruling AK)")
         assertEquals(SettlementPhase.SETTLEMENT, state?.phase)
+        assertEquals("New Settlement", state?.settlementName)
         assertEquals(1, state?.lanternYear)
         assertEquals(1, state?.currentStep)
     }

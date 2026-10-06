@@ -26,12 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import io.kdmtracker.app.ui.describe
 
 @Composable
 fun KdmTrackerApp(
@@ -41,6 +40,10 @@ fun KdmTrackerApp(
     val state by viewModel.state.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
     val loadError by viewModel.loadError.collectAsState()
+    val homeCards by viewModel.homeCards.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     MaterialTheme {
         Scaffold { innerPadding ->
@@ -55,40 +58,67 @@ fun KdmTrackerApp(
                 when {
                     current == null && error != null -> LoadFailure(error)
                     current == null -> Loading()
-                    else -> {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            SyncBar(
-                                syncState = syncState,
-                                onSync = viewModel::syncNow,
-                                onSignIn = viewModel::signIn,
-                            )
-                            Box(modifier = Modifier.weight(1f)) {
-                                when (current.screen) {
-                                    Screen.Settlement ->
-                                        SettlementScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                            onPrevious = viewModel::previous,
-                                            onSelectStep = viewModel::selectStep,
-                                        )
-                                    Screen.Hunt ->
-                                        HuntScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                            onFail = viewModel::failHunt,
-                                        )
-                                    Screen.Showdown ->
-                                        ShowdownScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                        )
+                    else ->
+                        when (current.screen) {
+                            Screen.Home ->
+                                HomeScreen(
+                                    cards = homeCards,
+                                    syncState = syncState,
+                                    onSelect = viewModel::select,
+                                    onCreate = viewModel::create,
+                                    onSync = viewModel::syncAll,
+                                    onSignIn = viewModel::signIn,
+                                    username = username,
+                                    password = password,
+                                    onUsername = { username = it },
+                                    onPassword = { password = it },
+                                    error = actionError,
+                                )
+                            Screen.Settlement ->
+                                Cockpit(syncState, viewModel) {
+                                    SettlementScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                        onPrevious = viewModel::previous,
+                                        onSelectStep = viewModel::selectStep,
+                                    )
                                 }
-                            }
+                            Screen.Hunt ->
+                                Cockpit(syncState, viewModel) {
+                                    HuntScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                        onFail = viewModel::failHunt,
+                                    )
+                                }
+                            Screen.Showdown ->
+                                Cockpit(syncState, viewModel) {
+                                    ShowdownScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                    )
+                                }
                         }
-                    }
                 }
             }
         }
+    }
+}
+
+/** Wraps a cockpit screen with the manual sync/sign-in bar shared by the three phases. */
+@Composable
+private fun Cockpit(
+    syncState: SyncState,
+    viewModel: LanternYearViewModel,
+    content: @Composable () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        SyncBar(
+            syncState = syncState,
+            onSync = viewModel::syncNow,
+            onSignIn = viewModel::signIn,
+        )
+        Box(modifier = Modifier.weight(1f)) { content() }
     }
 }
 
@@ -181,13 +211,3 @@ private fun SignInForm(onSignIn: (String, String) -> Unit) {
         }
     }
 }
-
-private fun SyncState.describe(): String =
-    when (this) {
-        is SyncState.Idle -> lastSyncedAtMillis?.let { "Last sync ${formatTime(it)}" } ?: "Not synced yet"
-        SyncState.Syncing -> "Syncing…"
-        SyncState.NotConfigured -> "Not signed in"
-        is SyncState.Error -> "Sync error: $message"
-    }
-
-private fun formatTime(millis: Long): String = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(millis))
