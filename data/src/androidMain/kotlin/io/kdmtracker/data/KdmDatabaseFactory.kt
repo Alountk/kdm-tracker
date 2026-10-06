@@ -3,16 +3,19 @@ package io.kdmtracker.data
 import android.content.Context
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import io.kdmtracker.core.persistence.CampaignStore
+import io.kdmtracker.core.sync.SyncStore
 import io.kdmtracker.data.db.KdmDatabase
 
 /**
- * A [CampaignStore] together with the driver it owns.
+ * The stores the app builds over one database, together with the driver they share.
  *
- * [close] releases the database connection, so callers must invoke it once the store is no longer
- * in use (the app's ViewModel does so from `onCleared`).
+ * [store] serves the domain repository and [syncStore] the sync engine; both read and write the same
+ * connection, so they must not outlive it. [close] releases the database connection, so callers must
+ * invoke it once the stores are no longer in use (the app's ViewModel does so from `onCleared`).
  */
 class CampaignStoreHandle internal constructor(
     val store: CampaignStore,
+    val syncStore: SyncStore,
     private val driver: AndroidSqliteDriver,
 ) {
     fun close() = driver.close()
@@ -32,6 +35,11 @@ object KdmDatabaseFactory {
     fun openAndroidStore(context: Context): CampaignStoreHandle {
         val driver =
             AndroidSqliteDriver(KdmDatabase.Schema, context.applicationContext, DATABASE_NAME)
-        return CampaignStoreHandle(SqlDelightCampaignStore(KdmDatabase(driver)), driver)
+        val database = KdmDatabase(driver)
+        return CampaignStoreHandle(
+            store = SqlDelightCampaignStore(database),
+            syncStore = SqlDelightSyncStore(database),
+            driver = driver,
+        )
     }
 }
