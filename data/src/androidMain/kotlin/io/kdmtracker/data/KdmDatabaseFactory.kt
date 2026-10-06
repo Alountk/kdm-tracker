@@ -3,6 +3,7 @@ package io.kdmtracker.data
 import android.content.Context
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import io.kdmtracker.core.persistence.CampaignStore
+import io.kdmtracker.core.sync.MembershipStore
 import io.kdmtracker.core.sync.SyncStore
 import io.kdmtracker.data.db.KdmDatabase
 import java.io.Closeable
@@ -12,13 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean
  * The stores the app builds over one database, together with the driver they share.
  *
  * [store] serves the domain repository and [syncStore] the sync engine; both read and write the same
- * connection, so they must not outlive it. [close] releases the database connection and is
- * idempotent, so a teardown race (or a defensive double close) cannot fail or double-free the
- * driver.
+ * connection, so they must not outlive it. [membershipStore] is the same store instance seen through
+ * its membership port, so the repository's cached-badge reads and the sync engine's cursor share one
+ * connection. [close] releases the database connection and is idempotent, so a teardown race (or a
+ * defensive double close) cannot fail or double-free the driver.
  */
 class CampaignStoreHandle internal constructor(
     val store: CampaignStore,
     val syncStore: SyncStore,
+    val membershipStore: MembershipStore,
     private val driver: AndroidSqliteDriver,
 ) : Closeable {
     private val closed = AtomicBoolean(false)
@@ -43,9 +46,11 @@ object KdmDatabaseFactory {
         val driver =
             AndroidSqliteDriver(KdmDatabase.Schema, context.applicationContext, DATABASE_NAME)
         val database = KdmDatabase(driver)
+        val syncStore = SqlDelightSyncStore(database)
         return CampaignStoreHandle(
             store = SqlDelightCampaignStore(database),
-            syncStore = SqlDelightSyncStore(database),
+            syncStore = syncStore,
+            membershipStore = syncStore,
             driver = driver,
         )
     }

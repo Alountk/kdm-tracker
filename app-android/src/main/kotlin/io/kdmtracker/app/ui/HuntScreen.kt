@@ -36,7 +36,8 @@ fun HuntScreen(
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Hunt", style = MaterialTheme.typography.headlineMedium)
+        Text(text = state.settlementName, style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Hunt", style = MaterialTheme.typography.titleMedium)
         Text(
             text = "Lantern Year ${state.lanternYear}",
             style = MaterialTheme.typography.bodyMedium,

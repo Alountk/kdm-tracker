@@ -7,8 +7,10 @@ import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
+import io.kdmtracker.core.sync.MembershipStore
 import io.kdmtracker.core.sync.SyncStore
 import io.kdmtracker.core.transfer.CampaignDto
 import io.kdmtracker.core.transfer.HybridLogicalClockDto
@@ -16,8 +18,11 @@ import io.kdmtracker.core.transfer.SettlementDto
 import io.kdmtracker.core.transfer.SyncMetaDto
 import io.kdmtracker.core.transfer.TransferMapper
 import io.kdmtracker.data.db.KdmDatabase
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import io.kdmtracker.data.db.Campaign as CampaignRow
+import io.kdmtracker.data.db.Campaign_membership as MembershipRow
 import io.kdmtracker.data.db.Outbox as OutboxRow
 import io.kdmtracker.data.db.Settlement as SettlementRow
 
@@ -44,7 +49,8 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
 class SqlDelightSyncStore(
     private val database: KdmDatabase,
     private val log: (String) -> Unit = { println(it) },
-) : SyncStore {
+) : SyncStore,
+    MembershipStore {
     override fun cursor(campaignId: String): Long =
         database.syncCursorQueries
             .selectCursor(campaignId)
@@ -137,6 +143,43 @@ class SqlDelightSyncStore(
             }
         }
     }
+
+    /**
+     * Stores the caller's membership summary for [summary]'s campaign, replacing any prior row for
+     * the same campaign id so a re-listed campaign updates instead of piling up duplicates.
+     */
+    override fun upsertMembership(summary: CampaignSummary) {
+        database.membershipQueries.upsertMembership(
+            campaignId = summary.id,
+            name = summary.name,
+            role = summary.role,
+            ownerUsername = summary.ownerUsername,
+            sharedWithJson = json.encodeToString(summary.sharedWith),
+        )
+    }
+
+    /** Every stored membership summary, for the offline Home list. */
+    override fun memberships(): List<CampaignSummary> =
+        database.membershipQueries
+            .selectAllMemberships()
+            .executeAsList()
+            .map { it.toCampaignSummary() }
+
+    /** The stored membership summary for [campaignId], or `null` when the campaign is unknown. */
+    override fun membership(campaignId: String): CampaignSummary? =
+        database.membershipQueries
+            .selectMembershipById(campaignId)
+            .executeAsOneOrNull()
+            ?.toCampaignSummary()
+
+    private fun MembershipRow.toCampaignSummary(): CampaignSummary =
+        CampaignSummary(
+            id = campaignId,
+            name = name,
+            role = role,
+            ownerUsername = ownerUsername,
+            sharedWith = json.decodeFromString(sharedWithJson),
+        )
 
     private fun dropPending(
         campaignId: String,

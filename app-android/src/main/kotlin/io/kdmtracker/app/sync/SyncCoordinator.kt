@@ -1,5 +1,6 @@
 package io.kdmtracker.app.sync
 
+import io.kdmtracker.core.sync.MembershipStore
 import io.kdmtracker.core.sync.SyncEngine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,25 +37,67 @@ sealed interface SyncState {
 /**
  * Runs the `:core` [SyncEngine] off the UI thread and mirrors its outcome into [state].
  *
- * The engine call is blocking (HTTP + SQLDelight), so [syncNow] dispatches it onto [dispatcher]
- * (Review Focus 5) and never lets a failure escape: a thrown exception becomes [SyncState.Error]
- * and the exception is swallowed so a flaky or offline hub cannot crash the app (Review Focus 4).
- * [CancellationException] is rethrown so structured cancellation still works when the owning scope
- * is torn down. The scope is supplied by the caller — the app hands in its ViewModel scope — which
- * keeps the coordinator JVM-testable and free of Android types beyond the dispatcher default.
+ * The engine call is blocking (HTTP + SQLDelight), so [syncNow] and [syncAll] dispatch it onto
+ * [dispatcher] (Review Focus 5) and never let a failure escape: a thrown exception becomes
+ * [SyncState.Error] and the exception is swallowed so a flaky or offline hub cannot crash the app
+ * (Review Focus 4). [CancellationException] is rethrown so structured cancellation still works when
+ * the owning scope is torn down. The scope is supplied by the caller — the app hands in its
+ * ViewModel scope — which keeps the coordinator JVM-testable and free of Android types beyond the
+ * dispatcher default.
  */
 class SyncCoordinator(
+    campaignId: String,
     private val engine: SyncEngine,
-    private val campaignId: String,
+    private val memberships: MembershipStore,
     private val scope: CoroutineScope,
     private val tokenProvider: () -> String? = { null },
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val clock: () -> Long = System::currentTimeMillis,
     private val onSynced: () -> Unit = {},
 ) {
-    private val _state = MutableStateFlow<SyncState>(SyncState.Idle())
+    /**
+     * The campaign a [syncNow] pass operates on.
+     *
+     * Re-bound by [rebind] when the Home selection changes (Ruling AJ): the id is captured at
+     * construction, so a selection must move the sync target or [syncNow] would keep syncing the
+     * campaign the app started on. Volatile because the UI thread rebinds while an IO pass reads.
+     */
+    @Volatile
+    var campaignId: String = campaignId
+        private set
+
+    /** Points [syncNow] at [campaignId]'s campaign after a Home selection. */
+    fun rebind(campaignId: String) {
+        this.campaignId = campaignId
+    }
+
+    /**
+     * The last attempt's status.
+     *
+     * Seeded to [SyncState.NotConfigured] when no token is stored, so the sign-in form is visible
+     * before the first sync is ever attempted (sign-in minor). With a token it starts [SyncState.Idle].
+     */
+    private val _state = MutableStateFlow(initialState())
 
     val state: StateFlow<SyncState> = _state.asStateFlow()
+
+    private fun initialState(): SyncState =
+        if (tokenProvider() == null) {
+            SyncState.NotConfigured
+        } else {
+            SyncState.Idle()
+        }
+
+    /**
+     * Increments once per completed sync pass, whatever its outcome.
+     *
+     * The Home card list refreshes on every completion — a failing campaign must not hide the
+     * campaigns that did sync (Ruling AP). [state] alone cannot signal this: it stays [SyncState.Error]
+     * when any campaign fails, so a success-only refresh would drop the whole list.
+     */
+    private val _completedSyncs = MutableStateFlow(0L)
+
+    val completedSyncs: StateFlow<Long> = _completedSyncs.asStateFlow()
 
     /**
      * Whether a sync pass is currently running. An [AtomicBoolean] because [syncNow] is called from
@@ -93,7 +136,65 @@ class SyncCoordinator(
                 _state.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
             } finally {
                 inFlight.set(false)
+                _completedSyncs.value += 1
             }
         }
     }
+
+    /**
+     * Syncs every campaign the signed-in user can reach (Review Focus 1).
+     *
+     * The sync set is derived from the **hub**, never from local rows (Ruling AQ): the campaigns the
+     * hub's `listCampaigns` returns, plus any campaign the app created through the hub (cached as a
+     * membership by `create`). A local, client-minted campaign the hub does not know — the first-run
+     * seed — has no membership and is therefore never submitted, so it cannot 403 the pass. Each
+     * campaign has its own cursor, so a campaign whose pull/push fails does not abort the others
+     * (Review Focus 3): the healthy campaigns still advance and the failures are collected and
+     * surfaced as [SyncState.Error] naming the campaigns that failed.
+     *
+     * Shares [syncNow]'s token and in-flight guards, so a manual sync and the sign-in sync cannot
+     * overlap. On every completion [completedSyncs] ticks so the Home list refreshes regardless of
+     * the outcome (Ruling AP).
+     */
+    fun syncAll() {
+        if (tokenProvider() == null) {
+            _state.value = SyncState.NotConfigured
+            return
+        }
+        if (!inFlight.compareAndSet(false, true)) return
+        _state.value = SyncState.Syncing
+        scope.launch(dispatcher) {
+            try {
+                val summaries = engine.listCampaigns()
+                summaries.forEach { memberships.upsertMembership(it) }
+                val campaignIds = (summaries.map { it.id } + memberships.memberships().map { it.id }).distinct()
+                val failures = campaignIds.mapNotNull(::syncOne)
+                onSynced()
+                _state.value =
+                    if (failures.isEmpty()) {
+                        SyncState.Idle(lastSyncedAtMillis = clock())
+                    } else {
+                        SyncState.Error("Failed to sync ${failures.size} campaign(s): ${failures.joinToString("; ")}")
+                    }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                _state.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
+            } finally {
+                inFlight.set(false)
+                _completedSyncs.value += 1
+            }
+        }
+    }
+
+    /** Runs one campaign's pass, mapping a failure to its `"id: message"` string; rethrows cancellation. */
+    private fun syncOne(campaignId: String): String? =
+        try {
+            engine.sync(campaignId)
+            null
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            "$campaignId: ${failure.message ?: failure::class.simpleName ?: "sync failed"}"
+        }
 }

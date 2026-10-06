@@ -1,0 +1,16 @@
+CREATE TABLE campaign_membership (
+  campaignId TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  ownerUsername TEXT NOT NULL,
+  sharedWithJson TEXT NOT NULL
+);
+
+upsertMembership:
+INSERT OR REPLACE INTO campaign_membership VALUES (?,?,?,?,?);
+
+selectAllMemberships:
+SELECT * FROM campaign_membership;
+
+selectMembershipById:
+SELECT * FROM campaign_membership WHERE campaignId = ?;

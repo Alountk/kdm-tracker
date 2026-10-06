@@ -1,7 +1,9 @@
 package io.kdmtracker.app.sync
 
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
+import io.kdmtracker.core.sync.InMemoryMembershipStore
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
 import io.kdmtracker.core.sync.SyncEngine
@@ -31,6 +33,11 @@ class SyncSignInTest {
         var pullCalls = 0
         val api =
             object : SyncApi {
+                override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
+                override fun createCampaign(name: String): CampaignSummary =
+                    throw UnsupportedOperationException("createCampaign is not exercised by SyncSignInTest")
+
                 override fun pull(
                     campaignId: String,
                     since: Long,
@@ -48,6 +55,7 @@ class SyncSignInTest {
             SyncCoordinator(
                 engine = SyncEngine(api, NoopSyncStore()),
                 campaignId = "c1",
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = tokens::read,
                 dispatcher = Dispatchers.Unconfined,
@@ -73,6 +81,11 @@ class SyncSignInTest {
                     SyncEngine(
                         api =
                             object : SyncApi {
+                                override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
+                                override fun createCampaign(name: String): CampaignSummary =
+                                    throw UnsupportedOperationException("unused")
+
                                 override fun pull(
                                     campaignId: String,
                                     since: Long,
@@ -86,6 +99,7 @@ class SyncSignInTest {
                         store = NoopSyncStore(),
                     ),
                 campaignId = "c1",
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = tokens::read,
                 dispatcher = Dispatchers.Unconfined,

@@ -7,6 +7,20 @@ package io.kdmtracker.core.sync
  * interface so pull/merge/push orchestration stays pure and JVM-testable.
  */
 interface SyncApi {
+    /** Lists the campaigns the signed-in user can reach. */
+    fun listCampaigns(): List<CampaignSummary>
+
+    /**
+     * Creates a campaign named [name] on the hub and returns the caller's membership for it.
+     *
+     * The hub owns campaign-id generation, so the client must never mint an id it intends to sync:
+     * only the id returned here is accepted by the change-log endpoints. The returned summary's
+     * `role` is the caller's (`OWNER` for a fresh campaign) and `sharedWith` is empty; the hub's
+     * create response carries no owner username, so implementations may leave
+     * [CampaignSummary.ownerUsername] blank.
+     */
+    fun createCampaign(name: String): CampaignSummary
+
     /** Pulls remote changes for [campaignId] recorded after [since], plus the hub's current revision. */
     fun pull(
         campaignId: String,

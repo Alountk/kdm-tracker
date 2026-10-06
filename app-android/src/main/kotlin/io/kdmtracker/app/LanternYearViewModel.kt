@@ -67,12 +67,36 @@ class LanternYearViewModel(
     private val _state = MutableStateFlow<UiState?>(null)
     val state: StateFlow<UiState?> = _state.asStateFlow()
 
+    /** The Home campaign list, one card per stored campaign, refreshed after loads, creates and syncs. */
+    private val _homeCards = MutableStateFlow<List<CampaignCard>>(emptyList())
+    val homeCards: StateFlow<List<CampaignCard>> = _homeCards.asStateFlow()
+
+    /** Set when [create] fails, so the Home can show it inline. */
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError.asStateFlow()
+
+    /**
+     * Increments once per successful [create], so the Home can clear the New-settlement field only
+     * when the create actually landed (a failure keeps the typed name).
+     */
+    private val _createSucceeded = MutableStateFlow(0L)
+    val createSucceeded: StateFlow<Long> = _createSucceeded.asStateFlow()
+
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
     /** Set when the initial load fails, so the UI can show an error instead of spinning forever. */
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
+
+    /**
+     * Whether the Home is the visible destination (Ruling AK). The app starts here; [select] and
+     * [create] leave it for the cockpit, and every controller frame is published with
+     * [Screen.Home] while it is set. Volatile because the UI thread flips it while the IO collector
+     * reads it on each emission.
+     */
+    @Volatile
+    private var onHome = true
 
     /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
@@ -100,12 +124,95 @@ class LanternYearViewModel(
                 }
             components.set(loaded)
             if (cleared.get()) loaded.close()
-            _state.value = loaded.controller.state.value
-            launch { loaded.controller.state.collect { _state.value = it } }
+            _homeCards.value = loaded.controller.cards()
+            _state.value =
+                loaded.controller.state.value
+                    .forDisplay()
+            launch { loaded.controller.state.collect { _state.value = it.forDisplay() } }
             loaded.syncCoordinator?.let { coordinator ->
-                launch { coordinator.state.collect { _syncState.value = it } }
+                launch {
+                    coordinator.state.collect { syncState ->
+                        _syncState.value = syncState
+                    }
+                }
+                launch {
+                    coordinator.completedSyncs.collect {
+                        _homeCards.value = loaded.controller.cards()
+                    }
+                }
             }
         }
+    }
+
+    /** Overrides the phase-derived screen with [Screen.Home] while the Home is showing (Ruling AK). */
+    private fun UiState.forDisplay(): UiState = if (onHome) copy(screen = Screen.Home) else this
+
+    /**
+     * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
+     *
+     * Runs on [dispatcher] (the repository read is blocking) and triggers a sync of the newly
+     * selected campaign. An unknown id is a no-op, leaving the Home in place.
+     */
+    fun select(campaignId: String) {
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            if (!loaded.controller.selectCampaign(campaignId)) return@launch
+            onHome = false
+            loaded.syncCoordinator?.rebind(campaignId)
+            _state.value = loaded.controller.state.value
+            loaded.syncCoordinator?.syncNow()
+        }
+    }
+
+    /**
+     * Returns to the Home from the cockpit and republishes the Home frame (Ruling AR).
+     *
+     * [onHome] flips immediately (the controller collector reads it per emission); the blocking
+     * repository read that rebuilds the card list runs on [dispatcher] (Review Focus 5).
+     */
+    fun goHome() {
+        onHome = true
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            _state.value =
+                loaded.controller.state.value
+                    .forDisplay()
+            _homeCards.value = loaded.controller.cards()
+        }
+    }
+
+    /**
+     * Creates a settlement named [name] through the hub and opens it.
+     *
+     * The hub round-trip runs on [dispatcher]; any failure — a transport error, a non-2xx hub reply,
+     * or a malformed 2xx body that fails to parse — surfaces as [actionError] and the Home stays put
+     * with no half-created state (Review Focus 4). [actionError] is cleared at the start of the
+     * attempt so a stale error cannot linger while the retry is in flight.
+     */
+    fun create(name: String) {
+        if (name.isBlank()) return
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            _actionError.value = null
+            try {
+                val card = loaded.controller.createCampaign(name)
+                _homeCards.value = loaded.controller.cards()
+                _createSucceeded.value += 1
+                onHome = false
+                loaded.syncCoordinator?.rebind(card.campaignId)
+                _state.value = loaded.controller.state.value
+                loaded.syncCoordinator?.syncNow()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                _actionError.value = failure.message ?: "Could not create the settlement"
+            }
+        }
+    }
+
+    /** Syncs every campaign the user can reach; the Home's Sync control (Review Focus 1). */
+    fun syncAll() {
+        components.get()?.syncCoordinator?.syncAll()
     }
 
     fun advance() = mutate { it.advance() }
@@ -134,7 +241,7 @@ class LanternYearViewModel(
             val signIn = loaded.signIn ?: return@launch
             try {
                 signIn.signIn(username, password)
-                loaded.syncCoordinator?.syncNow()
+                loaded.syncCoordinator?.syncAll()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
@@ -166,12 +273,18 @@ class LanternYearViewModel(
                     LanternYearViewModel(
                         buildComponents = { scope ->
                             val handle = KdmDatabaseFactory.openAndroidStore(appContext)
-                            val repository = SettlementRepository(handle.store)
-                            val controller = LanternYearController(repository)
                             val tokenStore = AndroidKeystoreTokenStore(appContext)
+                            val api = HttpSyncApi(DEFAULT_SYNC_BASE_URL, tokenStore::read)
+                            val repository =
+                                SettlementRepository(
+                                    handle.store,
+                                    memberships = handle.membershipStore,
+                                    createCampaign = api::createCampaign,
+                                )
+                            val controller = LanternYearController(repository)
                             val engine =
                                 SyncEngine(
-                                    api = HttpSyncApi(DEFAULT_SYNC_BASE_URL, tokenStore::read),
+                                    api = api,
                                     store = handle.syncStore,
                                 )
                             AppComponents(
@@ -180,6 +293,7 @@ class LanternYearViewModel(
                                     SyncCoordinator(
                                         engine = engine,
                                         campaignId = repository.campaign.id.value,
+                                        memberships = handle.membershipStore,
                                         scope = scope,
                                         tokenProvider = tokenStore::read,
                                         onSynced = controller::reload,

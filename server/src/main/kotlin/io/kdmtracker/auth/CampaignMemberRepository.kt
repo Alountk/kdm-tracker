@@ -14,4 +14,6 @@ interface CampaignMemberRepository : JpaRepository<CampaignMemberEntity, Long> {
     ): Boolean
 
     fun findByUserId(userId: Long): List<CampaignMemberEntity>
+
+    fun findByCampaignId(campaignId: String): List<CampaignMemberEntity>
 }

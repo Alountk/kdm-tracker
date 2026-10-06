@@ -112,11 +112,13 @@ database — campaign data survives container replacement.
 
 ## Quickstart (Android app)
 
-The `:app-android` module is a Compose Multiplatform Android app that consumes `:core`. It is
-currently a **walking skeleton**: a navigable lantern-year loop (Settlement → Hunt → Showdown)
-driven by `:core` rules, with "Pendiente" stubs for the step bodies. State persists locally through
-`:data` (see [Persistence](#persistence)) and syncs to the hub through the client sync engine (see
-[Sync (Android client)](#sync-android-client)); the real step UIs arrive in later plans.
+The `:app-android` module is a Compose Multiplatform Android app that consumes `:core`. It opens on
+a **Home** that lists every campaign (settlement) the signed-in user can reach, then enters a
+navigable lantern-year loop (Settlement → Hunt → Showdown) driven by `:core` rules, with "Pendiente"
+stubs for the step bodies. State persists locally through `:data` (see
+[Persistence](#persistence)) and syncs to the hub through the client sync engine (see
+[Sync (Android client)](#sync-android-client)); the real step UIs arrive in later plans. The Home
+and its sharing model are described in [Home and sharing](#home-and-sharing).
 
 Build the debug APK:
 
@@ -218,6 +220,40 @@ plaintext, whereas a hardware-backed key means app-data slurping alone cannot re
 rotated or deprecated key simply makes a read return `null`, leaving the coordinator `NotConfigured`
 until the user signs in again.
 
+## Home and sharing
+
+The Home is the app's entry screen and its campaign picker. It lists **every campaign (settlement)
+the signed-in user owns or has shared with them**, one tappable card each. A card shows
+`name · Lantern Year N · Population P` plus a sharing **badge** so the three relationships are
+distinguishable at a glance:
+
+| Badge | Meaning | Rule |
+| ----- | ------- | ---- |
+| **Tuyo** | The caller owns the campaign and nobody else is a member. | `role == "OWNER"` and `sharedWith` is empty |
+| **Compartido con: …** | The caller owns the campaign and has shared it with the listed users. | `role == "OWNER"` and `sharedWith` is non-empty |
+| **Compartido con vos por …** | Someone else owns the campaign and shared it with the caller. | any non-owner role |
+
+The badge rule lives in `:core` (`io.kdmtracker.core.sync.CampaignBadges`) and is pure/testable;
+the screen only renders it. The `CampaignSummary` returned by the hub carries `id`, `name`, the
+caller's `role`, the `ownerUsername` and the usernames in `sharedWith` (the caller is excluded), and
+the app caches each membership for offline badge rendering.
+
+**Sign-in syncs all campaigns.** Signing in (or pressing Sync) runs `SyncCoordinator.syncAll`: it
+calls `GET /api/v1/campaigns` to list the caller's campaigns, caches their memberships, then runs a
+full pull → merge → push pass for **every** campaign id — each with its own cursor, so one
+campaign's failure does not abort the others. A locally created campaign not yet on the hub is
+included through a supplemental id provider. Selecting a card re-scopes the cockpit to that campaign
+and rebinds the sync target; the cockpit header then shows the settlement **name** (with the
+generic "Settlement" label beneath it).
+
+**Sharing model (campaign-level).** Membership is per campaign, not per settlement or record. A
+campaign has one owner and any number of members; the role vocabulary is `OWNER`, `EDITOR` and
+`VIEWER` (roles are currently displayed and badge the list — fine-grained role enforcement beyond
+membership is backlog). Sharing happens through the **invite code** every campaign carries: a user
+who wants in calls `POST /api/v1/campaigns/join` with `{"inviteCode"}` and becomes an `EDITOR`
+(joining is idempotent and never downgrades an existing member). Creating a campaign makes the
+caller its `OWNER` (see the endpoint table below).
+
 ## Sync hub (server)
 
 The server exposes a small JSON sync API under `/api/v1`. Every route except `/api/v1/auth/*`
@@ -233,17 +269,22 @@ Authentication:
 
 Identity — `GET /api/v1/me` → `{"userId":<id>}` (protected).
 
-Campaigns — a valid token is required. Creating a campaign makes the caller its `OWNER`; joining by
-invite code makes the caller an `EDITOR`. Without this, a freshly registered user has no membership
-and every change-log call is `403`, so the hub is unusable end to end:
+Campaigns — a valid token is required. `GET /api/v1/campaigns` lists **every campaign the caller
+belongs to** (owned or joined) as summaries carrying the caller's role, the owner's username and the
+other members' usernames, ordered by name then id. Creating a campaign makes the caller its `OWNER`;
+joining by invite code makes the caller an `EDITOR`. Without these, a freshly registered user has no
+membership and every change-log call is `403`, so the hub is unusable end to end:
 
 | Route | Method | Body | Response |
 | ----- | ------ | ---- | -------- |
+| `/api/v1/campaigns` | GET | — | `[{"id","name","role","ownerUsername","sharedWith"}]` (all the caller's campaigns) |
 | `/api/v1/campaigns` | POST | `{"name"}` | `{"id","name","inviteCode","role"}` (`role="OWNER"`; `400` on a blank name) |
 | `/api/v1/campaigns/join` | POST | `{"inviteCode"}` | `{"id","name","inviteCode","role"}` (`role="EDITOR"`; `404` on an unknown code) |
 
 Campaign ids are server-generated 26-character Crockford ULIDs; invite codes are unique random
-strings. Joining is idempotent and never downgrades an existing member's role.
+strings. **The client must use the id the server returns from `POST /api/v1/campaigns`** when it
+creates a campaign — the change-log endpoints only accept server-issued ids, so the client never
+mints one it intends to sync. Joining is idempotent and never downgrades an existing member's role.
 
 Change log, per campaign. The caller must be a member of the campaign or the request is `403`:
 
@@ -366,7 +407,7 @@ kdm-tracker/
 │       │       ├── SettlementRepository.kt  # settlement/campaign holder backed by CampaignStore
 │       │       ├── UiState.kt               # UiState + Screen sealed interface
 │       │       ├── sync/                    # HttpSyncApi, TokenStore, SyncCoordinator
-│       │       └── ui/                      # stateless Compose screens (Settlement/Hunt/Showdown)
+│       │       └── ui/                      # stateless Compose screens (Home/Settlement/Hunt/Showdown)
 │       └── test/kotlin/io/kdmtracker/app/   # controller, loop, repository and sync tests
 ├── .githooks/
 │   └── pre-commit                     # ./gradlew -q spotlessCheck (enable via git config)
@@ -417,8 +458,9 @@ seam, the transfer mapper, and the sync engine — per-record LWW merge, tombsto
 pull/merge/push pass). The `:data` suite runs the shared `CampaignStore` contract against
 `SqlDelightCampaignStore` over a temp-file database, plus schema, soft-delete, JSON round-trip,
 reopen-durability, outbox and sync-store tests. The `:app-android` suite covers the lantern-year
-controller, the end-to-end loop, the store-backed settlement repository and the sync coordinator
-(in-flight guard, off-thread dispatch, non-fatal errors). The `:server` suite boots the app with
+controller, the end-to-end loop, the store-backed settlement repository, the multi-campaign Home
+(selection, cards and sharing badges) and the sync coordinator (in-flight guard, off-thread
+dispatch, non-fatal errors, sync-all). The `:server` suite boots the app with
 `@SpringBootTest` + MockMvc against an in-memory H2 database and runs without sleeps:
 
 - Smoke: `GET /` renders the dashboard (200), `GET /health` returns `{"status":"ok"}`.

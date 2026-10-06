@@ -98,7 +98,8 @@ fun SettlementScreen(
 @Composable
 private fun SettlementHeader(state: UiState) {
     Column {
-        Text(text = "Settlement", style = MaterialTheme.typography.headlineMedium)
+        Text(text = state.settlementName, style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Settlement", style = MaterialTheme.typography.titleMedium)
         Text(
             text =
                 "Lantern Year ${state.lanternYear} · Population ${state.population} · " +

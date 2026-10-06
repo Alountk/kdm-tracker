@@ -179,7 +179,7 @@ class OutboxStoreTest {
         KdmDatabase.Schema.migrate(driver, 1L, KdmDatabase.Schema.version)
 
         val database = KdmDatabase(driver)
-        assertEquals(2L, KdmDatabase.Schema.version)
+        assertEquals(3L, KdmDatabase.Schema.version)
         assertTrue(
             database.outboxQueries
                 .selectOutboxByCampaign("campaign")

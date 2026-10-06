@@ -1,12 +1,16 @@
 package io.kdmtracker.app.sync
 
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeSet
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import kotlinx.serialization.json.put
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -36,6 +40,33 @@ class HttpSyncApi(
     private val tokenProvider: () -> String?,
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) : SyncApi {
+    override fun listCampaigns(): List<CampaignSummary> {
+        val connection = openConnection("GET", "/api/v1/campaigns")
+        return json.decodeFromString(
+            ListSerializer(CampaignSummary.serializer()),
+            connection.readBody(),
+        )
+    }
+
+    override fun createCampaign(name: String): CampaignSummary {
+        val connection = openConnection("POST", "/api/v1/campaigns")
+        connection.doOutput = true
+        connection.setRequestProperty("Content-Type", "application/json")
+        val body = buildJsonObject { put("name", name) }.toString()
+        connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+        // The app module does not apply the kotlinx-serialization compiler plugin, so the response
+        // is read from the JSON tree instead of a generated DTO (it mirrors the server's
+        // `CampaignResponse`: id, name, role, inviteCode).
+        val response = json.parseToJsonElement(connection.readBody()).jsonObject
+        return CampaignSummary(
+            id = response.getValue("id").jsonPrimitive.content,
+            name = response.getValue("name").jsonPrimitive.content,
+            role = response.getValue("role").jsonPrimitive.content,
+            ownerUsername = "",
+            sharedWith = emptyList(),
+        )
+    }
+
     override fun pull(
         campaignId: String,
         since: Long,

@@ -6,9 +6,11 @@ import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
+import io.kdmtracker.core.sync.InMemoryMembershipStore
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
 import io.kdmtracker.core.sync.SyncEngine
@@ -53,6 +55,7 @@ class SyncReloadTest {
             SyncCoordinator(
                 engine = SyncEngine(api, syncStore),
                 campaignId = repository.campaign.id.value,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
@@ -127,6 +130,11 @@ class SyncReloadTest {
     private class FakeSyncApi(
         private val pullResponse: PullResponse,
     ) : SyncApi {
+        override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
+        override fun createCampaign(name: String): CampaignSummary =
+            throw UnsupportedOperationException("createCampaign is not exercised by SyncReloadTest")
+
         override fun pull(
             campaignId: String,
             since: Long,

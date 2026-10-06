@@ -1,5 +1,6 @@
 package io.kdmtracker.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,12 +29,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import io.kdmtracker.app.ui.describe
 
 @Composable
 fun KdmTrackerApp(
@@ -41,6 +43,18 @@ fun KdmTrackerApp(
     val state by viewModel.state.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
     val loadError by viewModel.loadError.collectAsState()
+    val homeCards by viewModel.homeCards.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+    val createSucceeded by viewModel.createSucceeded.collectAsState()
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var newSettlementName by remember { mutableStateOf("") }
+
+    // Clear the New-settlement field only once the create actually landed, so a failure keeps the
+    // typed name (cheap minor).
+    LaunchedEffect(createSucceeded) {
+        if (createSucceeded > 0L) newSettlementName = ""
+    }
 
     MaterialTheme {
         Scaffold { innerPadding ->
@@ -55,40 +69,72 @@ fun KdmTrackerApp(
                 when {
                     current == null && error != null -> LoadFailure(error)
                     current == null -> Loading()
-                    else -> {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            SyncBar(
-                                syncState = syncState,
-                                onSync = viewModel::syncNow,
-                                onSignIn = viewModel::signIn,
-                            )
-                            Box(modifier = Modifier.weight(1f)) {
-                                when (current.screen) {
-                                    Screen.Settlement ->
-                                        SettlementScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                            onPrevious = viewModel::previous,
-                                            onSelectStep = viewModel::selectStep,
-                                        )
-                                    Screen.Hunt ->
-                                        HuntScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                            onFail = viewModel::failHunt,
-                                        )
-                                    Screen.Showdown ->
-                                        ShowdownScreen(
-                                            state = current,
-                                            onAdvance = viewModel::advance,
-                                        )
+                    else ->
+                        when (current.screen) {
+                            Screen.Home ->
+                                HomeScreen(
+                                    cards = homeCards,
+                                    syncState = syncState,
+                                    onSelect = viewModel::select,
+                                    onCreate = viewModel::create,
+                                    onSync = viewModel::syncAll,
+                                    onSignIn = viewModel::signIn,
+                                    username = username,
+                                    password = password,
+                                    onUsername = { username = it },
+                                    onPassword = { password = it },
+                                    newSettlementName = newSettlementName,
+                                    onNewSettlementName = { newSettlementName = it },
+                                    error = actionError,
+                                )
+                            Screen.Settlement ->
+                                Cockpit(syncState, viewModel) {
+                                    SettlementScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                        onPrevious = viewModel::previous,
+                                        onSelectStep = viewModel::selectStep,
+                                    )
                                 }
-                            }
+                            Screen.Hunt ->
+                                Cockpit(syncState, viewModel) {
+                                    HuntScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                        onFail = viewModel::failHunt,
+                                    )
+                                }
+                            Screen.Showdown ->
+                                Cockpit(syncState, viewModel) {
+                                    ShowdownScreen(
+                                        state = current,
+                                        onAdvance = viewModel::advance,
+                                    )
+                                }
                         }
-                    }
                 }
             }
         }
+    }
+}
+
+/** Wraps a cockpit screen with the manual sync/sign-in bar shared by the three phases. */
+@Composable
+private fun Cockpit(
+    syncState: SyncState,
+    viewModel: LanternYearViewModel,
+    content: @Composable () -> Unit,
+) {
+    // System back returns to the Home list, mirroring the visible "Home" control (Ruling AR).
+    BackHandler { viewModel.goHome() }
+    Column(modifier = Modifier.fillMaxSize()) {
+        SyncBar(
+            syncState = syncState,
+            onSync = viewModel::syncNow,
+            onSignIn = viewModel::signIn,
+            onHome = viewModel::goHome,
+        )
+        Box(modifier = Modifier.weight(1f)) { content() }
     }
 }
 
@@ -120,6 +166,7 @@ private fun SyncBar(
     syncState: SyncState,
     onSync: () -> Unit,
     onSignIn: (String, String) -> Unit,
+    onHome: () -> Unit,
 ) {
     Column(
         modifier =
@@ -132,6 +179,9 @@ private fun SyncBar(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            OutlinedButton(onClick = onHome) {
+                Text("Home")
+            }
             Text(
                 text = syncState.describe(),
                 style = MaterialTheme.typography.bodySmall,
@@ -181,13 +231,3 @@ private fun SignInForm(onSignIn: (String, String) -> Unit) {
         }
     }
 }
-
-private fun SyncState.describe(): String =
-    when (this) {
-        is SyncState.Idle -> lastSyncedAtMillis?.let { "Last sync ${formatTime(it)}" } ?: "Not synced yet"
-        SyncState.Syncing -> "Syncing…"
-        SyncState.NotConfigured -> "Not signed in"
-        is SyncState.Error -> "Sync error: $message"
-    }
-
-private fun formatTime(millis: Long): String = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(millis))
