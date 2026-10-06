@@ -6,9 +6,10 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 
 /**
- * A sync campaign. [id] is a client-assigned ULID (26 characters of Crockford base32) so it matches
- * both the `campaignId` carried by `io.kdmtracker.core.sync.ChangeRecord` and the app's
- * `io.kdmtracker.core.domain.Ulid` identity. [inviteCode] is what a user shares to join.
+ * A sync campaign. [id] is a ULID (26 characters of Crockford base32) generated server-side on
+ * create, so it matches both the `campaignId` carried by `io.kdmtracker.core.sync.ChangeRecord` and
+ * the app's `io.kdmtracker.core.domain.Ulid` identity; the legacy-migration campaign uses the fixed
+ * well-known `LegacyToChangeLogMigration.CAMPAIGN_ID`. [inviteCode] is what a user shares to join.
  */
 @Entity
 @Table(name = "campaigns")
