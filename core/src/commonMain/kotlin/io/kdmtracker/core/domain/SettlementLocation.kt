@@ -1,11 +1,14 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.Serializable
+
 /**
  * A settlement location the settlement can build.
  *
  * @property name the location's unique, human-readable name.
  * @property requires the names of the locations that must already be built.
  */
+@Serializable
 data class SettlementLocation(
     val name: String,
     val requires: List<String> = emptyList(),

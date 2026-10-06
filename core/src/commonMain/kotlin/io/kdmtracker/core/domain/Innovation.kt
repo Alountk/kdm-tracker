@@ -1,5 +1,7 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.Serializable
+
 /**
  * An innovation the settlement can unlock.
  *
@@ -8,6 +10,7 @@ package io.kdmtracker.core.domain
  * @property consequences the names of the cards the innovation adds to the deck.
  * @property survivalLimitBonus the survival limit increase the innovation grants.
  */
+@Serializable
 data class Innovation(
     val name: String,
     val description: String,

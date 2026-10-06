@@ -261,7 +261,8 @@ Game content is **data, not code**. `:core` ships a modular content-catalog seam
 locations, quarries, nemeses and resources a campaign can use live in selectable
 **content packs**. Nothing about the settlement record is hardcoded in `rules/`.
 
-A `ContentPack` is identified by a stable string id and declares what it provides:
+A `ContentPack` is identified by a stable string id and carries the typed `ContentBundle`
+the domain reads:
 
 ```kotlin
 @Serializable
@@ -270,11 +271,17 @@ data class ContentPack(
     val version: String,
     val name: String,
     val requires: List<String> = emptyList(),   // pack ids that must also be enabled
-    val provideInnovations: List<String> = emptyList(),
-    val provideLocations: List<String> = emptyList(),
-    val provideQuarries: List<String> = emptyList(),
-    val provideNemeses: List<String> = emptyList(),
-    val provideResources: List<String> = emptyList(),
+    val bundle: ContentBundle = ContentBundle(),
+)
+
+@Serializable
+data class ContentBundle(
+    val innovations: List<Innovation> = emptyList(),        // names + consequences
+    val locations: List<SettlementLocation> = emptyList(),  // names + prerequisites
+    val resources: List<ResourceDefinition> = emptyList(),  // names + typed category
+    val timeline: List<TimelineEntry> = emptyList(),
+    val quarries: List<String> = emptyList(),
+    val nemeses: List<String> = emptyList(),
 )
 ```
 
@@ -286,8 +293,10 @@ Two pack kinds share one model:
 
 `ContentCatalogComposer.compose(packs)` validates that every `requires` id is present
 (returning `CatalogResult.MissingRequirement` otherwise) and, on success, merges the
-packs into a `ContentCatalog` whose `innovations`/`locations`/`quarries`/`nemeses`/
-`resources` are the **deduped, sorted union** across packs — so composition is
+packs into a `ContentCatalog`. The catalog exposes the **typed definitions**
+(`innovationDefinitions`/`locationDefinitions`/`resourceDefinitions`/`timeline`) and
+derives the display-name lists (`innovations`/`locations`/`resources`/`quarries`/
+`nemeses`) as the **deduped, sorted union** across packs — so composition is
 order-independent and deterministic.
 
 ```kotlin

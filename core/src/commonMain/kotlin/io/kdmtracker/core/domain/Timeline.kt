@@ -1,5 +1,8 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class TimelineEntry(
     val lanternYear: Int,
     val label: String,

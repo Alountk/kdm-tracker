@@ -1,5 +1,10 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.ResourceCategory
+import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.SettlementLocation
+import io.kdmtracker.core.domain.TimelineEntry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -10,11 +15,24 @@ class ContentCatalogTest {
             id = "core",
             version = "1.0.0",
             name = "Core",
-            provideInnovations = listOf("pictographs", "ammonia", "pictographs"),
-            provideLocations = listOf("lantern-hoard"),
-            provideQuarries = listOf("white-lion", "screaming-antelope"),
-            provideNemeses = listOf("butcher"),
-            provideResources = listOf("hide", "bone", "hide"),
+            bundle =
+                ContentBundle(
+                    innovations =
+                        listOf(
+                            Innovation(name = "pictographs", description = "…"),
+                            Innovation(name = "ammonia", description = "…"),
+                            Innovation(name = "pictographs", description = "duplicate name"),
+                        ),
+                    locations = listOf(SettlementLocation("lantern-hoard")),
+                    resources =
+                        listOf(
+                            ResourceDefinition("hide", ResourceCategory.BASIC),
+                            ResourceDefinition("bone", ResourceCategory.BASIC),
+                        ),
+                    timeline = listOf(TimelineEntry(lanternYear = 4, label = "Story Event")),
+                    quarries = listOf("white-lion", "screaming-antelope"),
+                    nemeses = listOf("butcher"),
+                ),
         )
 
     private val expansion =
@@ -23,10 +41,21 @@ class ContentCatalogTest {
             version = "1.0.0",
             name = "Expansion",
             requires = listOf("core"),
-            provideInnovations = listOf("forbidden-dance", "ammonia"),
-            provideQuarries = listOf("gorm", "white-lion"),
-            provideNemeses = listOf("the-hand"),
-            provideResources = listOf("bone", "scrap"),
+            bundle =
+                ContentBundle(
+                    innovations =
+                        listOf(
+                            Innovation(name = "forbidden-dance", description = "…"),
+                            Innovation(name = "ammonia", description = "…"),
+                        ),
+                    quarries = listOf("gorm", "white-lion"),
+                    nemeses = listOf("the-hand"),
+                    resources =
+                        listOf(
+                            ResourceDefinition("bone", ResourceCategory.BASIC),
+                            ResourceDefinition("scrap", ResourceCategory.SPECIAL),
+                        ),
+                ),
         )
 
     private fun ok(result: CatalogResult): ContentCatalog {
@@ -44,6 +73,20 @@ class ContentCatalogTest {
         assertEquals(forward.quarries, reversed.quarries)
         assertEquals(forward.nemeses, reversed.nemeses)
         assertEquals(forward.resources, reversed.resources)
+    }
+
+    @Test
+    fun typedDefinitionsAreMergedFromTheBundles() {
+        val catalog = ok(ContentCatalogComposer.compose(listOf(core, expansion)))
+
+        assertEquals(3, catalog.innovationDefinitions.size)
+        assertEquals("lantern-hoard", catalog.locationDefinitions.single().name)
+        assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.name == "bone" }.category)
+        assertEquals(
+            ResourceCategory.SPECIAL,
+            catalog.resourceDefinitions.first { it.name == "scrap" }.category,
+        )
+        assertEquals(listOf(TimelineEntry(lanternYear = 4, label = "Story Event")), catalog.timeline)
     }
 
     @Test

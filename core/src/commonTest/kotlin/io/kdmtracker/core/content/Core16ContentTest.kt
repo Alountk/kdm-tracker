@@ -2,7 +2,11 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.SyncMeta
+import io.kdmtracker.core.domain.Timeline
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
 import io.kdmtracker.core.transfer.TransferMapper
@@ -56,15 +60,34 @@ class Core16ContentTest {
     }
 
     @Test
-    fun packProvidesTheSeedInnovations() {
-        assertTrue("Language" in catalog().innovations)
+    fun boneSmithRequiresLanternHoardFromContent() {
+        val boneSmith = catalog().locationDefinitions.first { it.name == "Bone Smith" }
+
+        assertEquals(listOf("Lantern Hoard"), boneSmith.requires)
     }
 
     @Test
-    fun packProvidesTheSeedResources() {
-        val resources = catalog().resources
+    fun languageConsequencesDriveTheInnovationDeck() {
+        val language = catalog().innovationDefinitions.first { it.name == "Language" }
+        val deck = InnovationDeck.of(InnovationCollection().with(language))
 
-        assertTrue(resources.containsAll(listOf("Bone", "Hide", "Organ", "Scrap")), "was $resources")
+        assertEquals(language.consequences.sorted(), deck.cards)
+    }
+
+    @Test
+    fun packProvidesTheSeedResourcesWithCategories() {
+        val catalog = catalog()
+
+        assertTrue(
+            catalog.resources.containsAll(listOf("Bone", "Hide", "Organ", "Scrap")),
+            "was ${catalog.resources}",
+        )
+        assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.name == "Bone" }.category)
+    }
+
+    @Test
+    fun packProvidesTheCore16TimelineEntries() {
+        assertEquals(Timeline.core16().entries, catalog().timeline)
     }
 
     @Test
