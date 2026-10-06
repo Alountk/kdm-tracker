@@ -42,7 +42,15 @@ class SettlementStateTest {
 
     @Test
     fun aFreshSettlementReachesNoMilestones() {
-        assertTrue(state().reachedMilestones().isEmpty())
+        assertTrue(SettlementState(survivalLimit = 10).reachedMilestones().isEmpty())
+    }
+
+    @Test
+    fun aDefaultSettlementStateStartsWithFourSurvivorsAndReachesNoMilestones() {
+        val state = SettlementState(survivalLimit = 10)
+
+        assertEquals(4, state.population)
+        assertTrue(state.reachedMilestones().isEmpty())
     }
 
     @Test

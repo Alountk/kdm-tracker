@@ -16,7 +16,9 @@ import io.kdmtracker.core.rules.reachedMilestones
  * @property innovations the innovations the settlement has unlocked.
  * @property locations the settlement locations that have been built.
  * @property storage the projected resource inventory.
- * @property population the number of living survivors.
+ * @property population the number of living survivors; defaults to the four
+ *   founding survivors of [Settlement.new]. A default state therefore does not
+ *   reach GAME_OVER, which requires an explicit `population <= 0`.
  * @property deaths the survivors lost so far.
  * @property births the survivors born so far.
  * @property enabledPacks the content packs enabled for this settlement's campaign.
@@ -28,7 +30,7 @@ data class SettlementState(
     val innovations: InnovationCollection = InnovationCollection(),
     val locations: LocationSet = LocationSet(),
     val storage: List<StorageLine> = emptyList(),
-    val population: Int = 0,
+    val population: Int = 4,
     val deaths: Int = 0,
     val births: Int = 0,
     val enabledPacks: List<String> = emptyList(),
