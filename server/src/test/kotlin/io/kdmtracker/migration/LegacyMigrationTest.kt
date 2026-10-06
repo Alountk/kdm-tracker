@@ -4,13 +4,21 @@ import io.kdmtracker.auth.CampaignMemberRepository
 import io.kdmtracker.auth.CampaignRepository
 import io.kdmtracker.auth.UserRepository
 import io.kdmtracker.domain.LogEntry
+import io.kdmtracker.domain.Milestone
+import io.kdmtracker.domain.MilestoneKey
+import io.kdmtracker.domain.Principle
+import io.kdmtracker.domain.PrincipleCategory
 import io.kdmtracker.domain.Resource
 import io.kdmtracker.domain.Settlement
+import io.kdmtracker.domain.StepNote
 import io.kdmtracker.domain.Survivor
 import io.kdmtracker.repository.InnovationRepository
 import io.kdmtracker.repository.LogEntryRepository
+import io.kdmtracker.repository.MilestoneRepository
+import io.kdmtracker.repository.PrincipleRepository
 import io.kdmtracker.repository.ResourceRepository
 import io.kdmtracker.repository.SettlementRepository
+import io.kdmtracker.repository.StepNoteRepository
 import io.kdmtracker.repository.SurvivorRepository
 import io.kdmtracker.sync.ChangeRecordEntity
 import io.kdmtracker.sync.ChangeRecordRepository
@@ -40,6 +48,15 @@ class LegacyMigrationTest {
 
     @Autowired
     private lateinit var logEntries: LogEntryRepository
+
+    @Autowired
+    private lateinit var stepNotes: StepNoteRepository
+
+    @Autowired
+    private lateinit var milestones: MilestoneRepository
+
+    @Autowired
+    private lateinit var principles: PrincipleRepository
 
     @Autowired
     private lateinit var changeRecords: ChangeRecordRepository
@@ -92,6 +109,23 @@ class LegacyMigrationTest {
                     settlementId = settlement.id!!,
                 ),
             )
+        val stepNote =
+            stepNotes.saveAndFlush(
+                StepNote(settlementId = settlement.id!!, step = 2, text = "Migration note"),
+            )
+        val milestone =
+            milestones.saveAndFlush(
+                Milestone(settlementId = settlement.id!!, key = MilestoneKey.PRINCIPLE_DEATH.name, reached = true),
+            )
+        val principle =
+            principles.saveAndFlush(
+                Principle(
+                    settlementId = settlement.id!!,
+                    category = PrincipleCategory.DEATH,
+                    choice = "Grave Digging",
+                    chosenInYear = 4,
+                ),
+            )
 
         val first = migration.migrate()
 
@@ -110,18 +144,25 @@ class LegacyMigrationTest {
         val expectedRecords =
             (
                 settlements.count() + survivors.count() + resources.count() +
-                    innovations.count() + logEntries.count()
+                    innovations.count() + logEntries.count() + stepNotes.count() +
+                    milestones.count() + principles.count()
             ).toInt()
         val firstRecords = recordsFor(campaignId)
         assertEquals(expectedRecords, firstRecords.size)
         assertEquals(expectedRecords, first.changesApplied)
         assertEquals(expectedRecords, first.totalRecords)
+        assertEquals(stepNotes.count().toInt(), first.stepNotes)
+        assertEquals(milestones.count().toInt(), first.milestones)
+        assertEquals(principles.count().toInt(), first.principles)
 
         assertRecord(firstRecords, "settlement", settlement.id.toString())
         assertRecord(firstRecords, "survivor", survivor.id.toString())
         assertRecord(firstRecords, "resource", resource.id.toString())
         assertRecord(firstRecords, "innovation", innovation.id.toString())
         assertRecord(firstRecords, "log", log.id.toString())
+        assertRecord(firstRecords, "step_note", stepNote.id.toString())
+        assertRecord(firstRecords, "milestone", milestone.id.toString())
+        assertRecord(firstRecords, "principle", principle.id.toString())
 
         // The service assigns a contiguous 1..N revision run; the migration never stamps rev itself.
         assertEquals((1..expectedRecords).map { it.toLong() }, firstRecords.map { it.rev })
