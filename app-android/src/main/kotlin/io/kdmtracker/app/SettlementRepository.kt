@@ -36,6 +36,18 @@ class SettlementRepository(
         settlement = snapshot.settlements.first()
     }
 
+    /**
+     * Re-reads the canonical snapshot from the store and refreshes the held settlement.
+     *
+     * Called after a sync pass applies remote changes (Ruling AE). Without it the repository keeps
+     * the pre-sync settlement, the UI never shows the remote edit, and the next local mutation
+     * writes the stale value back over the already-advanced remote row.
+     */
+    fun reload() {
+        val snapshot = store.loadSnapshots().firstOrNull() ?: return
+        settlement = snapshot.settlements.firstOrNull() ?: return
+    }
+
     fun update(next: Settlement) {
         val previous = settlement.sync
         val stamped =

@@ -101,6 +101,18 @@ class LanternYearController(
         moveToStep(number)
     }
 
+    /**
+     * Re-reads the repository after an external (sync) change and republishes [state].
+     *
+     * The controller mirrors the settlement into [state] once per mutation; a sync pass mutates the
+     * store behind the controller's back, so without this the UI would keep rendering the pre-sync
+     * frame (Ruling AE).
+     */
+    fun reload() {
+        repository.reload()
+        _state.value = uiState(repository.settlement, _state.value.lastTransition)
+    }
+
     private fun moveToStep(step: Int) {
         val updated = repository.settlement.copy(currentStep = step)
         repository.update(updated)

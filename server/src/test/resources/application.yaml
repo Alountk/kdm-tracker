@@ -12,5 +12,5 @@ spring:
 
 sync:
   jwt:
-    secret: test-secret-not-for-production
+    secret: test-secret-not-for-production-0123456789
     expiry-seconds: 3600

@@ -114,9 +114,9 @@ database — campaign data survives container replacement.
 
 The `:app-android` module is a Compose Multiplatform Android app that consumes `:core`. It is
 currently a **walking skeleton**: a navigable lantern-year loop (Settlement → Hunt → Showdown)
-driven by `:core` rules, with "Pendiente" stubs for the step bodies. State now persists locally
-through `:data` (see [Persistence](#persistence)); network sync and the real step UIs arrive in
-later plans.
+driven by `:core` rules, with "Pendiente" stubs for the step bodies. State persists locally through
+`:data` (see [Persistence](#persistence)) and syncs to the hub through the client sync engine (see
+[Sync (Android client)](#sync-android-client)); the real step UIs arrive in later plans.
 
 Build the debug APK:
 
@@ -141,8 +141,82 @@ private storage (`/data/data/io.kdmtracker.app/databases/`) and seeded with a sa
 first launch.
 
 Every table carries sync columns (`updatedAtMillis`, `updatedAtCounter`, `rev`, `deletedAtMillis`,
-`deletedAtCounter`) so records can be reconciled later. The **outbox**, **sync cursor**, and the
-network pull/push engine are the next plan (3b); this milestone only persists locally.
+`deletedAtCounter`) so records can be reconciled. The **outbox**, **sync cursor**, and the
+pull/merge/push engine are implemented (see [Sync (Android client)](#sync-android-client)); this
+section covers only the local store.
+
+## Sync (Android client)
+
+The app is **offline-first and syncs opportunistically**: every local mutation is written to
+SQLDelight and to an **outbox** table in the same database, and a sync pass runs after each mutation
+and on demand (the manual sync button). The engine lives in `:core` (`io.kdmtracker.core.sync`)
+behind two ports — `SyncApi` (transport) and `SyncStore` (local persistence) — so pull/merge/push
+orchestration stays pure Kotlin and JVM-testable. `:app-android` supplies the HTTP transport
+(`HttpSyncApi`), `:data` supplies the SQLDelight store (`SqlDelightSyncStore`), and `SyncCoordinator`
+runs the pass off the UI thread.
+
+**One pass — outbox → pull → per-record LWW merge → push** (`SyncEngine.sync`):
+
+1. **Pull** from the stored cursor: `GET /api/v1/campaigns/{id}/changes?since=<cursor>`.
+2. **Merge** each pulled record against the **canonical local record** (falling back to the outbox)
+   with per-record last-write-wins (`MergePolicy`). A remote record that wins is applied **and** any
+   pending outbox entry for the same `(entityType, entityId)` is dropped, so a superseded local edit
+   is never re-pushed. A local record that wins is kept; if it was already acknowledged (canonical
+   only, outbox cleared) it is **re-enqueued** so the hub eventually converges.
+3. **Advance the cursor** to the response's `latestRev` only after the whole batch merges.
+4. **Push** whatever is still pending in the outbox (`POST .../changes`), then clear exactly the
+   acknowledged records.
+
+A pull failure aborts before the cursor moves, so no change is skipped. A push failure propagates and
+leaves the outbox intact for the next attempt, while the cursor stays advanced because the merged
+batch is already durable. An atomic in-flight guard makes overlapping **sync passes** a no-op; it does
+not lock the store against a concurrent local mutation (both use the same SQLDelight connection, which
+serializes access itself). After a successful merge the repository is reloaded from the store
+(`SettlementRepository.reload()`) so applied remote changes reach the UI before the next local edit.
+
+**Conflict model — client-side LWW.** Records for the same entity are ordered by a hybrid logical
+clock over (`updatedAtMillis`, `updatedAtCounter`), and **the client resolves conflicts**, not the
+server. A `DELETE` is a tombstone ordered by the same clock, so a newer delete supersedes an older
+upsert and vice versa. A remote record wins only when its clock is **strictly newer** than the local
+one; when the clocks are equal **the local record wins** and is re-pushed. The wire `baseRev` is
+carried and persisted verbatim but is **reserved** — the merge does not consult it yet. For the server
+path, see the "conflict model (Ruling W)" note above: the hub still stores the most recent push per
+entity as-is and never merges; the client now does the merging that was previously deferred.
+
+> **Resurrection caveat (Ruling AB).** Because equal clocks keep local, a remote `DELETE` and a local
+> `UPSERT` that share the exact same clock resolve in favour of the local upsert — the entity is
+> re-pushed and **resurrected**. The tradeoff is deliberate: a local edit is never silently dropped on
+> a tie, and real edits carry strictly-newer clocks. Since the hub itself is last-push-wins, an
+> equal-clock delete can also be undone by another client's later push, so deletes are best-effort
+> under clock collisions. Full conflict-history retention and UI are backlog.
+
+**Configuration.** The transport needs two things:
+
+- **Server base URL** — the `baseUrl` handed to `HttpSyncApi`. The app currently uses the development
+  default `DEFAULT_SYNC_BASE_URL = "http://10.0.2.2:8080"` (the Android emulator's alias for the host
+  machine), injected in `LanternYearViewModel`; a real deployment injects a configured URL.
+- **Bearer token** — read fresh per request through a `TokenStore`. `SyncCoordinator.syncNow()` gates on
+  it: with no token it sets `SyncState.NotConfigured` and **does not attempt** the doomed request,
+  instead of asking the hub for a `401`. The token is only ever placed in the request header and is
+  never logged.
+
+**Sign-in (token acquisition).** The token is obtained through `POST /api/v1/auth/login`
+(`HttpSyncAuthApi`), wrapped by `SyncSignIn` which persists the returned token via the `TokenStore`.
+When the coordinator is `NotConfigured` the app shows a minimal username/password form; submitting it
+runs `LanternYearViewModel.signIn`, stores the token, and then attempts a sync.
+
+**Cleartext (debug only).** The development hub is plain HTTP and `targetSdk 36` blocks cleartext by
+default, so `http://10.0.2.2:8080` would be unreachable. A **debug-only** manifest overlay
+(`app-android/src/debug/AndroidManifest.xml`) sets `android:usesCleartextTraffic="true"`; the release
+manifest is untouched and stays HTTPS-only. Never ship a release build that depends on cleartext.
+
+**Token storage.** `AndroidKeystoreTokenStore` encrypts the bearer token with AES-GCM under a
+non-extractable key held in the **Android Keystore**, and stores only the ciphertext plus IV in a
+private `SharedPreferences` file. The choice avoids a dependency: `EncryptedSharedPreferences` would
+pull in `androidx.security:security-crypto` (not in the version catalog) and `DataStore` alone stores
+plaintext, whereas a hardware-backed key means app-data slurping alone cannot recover the token. A
+rotated or deprecated key simply makes a read return `null`, leaving the coordinator `NotConfigured`
+until the user signs in again.
 
 ## Sync hub (server)
 
@@ -192,8 +266,9 @@ outrun the returned records, so a client cursor never skips a change.
 last-write-wins or any merge. It stores the most recent push for each
 `(campaignId, entityType, entityId)` triple as-is. `baseRev` is carried on the wire and persisted
 verbatim but never interpreted server-side; it stays reserved for the client's conflict detection.
-LWW/conflict resolution is deferred to **plan 3c**, where the client merges using `baseRev` to detect
-that the revision it computed against has since been replaced.
+The client now performs the merging (per-record LWW by HLC — see
+[Sync (Android client)](#sync-android-client)); `baseRev`-based detection remains client-side and is
+still reserved.
 
 ### Migrating existing data
 
@@ -237,6 +312,7 @@ kdm-tracker/
 │       │   ├── domain/                # Settlement, Campaign + value objects (Ulid, HLC, enums)
 │       │   ├── rules/                 # LanternYearFlow, SettlementStepCatalog, DerivedValues
 │       │   ├── ruleset/               # Ruleset, Core16Ruleset, RulesetOverrides
+│       │   ├── sync/                  # SyncApi/SyncStore ports, MergePolicy (LWW), SyncEngine
 │       │   ├── transfer/              # TransferDocument/TransferMapper (schema v3)
 │       │   └── usecase/               # AdvanceStep (lantern-year transition use case)
 │       └── commonTest/kotlin/io/kdmtracker/core/  # unit tests for the above
@@ -245,10 +321,13 @@ kdm-tracker/
 │   └── src/
 │       ├── commonMain/
 │       │   ├── kotlin/io/kdmtracker/data/
-│       │   │   └── SqlDelightCampaignStore.kt  # :core CampaignStore port over the generated DB
+│       │   │   ├── SqlDelightCampaignStore.kt  # :core CampaignStore port over the generated DB
+│       │   │   └── SqlDelightSyncStore.kt      # :core SyncStore port (outbox, cursor, applyMerged)
 │       │   └── sqldelight/io/kdmtracker/data/db/
 │       │       ├── Campaign.sq                 # campaign table + sync columns
-│       │       └── Settlement.sq               # settlement table + sync columns
+│       │       ├── Settlement.sq               # settlement table + sync columns
+│       │       ├── Outbox.sq                   # pending local changes awaiting push
+│       │       └── SyncCursor.sq               # per-campaign pull high-water mark
 │       ├── androidMain/kotlin/io/kdmtracker/data/
 │       │   └── KdmDatabaseFactory.kt           # opens the on-device DB; driver owns migrations
 │       └── jvmTest/kotlin/io/kdmtracker/data/  # schema, store, contract and durability tests
@@ -286,8 +365,9 @@ kdm-tracker/
 │       │       ├── LanternYearViewModel.kt  # retains the loop; opens the on-device SQLDelight DB
 │       │       ├── SettlementRepository.kt  # settlement/campaign holder backed by CampaignStore
 │       │       ├── UiState.kt               # UiState + Screen sealed interface
+│       │       ├── sync/                    # HttpSyncApi, TokenStore, SyncCoordinator
 │       │       └── ui/                      # stateless Compose screens (Settlement/Hunt/Showdown)
-│       └── test/kotlin/io/kdmtracker/app/   # controller, loop and store-backed repository tests
+│       └── test/kotlin/io/kdmtracker/app/   # controller, loop, repository and sync tests
 ├── .githooks/
 │   └── pre-commit                     # ./gradlew -q spotlessCheck (enable via git config)
 ├── .dockerignore                      # build-context root; ignores .git, build, data, .superpowers, ...
@@ -313,7 +393,7 @@ kdm-tracker/
 | `./gradlew :data:jvmTest` | Data tests           | SQLDelight schema + campaign-store tests       |
 | `./gradlew :server:test`  | Server tests         | MockMvc smoke + entity flow tests              |
 | `./gradlew :app-android:assembleDebug` | Build debug APK | Compiles the app into `app-debug.apk`      |
-| `./gradlew :app-android:testDebugUnitTest` | App tests | Controller, loop and repository tests    |
+| `./gradlew :app-android:testDebugUnitTest` | App tests | Controller, loop, repository and sync tests |
 | `./gradlew spotlessCheck` | Lint                 | ktlint style check (driven by `.editorconfig`) |
 | `./gradlew spotlessApply` | Format               | Auto-fix ktlint violations                     |
 
@@ -333,11 +413,12 @@ kdm-tracker/
 ```
 
 The `:core` suite is pure Kotlin unit tests (domain invariants, the lantern-year flow, the ruleset
-seam and the transfer mapper). The `:data` suite runs the shared `CampaignStore` contract against
-`SqlDelightCampaignStore` over a temp-file database, plus schema, soft-delete, JSON round-trip and
-reopen-durability tests. The `:app-android` suite covers the
-lantern-year controller, the end-to-end loop and the store-backed settlement repository. The
-`:server` suite boots the app with
+seam, the transfer mapper, and the sync engine — per-record LWW merge, tombstone ordering and the
+pull/merge/push pass). The `:data` suite runs the shared `CampaignStore` contract against
+`SqlDelightCampaignStore` over a temp-file database, plus schema, soft-delete, JSON round-trip,
+reopen-durability, outbox and sync-store tests. The `:app-android` suite covers the lantern-year
+controller, the end-to-end loop, the store-backed settlement repository and the sync coordinator
+(in-flight guard, off-thread dispatch, non-fatal errors). The `:server` suite boots the app with
 `@SpringBootTest` + MockMvc against an in-memory H2 database and runs without sleeps:
 
 - Smoke: `GET /` renders the dashboard (200), `GET /health` returns `{"status":"ok"}`.
