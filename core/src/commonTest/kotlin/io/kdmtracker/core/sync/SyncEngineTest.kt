@@ -181,6 +181,8 @@ class SyncEngineTest {
         var pushFailure: Throwable? = null
         val pushedSets = mutableListOf<ChangeSet>()
 
+        override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
         override fun pull(
             campaignId: String,
             since: Long,

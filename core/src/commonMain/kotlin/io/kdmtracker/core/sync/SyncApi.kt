@@ -7,6 +7,9 @@ package io.kdmtracker.core.sync
  * interface so pull/merge/push orchestration stays pure and JVM-testable.
  */
 interface SyncApi {
+    /** Lists the campaigns the signed-in user can reach. */
+    fun listCampaigns(): List<CampaignSummary>
+
     /** Pulls remote changes for [campaignId] recorded after [since], plus the hub's current revision. */
     fun pull(
         campaignId: String,
