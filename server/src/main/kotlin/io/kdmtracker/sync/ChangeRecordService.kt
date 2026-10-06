@@ -21,16 +21,23 @@ class ChangeRecordService(
      * Returns every change for [campaignId] with `rev > since`, ordered by ascending `rev`, plus the
      * campaign's current high-water mark. When the campaign has no changes [PullResponse.latestRev] is
      * `0`.
+     *
+     * The high-water mark is read **before** the records and the records are clamped to
+     * `rev <= latestRev`. A push that commits between the two reads can therefore only increase the
+     * returned `latestRev` beyond a record the caller did not receive in *this* response; clamping
+     * keeps the client's cursor from advancing past a change it never saw, so the change is delivered
+     * on the next pull instead of being skipped silently.
      */
     fun pull(
         campaignId: String,
         since: Long,
     ): PullResponse {
+        val latestRev = changeRecords.maxRev(campaignId) ?: 0
         val records =
             changeRecords
                 .findByCampaignIdAndRevGreaterThanOrderByRevAsc(campaignId, since)
+                .filter { it.rev <= latestRev }
                 .map { it.toChangeRecord() }
-        val latestRev = changeRecords.maxRev(campaignId) ?: 0
         return PullResponse(latestRev = latestRev, records = records)
     }
 
@@ -46,6 +53,12 @@ class ChangeRecordService(
      *
      * The campaign row is locked `PESSIMISTIC_WRITE` for the whole transaction, so concurrent pushes
      * to the same campaign serialize and cannot both assign the same `rev` from a stale `maxRev`.
+     *
+     * Conflict model (Ruling W): the server performs **no** server-side last-write-wins or merge. The
+     * stored row is simply the most recent push for the `(campaignId, entityType, entityId)` triple,
+     * and [ChangeRecord.baseRev] is persisted and echoed back verbatim, but never interpreted here.
+     * LWW/conflict resolution is deferred to plan 3c (client-side merge), which uses `baseRev` to
+     * detect when its change was computed against a revision the server has since replaced.
      */
     @Transactional
     fun push(
