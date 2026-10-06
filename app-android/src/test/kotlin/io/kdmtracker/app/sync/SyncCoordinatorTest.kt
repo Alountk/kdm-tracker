@@ -10,6 +10,9 @@ import io.kdmtracker.core.sync.SyncStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -75,6 +78,50 @@ class SyncCoordinatorTest {
         assertIs<SyncState.Error>(state)
         assertEquals("hub down", state.message)
         assertEquals(listOf("s1"), store.pendingOf(CAMPAIGN_ID).map(ChangeRecord::entityId))
+    }
+
+    /**
+     * Hammers [SyncCoordinator.syncNow] from many threads released together by a barrier so their
+     * guard checks genuinely race, and records the highest number of `engine.sync` passes that were
+     * ever in flight at once. With an atomic in-flight claim that peak is always 1; a non-atomic
+     * check-then-set lets two threads both start a pass (concurrent SQLDelight access + duplicate
+     * pushes). The pull holds a short sleep to widen the overlap window, so the race is not a
+     * matter of chance across the repeated rounds.
+     */
+    @Test
+    fun overlappingSyncRequestsNeverRunTwoEnginePasses() {
+        val concurrentPasses = AtomicInteger(0)
+        val maxConcurrentPasses = AtomicInteger(0)
+        val api =
+            FakeSyncApi(
+                onPull = { _, _ ->
+                    val running = concurrentPasses.incrementAndGet()
+                    maxConcurrentPasses.updateAndGet { peak -> maxOf(peak, running) }
+                    Thread.sleep(5)
+                    concurrentPasses.decrementAndGet()
+                    PullResponse(latestRev = 1L, records = emptyList())
+                },
+            )
+        val coordinator =
+            SyncCoordinator(
+                engine = SyncEngine(api, FakeSyncStore()),
+                campaignId = CAMPAIGN_ID,
+                scope = CoroutineScope(Dispatchers.IO),
+                dispatcher = Dispatchers.IO,
+            )
+
+        repeat(ROUNDS) {
+            val barrier = CyclicBarrier(THREADS)
+            (0 until THREADS)
+                .map {
+                    thread {
+                        barrier.await()
+                        coordinator.syncNow()
+                    }
+                }.forEach { it.join() }
+        }
+
+        assertEquals(1, maxConcurrentPasses.get(), "two engine.sync passes overlapped")
     }
 
     private fun record(
@@ -152,5 +199,7 @@ class SyncCoordinatorTest {
 
     private companion object {
         const val CAMPAIGN_ID = "01J0000000000000000000000A"
+        const val THREADS = 16
+        const val ROUNDS = 200
     }
 }

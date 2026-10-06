@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Everything the ViewModel builds off the main thread.
@@ -64,19 +65,20 @@ class LanternYearViewModel(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
-    private var controller: LanternYearController? = null
-    private var syncCoordinator: SyncCoordinator? = null
-    private var closeComponents: () -> Unit = {}
+    /**
+     * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
+     * [onCleared] on other threads. Held behind an [AtomicReference] so a reader never observes a
+     * half-published trio (a stale `null` controller would silently drop a mutation).
+     */
+    private val components = AtomicReference<AppComponents?>(null)
 
     init {
         workScope.launch(dispatcher) {
-            val components = buildComponents(workScope)
-            controller = components.controller
-            syncCoordinator = components.syncCoordinator
-            closeComponents = components.close
-            _state.value = components.controller.state.value
-            launch { components.controller.state.collect { _state.value = it } }
-            components.syncCoordinator?.let { coordinator ->
+            val loaded = buildComponents(workScope)
+            components.set(loaded)
+            _state.value = loaded.controller.state.value
+            launch { loaded.controller.state.collect { _state.value = it } }
+            loaded.syncCoordinator?.let { coordinator ->
                 launch { coordinator.state.collect { _syncState.value = it } }
             }
         }
@@ -91,19 +93,19 @@ class LanternYearViewModel(
     fun selectStep(number: Int) = mutate { it.selectStep(number) }
 
     fun syncNow() {
-        syncCoordinator?.syncNow()
+        components.get()?.syncCoordinator?.syncNow()
     }
 
     private fun mutate(block: (LanternYearController) -> Unit) {
         workScope.launch(dispatcher) {
-            val current = controller ?: return@launch
-            block(current)
-            syncCoordinator?.syncNow()
+            val loaded = components.get() ?: return@launch
+            block(loaded.controller)
+            loaded.syncCoordinator?.syncNow()
         }
     }
 
     override fun onCleared() {
-        closeComponents()
+        components.get()?.close?.invoke()
         scopeOverride?.cancel()
     }
 

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The observable status of the last sync attempt.
@@ -51,25 +52,34 @@ class SyncCoordinator(
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
     /**
+     * Whether a sync pass is currently running. An [AtomicBoolean] because [syncNow] is called from
+     * both the UI thread (the manual button) and [Dispatchers.IO] (after a mutation), so the
+     * claim/release must be atomic and visible across threads.
+     */
+    private val inFlight = AtomicBoolean(false)
+
+    /**
      * Launches one pull → merge → push pass on [dispatcher].
      *
-     * A sync already in flight is a no-op, so a burst of mutations cannot pile up concurrent passes.
-     * The in-flight state is set on the caller thread (not inside the coroutine) to make that guard
-     * race-free; a failure leaves the outbox untouched for the next attempt.
+     * A sync already in flight is a no-op: the guard is an atomic compare-and-set, so overlapping
+     * callers cannot both start a pass (which would mean concurrent SQLDelight access and duplicate
+     * pushes). The flag is released in `finally` once the pass ends. A failure leaves the outbox
+     * untouched for the next attempt.
      */
     fun syncNow() {
-        if (_state.value is SyncState.Syncing) return
+        if (!inFlight.compareAndSet(false, true)) return
         _state.value = SyncState.Syncing
         scope.launch(dispatcher) {
-            _state.value =
-                try {
-                    engine.sync(campaignId)
-                    SyncState.Idle(lastSyncedAtMillis = clock())
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (failure: Exception) {
-                    SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
-                }
+            try {
+                engine.sync(campaignId)
+                _state.value = SyncState.Idle(lastSyncedAtMillis = clock())
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                _state.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
+            } finally {
+                inFlight.set(false)
+            }
         }
     }
 }
