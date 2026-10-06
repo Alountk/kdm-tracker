@@ -92,4 +92,14 @@ class ChangeRecordRepositoryTest {
             repository.flush()
         }
     }
+
+    @Test
+    fun uniqueCampaignRevIsEnforced() {
+        repository.saveAndFlush(record(entityId = "settlement-1", rev = 1))
+        repository.save(record(entityId = "settlement-2", rev = 1))
+
+        assertThrows(DataIntegrityViolationException::class.java) {
+            repository.flush()
+        }
+    }
 }

@@ -20,8 +20,8 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "change_records",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["campaignId", "entityType", "entityId"]),
-        UniqueConstraint(columnNames = ["campaignId", "rev"]),
+        UniqueConstraint(columnNames = ["campaign_id", "entity_type", "entity_id"]),
+        UniqueConstraint(columnNames = ["campaign_id", "rev"]),
     ],
 )
 class ChangeRecordEntity(

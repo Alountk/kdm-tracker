@@ -1,7 +1,7 @@
 package io.kdmtracker.sync
 
-import io.kdmtracker.auth.BearerTokenFilter
 import io.kdmtracker.auth.CampaignMemberRepository
+import io.kdmtracker.auth.requireAuthenticatedUserId
 import io.kdmtracker.core.sync.ChangeSet
 import io.kdmtracker.core.sync.PullResponse
 import jakarta.servlet.http.HttpServletRequest
@@ -21,9 +21,9 @@ data class PushResponse(
 
 /**
  * Sync hub pull/push endpoints. The bearer filter has already authenticated the caller and exposed
- * the user id as [BearerTokenFilter.AUTHENTICATED_USER_ID]; this controller enforces campaign
- * membership before delegating to [ChangeRecordService]. A non-member gets 403; a missing or invalid
- * token is rejected upstream with 401.
+ * the user id as a request attribute; this controller enforces campaign membership before delegating
+ * to [ChangeRecordService]. A non-member gets 403; a missing or invalid token is rejected upstream
+ * with 401.
  */
 @RestController
 class SyncController(
@@ -51,7 +51,7 @@ class SyncController(
     }
 
     private fun HttpServletRequest.requireMemberOf(campaignId: String) {
-        val userId = getAttribute(BearerTokenFilter.AUTHENTICATED_USER_ID) as Long
+        val userId = requireAuthenticatedUserId()
         if (!members.existsByCampaignIdAndUserId(campaignId, userId)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "not a member of campaign $campaignId")
         }

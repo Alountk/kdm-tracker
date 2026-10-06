@@ -11,8 +11,5 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class MeController {
     @GetMapping("/api/v1/me")
-    fun me(request: HttpServletRequest): Map<String, Long> = mapOf("userId" to authenticatedUserId(request))
-
-    private fun authenticatedUserId(request: HttpServletRequest): Long =
-        request.getAttribute(BearerTokenFilter.AUTHENTICATED_USER_ID) as Long
+    fun me(request: HttpServletRequest): Map<String, Long> = mapOf("userId" to request.requireAuthenticatedUserId())
 }

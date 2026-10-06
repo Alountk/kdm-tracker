@@ -300,6 +300,39 @@ class PushChangesTest {
         }
     }
 
+    @Test
+    fun malformedBodyIsBadRequest() {
+        val user = seedUser("push-malformed-ada")
+        val campaign = seedCampaign(CAMPAIGN_MALFORMED, "INVITE-PUSH-MALFORMED")
+        seedMembership(campaign.id, user.id!!)
+        val token = jwtService.issueToken(user.id!!)
+
+        mockMvc
+            .perform(
+                post(changesUrl(campaign.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"records": [ {"campaignId": }""")
+                    .header("Authorization", "Bearer $token"),
+            ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun memberOfAnotherCampaignIsForbiddenOnThisCampaignPath() {
+        val user = seedUser("push-cross-ada")
+        val campaignA = seedCampaign(CAMPAIGN_CROSS_A, "INVITE-CROSS-A")
+        val campaignB = seedCampaign(CAMPAIGN_CROSS_B, "INVITE-CROSS-B")
+        seedMembership(campaignA.id, user.id!!)
+        val token = jwtService.issueToken(user.id!!)
+
+        mockMvc
+            .perform(
+                post(changesUrl(campaignB.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(changeSetJson(recordJson(campaignB.id, "settlement-1", """{"name":"A"}""")))
+                    .header("Authorization", "Bearer $token"),
+            ).andExpect(status().isForbidden)
+    }
+
     private fun wireRecord(
         campaignId: String,
         entityId: String,
@@ -325,5 +358,8 @@ class PushChangesTest {
         const val OTHER_CAMPAIGN = "01J0PUSH0000000000000000EE"
         const val CAMPAIGN_UPDATE = "01J0PUSH0000000000000000FF"
         const val CAMPAIGN_CONCURRENT = "01J0PUSH0000000000000000GG"
+        const val CAMPAIGN_MALFORMED = "01J0PUSH0000000000000000HH"
+        const val CAMPAIGN_CROSS_A = "01J0PUSH0000000000000000JJ"
+        const val CAMPAIGN_CROSS_B = "01J0PUSH0000000000000000KK"
     }
 }

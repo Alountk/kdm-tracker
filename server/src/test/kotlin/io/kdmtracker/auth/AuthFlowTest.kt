@@ -1,8 +1,11 @@
 package io.kdmtracker.auth
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.jayway.jsonpath.JsonPath
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
@@ -11,6 +14,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.Date
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -20,6 +24,9 @@ class AuthFlowTest {
 
     @Autowired
     private lateinit var users: UserRepository
+
+    @Value("\${sync.jwt.secret}")
+    private lateinit var jwtSecret: String
 
     private fun register(
         username: String,
@@ -106,6 +113,31 @@ class AuthFlowTest {
             .perform(get("/api/v1/me").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.userId").value(userId))
+    }
+
+    @Test
+    fun meWithExpiredTokenIsUnauthorized() {
+        val expired =
+            JWT
+                .create()
+                .withSubject("1")
+                .withIssuedAt(Date(System.currentTimeMillis() - 3_600_000))
+                .withExpiresAt(Date(System.currentTimeMillis() - 1_000))
+                .sign(Algorithm.HMAC256(jwtSecret))
+
+        mockMvc
+            .perform(get("/api/v1/me").header("Authorization", "Bearer $expired"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun reservedMigrationUsernameCannotBeRegistered() {
+        mockMvc
+            .perform(
+                post("/api/v1/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"username":"${ReservedUsernames.LEGACY_MIGRATION}","password":"correct-horse"}"""),
+            ).andExpect(status().isConflict)
     }
 
     @Test

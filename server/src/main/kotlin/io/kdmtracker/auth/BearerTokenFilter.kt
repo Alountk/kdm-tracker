@@ -15,9 +15,22 @@ import org.springframework.web.filter.OncePerRequestFilter
 class BearerTokenFilter(
     private val jwtService: JwtService,
 ) : OncePerRequestFilter() {
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        val path = request.requestURI
+    // Widened to public so the path-scoping logic is unit-testable without a servlet container.
+    public override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        val path = apiPath(request)
         return !path.startsWith(API_PREFIX) || path.startsWith(AUTH_PREFIX)
+    }
+
+    /**
+     * The request path relative to the servlet context. `servletPath` already excludes any context
+     * path, so it is preferred; it is, however, left empty by `MockMvc`, so fall back to the
+     * `requestURI` with the context path stripped. Both forms leave a raw prefix check against
+     * `requestURI` intact under a context-path deployment, which is what this guard must survive.
+     */
+    private fun apiPath(request: HttpServletRequest): String {
+        val servletPath = request.servletPath
+        if (!servletPath.isNullOrEmpty()) return servletPath
+        return request.requestURI.removePrefix(request.contextPath.orEmpty())
     }
 
     override fun doFilterInternal(

@@ -1,5 +1,6 @@
 package io.kdmtracker.auth
 
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
@@ -28,12 +29,21 @@ class AuthController(
     fun register(
         @RequestBody request: CredentialsRequest,
     ): TokenResponse {
+        if (request.username in ReservedUsernames.ALL) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "username is reserved")
+        }
         if (users.findByUsername(request.username) != null) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "username already taken")
         }
         val passwordHash =
             requireNotNull(passwordEncoder.encode(request.password)) { "password encoder returned no hash" }
-        val user = users.save(UserEntity(username = request.username, passwordHash = passwordHash))
+        val user =
+            try {
+                users.saveAndFlush(UserEntity(username = request.username, passwordHash = passwordHash))
+            } catch (e: DataIntegrityViolationException) {
+                // Lost a race with a concurrent registration for the same username.
+                throw ResponseStatusException(HttpStatus.CONFLICT, "username already taken", e)
+            }
         return TokenResponse(jwtService.issueToken(user.id!!))
     }
 

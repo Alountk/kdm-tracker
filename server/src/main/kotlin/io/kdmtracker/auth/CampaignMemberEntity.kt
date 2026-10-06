@@ -18,7 +18,7 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "campaign_members",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["campaignId", "userId"]),
+        UniqueConstraint(columnNames = ["campaign_id", "user_id"]),
     ],
 )
 class CampaignMemberEntity(
