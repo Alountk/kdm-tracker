@@ -6,6 +6,7 @@ import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
@@ -127,6 +128,8 @@ class SyncReloadTest {
     private class FakeSyncApi(
         private val pullResponse: PullResponse,
     ) : SyncApi {
+        override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
         override fun pull(
             campaignId: String,
             since: Long,

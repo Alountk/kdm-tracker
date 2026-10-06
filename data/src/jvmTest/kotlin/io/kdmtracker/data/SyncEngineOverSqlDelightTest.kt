@@ -8,6 +8,7 @@ import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
@@ -113,6 +114,8 @@ class SyncEngineOverSqlDelightTest {
         var pullResponse: PullResponse = PullResponse(0, emptyList()),
     ) : SyncApi {
         val pushedSets = mutableListOf<ChangeSet>()
+
+        override fun listCampaigns(): List<CampaignSummary> = emptyList()
 
         override fun pull(
             campaignId: String,

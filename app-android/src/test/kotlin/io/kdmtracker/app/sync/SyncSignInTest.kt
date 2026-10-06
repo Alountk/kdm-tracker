@@ -1,5 +1,6 @@
 package io.kdmtracker.app.sync
 
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
 import io.kdmtracker.core.sync.PullResponse
@@ -31,6 +32,8 @@ class SyncSignInTest {
         var pullCalls = 0
         val api =
             object : SyncApi {
+                override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
                 override fun pull(
                     campaignId: String,
                     since: Long,
@@ -73,6 +76,8 @@ class SyncSignInTest {
                     SyncEngine(
                         api =
                             object : SyncApi {
+                                override fun listCampaigns(): List<CampaignSummary> = emptyList()
+
                                 override fun pull(
                                     campaignId: String,
                                     since: Long,

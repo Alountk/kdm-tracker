@@ -1,8 +1,10 @@
 package io.kdmtracker.app.sync
 
+import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeSet
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -36,6 +38,14 @@ class HttpSyncApi(
     private val tokenProvider: () -> String?,
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) : SyncApi {
+    override fun listCampaigns(): List<CampaignSummary> {
+        val connection = openConnection("GET", "/api/v1/campaigns")
+        return json.decodeFromString(
+            ListSerializer(CampaignSummary.serializer()),
+            connection.readBody(),
+        )
+    }
+
     override fun pull(
         campaignId: String,
         since: Long,
