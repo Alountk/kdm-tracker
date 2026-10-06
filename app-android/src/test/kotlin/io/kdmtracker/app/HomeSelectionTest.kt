@@ -22,6 +22,7 @@ import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.core.sync.SyncStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.SerializationException
 import java.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -145,6 +146,48 @@ class HomeSelectionTest {
             Screen.Home,
             harness.viewModel.state.value
                 ?.screen,
+        )
+    }
+
+    @Test
+    fun aMalformedCreateResponseSurfacesAnErrorInsteadOfCrashing() {
+        val harness = harness(createCampaign = { throw SerializationException("malformed 2xx body") })
+
+        harness.viewModel.create("Gloom")
+
+        assertEquals(
+            Screen.Home,
+            harness.viewModel.state.value
+                ?.screen,
+        )
+        assertTrue(
+            harness.viewModel.actionError.value != null,
+            "a malformed 2xx create response must surface as actionError, not crash",
+        )
+    }
+
+    @Test
+    fun returningHomeFromTheCockpitShowsTheHomeListAgain() {
+        val harness = harness()
+        val seededId =
+            harness.viewModel.homeCards.value
+                .single()
+                .campaignId
+
+        harness.viewModel.select(seededId)
+        assertEquals(
+            Screen.Settlement,
+            harness.viewModel.state.value
+                ?.screen,
+        )
+
+        harness.viewModel.goHome()
+
+        assertEquals(
+            Screen.Home,
+            harness.viewModel.state.value
+                ?.screen,
+            "the cockpit must offer a way back to Home (Ruling AR)",
         )
     }
 

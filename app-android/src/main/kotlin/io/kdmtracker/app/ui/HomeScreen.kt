@@ -15,10 +15,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -49,6 +45,8 @@ fun HomeScreen(
     password: String,
     onUsername: (String) -> Unit,
     onPassword: (String) -> Unit,
+    newSettlementName: String,
+    onNewSettlementName: (String) -> Unit,
     error: String?,
 ) {
     Column(
@@ -79,7 +77,11 @@ fun HomeScreen(
             )
         }
 
-        NewSettlementForm(onCreate = onCreate)
+        NewSettlementForm(
+            name = newSettlementName,
+            onNameChange = onNewSettlementName,
+            onCreate = onCreate,
+        )
 
         if (cards.isEmpty()) {
             Text(
@@ -126,9 +128,11 @@ private fun CampaignCardItem(
 }
 
 @Composable
-private fun NewSettlementForm(onCreate: (String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-
+private fun NewSettlementForm(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onCreate: (String) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -136,16 +140,13 @@ private fun NewSettlementForm(onCreate: (String) -> Unit) {
     ) {
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = onNameChange,
             label = { Text("New settlement") },
             singleLine = true,
             modifier = Modifier.weight(1f),
         )
         Button(
-            onClick = {
-                onCreate(name)
-                name = ""
-            },
+            onClick = { onCreate(name) },
             enabled = name.isNotBlank(),
         ) {
             Text("Create")

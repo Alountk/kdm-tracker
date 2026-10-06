@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
 
 /**
  * Covers the multi-campaign app surface: the campaign list with sharing badges, switching the
- * held settlement, creating a campaign offline, and syncing every listed campaign on sign-in.
+ * held settlement, creating a campaign through the hub, and syncing every listed campaign on sign-in.
  *
  * Driven entirely with fakes and [Dispatchers.Unconfined], so the whole file is JVM-only and the
  * scheduled sync pass runs to completion synchronously.

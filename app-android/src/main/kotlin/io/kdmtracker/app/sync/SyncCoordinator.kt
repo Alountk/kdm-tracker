@@ -71,9 +71,33 @@ class SyncCoordinator(
         this.campaignId = campaignId
     }
 
-    private val _state = MutableStateFlow<SyncState>(SyncState.Idle())
+    /**
+     * The last attempt's status.
+     *
+     * Seeded to [SyncState.NotConfigured] when no token is stored, so the sign-in form is visible
+     * before the first sync is ever attempted (sign-in minor). With a token it starts [SyncState.Idle].
+     */
+    private val _state = MutableStateFlow(initialState())
 
     val state: StateFlow<SyncState> = _state.asStateFlow()
+
+    private fun initialState(): SyncState =
+        if (tokenProvider() == null) {
+            SyncState.NotConfigured
+        } else {
+            SyncState.Idle()
+        }
+
+    /**
+     * Increments once per completed sync pass, whatever its outcome.
+     *
+     * The Home card list refreshes on every completion — a failing campaign must not hide the
+     * campaigns that did sync (Ruling AP). [state] alone cannot signal this: it stays [SyncState.Error]
+     * when any campaign fails, so a success-only refresh would drop the whole list.
+     */
+    private val _completedSyncs = MutableStateFlow(0L)
+
+    val completedSyncs: StateFlow<Long> = _completedSyncs.asStateFlow()
 
     /**
      * Whether a sync pass is currently running. An [AtomicBoolean] because [syncNow] is called from
@@ -112,6 +136,7 @@ class SyncCoordinator(
                 _state.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
             } finally {
                 inFlight.set(false)
+                _completedSyncs.value += 1
             }
         }
     }
@@ -119,17 +144,19 @@ class SyncCoordinator(
     /**
      * Syncs every campaign the signed-in user can reach (Review Focus 1).
      *
-     * Lists the caller's campaigns, caches each membership for offline badges, then runs a full
-     * pull → merge → push pass for every campaign id — the server-listed ones plus any
-     * [campaignIdsProvider] adds (a local campaign not on the hub yet). Each campaign has its own
-     * cursor, so a campaign whose pull/push fails does not abort the others (Review Focus 3): the
-     * healthy campaigns still advance and the failures are collected and surfaced as
-     * [SyncState.Error] naming the campaigns that failed.
+     * The sync set is derived from the **hub**, never from local rows (Ruling AQ): the campaigns the
+     * hub's `listCampaigns` returns, plus any campaign the app created through the hub (cached as a
+     * membership by `create`). A local, client-minted campaign the hub does not know — the first-run
+     * seed — has no membership and is therefore never submitted, so it cannot 403 the pass. Each
+     * campaign has its own cursor, so a campaign whose pull/push fails does not abort the others
+     * (Review Focus 3): the healthy campaigns still advance and the failures are collected and
+     * surfaced as [SyncState.Error] naming the campaigns that failed.
      *
      * Shares [syncNow]'s token and in-flight guards, so a manual sync and the sign-in sync cannot
-     * overlap.
+     * overlap. On every completion [completedSyncs] ticks so the Home list refreshes regardless of
+     * the outcome (Ruling AP).
      */
-    fun syncAll(campaignIdsProvider: () -> List<String> = { emptyList() }) {
+    fun syncAll() {
         if (tokenProvider() == null) {
             _state.value = SyncState.NotConfigured
             return
@@ -140,7 +167,7 @@ class SyncCoordinator(
             try {
                 val summaries = engine.listCampaigns()
                 summaries.forEach { memberships.upsertMembership(it) }
-                val campaignIds = (summaries.map { it.id } + campaignIdsProvider()).distinct()
+                val campaignIds = (summaries.map { it.id } + memberships.memberships().map { it.id }).distinct()
                 val failures = campaignIds.mapNotNull(::syncOne)
                 onSynced()
                 _state.value =
@@ -155,6 +182,7 @@ class SyncCoordinator(
                 _state.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sync failed")
             } finally {
                 inFlight.set(false)
+                _completedSyncs.value += 1
             }
         }
     }

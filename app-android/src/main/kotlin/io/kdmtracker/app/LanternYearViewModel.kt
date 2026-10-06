@@ -11,7 +11,6 @@ import io.kdmtracker.app.sync.DEFAULT_SYNC_BASE_URL
 import io.kdmtracker.app.sync.HttpSyncApi
 import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
-import io.kdmtracker.app.sync.SyncHttpException
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
 import io.kdmtracker.core.sync.SyncEngine
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -73,9 +71,16 @@ class LanternYearViewModel(
     private val _homeCards = MutableStateFlow<List<CampaignCard>>(emptyList())
     val homeCards: StateFlow<List<CampaignCard>> = _homeCards.asStateFlow()
 
-    /** Set when [create] hits an [IOException]/[SyncHttpException], so the Home can show it inline. */
+    /** Set when [create] fails, so the Home can show it inline. */
     private val _actionError = MutableStateFlow<String?>(null)
     val actionError: StateFlow<String?> = _actionError.asStateFlow()
+
+    /**
+     * Increments once per successful [create], so the Home can clear the New-settlement field only
+     * when the create actually landed (a failure keeps the typed name).
+     */
+    private val _createSucceeded = MutableStateFlow(0L)
+    val createSucceeded: StateFlow<Long> = _createSucceeded.asStateFlow()
 
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
@@ -128,9 +133,11 @@ class LanternYearViewModel(
                 launch {
                     coordinator.state.collect { syncState ->
                         _syncState.value = syncState
-                        if (syncState is SyncState.Idle && syncState.lastSyncedAtMillis != null) {
-                            _homeCards.value = loaded.controller.cards()
-                        }
+                    }
+                }
+                launch {
+                    coordinator.completedSyncs.collect {
+                        _homeCards.value = loaded.controller.cards()
                     }
                 }
             }
@@ -158,28 +165,46 @@ class LanternYearViewModel(
     }
 
     /**
+     * Returns to the Home from the cockpit and republishes the Home frame (Ruling AR).
+     *
+     * [onHome] flips immediately (the controller collector reads it per emission); the blocking
+     * repository read that rebuilds the card list runs on [dispatcher] (Review Focus 5).
+     */
+    fun goHome() {
+        onHome = true
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            _state.value =
+                loaded.controller.state.value
+                    .forDisplay()
+            _homeCards.value = loaded.controller.cards()
+        }
+    }
+
+    /**
      * Creates a settlement named [name] through the hub and opens it.
      *
-     * The hub round-trip runs on [dispatcher]; an [IOException] (including [SyncHttpException])
-     * surfaces as [actionError] and the Home stays put with no half-created state (Review Focus 4).
+     * The hub round-trip runs on [dispatcher]; any failure — a transport error, a non-2xx hub reply,
+     * or a malformed 2xx body that fails to parse — surfaces as [actionError] and the Home stays put
+     * with no half-created state (Review Focus 4). [actionError] is cleared at the start of the
+     * attempt so a stale error cannot linger while the retry is in flight.
      */
     fun create(name: String) {
         if (name.isBlank()) return
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
+            _actionError.value = null
             try {
                 val card = loaded.controller.createCampaign(name)
-                _actionError.value = null
                 _homeCards.value = loaded.controller.cards()
+                _createSucceeded.value += 1
                 onHome = false
                 loaded.syncCoordinator?.rebind(card.campaignId)
                 _state.value = loaded.controller.state.value
                 loaded.syncCoordinator?.syncNow()
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (failure: SyncHttpException) {
-                _actionError.value = failure.message ?: "Could not create the settlement"
-            } catch (failure: IOException) {
+            } catch (failure: Exception) {
                 _actionError.value = failure.message ?: "Could not create the settlement"
             }
         }
@@ -187,8 +212,7 @@ class LanternYearViewModel(
 
     /** Syncs every campaign the user can reach; the Home's Sync control (Review Focus 1). */
     fun syncAll() {
-        val loaded = components.get() ?: return
-        loaded.syncCoordinator?.syncAll { loaded.controller.cards().map { it.campaignId } }
+        components.get()?.syncCoordinator?.syncAll()
     }
 
     fun advance() = mutate { it.advance() }
@@ -217,7 +241,7 @@ class LanternYearViewModel(
             val signIn = loaded.signIn ?: return@launch
             try {
                 signIn.signIn(username, password)
-                loaded.syncCoordinator?.syncAll { loaded.controller.cards().map { it.campaignId } }
+                loaded.syncCoordinator?.syncAll()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {

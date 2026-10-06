@@ -52,6 +52,15 @@ class LanternYearViewModelTest {
         assertEquals("database unavailable", viewModel.loadError.value)
     }
 
+    @Test
+    fun selectingAnUnknownCampaignStaysOnHome() {
+        val viewModel = viewModel()
+
+        viewModel.select("missing")
+
+        assertEquals(Screen.Home, viewModel.state.value?.screen, "an unknown id must not leave Home")
+    }
+
     private fun viewModel(): LanternYearViewModel =
         LanternYearViewModel(
             buildComponents = {
