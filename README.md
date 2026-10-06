@@ -140,6 +140,47 @@ Every table carries sync columns (`updatedAtMillis`, `updatedAtCounter`, `rev`, 
 `deletedAtCounter`) so records can be reconciled later. The **outbox**, **sync cursor**, and the
 network pull/push engine are the next plan (3b); this milestone only persists locally.
 
+## Sync hub (server)
+
+The server exposes a small JSON sync API under `/api/v1`. Every route except `/api/v1/auth/*`
+requires an `Authorization: Bearer <token>` header; a missing or invalid token is rejected with
+`401`.
+
+Authentication:
+
+| Route | Method | Body | Response |
+| ----- | ------ | ---- | -------- |
+| `/api/v1/auth/register` | POST | `{"username","password"}` | `{"token":"<jwt>"}` (`409` if the name is taken) |
+| `/api/v1/auth/login` | POST | `{"username","password"}` | `{"token":"<jwt>"}` (`401` on bad credentials) |
+
+Identity — `GET /api/v1/me` → `{"userId":<id>}` (protected).
+
+Change log, per campaign. The caller must be a member of the campaign or the request is `403`:
+
+| Route | Method | Body / query | Response |
+| ----- | ------ | ------------ | -------- |
+| `/api/v1/campaigns/{id}/changes?since=<rev>` | GET | `since` (default `0`) | `{"latestRev":<n>,"records":[…]}` |
+| `/api/v1/campaigns/{id}/changes` | POST | `{"records":[…]}` | `{"latestRev":<n>}` |
+
+The wire contract lives in `:core` (`io.kdmtracker.core.sync`). Each record carries `campaignId`,
+`entityType`, `entityId`, `op` (`UPSERT`/`DELETE`), `baseRev`, `payload`, `updatedAtMillis`,
+`updatedAtCounter` and `rev`. On push the server assigns a monotonic per-campaign `rev`
+(`maxRev + 1`); replaying an identical `(campaignId, entityType, entityId)` with the same payload is a
+no-op — no duplicate row and no revision bump.
+
+### Migrating existing data
+
+Legacy relational rows (settlements, survivors, resources, innovations, log entries) predate
+campaigns and accounts. `io.kdmtracker.migration.LegacyToChangeLogMigration.migrate()` reads every
+legacy row, folds it into a single deterministic campaign
+(`LegacyToChangeLogMigration.CAMPAIGN_ID`), and pushes one `UPSERT` per row so existing data becomes
+visible to sync clients. The campaign is owned by a synthetic `legacy-migration` account.
+
+`migrate()` is a **one-shot, explicitly invoked** entry point — not an always-on startup hook — and is
+idempotent: because it routes through the push path, a second run over unchanged legacy data writes
+nothing and does not bump `rev`. It is exposed as a Spring bean (`LegacyToChangeLogMigration`) and
+returns a `MigrationReport` with per-entity counts, `changesApplied` and the campaign's `latestRev`.
+
 ## Project structure
 
 ```text
@@ -175,9 +216,12 @@ kdm-tracker/
 │   └── src/
 │       ├── main/kotlin/io/kdmtracker/
 │       │   ├── KdmTrackerApplication.kt   # @SpringBootApplication entry point
+│       │   ├── auth/                      # users, campaigns, membership, JWT auth
 │       │   ├── domain/                    # Settlement, Survivor, Resource, Innovation, LogEntry + enums
+│       │   ├── migration/                 # LegacyToChangeLogMigration (one-shot legacy → change-log)
 │       │   ├── repository/                # Spring Data JPA repositories
 │       │   ├── seed/DatabaseSeeder.kt     # First-run seed: settlement + basic resources
+│       │   ├── sync/                      # change-log persistence + pull/push endpoints
 │       │   └── web/                       # Controllers (dashboard, survivors, resources, innovations, log, health)
 │       │       └── form/                  # Validated form-backing objects
 │       ├── main/resources/
@@ -256,6 +300,9 @@ lantern-year controller, the end-to-end loop and the store-backed settlement rep
   below 0; custom monster resource can be created.
 - Innovation flow: create → appears in the list with the unlock year.
 - Log flow: entries render sorted by lantern year desc, then `createdAt` desc; blank title rejected.
+- Sync hub: the pull/push endpoints enforce auth + campaign membership, assign monotonic per-campaign
+  `rev`s, and replay idempotently; the legacy migration emits one record per row and is a no-op on a
+  second run.
 
 Tests run automatically as part of `./gradlew build`.
 
