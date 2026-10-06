@@ -25,6 +25,9 @@ sealed interface SyncState {
 
     data object Syncing : SyncState
 
+    /** No bearer token is stored, so a sync would be rejected `401`; the user must sign in first. */
+    data object NotConfigured : SyncState
+
     data class Error(
         val message: String,
     ) : SyncState
@@ -44,8 +47,10 @@ class SyncCoordinator(
     private val engine: SyncEngine,
     private val campaignId: String,
     private val scope: CoroutineScope,
+    private val tokenProvider: () -> String? = { null },
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val onSynced: () -> Unit = {},
 ) {
     private val _state = MutableStateFlow<SyncState>(SyncState.Idle())
 
@@ -61,17 +66,26 @@ class SyncCoordinator(
     /**
      * Launches one pull → merge → push pass on [dispatcher].
      *
+     * Without a stored token the pass is not attempted: the hub would answer `401`, so the state
+     * short-circuits to [SyncState.NotConfigured] and the user is prompted to sign in (Ruling AG).
+     *
      * A sync already in flight is a no-op: the guard is an atomic compare-and-set, so overlapping
      * callers cannot both start a pass (which would mean concurrent SQLDelight access and duplicate
      * pushes). The flag is released in `finally` once the pass ends. A failure leaves the outbox
-     * untouched for the next attempt.
+     * untouched for the next attempt. On success [onSynced] runs before the state flips to [Idle]
+     * so the repository reloads the applied remote changes (Ruling AE).
      */
     fun syncNow() {
+        if (tokenProvider() == null) {
+            _state.value = SyncState.NotConfigured
+            return
+        }
         if (!inFlight.compareAndSet(false, true)) return
         _state.value = SyncState.Syncing
         scope.launch(dispatcher) {
             try {
                 engine.sync(campaignId)
+                onSynced()
                 _state.value = SyncState.Idle(lastSyncedAtMillis = clock())
             } catch (cancelled: CancellationException) {
                 throw cancelled

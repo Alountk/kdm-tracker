@@ -9,10 +9,13 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.kdmtracker.app.sync.AndroidKeystoreTokenStore
 import io.kdmtracker.app.sync.DEFAULT_SYNC_BASE_URL
 import io.kdmtracker.app.sync.HttpSyncApi
+import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
+import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
 import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.data.KdmDatabaseFactory
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -34,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference
 class AppComponents(
     val controller: LanternYearController,
     val syncCoordinator: SyncCoordinator? = null,
+    val signIn: SyncSignIn? = null,
     val close: () -> Unit = {},
 )
 
@@ -65,6 +70,10 @@ class LanternYearViewModel(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
+    /** Set when the initial load fails, so the UI can show an error instead of spinning forever. */
+    private val _loadError = MutableStateFlow<String?>(null)
+    val loadError: StateFlow<String?> = _loadError.asStateFlow()
+
     /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
      * [onCleared] on other threads. Held behind an [AtomicReference] so a reader never observes a
@@ -72,10 +81,25 @@ class LanternYearViewModel(
      */
     private val components = AtomicReference<AppComponents?>(null)
 
+    /**
+     * Set when [onCleared] runs. If teardown races the IO load, the freshly built bundle is closed
+     * as soon as it is published instead of being leaked; paired with an idempotent [close].
+     */
+    private val cleared = AtomicBoolean(false)
+
     init {
         workScope.launch(dispatcher) {
-            val loaded = buildComponents(workScope)
+            val loaded =
+                try {
+                    buildComponents(workScope)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    _loadError.value = failure.message ?: failure::class.simpleName ?: "Failed to load"
+                    return@launch
+                }
             components.set(loaded)
+            if (cleared.get()) loaded.close()
             _state.value = loaded.controller.state.value
             launch { loaded.controller.state.collect { _state.value = it } }
             loaded.syncCoordinator?.let { coordinator ->
@@ -96,6 +120,29 @@ class LanternYearViewModel(
         components.get()?.syncCoordinator?.syncNow()
     }
 
+    /**
+     * Signs in with the given credentials on the IO thread, stores the token, then attempts a sync.
+     *
+     * A failure surfaces as [SyncState.Error] instead of crashing, mirroring the sync path.
+     */
+    fun signIn(
+        username: String,
+        password: String,
+    ) {
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            val signIn = loaded.signIn ?: return@launch
+            try {
+                signIn.signIn(username, password)
+                loaded.syncCoordinator?.syncNow()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                _syncState.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sign in failed")
+            }
+        }
+    }
+
     private fun mutate(block: (LanternYearController) -> Unit) {
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
@@ -105,6 +152,7 @@ class LanternYearViewModel(
     }
 
     override fun onCleared() {
+        cleared.set(true)
         components.get()?.close?.invoke()
         scopeOverride?.cancel()
     }
@@ -119,6 +167,7 @@ class LanternYearViewModel(
                         buildComponents = { scope ->
                             val handle = KdmDatabaseFactory.openAndroidStore(appContext)
                             val repository = SettlementRepository(handle.store)
+                            val controller = LanternYearController(repository)
                             val tokenStore = AndroidKeystoreTokenStore(appContext)
                             val engine =
                                 SyncEngine(
@@ -126,8 +175,16 @@ class LanternYearViewModel(
                                     store = handle.syncStore,
                                 )
                             AppComponents(
-                                controller = LanternYearController(repository),
-                                syncCoordinator = SyncCoordinator(engine, repository.campaign.id.value, scope),
+                                controller = controller,
+                                syncCoordinator =
+                                    SyncCoordinator(
+                                        engine = engine,
+                                        campaignId = repository.campaign.id.value,
+                                        scope = scope,
+                                        tokenProvider = tokenStore::read,
+                                        onSynced = controller::reload,
+                                    ),
+                                signIn = SyncSignIn(HttpSyncAuthApi(DEFAULT_SYNC_BASE_URL), tokenStore),
                                 close = handle::close,
                             )
                         },

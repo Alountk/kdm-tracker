@@ -43,6 +43,7 @@ class SyncCoordinatorTest {
                 engine = SyncEngine(api, store),
                 campaignId = CAMPAIGN_ID,
                 scope = CoroutineScope(Dispatchers.Unconfined),
+                tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
                 clock = { 1_000L },
             )
@@ -68,6 +69,7 @@ class SyncCoordinatorTest {
                 engine = SyncEngine(api, store),
                 campaignId = CAMPAIGN_ID,
                 scope = CoroutineScope(Dispatchers.Unconfined),
+                tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
                 clock = { 1_000L },
             )
@@ -78,6 +80,49 @@ class SyncCoordinatorTest {
         assertIs<SyncState.Error>(state)
         assertEquals("hub down", state.message)
         assertEquals(listOf("s1"), store.pendingOf(CAMPAIGN_ID).map(ChangeRecord::entityId))
+    }
+
+    @Test
+    fun syncWithoutATokenReportsNotConfiguredAndNeverCallsTheHub() {
+        var pullCalls = 0
+        val api =
+            FakeSyncApi(
+                onPull = { _, since ->
+                    pullCalls++
+                    PullResponse(since, emptyList())
+                },
+            )
+        val coordinator =
+            SyncCoordinator(
+                engine = SyncEngine(api, FakeSyncStore()),
+                campaignId = CAMPAIGN_ID,
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                tokenProvider = { null },
+                dispatcher = Dispatchers.Unconfined,
+            )
+
+        coordinator.syncNow()
+
+        assertEquals(SyncState.NotConfigured, coordinator.state.value)
+        assertEquals(0, pullCalls, "a doomed unauthorised request must not be attempted")
+    }
+
+    @Test
+    fun aSuccessfulSyncInvokesTheOnSyncedCallback() {
+        var reloads = 0
+        val coordinator =
+            SyncCoordinator(
+                engine = SyncEngine(FakeSyncApi(), FakeSyncStore()),
+                campaignId = CAMPAIGN_ID,
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                tokenProvider = { "token" },
+                dispatcher = Dispatchers.Unconfined,
+                onSynced = { reloads++ },
+            )
+
+        coordinator.syncNow()
+
+        assertEquals(1, reloads)
     }
 
     /**
@@ -107,6 +152,7 @@ class SyncCoordinatorTest {
                 engine = SyncEngine(api, FakeSyncStore()),
                 campaignId = CAMPAIGN_ID,
                 scope = CoroutineScope(Dispatchers.IO),
+                tokenProvider = { "token" },
                 dispatcher = Dispatchers.IO,
             )
 
@@ -173,6 +219,19 @@ class SyncCoordinatorTest {
 
         override fun pending(campaignId: String): List<ChangeRecord> =
             outbox.values.filter { it.campaignId == campaignId }
+
+        override fun local(
+            campaignId: String,
+            entityType: String,
+            entityId: String,
+        ): ChangeRecord? = outbox[entityType to entityId]
+
+        override fun enqueue(
+            campaignId: String,
+            record: ChangeRecord,
+        ) {
+            outbox[record.entityType to record.entityId] = record
+        }
 
         override fun applyMerged(
             campaignId: String,

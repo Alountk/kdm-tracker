@@ -130,6 +130,30 @@ class SettlementRepositoryTest {
     }
 
     @Test
+    fun reloadPicksUpChangesWrittenBehindTheRepositorysBack() {
+        val store = InMemoryCampaignStore()
+        val repository = repository(store)
+        val original = repository.settlement
+        store.upsertSettlement(
+            original.copy(
+                name = "Remote edit",
+                population = 42,
+                sync =
+                    original.sync.copy(
+                        updatedAt = HybridLogicalClock(original.sync.updatedAt.millis + 10_000, 0),
+                        rev = 99,
+                    ),
+            ),
+        )
+
+        repository.reload()
+
+        assertEquals("Remote edit", repository.settlement.name)
+        assertEquals(42, repository.settlement.population)
+        assertEquals(99, repository.settlement.sync.rev)
+    }
+
+    @Test
     fun recoversWhenACampaignExistsWithoutALiveSettlement() {
         val store = InMemoryCampaignStore()
         store.upsertCampaign(

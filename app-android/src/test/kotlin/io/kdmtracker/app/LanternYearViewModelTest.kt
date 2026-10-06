@@ -38,6 +38,19 @@ class LanternYearViewModelTest {
         assertEquals(2, viewModel.state.value?.currentStep)
     }
 
+    @Test
+    fun aFailedLoadIsExposedInsteadOfSpinningForever() {
+        val viewModel =
+            LanternYearViewModel(
+                buildComponents = { throw IllegalStateException("database unavailable") },
+                dispatcher = Dispatchers.Unconfined,
+                scope = CoroutineScope(Dispatchers.Unconfined),
+            )
+
+        assertEquals(null, viewModel.state.value)
+        assertEquals("database unavailable", viewModel.loadError.value)
+    }
+
     private fun viewModel(): LanternYearViewModel =
         LanternYearViewModel(
             buildComponents = {
