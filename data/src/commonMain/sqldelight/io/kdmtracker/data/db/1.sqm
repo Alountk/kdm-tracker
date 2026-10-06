@@ -1,0 +1,15 @@
+CREATE TABLE outbox (
+  campaignId TEXT NOT NULL,
+  entityType TEXT NOT NULL,
+  entityId TEXT NOT NULL,
+  op TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  updatedAtMillis INTEGER NOT NULL,
+  updatedAtCounter INTEGER NOT NULL,
+  PRIMARY KEY (campaignId, entityType, entityId)
+);
+
+CREATE TABLE sync_cursor (
+  campaignId TEXT NOT NULL PRIMARY KEY,
+  rev INTEGER NOT NULL
+);

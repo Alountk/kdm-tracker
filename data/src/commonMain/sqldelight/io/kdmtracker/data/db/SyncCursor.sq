@@ -1,0 +1,10 @@
+CREATE TABLE sync_cursor (
+  campaignId TEXT NOT NULL PRIMARY KEY,
+  rev INTEGER NOT NULL
+);
+
+upsertCursor:
+INSERT OR REPLACE INTO sync_cursor VALUES (?,?);
+
+selectCursor:
+SELECT rev FROM sync_cursor WHERE campaignId = ?;

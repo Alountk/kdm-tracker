@@ -9,9 +9,17 @@ import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
 import io.kdmtracker.core.persistence.CampaignStore
 import io.kdmtracker.core.ruleset.RulesetOverrides
+import io.kdmtracker.core.sync.ChangeOp
+import io.kdmtracker.core.sync.ChangeRecord
+import io.kdmtracker.core.transfer.CampaignDto
+import io.kdmtracker.core.transfer.HybridLogicalClockDto
+import io.kdmtracker.core.transfer.SettlementDto
+import io.kdmtracker.core.transfer.SyncMetaDto
+import io.kdmtracker.core.transfer.TransferMapper
 import io.kdmtracker.data.db.KdmDatabase
 import kotlinx.serialization.json.Json
 import io.kdmtracker.data.db.Campaign as CampaignRow
+import io.kdmtracker.data.db.Outbox as OutboxRow
 import io.kdmtracker.data.db.Settlement as SettlementRow
 
 /**
@@ -22,6 +30,13 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  * stored as a JSON blob; the remaining columns map one-to-one onto the aggregates, and the
  * four sync columns rebuild [SyncMeta]. A campaign's `settlementIds` is derived from the
  * settlements loaded for it, since ownership lives in `settlement.campaignId`.
+ *
+ * Every local mutation also lands in the `outbox`, inside the *same* transaction as the domain
+ * row (Review Focus 2). The outbox is the client-side change log the sync engine pushes; its
+ * `(campaignId, entityType, entityId)` primary key makes replay idempotent — re-upserting an
+ * entity replaces its pending entry instead of appending a second one. The outbox `payload` is the
+ * entity's versioned transfer DTO (`CampaignDto`/`SettlementDto`) encoded as JSON, so a future
+ * [io.kdmtracker.core.sync.SyncStore] can map a row straight onto a [ChangeRecord].
  */
 class SqlDelightCampaignStore(
     private val database: KdmDatabase,
@@ -44,40 +59,106 @@ class SqlDelightCampaignStore(
 
     override fun upsertCampaign(campaign: Campaign) {
         val sync = campaign.sync
-        database.campaignQueries.upsertCampaign(
-            id = campaign.id.value,
-            name = campaign.name,
-            rulesetId = campaign.rulesetId,
-            rulesetOverridesJson = json.encodeToString(RulesetOverrides.serializer(), campaign.rulesetOverrides),
-            updatedAtMillis = sync.updatedAt.millis,
-            updatedAtCounter = sync.updatedAt.counter.toLong(),
-            rev = sync.rev,
-            deletedAtMillis = sync.deletedAt?.millis,
-            deletedAtCounter = sync.deletedAt?.counter?.toLong(),
-        )
+        database.transaction {
+            database.campaignQueries.upsertCampaign(
+                id = campaign.id.value,
+                name = campaign.name,
+                rulesetId = campaign.rulesetId,
+                rulesetOverridesJson = json.encodeToString(RulesetOverrides.serializer(), campaign.rulesetOverrides),
+                updatedAtMillis = sync.updatedAt.millis,
+                updatedAtCounter = sync.updatedAt.counter.toLong(),
+                rev = sync.rev,
+                deletedAtMillis = sync.deletedAt?.millis,
+                deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+            )
+            recordOutbox(campaign.toOutboxRecord())
+        }
     }
 
     override fun upsertSettlement(settlement: Settlement) {
         val sync = settlement.sync
-        database.settlementQueries.upsertSettlement(
-            id = settlement.id.value,
-            campaignId = settlement.campaignId.value,
-            name = settlement.name,
-            lanternYear = settlement.lanternYear.toLong(),
-            phase = settlement.phase.name,
-            currentStep = settlement.currentStep.toLong(),
-            endeavors = settlement.endeavors.toLong(),
-            population = settlement.population.toLong(),
-            settlementEvent = settlement.settlementEvent,
-            updatedAtMillis = sync.updatedAt.millis,
-            updatedAtCounter = sync.updatedAt.counter.toLong(),
-            rev = sync.rev,
-            deletedAtMillis = sync.deletedAt?.millis,
-            deletedAtCounter = sync.deletedAt?.counter?.toLong(),
-        )
+        database.transaction {
+            database.settlementQueries.upsertSettlement(
+                id = settlement.id.value,
+                campaignId = settlement.campaignId.value,
+                name = settlement.name,
+                lanternYear = settlement.lanternYear.toLong(),
+                phase = settlement.phase.name,
+                currentStep = settlement.currentStep.toLong(),
+                endeavors = settlement.endeavors.toLong(),
+                population = settlement.population.toLong(),
+                settlementEvent = settlement.settlementEvent,
+                updatedAtMillis = sync.updatedAt.millis,
+                updatedAtCounter = sync.updatedAt.counter.toLong(),
+                rev = sync.rev,
+                deletedAtMillis = sync.deletedAt?.millis,
+                deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+            )
+            recordOutbox(settlement.toOutboxRecord())
+        }
     }
 
     override fun <T> transaction(block: () -> T): T = database.transactionWithResult { block() }
+
+    /**
+     * Records [record] as a pending change.
+     *
+     * Upserting is idempotent by the outbox primary key, so replaying the same mutation (or a
+     * crash-retried write) leaves exactly one entry. When called inside a `database.transaction {}`
+     * the write joins that transaction; the entity upserts above rely on this to keep the domain row
+     * and its outbox entry atomic.
+     */
+    fun recordOutbox(record: ChangeRecord) {
+        database.outboxQueries.upsertOutbox(
+            campaignId = record.campaignId,
+            entityType = record.entityType,
+            entityId = record.entityId,
+            op = record.op.name,
+            payload = record.payload,
+            updatedAtMillis = record.updatedAtMillis,
+            updatedAtCounter = record.updatedAtCounter.toLong(),
+        )
+    }
+
+    /** Local changes for [campaignId] not yet acknowledged by the hub, oldest edit first. */
+    fun pending(campaignId: String): List<ChangeRecord> =
+        database.outboxQueries
+            .selectOutboxByCampaign(campaignId)
+            .executeAsList()
+            .map { it.toChangeRecord() }
+
+    /** The revision [campaignId] last synced through; `0` when it has never synced. */
+    fun cursor(campaignId: String): Long =
+        database.syncCursorQueries
+            .selectCursor(campaignId)
+            .executeAsOneOrNull()
+            ?: 0L
+
+    /** Persists [campaignId]'s new sync cursor. */
+    fun setCursor(
+        campaignId: String,
+        rev: Long,
+    ) {
+        database.syncCursorQueries.upsertCursor(campaignId = campaignId, rev = rev)
+    }
+
+    /** Removes exactly [records] from [campaignId]'s outbox once the hub acknowledges them. */
+    fun clearAcknowledged(
+        campaignId: String,
+        records: List<ChangeRecord>,
+    ) {
+        database.transaction {
+            records.forEach { record ->
+                database.outboxQueries.deleteOutbox(
+                    campaignId = campaignId,
+                    entityType = record.entityType,
+                    entityId = record.entityId,
+                    updatedAtMillis = record.updatedAtMillis,
+                    updatedAtCounter = record.updatedAtCounter.toLong(),
+                )
+            }
+        }
+    }
 
     private fun CampaignRow.toDomain(settlementIds: List<Ulid>): Campaign =
         Campaign(
@@ -133,7 +214,74 @@ class SqlDelightCampaignStore(
                 },
         )
 
+    private fun Campaign.toOutboxRecord(): ChangeRecord =
+        ChangeRecord(
+            campaignId = id.value,
+            entityType = ENTITY_TYPE_CAMPAIGN,
+            entityId = id.value,
+            op = sync.changeOp(),
+            baseRev = null,
+            payload = json.encodeToString(CampaignDto.serializer(), TransferMapper.toDto(this, emptyList())),
+            updatedAtMillis = sync.updatedAt.millis,
+            updatedAtCounter = sync.updatedAt.counter,
+            rev = 0,
+        )
+
+    private fun Settlement.toOutboxRecord(): ChangeRecord =
+        ChangeRecord(
+            campaignId = campaignId.value,
+            entityType = ENTITY_TYPE_SETTLEMENT,
+            entityId = id.value,
+            op = sync.changeOp(),
+            baseRev = null,
+            payload = json.encodeToString(SettlementDto.serializer(), toPayloadDto()),
+            updatedAtMillis = sync.updatedAt.millis,
+            updatedAtCounter = sync.updatedAt.counter,
+            rev = 0,
+        )
+
+    private fun SyncMeta.changeOp(): ChangeOp = if (deletedAt != null) ChangeOp.DELETE else ChangeOp.UPSERT
+
+    private fun Settlement.toPayloadDto(): SettlementDto =
+        SettlementDto(
+            id = id.value,
+            campaignId = campaignId.value,
+            name = name,
+            lanternYear = lanternYear,
+            phase = phase,
+            currentStep = currentStep,
+            endeavors = endeavors,
+            population = population,
+            settlementEvent = settlementEvent,
+            sync = sync.toPayloadDto(),
+        )
+
+    private fun SyncMeta.toPayloadDto(): SyncMetaDto =
+        SyncMetaDto(
+            updatedAt = updatedAt.toPayloadDto(),
+            rev = rev,
+            deletedAt = deletedAt?.toPayloadDto(),
+        )
+
+    private fun HybridLogicalClock.toPayloadDto(): HybridLogicalClockDto =
+        HybridLogicalClockDto(millis = millis, counter = counter)
+
+    private fun OutboxRow.toChangeRecord(): ChangeRecord =
+        ChangeRecord(
+            campaignId = campaignId,
+            entityType = entityType,
+            entityId = entityId,
+            op = ChangeOp.valueOf(op),
+            baseRev = null,
+            payload = payload,
+            updatedAtMillis = updatedAtMillis,
+            updatedAtCounter = updatedAtCounter.toInt(),
+            rev = 0,
+        )
+
     private companion object {
         private val json = Json
+        private const val ENTITY_TYPE_CAMPAIGN = "campaign"
+        private const val ENTITY_TYPE_SETTLEMENT = "settlement"
     }
 }

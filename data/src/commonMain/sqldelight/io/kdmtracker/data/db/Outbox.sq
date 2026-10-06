@@ -1,0 +1,23 @@
+CREATE TABLE outbox (
+  campaignId TEXT NOT NULL,
+  entityType TEXT NOT NULL,
+  entityId TEXT NOT NULL,
+  op TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  updatedAtMillis INTEGER NOT NULL,
+  updatedAtCounter INTEGER NOT NULL,
+  PRIMARY KEY (campaignId, entityType, entityId)
+);
+
+upsertOutbox:
+INSERT OR REPLACE INTO outbox VALUES (?,?,?,?,?,?,?);
+
+selectOutboxByCampaign:
+SELECT * FROM outbox
+WHERE campaignId = ?
+ORDER BY updatedAtMillis, updatedAtCounter, entityType, entityId;
+
+deleteOutbox:
+DELETE FROM outbox
+WHERE campaignId = ? AND entityType = ? AND entityId = ?
+  AND updatedAtMillis = ? AND updatedAtCounter = ?;
