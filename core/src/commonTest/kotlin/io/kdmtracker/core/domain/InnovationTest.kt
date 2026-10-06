@@ -2,6 +2,7 @@ package io.kdmtracker.core.domain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class InnovationTest {
@@ -76,13 +77,20 @@ class InnovationTest {
     }
 
     @Test
-    fun deckContainsUnlockedNamesAndTheirConsequences() {
+    fun deckContainsOnlyTheUnlockedConsequences() {
         val collection = InnovationCollection().with(iron)
 
-        assertEquals(
-            listOf("Blade Sharpen", "Iron", "Iron Weapons"),
-            InnovationDeck.of(collection).cards,
-        )
+        val cards = InnovationDeck.of(collection).cards
+
+        assertEquals(listOf("Blade Sharpen", "Iron Weapons"), cards)
+        assertFalse("Iron" in cards)
+    }
+
+    @Test
+    fun deckIgnoresAnInnovationWithNoConsequences() {
+        val plain = Innovation(name = "Hovel", description = "A place to sleep.")
+
+        assertTrue(InnovationDeck.of(InnovationCollection().with(plain)).cards.isEmpty())
     }
 
     @Test
@@ -97,9 +105,12 @@ class InnovationTest {
 
         val cards = InnovationDeck.of(collection).cards
 
-        assertEquals(listOf("Ammonia", "Blade Sharpen", "Iron", "Iron Weapons", "Ointment", "Soap"), cards)
+        assertEquals(listOf("Blade Sharpen", "Iron Weapons", "Ointment"), cards)
         assertEquals(cards, cards.distinct())
         assertEquals(cards.sorted(), cards)
+        assertFalse("Iron" in cards)
+        assertFalse("Ammonia" in cards)
+        assertFalse("Soap" in cards)
     }
 
     @Test

@@ -56,8 +56,9 @@ data class InnovationCollection(
 }
 
 /**
- * The deck a settlement draws from: every unlocked innovation name plus that
- * innovation's [Innovation.consequences], deduped and sorted.
+ * The deck a settlement draws from when it innovates: exactly the
+ * [Innovation.consequences] of the unlocked innovations, deduped and sorted.
+ * Innovation names are not cards and never appear in the deck.
  */
 data class InnovationDeck(
     val cards: List<String>,
@@ -66,7 +67,7 @@ data class InnovationDeck(
         fun of(collection: InnovationCollection): InnovationDeck =
             InnovationDeck(
                 collection.innovations
-                    .flatMap { listOf(it.name) + it.consequences }
+                    .flatMap { it.consequences }
                     .distinct()
                     .sorted(),
             )
