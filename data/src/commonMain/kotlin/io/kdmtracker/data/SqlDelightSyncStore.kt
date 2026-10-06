@@ -10,6 +10,7 @@ import io.kdmtracker.core.ruleset.RulesetOverrides
 import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
+import io.kdmtracker.core.sync.MembershipStore
 import io.kdmtracker.core.sync.SyncStore
 import io.kdmtracker.core.transfer.CampaignDto
 import io.kdmtracker.core.transfer.HybridLogicalClockDto
@@ -48,7 +49,8 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
 class SqlDelightSyncStore(
     private val database: KdmDatabase,
     private val log: (String) -> Unit = { println(it) },
-) : SyncStore {
+) : SyncStore,
+    MembershipStore {
     override fun cursor(campaignId: String): Long =
         database.syncCursorQueries
             .selectCursor(campaignId)
@@ -146,7 +148,7 @@ class SqlDelightSyncStore(
      * Stores the caller's membership summary for [summary]'s campaign, replacing any prior row for
      * the same campaign id so a re-listed campaign updates instead of piling up duplicates.
      */
-    fun upsertMembership(summary: CampaignSummary) {
+    override fun upsertMembership(summary: CampaignSummary) {
         database.membershipQueries.upsertMembership(
             campaignId = summary.id,
             name = summary.name,
@@ -157,14 +159,14 @@ class SqlDelightSyncStore(
     }
 
     /** Every stored membership summary, for the offline Home list. */
-    fun memberships(): List<CampaignSummary> =
+    override fun memberships(): List<CampaignSummary> =
         database.membershipQueries
             .selectAllMemberships()
             .executeAsList()
             .map { it.toCampaignSummary() }
 
     /** The stored membership summary for [campaignId], or `null` when the campaign is unknown. */
-    fun membership(campaignId: String): CampaignSummary? =
+    override fun membership(campaignId: String): CampaignSummary? =
         database.membershipQueries
             .selectMembershipById(campaignId)
             .executeAsOneOrNull()

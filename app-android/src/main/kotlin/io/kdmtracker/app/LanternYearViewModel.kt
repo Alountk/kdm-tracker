@@ -166,7 +166,8 @@ class LanternYearViewModel(
                     LanternYearViewModel(
                         buildComponents = { scope ->
                             val handle = KdmDatabaseFactory.openAndroidStore(appContext)
-                            val repository = SettlementRepository(handle.store)
+                            val repository =
+                                SettlementRepository(handle.store, memberships = handle.membershipStore)
                             val controller = LanternYearController(repository)
                             val tokenStore = AndroidKeystoreTokenStore(appContext)
                             val engine =
@@ -180,6 +181,7 @@ class LanternYearViewModel(
                                     SyncCoordinator(
                                         engine = engine,
                                         campaignId = repository.campaign.id.value,
+                                        memberships = handle.membershipStore,
                                         scope = scope,
                                         tokenProvider = tokenStore::read,
                                         onSynced = controller::reload,

@@ -4,6 +4,7 @@ import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeOp
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
+import io.kdmtracker.core.sync.InMemoryMembershipStore
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
 import io.kdmtracker.core.sync.SyncEngine
@@ -43,6 +44,7 @@ class SyncCoordinatorTest {
             SyncCoordinator(
                 engine = SyncEngine(api, store),
                 campaignId = CAMPAIGN_ID,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
@@ -69,6 +71,7 @@ class SyncCoordinatorTest {
             SyncCoordinator(
                 engine = SyncEngine(api, store),
                 campaignId = CAMPAIGN_ID,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
@@ -97,6 +100,7 @@ class SyncCoordinatorTest {
             SyncCoordinator(
                 engine = SyncEngine(api, FakeSyncStore()),
                 campaignId = CAMPAIGN_ID,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = { null },
                 dispatcher = Dispatchers.Unconfined,
@@ -115,6 +119,7 @@ class SyncCoordinatorTest {
             SyncCoordinator(
                 engine = SyncEngine(FakeSyncApi(), FakeSyncStore()),
                 campaignId = CAMPAIGN_ID,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = { "token" },
                 dispatcher = Dispatchers.Unconfined,
@@ -152,6 +157,7 @@ class SyncCoordinatorTest {
             SyncCoordinator(
                 engine = SyncEngine(api, FakeSyncStore()),
                 campaignId = CAMPAIGN_ID,
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.IO),
                 tokenProvider = { "token" },
                 dispatcher = Dispatchers.IO,

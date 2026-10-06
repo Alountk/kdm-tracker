@@ -26,6 +26,9 @@ class SyncEngine(
     private val api: SyncApi,
     private val store: SyncStore,
 ) {
+    /** The campaigns the signed-in user can reach, straight from the hub. */
+    fun listCampaigns(): List<CampaignSummary> = api.listCampaigns()
+
     fun sync(campaignId: String): SyncOutcome {
         val response = api.pull(campaignId, store.cursor(campaignId))
 

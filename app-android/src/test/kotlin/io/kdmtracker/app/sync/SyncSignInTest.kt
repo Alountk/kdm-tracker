@@ -3,6 +3,7 @@ package io.kdmtracker.app.sync
 import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.ChangeRecord
 import io.kdmtracker.core.sync.ChangeSet
+import io.kdmtracker.core.sync.InMemoryMembershipStore
 import io.kdmtracker.core.sync.PullResponse
 import io.kdmtracker.core.sync.SyncApi
 import io.kdmtracker.core.sync.SyncEngine
@@ -51,6 +52,7 @@ class SyncSignInTest {
             SyncCoordinator(
                 engine = SyncEngine(api, NoopSyncStore()),
                 campaignId = "c1",
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = tokens::read,
                 dispatcher = Dispatchers.Unconfined,
@@ -91,6 +93,7 @@ class SyncSignInTest {
                         store = NoopSyncStore(),
                     ),
                 campaignId = "c1",
+                memberships = InMemoryMembershipStore(),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 tokenProvider = tokens::read,
                 dispatcher = Dispatchers.Unconfined,
