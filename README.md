@@ -158,17 +158,21 @@ runs the pass off the UI thread.
 **One pass — outbox → pull → per-record LWW merge → push** (`SyncEngine.sync`):
 
 1. **Pull** from the stored cursor: `GET /api/v1/campaigns/{id}/changes?since=<cursor>`.
-2. **Merge** each pulled record into the local state with per-record last-write-wins (`MergePolicy`).
-   A remote record that wins is applied **and** any pending outbox entry for the same
-   `(entityType, entityId)` is dropped, so a superseded local edit is never re-pushed.
+2. **Merge** each pulled record against the **canonical local record** (falling back to the outbox)
+   with per-record last-write-wins (`MergePolicy`). A remote record that wins is applied **and** any
+   pending outbox entry for the same `(entityType, entityId)` is dropped, so a superseded local edit
+   is never re-pushed. A local record that wins is kept; if it was already acknowledged (canonical
+   only, outbox cleared) it is **re-enqueued** so the hub eventually converges.
 3. **Advance the cursor** to the response's `latestRev` only after the whole batch merges.
 4. **Push** whatever is still pending in the outbox (`POST .../changes`), then clear exactly the
    acknowledged records.
 
 A pull failure aborts before the cursor moves, so no change is skipped. A push failure propagates and
 leaves the outbox intact for the next attempt, while the cursor stays advanced because the merged
-batch is already durable. An atomic in-flight guard makes overlapping passes a no-op, so the store is
-never accessed concurrently.
+batch is already durable. An atomic in-flight guard makes overlapping **sync passes** a no-op; it does
+not lock the store against a concurrent local mutation (both use the same SQLDelight connection, which
+serializes access itself). After a successful merge the repository is reloaded from the store
+(`SettlementRepository.reload()`) so applied remote changes reach the UI before the next local edit.
 
 **Conflict model — client-side LWW.** Records for the same entity are ordered by a hybrid logical
 clock over (`updatedAtMillis`, `updatedAtCounter`), and **the client resolves conflicts**, not the
@@ -191,16 +195,28 @@ entity as-is and never merges; the client now does the merging that was previous
 - **Server base URL** — the `baseUrl` handed to `HttpSyncApi`. The app currently uses the development
   default `DEFAULT_SYNC_BASE_URL = "http://10.0.2.2:8080"` (the Android emulator's alias for the host
   machine), injected in `LanternYearViewModel`; a real deployment injects a configured URL.
-- **Bearer token** — read fresh per request through a `TokenStore`. A `null` token sends no
-  `Authorization` header and the request fails `401` non-fatally. The token is only ever placed in the
-  request header and is never logged.
+- **Bearer token** — read fresh per request through a `TokenStore`. `SyncCoordinator.syncNow()` gates on
+  it: with no token it sets `SyncState.NotConfigured` and **does not attempt** the doomed request,
+  instead of asking the hub for a `401`. The token is only ever placed in the request header and is
+  never logged.
+
+**Sign-in (token acquisition).** The token is obtained through `POST /api/v1/auth/login`
+(`HttpSyncAuthApi`), wrapped by `SyncSignIn` which persists the returned token via the `TokenStore`.
+When the coordinator is `NotConfigured` the app shows a minimal username/password form; submitting it
+runs `LanternYearViewModel.signIn`, stores the token, and then attempts a sync.
+
+**Cleartext (debug only).** The development hub is plain HTTP and `targetSdk 36` blocks cleartext by
+default, so `http://10.0.2.2:8080` would be unreachable. A **debug-only** manifest overlay
+(`app-android/src/debug/AndroidManifest.xml`) sets `android:usesCleartextTraffic="true"`; the release
+manifest is untouched and stays HTTPS-only. Never ship a release build that depends on cleartext.
 
 **Token storage.** `AndroidKeystoreTokenStore` encrypts the bearer token with AES-GCM under a
 non-extractable key held in the **Android Keystore**, and stores only the ciphertext plus IV in a
 private `SharedPreferences` file. The choice avoids a dependency: `EncryptedSharedPreferences` would
 pull in `androidx.security:security-crypto` (not in the version catalog) and `DataStore` alone stores
 plaintext, whereas a hardware-backed key means app-data slurping alone cannot recover the token. A
-rotated or deprecated key simply makes a read return `null`, and the next sync fails non-fatally.
+rotated or deprecated key simply makes a read return `null`, leaving the coordinator `NotConfigured`
+until the user signs in again.
 
 ## Sync hub (server)
 
