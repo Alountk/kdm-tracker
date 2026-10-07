@@ -19,6 +19,8 @@ import io.kdmtracker.core.transfer.SettlementDto
 import io.kdmtracker.core.transfer.SyncMetaDto
 import io.kdmtracker.core.transfer.TransferMapper
 import io.kdmtracker.data.db.KdmDatabase
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import io.kdmtracker.data.db.Campaign as CampaignRow
 import io.kdmtracker.data.db.Outbox as OutboxRow
@@ -79,6 +81,7 @@ class SqlDelightCampaignStore(
                 rev = sync.rev,
                 deletedAtMillis = sync.deletedAt?.millis,
                 deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+                enabledPacksJson = json.encodeToString(campaign.enabledPacks),
             )
             recordOutbox(campaign.toOutboxRecord())
         }
@@ -218,6 +221,7 @@ class SqlDelightCampaignStore(
             rulesetId = rulesetId,
             rulesetOverrides = json.decodeFromString(RulesetOverrides.serializer(), rulesetOverridesJson),
             settlementIds = settlementIds,
+            enabledPacks = json.decodeFromString(enabledPacksJson),
             sync =
                 syncMeta(
                     updatedAtMillis = updatedAtMillis,

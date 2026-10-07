@@ -209,6 +209,7 @@ class SqlDelightSyncStore(
             rev = rev,
             deletedAtMillis = sync.deletedAt?.millis,
             deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+            enabledPacksJson = json.encodeToString(campaign.enabledPacks),
         )
     }
 
