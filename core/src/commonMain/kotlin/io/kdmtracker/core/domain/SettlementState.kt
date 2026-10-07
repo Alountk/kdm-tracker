@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
  * @property births the survivors born so far.
  * @property phaseActionsUsed the action identifiers already spent this Settlement Phase, so
  *   once-per-phase actions (such as Innovate) can be refused on a repeat attempt.
+ * @property gear the names of the gear the settlement has crafted.
  */
 @Serializable
 data class SettlementState(
@@ -28,6 +29,7 @@ data class SettlementState(
     val deaths: Int = 0,
     val births: Int = 0,
     val phaseActionsUsed: Set<String> = emptySet(),
+    val gear: List<String> = emptyList(),
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
@@ -38,6 +40,9 @@ data class SettlementState(
      */
     fun withPhaseAction(key: String): SettlementState =
         if (key in phaseActionsUsed) this else copy(phaseActionsUsed = phaseActionsUsed + key)
+
+    /** Returns a copy that also holds [name] in its gear, deduped by name. */
+    fun withGear(name: String): SettlementState = if (name in gear) this else copy(gear = gear + name)
 }
 
 /** The storage lines projected from this state's resource ledger. */

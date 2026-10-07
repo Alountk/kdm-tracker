@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
  * @property buildEndeavors the number of endeavors required to build the location.
  * @property buildCost the resources required to build the location, as name → count.
  * @property actions the actions the location offers once built.
+ * @property recipes the gear this location can craft once built.
  */
 @Serializable
 data class SettlementLocation(
@@ -21,6 +22,7 @@ data class SettlementLocation(
     val buildEndeavors: Int = 0,
     val buildCost: Map<String, Int> = emptyMap(),
     val actions: List<SettlementAction> = emptyList(),
+    val recipes: List<GearRecipe> = emptyList(),
 )
 
 /**

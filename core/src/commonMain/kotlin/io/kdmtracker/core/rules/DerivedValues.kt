@@ -1,5 +1,8 @@
 package io.kdmtracker.core.rules
 
+import io.kdmtracker.core.domain.Modifier
+import io.kdmtracker.core.domain.ModifierScope
+import io.kdmtracker.core.domain.ModifierTarget
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.ruleset.Ruleset
 
@@ -46,6 +49,18 @@ object DerivedValues {
         ruleset: Ruleset,
         innovationBonus: Int = 0,
     ): Int = ruleset.survivalLimit + innovationBonus
+
+    /**
+     * The sum of every modifier in [modifiers] whose target and scope both match.
+     *
+     * Only [ModifierScope.SETTLEMENT] modifiers feed derived values; a survivor-scope
+     * modifier of the same target is ignored here.
+     */
+    fun modifierTotal(
+        modifiers: List<Modifier>,
+        target: ModifierTarget,
+        scope: ModifierScope,
+    ): Int = modifiers.filter { it.target == target && it.scope == scope }.sumOf { it.value }
 }
 
 /**

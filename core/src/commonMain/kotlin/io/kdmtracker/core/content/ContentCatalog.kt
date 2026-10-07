@@ -1,7 +1,9 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ContentEntry
+import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.TimelineEntry
@@ -38,6 +40,8 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.fightingArts }) { it.name }
     val disorderDefinitions: List<ContentEntry> =
         mergeDefinition(packs.flatMap { it.bundle.disorders }) { it.name }
+    val gearDefinitions: List<Gear> =
+        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
     val timeline: List<TimelineEntry> =
         packs
             .flatMap { it.bundle.timeline }
@@ -56,6 +60,12 @@ data class ContentCatalog(
         definitions: List<T>,
         name: (T) -> String,
     ): List<T> = definitions.sortedBy(name).distinctBy(name)
+
+    /** The modifiers of every gear named in [gearNames]; unknown names are ignored. */
+    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> {
+        val byName = gearDefinitions.associateBy { it.name }
+        return gearNames.flatMap { byName[it]?.modifiers ?: emptyList() }
+    }
 }
 
 /**
@@ -75,7 +85,8 @@ private fun preferModeledLocation(
     candidate: SettlementLocation,
 ): SettlementLocation = if (current.hasModeledData() || !candidate.hasModeledData()) current else candidate
 
-private fun SettlementLocation.hasModeledData(): Boolean = buildCost.isNotEmpty() || actions.isNotEmpty()
+private fun SettlementLocation.hasModeledData(): Boolean =
+    buildCost.isNotEmpty() || actions.isNotEmpty() || recipes.isNotEmpty()
 
 object ContentCatalogComposer {
     fun compose(packs: List<ContentPack>): CatalogResult {
