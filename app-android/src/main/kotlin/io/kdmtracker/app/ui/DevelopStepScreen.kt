@@ -245,6 +245,13 @@ private fun CraftSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                recipe.requiresText?.let { requirement ->
+                    Text(
+                        text = "Requires: $requirement",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Button(
                     onClick = { onCraft(location.name, recipe.gearName) },
                     modifier = Modifier.fillMaxWidth(),

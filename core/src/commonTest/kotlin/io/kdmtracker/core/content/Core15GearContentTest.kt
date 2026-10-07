@@ -38,4 +38,12 @@ class Core15GearContentTest {
     fun everyGearNameIsNonBlank() {
         assertTrue(Core15Gear.bundle.gear.all { it.name.isNotBlank() })
     }
+
+    @Test
+    fun theArmeriaLocationKeepsItsRecipes() {
+        val armeria = Core15Gear.bundle.locations.single { it.name == "Armería" }
+
+        assertTrue(armeria.recipes.size >= 6, "Armería recipes: ${armeria.recipes.map { it.gearName }}")
+        assertTrue(armeria.recipes.any { it.gearName == "Katana del Arcoíris" })
+    }
 }

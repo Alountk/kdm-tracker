@@ -256,8 +256,8 @@ git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/gener
   Resolving costs by resource **type** is deferred to a follow-up work unit (it needs a
   resource-type model plus a type↔resource content pass).
 - **`restos` (scrap) has no card.** Core15Resources.kt defines no `restos` card, so the
-  token is lowercased and kept verbatim should it reach a cost box. Only gear recipes (not
-  ingested here) use it today.
+  token is kept verbatim should it reach a cost box; a gear recipe that costs `restos` is
+  dropped as a `[gap]` (see *Gear*).
 - **Locations outside the build tree.** Plumería, Felinarium, Cirujano Barbero, Artesano
   de Máscaras, Herrería and Cúmulo de Linternas Extinto publish no `Construir` bar on any
   base location card; they are unlocked by innovations, so their build costs live on the
@@ -266,6 +266,42 @@ git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/gener
   Restos, Trepanación, Augurio, Investigar, Experiencia Compartida) as d10 tables/prose.
   Only the Lantern Hoard's `Esfuerzo` Innovate action is modeled here; the rest are
   deferred.
+
+## Gear
+
+`ingest_gear.py` reads the gear cards (`AF Equipo/*.pdf`) and the location cards into
+`Core15Gear.kt`. Unlike the other decks, `pdftotext -raw` strips spaces and `-layout`
+flattens columns, so it uses **`pdftotext -bbox-layout`** (word boxes via `bbox.py`): text
+is recovered with spaces and columns are separated by x.
+
+```sh
+python3 tools/content-ingest/ingest_gear.py \
+  --gear-dir "<external-assets>/Juego Completo/Formato Cuadrado 51x51 mm/AF Equipo" \
+  --locations-pdf "<external-assets>/Juego Completo/Formato XXL 102x204 mm/AF Asentamientos Loc.pdf"
+```
+
+### Parsing model
+
+- **Gear card page:** the top non-numeric block is the **name**; a comma-separated lowercase
+  block is the **keywords**; the remaining blocks joined are the **rules**. Page 1 of each
+  deck (the location title) is skipped, and names shorter than 3 chars are dropped.
+- **Location card page:** the top block is the location **name**; a recipe pairs a name block
+  with the cost block directly below it in the same column; a nearby `Requiere` (with its
+  value block) is the prerequisite.
+
+### Prerequisites
+
+A `Requiere X` whose `X` matches a 1.5 innovation name gates the recipe (`requires`); any
+other `X` (e.g. `Calor`, a state granted by `Horno Linterna`) is kept as display-only
+`requiresText` and does not gate.
+
+### Known parse gaps
+
+- **Dropped recipes.** A recipe whose resource tokens do not resolve against `Core15Resources`
+  is dropped (recorded here, not emitted). The main cause is `restos` (no card).
+- **Gear stats/bonuses are `[gap]`.** The cards' "+N" bonuses are conditional rule text
+  (`Mientras tengas 5+ de supervivencia, ganas +1 a precisión…`), not static stats, so
+  `Gear.modifiers` is emitted empty rather than guessed.
 
 ## Known gaps / not ingested
 

@@ -282,18 +282,6 @@ object Core15Gear {
                                 "colocarlas en cualquier orden.",
                     ),
                     Gear(
-                        name = "E",
-                        rules = "Armería",
-                    ),
-                    Gear(
-                        name = "EI",
-                        rules = "Equipo Inicial",
-                    ),
-                    Gear(
-                        name = "ER",
-                        rules = "Equipo Raro",
-                    ),
-                    Gear(
                         name = "Equipo de Saqueador",
                         keywords = listOf("objeto", "pesado"),
                         rules =
@@ -877,7 +865,7 @@ object Core15Gear {
                         keywords = listOf("objeto", "linterna", "otro"),
                         rules =
                             "Vital Al Llegar, todos los supervivientes ganan la carta de Horripilación (ver " +
-                                "mazo de IA del Vigilante). Si estás loco, gira esta carta.",
+                                "mazo de IA del Vigilante). Si no estás loco, gira esta carta.",
                     ),
                 ),
             locations =
@@ -917,6 +905,17 @@ object Core15Gear {
                                 GearRecipe(
                                     gearName = "Dedo de Dios",
                                     resourceCost = mapOf("Dedo de Fénix" to 1, "Hueso de Monstruo" to 4),
+                                ),
+                                GearRecipe(
+                                    gearName = "Katana del Arcoíris",
+                                    resourceCost =
+                                        mapOf(
+                                            "Excremento Arcoiris" to 1,
+                                            "Hierro" to 1,
+                                            "Hueso de Monstruo" to 6,
+                                            "Pico de Ave" to 1,
+                                        ),
+                                    requiresText = "Calor",
                                 ),
                             ),
                     ),

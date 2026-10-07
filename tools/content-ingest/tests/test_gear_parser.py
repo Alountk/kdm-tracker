@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bbox import Block  # noqa: E402
-from ingest_gear import parse_cost, parse_gear_cards, parse_location  # noqa: E402
+from ingest_gear import _make_resolver, parse_cost, parse_gear_cards, parse_location  # noqa: E402
 
 
 def block(x0, y0, x1, y1, text):
@@ -47,6 +47,16 @@ class GearParserTest(unittest.TestCase):
 
     def test_duplicate_cards_dedup_by_name(self):
         self.assertEqual(1, len(parse_gear_cards([GEAR_PAGE, GEAR_PAGE])))
+
+    def test_short_title_cards_are_dropped(self):
+        page = [block(10, 10, 20, 20, "E")]
+
+        self.assertEqual([], parse_gear_cards([page]))
+
+    def test_resolver_recovers_plural_accented_tokens(self):
+        resolve = _make_resolver({"Excremento Arcoiris"})
+
+        self.assertEqual("Excremento Arcoiris", resolve("excrementos arcoíris"))
 
     def test_parse_location_pairs_names_with_costs_and_maps_prerequisites(self):
         location = parse_location(LOCATION_PAGE, innovation_names=set(), resolve=lambda token: token)

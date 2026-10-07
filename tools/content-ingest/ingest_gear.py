@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set
@@ -111,7 +112,7 @@ def parse_gear_cards(pages: Sequence[Sequence[Block]]) -> List[Gear]:
     by_name: Dict[str, Gear] = {}
     for page in pages:
         card = _parse_gear_card(page)
-        if card and card.name and card.name not in by_name:
+        if card and len(card.name) >= 3 and card.name not in by_name:
             by_name[card.name] = card
     return [by_name[name] for name in sorted(by_name)]
 
@@ -362,7 +363,24 @@ def _resource_names() -> Set[str]:
 
 
 def _normalize(token: str) -> str:
-    return " ".join(token.split()).lower()
+    decomposed = unicodedata.normalize("NFKD", token)
+    stripped = "".join(char for char in decomposed if not unicodedata.combining(char))
+    return " ".join(stripped.split()).lower()
+
+
+def _normalized_variants(token: str) -> List[str]:
+    """Normalized spellings to try: the token, then its first word singularized.
+
+    The cards print some resources plural where the card name is singular (e.g. the cost
+    `excrementos arcoíris` vs the resource `Excremento Arcoiris`), so matching a singularized
+    first word recovers those recipes.
+    """
+    normalized = _normalize(token)
+    variants = [normalized]
+    words = normalized.split(" ")
+    if words and words[0].endswith("s"):
+        variants.append(" ".join([words[0][:-1]] + words[1:]))
+    return variants
 
 
 def _make_resolver(resource_names: Set[str]) -> Callable[[str], str]:
@@ -372,7 +390,10 @@ def _make_resolver(resource_names: Set[str]) -> Callable[[str], str]:
         mapped = resolve_resource(token)
         if mapped in resource_names:
             return mapped
-        return by_normalized.get(_normalize(token), token)
+        for variant in _normalized_variants(token):
+            if variant in by_normalized:
+                return by_normalized[variant]
+        return token
 
     return resolve
 
@@ -386,7 +407,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     gears: List[Gear] = []
     for pdf in sorted(_relative(Path(args.gear_dir)).glob("*.pdf")):
-        gears.extend(parse_gear_cards(parse_blocks(bbox_text(pdf))))
+        # Page 1 of each deck is the location's title card, not a gear card.
+        gears.extend(parse_gear_cards(parse_blocks(bbox_text(pdf))[1:]))
     gears = _dedup_gears(gears)
 
     innovations = _innovation_names()
