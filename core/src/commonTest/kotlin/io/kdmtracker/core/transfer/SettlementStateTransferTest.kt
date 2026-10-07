@@ -17,6 +17,7 @@ import io.kdmtracker.core.domain.TimelineEntry
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -89,6 +90,23 @@ class SettlementStateTransferTest {
         val records = listOf(SettlementRecord(settlement, populatedState))
 
         val (domainCampaign, domainRecords) = TransferMapper.toDomain(TransferMapper.toDto(campaign, records))
+
+        assertEquals(campaign, domainCampaign)
+        assertEquals(records, domainRecords)
+    }
+
+    @Test
+    fun populatedStateRoundTripsThroughTransferDocumentJson() {
+        val records = listOf(SettlementRecord(settlement, populatedState))
+        val document =
+            TransferDocument(
+                exportedAt = "2026-10-05T00:00:00Z",
+                campaigns = listOf(TransferMapper.toDto(campaign, records)),
+            )
+
+        val encoded = json.encodeToString(document)
+        val decoded = json.decodeFromString<TransferDocument>(encoded)
+        val (domainCampaign, domainRecords) = TransferMapper.toDomain(decoded.campaigns.single())
 
         assertEquals(campaign, domainCampaign)
         assertEquals(records, domainRecords)

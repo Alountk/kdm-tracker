@@ -42,6 +42,7 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  */
 class SqlDelightCampaignStore(
     private val database: KdmDatabase,
+    private val log: (String) -> Unit = { println(it) },
 ) : CampaignStore {
     override fun loadSnapshots(): List<CampaignSnapshot> =
         database.campaignQueries
@@ -131,8 +132,22 @@ class SqlDelightCampaignStore(
         database.settlementQueries
             .selectSettlementById(id)
             .executeAsOneOrNull()
-            ?.let { json.decodeFromString(SettlementState.serializer(), it.stateJson) }
+            ?.let { decodeState(it.stateJson) }
             ?: SettlementState()
+
+    /**
+     * Decodes [stateJson] into a [SettlementState], tolerating blobs this build cannot read.
+     *
+     * A newer build may have written fields this build does not know about; a downgraded device
+     * must not crash on launch, so an unknown or malformed blob degrades to an empty state (and is
+     * logged) instead of throwing out of [loadRecords].
+     */
+    private fun decodeState(stateJson: String): SettlementState =
+        runCatching { json.decodeFromString(SettlementState.serializer(), stateJson) }
+            .getOrElse { error ->
+                log("SqlDelightCampaignStore: ignoring undecodable settlement stateJson: ${error.message}")
+                SettlementState()
+            }
 
     override fun <T> transaction(block: () -> T): T = database.transactionWithResult { block() }
 
@@ -237,7 +252,7 @@ class SqlDelightCampaignStore(
     private fun SettlementRow.toRecord(): SettlementRecord =
         SettlementRecord(
             settlement = toDomain(),
-            state = json.decodeFromString(SettlementState.serializer(), stateJson),
+            state = decodeState(stateJson),
         )
 
     private fun syncMeta(
@@ -323,7 +338,7 @@ class SqlDelightCampaignStore(
         )
 
     private companion object {
-        private val json = Json
+        private val json = Json { ignoreUnknownKeys = true }
         private const val ENTITY_TYPE_CAMPAIGN = "campaign"
         private const val ENTITY_TYPE_SETTLEMENT = "settlement"
     }

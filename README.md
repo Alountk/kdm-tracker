@@ -166,8 +166,10 @@ an existing caller cannot clobber the record.
 
 On the wire the transfer schema is **v5**: `SettlementDto` carries the record as
 `state: SettlementState` (defaulting to an empty state, so a pre-v5 document decodes unchanged) and
-`TransferDocument.SUPPORTED_VERSIONS = [1, 2, 3, 4, 5]`. `TransferMapper` round-trips
-`SettlementRecord` both ways, keeping an export/import lossless.
+`TransferDocument.SUPPORTED_VERSIONS = [1, 2, 3, 4, 5]`. Within `:core`'s transfer layer,
+`TransferMapper` round-trips `SettlementRecord` both ways, so an export/import built on it is
+lossless; the server's separate schema-v2 export/import endpoint is not, because it carries only the
+settlement scalars and not the `SettlementState`.
 
 ## Sync (Android client)
 

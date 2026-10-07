@@ -137,7 +137,62 @@ class SettlementStateStoreTest {
         assertEquals(4L, KdmDatabase.Schema.version)
         val records = SqlDelightCampaignStore(database).loadRecords(CAMPAIGN_ID)
         assertEquals(1, records.size)
-        assertEquals(SettlementState(), records.single().state)
+        val record = records.single()
+        assertEquals(SettlementState(), record.state)
+        assertEquals("First Lantern", record.settlement.name)
+        assertEquals(3, record.settlement.lanternYear)
+        assertEquals(SettlementPhase.HUNT, record.settlement.phase)
+        assertEquals(5, record.settlement.currentStep)
+        assertEquals(2, record.settlement.endeavors)
+        assertEquals(9, record.settlement.population)
+        assertEquals("Murder", record.settlement.settlementEvent)
+    }
+
+    @Test
+    fun forwardWrittenStateFieldsAreIgnoredOnRead() {
+        val database = tempDatabase()
+        seedSettlement(
+            database,
+            stateJson = """{"timeline":{"entries":[],"length":30},"deaths":2,"futureField":"x"}""",
+        )
+
+        val state = SqlDelightCampaignStore(database).loadRecords(CAMPAIGN_ID).single().state
+
+        assertEquals(30, state.timeline.length)
+        assertEquals(2, state.deaths)
+    }
+
+    @Test
+    fun malformedStateJsonDegradesToEmptyStateWithoutThrowing() {
+        val database = tempDatabase()
+        seedSettlement(database, stateJson = "not valid json")
+
+        val state = SqlDelightCampaignStore(database).loadRecords(CAMPAIGN_ID).single().state
+
+        assertEquals(SettlementState(), state)
+    }
+
+    private fun seedSettlement(
+        database: KdmDatabase,
+        stateJson: String,
+    ) {
+        database.settlementQueries.upsertSettlement(
+            id = SETTLEMENT_ID,
+            campaignId = CAMPAIGN_ID,
+            name = "First Lantern",
+            lanternYear = 3,
+            phase = SettlementPhase.HUNT.name,
+            currentStep = 5,
+            endeavors = 2,
+            population = 9,
+            settlementEvent = "Murder",
+            updatedAtMillis = 1_700_000_000_500,
+            updatedAtCounter = 4,
+            rev = 11,
+            deletedAtMillis = null,
+            deletedAtCounter = null,
+            stateJson = stateJson,
+        )
     }
 
     private companion object {

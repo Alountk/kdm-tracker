@@ -39,9 +39,14 @@ class SettlementRecordRepositoryTest {
 
     @Test
     fun exposesTheSeedRecordBackedByTheSettlement() {
-        val repository = SettlementRepository(sqlDelightStore())
+        val store = sqlDelightStore()
+        val repository = SettlementRepository(store)
 
-        assertEquals(repository.settlement, repository.record.settlement)
+        val seeded = store.loadRecords(repository.campaign.id.value).single()
+
+        assertEquals("New Settlement", seeded.settlement.name)
+        assertEquals(1, seeded.settlement.lanternYear)
+        assertEquals(seeded, repository.record)
     }
 
     @Test

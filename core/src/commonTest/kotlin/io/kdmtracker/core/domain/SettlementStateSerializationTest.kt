@@ -68,6 +68,16 @@ class SettlementStateSerializationTest {
     }
 
     @Test
+    fun nonDefaultTimelineLengthRoundTripsThroughJson() {
+        val state = SettlementState(timeline = Timeline.core16(length = 30))
+        val encoded = json.encodeToString(state)
+        val decoded = json.decodeFromString<SettlementState>(encoded)
+
+        assertEquals(30, decoded.timeline.length)
+        assertEquals(state, decoded)
+    }
+
+    @Test
     fun jsonMissingFieldsDecodesWithDefaults() {
         val older =
             """
