@@ -72,7 +72,7 @@ class SettlementCatalogTest {
         val state = controller.state.value
 
         assertNotNull(state.record)
-        assertTrue(state.buildableLocations.isNotEmpty())
+        assertTrue(state.catalogLocations.isNotEmpty())
         assertTrue(state.innovationDefinitions.isNotEmpty())
         assertEquals(4, state.endeavorBreakdown.base)
         assertEquals(4, state.endeavorBreakdown.total)
@@ -120,7 +120,7 @@ class SettlementCatalogTest {
         val controller = LanternYearController(SettlementRepository(store))
 
         assertTrue(
-            controller.state.value.buildableLocations
+            controller.state.value.catalogLocations
                 .isNotEmpty(),
             "holds the first campaign",
         )
@@ -128,7 +128,7 @@ class SettlementCatalogTest {
         assertTrue(controller.selectCampaign(empty))
 
         assertTrue(
-            controller.state.value.buildableLocations
+            controller.state.value.catalogLocations
                 .isEmpty(),
             "the selected empty campaign wins",
         )
@@ -142,7 +142,7 @@ class SettlementCatalogTest {
 
         assertTrue(controller.selectCampaign(core))
         assertTrue(
-            controller.state.value.buildableLocations
+            controller.state.value.catalogLocations
                 .isNotEmpty(),
         )
     }

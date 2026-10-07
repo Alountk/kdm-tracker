@@ -6,6 +6,7 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
@@ -86,6 +87,7 @@ class InnovateUseCaseTest {
 
     private fun stocked(): SettlementState =
         SettlementState(
+            locations = LocationSet(built = listOf("Lantern Hoard")),
             resourceEntries =
                 listOf(
                     ResourceEntry("Bone", ResourceCategory.BASIC, 2),
@@ -93,6 +95,9 @@ class InnovateUseCaseTest {
                     ResourceEntry("Hide", ResourceCategory.BASIC, 2),
                 ),
         )
+
+    private fun builtButUnstocked(): SettlementState =
+        SettlementState(locations = LocationSet(built = listOf("Lantern Hoard")))
 
     @Test
     fun aValidInnovateSpendsTheCostAddsTheInnovationAndMarksThePhase() {
@@ -125,7 +130,16 @@ class InnovateUseCaseTest {
 
     @Test
     fun insufficientStorageIsBlocked() {
-        val result = Innovate.run(record(state = SettlementState()), "Lantern Hoard", "Ammonia", catalog)
+        val result = Innovate.run(record(state = builtButUnstocked()), "Lantern Hoard", "Ammonia", catalog)
+
+        assertIs<StepResult.Blocked>(result)
+    }
+
+    @Test
+    fun anUnbuiltInnovateLocationIsBlocked() {
+        val unbuilt = stocked().copy(locations = LocationSet())
+
+        val result = Innovate.run(record(state = unbuilt), "Lantern Hoard", "Ammonia", catalog)
 
         assertIs<StepResult.Blocked>(result)
     }

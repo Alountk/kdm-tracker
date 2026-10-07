@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -23,11 +24,12 @@ sealed interface Screen {
  * Everything the screens need to render one frame of the lantern-year loop.
  *
  * The trailing content-view fields are additive and defaulted so existing consumers keep
- * compiling: [record] is the full step-facing settlement, [buildableLocations] and
+ * compiling: [record] is the full step-facing settlement, [catalogLocations] and
  * [innovationDefinitions] are the composed catalog's definitions for the screens,
- * [storageLines] is the resource ledger projected for display, and [endeavorBreakdown] is
- * the derived endeavor composition for the current population. [catalogError] is set when
- * the held campaign names a pack the app cannot resolve.
+ * [resourceDefinitions] is the catalog's resource list (so the Develop screen can record a
+ * resource with content-true categories), [storageLines] is the resource ledger projected for
+ * display, and [endeavorBreakdown] is the derived endeavor composition for the current
+ * population. [catalogError] is set when the held campaign names a pack the app cannot resolve.
  *
  * The trailing Step 1 (Set Up) view fields are additive and defaulted: [innovationDeck] is the
  * consequence cards the unlocked innovations add, [builtLocations] is what the settlement has
@@ -51,7 +53,8 @@ data class UiState(
     val reachableSteps: Set<Int>,
     val lastTransition: String?,
     val record: SettlementRecord? = null,
-    val buildableLocations: List<SettlementLocation> = emptyList(),
+    val catalogLocations: List<SettlementLocation> = emptyList(),
+    val resourceDefinitions: List<ResourceDefinition> = emptyList(),
     val innovationDefinitions: List<Innovation> = emptyList(),
     val storageLines: List<StorageLine> = emptyList(),
     val endeavorBreakdown: EndeavorBreakdown = EndeavorBreakdown(base = 0, bonuses = emptyList()),

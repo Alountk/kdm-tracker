@@ -7,8 +7,10 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
@@ -205,11 +207,11 @@ class SettlementRepository(
                 .copy(sync = SyncMeta(clock.tick(null), rev = 1))
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(SettlementRecord(settlement))
+            store.upsertSettlement(startingRecord(settlement))
             memberships?.upsertMembership(summary)
         }
         this.campaign = campaign
-        this.record = SettlementRecord(settlement)
+        this.record = startingRecord(settlement)
         return CampaignCard(
             campaignId = campaignId.value,
             name = settlement.name,
@@ -316,11 +318,27 @@ class SettlementRepository(
                 .copy(sync = SyncMeta(clock.tick(null), rev = 1))
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(SettlementRecord(settlement))
+            store.upsertSettlement(startingRecord(settlement))
         }
         return CampaignSnapshot(campaign, listOf(settlement))
     }
+
+    /**
+     * The opening [SettlementRecord] for a new settlement: its starting locations are already built.
+     *
+     * A settlement opens with the Lantern Hoard built, so Innovate is offered at a location the
+     * settlement actually has (the Innovate use-case refuses an unbuilt location). Without this the
+     * whole develop economy is unreachable — the Step 7 actions would all be `Blocked`.
+     */
+    private fun startingRecord(settlement: Settlement): SettlementRecord =
+        SettlementRecord(
+            settlement = settlement,
+            state = SettlementState(locations = LocationSet(built = listOf(STARTING_LOCATION))),
+        )
 }
+
+/** The location every settlement opens with, so Innovate is offered at a built location. */
+private const val STARTING_LOCATION = "Lantern Hoard"
 
 /** A catalog with no packs, used when composition fails so the screens render nothing. */
 private val EMPTY_CATALOG = ContentCatalog(emptyList())

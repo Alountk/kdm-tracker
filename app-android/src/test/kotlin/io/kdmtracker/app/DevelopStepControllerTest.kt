@@ -57,6 +57,7 @@ class DevelopStepControllerTest {
                                 listOf(
                                     SettlementLocation("Lantern Hoard", actions = listOf(innovateAction)),
                                     SettlementLocation("Bone Smith", requires = listOf("Lantern Hoard")),
+                                    SettlementLocation("Weapon Crafter", requires = listOf("Bone Smith")),
                                     SettlementLocation(
                                         "Skinnery",
                                         buildEndeavors = 1,
@@ -139,14 +140,14 @@ class DevelopStepControllerTest {
         val store = storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2)
         val controller = controller(store)
 
-        controller.build("Bone Smith")
+        controller.build("Weapon Crafter")
 
         assertNotNull(controller.state.value.actionError)
         val record = controller.state.value.record
         assertNotNull(record)
-        assertFalse("Bone Smith" in record.state.locations.built)
+        assertFalse("Weapon Crafter" in record.state.locations.built)
         assertFalse(
-            "Bone Smith" in
+            "Weapon Crafter" in
                 SettlementRepository(store)
                     .record.state.locations.built,
         )

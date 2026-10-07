@@ -2,7 +2,6 @@ package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -16,19 +15,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.StorageLine
 import io.kdmtracker.core.rules.EndeavorBreakdown
 
 /**
- * The Step 7 "Develop" body.
+ * The Step 7 "Develop" body, rendered inside the settlement cockpit's chrome.
  *
- * Three affordances with their real costs: **Innovate** (the catalog's Innovate location, with its
- * cost and once-per-phase limit), **Build** (the not-yet-built locations with their cost and
- * prerequisites) and a generic **Endeavor** (−1). The current storage ledger and endeavor pool are
- * shown beside them, and every action's rules text is displayed verbatim — effects are resolved by
- * the players, never executed here. Stateless: content comes from [state] and every action is
+ * Four affordances with their real costs: **Record a Resource** (the manual bridge that funds the
+ * ledger while hunts and rewards are unmodeled), **Innovate** (the catalog's Innovate location,
+ * with its cost and once-per-phase limit), **Build** (the not-yet-built locations with their cost
+ * and prerequisites) and a generic **Endeavor** (−1). The current storage ledger and endeavor pool
+ * are shown beside them, and every action's rules text is displayed verbatim — effects are resolved
+ * by the players, never executed here. Stateless: content comes from [state] and every action is
  * reported through a callback; no rules live here.
  */
 @Composable
@@ -37,23 +39,15 @@ fun DevelopStepScreen(
     onInnovate: (String) -> Unit,
     onBuild: (String) -> Unit,
     onSpendEndeavor: () -> Unit,
+    onAddResource: (ResourceEntry) -> Unit,
 ) {
     Column(
         modifier =
             Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = state.stepTitle, style = MaterialTheme.typography.headlineMedium)
-        Text(
-            text =
-                "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
-                    "Endeavors ${state.endeavors}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         state.actionError?.let { reason ->
             Text(
                 text = reason,
@@ -62,10 +56,39 @@ fun DevelopStepScreen(
             )
         }
 
+        RecordResourceSection(definitions = state.resourceDefinitions, onAddResource = onAddResource)
         InnovateSection(state = state, onInnovate = onInnovate)
         BuildSection(state = state, onBuild = onBuild)
         EndeavorSection(state = state, onSpendEndeavor = onSpendEndeavor)
         StorageSection(lines = state.storageLines, breakdown = state.endeavorBreakdown)
+    }
+}
+
+@Composable
+private fun RecordResourceSection(
+    definitions: List<ResourceDefinition>,
+    onAddResource: (ResourceEntry) -> Unit,
+) {
+    DevelopSection(title = "Record a Resource") {
+        Text(
+            text = "Hunt rewards are not modeled yet, so record a gained resource here by hand.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        if (definitions.isEmpty()) {
+            Text(
+                text = "No resources in this campaign's catalog",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            return@DevelopSection
+        }
+        definitions.forEach { definition ->
+            Button(
+                onClick = { onAddResource(ResourceEntry(definition.name, definition.category, 1)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Record ${definition.name} (+1)")
+            }
+        }
     }
 }
 
@@ -75,7 +98,7 @@ private fun InnovateSection(
     onInnovate: (String) -> Unit,
 ) {
     val hoard =
-        state.buildableLocations.firstOrNull { location ->
+        state.catalogLocations.firstOrNull { location ->
             location.actions.any { it.kind == ActionKind.INNOVATE }
         }
     DevelopSection(title = "Innovate") {
@@ -121,7 +144,7 @@ private fun BuildSection(
     state: UiState,
     onBuild: (String) -> Unit,
 ) {
-    val buildable = state.buildableLocations.filter { it.name !in state.builtLocations }
+    val buildable = state.catalogLocations.filter { it.name !in state.builtLocations }
     DevelopSection(title = "Build") {
         if (buildable.isEmpty()) {
             Text(text = "Nothing left to build", style = MaterialTheme.typography.bodySmall)

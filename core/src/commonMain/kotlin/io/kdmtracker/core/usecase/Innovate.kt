@@ -27,10 +27,11 @@ object Innovate {
      * reason the action could not run.
      *
      * Blocks, without changing anything, when: [locationName] is unknown, the location offers
-     * no [ActionKind.INNOVATE] action, the location's action was already used this phase,
-     * [innovationName] is unknown, the endeavor pool cannot fund the action, a cost resource
-     * has no catalog definition, or the ledger cannot cover a spend. On success it spends the
-     * cost, unlocks the innovation, and marks the location's action used for the phase.
+     * no [ActionKind.INNOVATE] action, the location is not yet built, the location's action was
+     * already used this phase, [innovationName] is unknown, the endeavor pool cannot fund the
+     * action, a cost resource has no catalog definition, or the ledger cannot cover a spend. On
+     * success it spends the cost, unlocks the innovation, and marks the location's action used
+     * for the phase.
      *
      * @param locationName the name of the settlement location whose Innovate action runs.
      * @param innovationName the name of the innovation to unlock.
@@ -47,6 +48,9 @@ object Innovate {
         val action =
             location.actions.firstOrNull { it.kind == ActionKind.INNOVATE }
                 ?: return StepResult.Blocked("$locationName offers no Innovate action")
+        if (locationName !in record.state.locations.built) {
+            return StepResult.Blocked("$locationName is not built")
+        }
         if (record.state.usedInPhase(locationName)) {
             return StepResult.Blocked("$locationName already used this phase")
         }

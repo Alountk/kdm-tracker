@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.rules.SettlementStep
 
 /** Standard Material disabled alpha, so an unreachable step reads as non-interactive. */
@@ -31,11 +33,11 @@ private const val DISABLED_ALPHA = 0.38f
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
  *
  * Step 1 (Set Up) hands the whole frame to [SetUpStepScreen]: it is read-only content with its
- * own confirm action. Step 7 (Develop) hands the frame to [DevelopStepScreen], whose Innovate,
- * Build and Endeavor actions are reported through their callbacks (defaulted to no-ops so existing
- * callers keep compiling). Every other step shows the cockpit — the lantern year, population and
+ * own confirm action. Every other step shows the cockpit — the lantern year, population and
  * endeavors, a rail of the official settlement steps with [UiState.currentStep] highlighted, a
- * "Pendiente" body and the back/next controls. All navigation is reported through the callbacks;
+ * body and the back/next controls — with Step 7 (Develop) supplying [DevelopStepScreen] as that
+ * body, so its Innovate, Build and Endeavor actions live inside the same navigation chrome (a user
+ * at step 7 can always reach the later steps). All navigation is reported through the callbacks;
  * this composable owns no state and no rules.
  */
 @Composable
@@ -47,18 +49,10 @@ fun SettlementScreen(
     onInnovate: (String) -> Unit = {},
     onBuild: (String) -> Unit = {},
     onSpendEndeavor: () -> Unit = {},
+    onAddResource: (ResourceEntry) -> Unit = {},
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
-        return
-    }
-    if (state.currentStep == 7) {
-        DevelopStepScreen(
-            state = state,
-            onInnovate = onInnovate,
-            onBuild = onBuild,
-            onSpendEndeavor = onSpendEndeavor,
-        )
         return
     }
     SettlementCockpit(
@@ -66,7 +60,19 @@ fun SettlementScreen(
         onAdvance = onAdvance,
         onPrevious = onPrevious,
         onSelectStep = onSelectStep,
-    )
+    ) {
+        if (state.currentStep == 7) {
+            DevelopStepScreen(
+                state = state,
+                onInnovate = onInnovate,
+                onBuild = onBuild,
+                onSpendEndeavor = onSpendEndeavor,
+                onAddResource = onAddResource,
+            )
+        } else {
+            PendientePlaceholder(modifier = Modifier.fillMaxWidth())
+        }
+    }
 }
 
 @Composable
@@ -75,6 +81,7 @@ private fun SettlementCockpit(
     onAdvance: () -> Unit,
     onPrevious: () -> Unit,
     onSelectStep: (Int) -> Unit,
+    body: @Composable () -> Unit,
 ) {
     Column(
         modifier =
@@ -107,7 +114,7 @@ private fun SettlementCockpit(
                     text = "Step ${state.currentStep} · ${state.stepTitle}",
                     style = MaterialTheme.typography.titleLarge,
                 )
-                PendientePlaceholder(modifier = Modifier.fillMaxWidth())
+                Box(modifier = Modifier.weight(1f)) { body() }
                 state.lastTransition?.let { transition ->
                     Text(
                         text = transition,

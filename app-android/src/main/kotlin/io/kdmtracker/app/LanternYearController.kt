@@ -18,6 +18,7 @@ import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.BuildLocation
+import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.SpendEndeavor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,13 +121,16 @@ class LanternYearController(
                 context = context,
             )
         val current = repository.record
-        val state =
+        val moved =
             if (result.transition.landsOnNewYear(settlement.phase)) {
-                current.state.copy(phaseActionsUsed = emptySet())
+                current.copy(
+                    settlement = result.settlement,
+                    state = current.state.copy(phaseActionsUsed = emptySet()),
+                )
             } else {
-                current.state
+                current.copy(settlement = result.settlement)
             }
-        repository.update(current.copy(settlement = result.settlement, state = state))
+        repository.update(fundGainEndeavors(moved))
         _state.value = uiState(repository.record, result.transition.describe())
     }
 
@@ -241,9 +245,28 @@ class LanternYearController(
     }
 
     private fun moveToStep(step: Int) {
-        val updated = repository.settlement.copy(currentStep = step)
-        repository.update(updated)
+        val moved = repository.record.copy(settlement = repository.settlement.copy(currentStep = step))
+        repository.update(fundGainEndeavors(moved))
         _state.value = uiState(repository.record, _state.value.lastTransition)
+    }
+
+    /**
+     * Funds the endeavor pool exactly once per Settlement Phase when the settlement enters Step 3.
+     *
+     * The Step 3 rule lives in `:core`'s [GainEndeavors]: the earned total is derived from the
+     * settlement's population through the ruleset and *added* to the pool. The controller never
+     * reimplements it — it only decides when the rule applies. A phase marker carried in
+     * [SettlementState.phaseActionsUsed] (which resets at the year boundary) keeps a revisit of
+     * Step 3 from funding a second time.
+     */
+    private fun fundGainEndeavors(record: SettlementRecord): SettlementRecord {
+        val settlement = record.settlement
+        if (settlement.phase != SettlementPhase.SETTLEMENT || settlement.currentStep != GAIN_ENDEAVORS_STEP) {
+            return record
+        }
+        if (record.state.usedInPhase(GAIN_ENDEAVORS_MARKER)) return record
+        val gained = GainEndeavors.run(record, returnedSurvivors = settlement.population, ruleset = ruleset)
+        return gained.copy(state = gained.state.withPhaseAction(GAIN_ENDEAVORS_MARKER))
     }
 
     private fun uiState(
@@ -274,7 +297,8 @@ class LanternYearController(
                     .toSet(),
             lastTransition = lastTransition,
             record = record,
-            buildableLocations = content.locationDefinitions,
+            catalogLocations = content.locationDefinitions,
+            resourceDefinitions = content.resourceDefinitions,
             innovationDefinitions = content.innovationDefinitions,
             storageLines = record.storage(),
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
@@ -328,3 +352,9 @@ internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
             from != SettlementPhase.SETTLEMENT && to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
         is FlowTransition.Blocked -> false
     }
+
+/** The Settlement Phase step where the survivors' endeavors are earned. */
+private const val GAIN_ENDEAVORS_STEP = 3
+
+/** The phase marker recording that Step 3 funded the pool, so a revisit cannot double-fund it. */
+private const val GAIN_ENDEAVORS_MARKER = "Gain Endeavors"
