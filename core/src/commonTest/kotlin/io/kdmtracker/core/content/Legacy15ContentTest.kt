@@ -67,6 +67,15 @@ class Legacy15ContentTest {
     }
 
     @Test
+    fun alimanaVerminDeckIsDeliberatelySpecial() {
+        // Alimañas (vermin) have no VERMIN enum member; their deck ships the "strange"
+        // consumables, so SPECIAL is the deliberate choice. Pinned so it stays deliberate.
+        val cucaracha = resources.first { it.name == "Cucaracha Silbante" }
+
+        assertEquals(ResourceCategory.SPECIAL, cucaracha.category)
+    }
+
+    @Test
     fun resourceNamesAreSorted() {
         val names = resources.map { it.name }
 
