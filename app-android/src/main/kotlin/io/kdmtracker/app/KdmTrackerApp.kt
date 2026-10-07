@@ -98,6 +98,7 @@ fun KdmTrackerApp(
                                         onBuild = viewModel::build,
                                         onSpendEndeavor = viewModel::spendEndeavor,
                                         onAddResource = viewModel::addResource,
+                                        onCraft = viewModel::craft,
                                     )
                                 }
                             Screen.Hunt ->

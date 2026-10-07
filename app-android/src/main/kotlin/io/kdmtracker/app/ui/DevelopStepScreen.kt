@@ -40,6 +40,7 @@ fun DevelopStepScreen(
     onBuild: (String) -> Unit,
     onSpendEndeavor: () -> Unit,
     onAddResource: (ResourceEntry) -> Unit,
+    onCraft: (String, String) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier =

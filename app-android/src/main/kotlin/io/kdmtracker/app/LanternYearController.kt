@@ -18,6 +18,7 @@ import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.BuildLocation
+import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.SpendEndeavor
@@ -215,6 +216,20 @@ class LanternYearController(
     }
 
     /**
+     * Crafts [gearName] at the built location [locationName].
+     *
+     * The whole rule — the location must be built, its recipe, the innovation prerequisite and the
+     * resource cost — is enforced by `:core`'s [Craft]; the controller mirrors the outcome like the
+     * other develop actions.
+     */
+    fun craft(
+        locationName: String,
+        gearName: String,
+    ) {
+        applyResult(Craft.run(repository.record, locationName, gearName, content))
+    }
+
+    /**
      * Mirrors one `:core` action outcome: an [StepResult.Ok] is persisted and republished with no
      * error, while a [StepResult.Blocked] leaves the record untouched and surfaces its reason.
      */
@@ -305,6 +320,7 @@ class LanternYearController(
             catalogError = repository.catalogError,
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
             builtLocations = record.state.locations.built,
+            gear = record.state.gear,
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }

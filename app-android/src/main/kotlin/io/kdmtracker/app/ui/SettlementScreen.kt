@@ -50,6 +50,7 @@ fun SettlementScreen(
     onBuild: (String) -> Unit = {},
     onSpendEndeavor: () -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
+    onCraft: (String, String) -> Unit = { _, _ -> },
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
@@ -68,6 +69,7 @@ fun SettlementScreen(
                 onBuild = onBuild,
                 onSpendEndeavor = onSpendEndeavor,
                 onAddResource = onAddResource,
+                onCraft = onCraft,
             )
         } else {
             PendientePlaceholder(modifier = Modifier.fillMaxWidth())
