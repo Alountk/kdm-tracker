@@ -2,6 +2,7 @@ package io.kdmtracker.core.domain
 
 import io.kdmtracker.core.rules.DerivedValues
 import io.kdmtracker.core.ruleset.Ruleset
+import kotlinx.serialization.Serializable
 
 /**
  * The **extra** settlement record the phase steps read, separate from [Settlement].
@@ -16,6 +17,7 @@ import io.kdmtracker.core.ruleset.Ruleset
  * @property deaths the survivors lost so far.
  * @property births the survivors born so far.
  */
+@Serializable
 data class SettlementState(
     val timeline: Timeline = Timeline(),
     val innovations: InnovationCollection = InnovationCollection(),

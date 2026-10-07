@@ -4,6 +4,8 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
@@ -40,6 +42,7 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  */
 class SqlDelightCampaignStore(
     private val database: KdmDatabase,
+    private val log: (String) -> Unit = { println(it) },
 ) : CampaignStore {
     override fun loadSnapshots(): List<CampaignSnapshot> =
         database.campaignQueries
@@ -56,6 +59,12 @@ class SqlDelightCampaignStore(
                     settlements = settlements,
                 )
             }
+
+    override fun loadRecords(campaignId: String): List<SettlementRecord> =
+        database.settlementQueries
+            .selectSettlementsByCampaign(campaignId)
+            .executeAsList()
+            .map { it.toRecord() }
 
     override fun upsertCampaign(campaign: Campaign) {
         val sync = campaign.sync
@@ -76,27 +85,69 @@ class SqlDelightCampaignStore(
     }
 
     override fun upsertSettlement(settlement: Settlement) {
-        val sync = settlement.sync
         database.transaction {
-            database.settlementQueries.upsertSettlement(
-                id = settlement.id.value,
-                campaignId = settlement.campaignId.value,
-                name = settlement.name,
-                lanternYear = settlement.lanternYear.toLong(),
-                phase = settlement.phase.name,
-                currentStep = settlement.currentStep.toLong(),
-                endeavors = settlement.endeavors.toLong(),
-                population = settlement.population.toLong(),
-                settlementEvent = settlement.settlementEvent,
-                updatedAtMillis = sync.updatedAt.millis,
-                updatedAtCounter = sync.updatedAt.counter.toLong(),
-                rev = sync.rev,
-                deletedAtMillis = sync.deletedAt?.millis,
-                deletedAtCounter = sync.deletedAt?.counter?.toLong(),
-            )
-            recordOutbox(settlement.toOutboxRecord())
+            writeSettlement(settlement, storedState(settlement.id.value))
         }
     }
+
+    override fun upsertSettlement(record: SettlementRecord) {
+        database.transaction {
+            writeSettlement(record.settlement, record.state)
+        }
+    }
+
+    /**
+     * Writes the settlement scalars and [state] as one row, recording the matching outbox entry.
+     *
+     * The outbox payload is the settlement's versioned transfer DTO, so it carries [state] and a
+     * later sync push cannot drop it. Callers run this inside a `database.transaction {}`.
+     */
+    private fun writeSettlement(
+        settlement: Settlement,
+        state: SettlementState,
+    ) {
+        val sync = settlement.sync
+        database.settlementQueries.upsertSettlement(
+            id = settlement.id.value,
+            campaignId = settlement.campaignId.value,
+            name = settlement.name,
+            lanternYear = settlement.lanternYear.toLong(),
+            phase = settlement.phase.name,
+            currentStep = settlement.currentStep.toLong(),
+            endeavors = settlement.endeavors.toLong(),
+            population = settlement.population.toLong(),
+            settlementEvent = settlement.settlementEvent,
+            updatedAtMillis = sync.updatedAt.millis,
+            updatedAtCounter = sync.updatedAt.counter.toLong(),
+            rev = sync.rev,
+            deletedAtMillis = sync.deletedAt?.millis,
+            deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+            stateJson = json.encodeToString(SettlementState.serializer(), state),
+        )
+        recordOutbox(settlement.toOutboxRecord(state))
+    }
+
+    /** The state already stored for [id], or an empty state when the row is new. */
+    private fun storedState(id: String): SettlementState =
+        database.settlementQueries
+            .selectSettlementById(id)
+            .executeAsOneOrNull()
+            ?.let { decodeState(it.stateJson) }
+            ?: SettlementState()
+
+    /**
+     * Decodes [stateJson] into a [SettlementState], tolerating blobs this build cannot read.
+     *
+     * A newer build may have written fields this build does not know about; a downgraded device
+     * must not crash on launch, so an unknown or malformed blob degrades to an empty state (and is
+     * logged) instead of throwing out of [loadRecords].
+     */
+    private fun decodeState(stateJson: String): SettlementState =
+        runCatching { json.decodeFromString(SettlementState.serializer(), stateJson) }
+            .getOrElse { error ->
+                log("SqlDelightCampaignStore: ignoring undecodable settlement stateJson: ${error.message}")
+                SettlementState()
+            }
 
     override fun <T> transaction(block: () -> T): T = database.transactionWithResult { block() }
 
@@ -198,6 +249,12 @@ class SqlDelightCampaignStore(
                 ),
         )
 
+    private fun SettlementRow.toRecord(): SettlementRecord =
+        SettlementRecord(
+            settlement = toDomain(),
+            state = decodeState(stateJson),
+        )
+
     private fun syncMeta(
         updatedAtMillis: Long,
         updatedAtCounter: Long,
@@ -227,14 +284,14 @@ class SqlDelightCampaignStore(
             rev = 0,
         )
 
-    private fun Settlement.toOutboxRecord(): ChangeRecord =
+    private fun Settlement.toOutboxRecord(state: SettlementState): ChangeRecord =
         ChangeRecord(
             campaignId = campaignId.value,
             entityType = ENTITY_TYPE_SETTLEMENT,
             entityId = id.value,
             op = sync.changeOp(),
             baseRev = null,
-            payload = json.encodeToString(SettlementDto.serializer(), toPayloadDto()),
+            payload = json.encodeToString(SettlementDto.serializer(), toPayloadDto(state)),
             updatedAtMillis = sync.updatedAt.millis,
             updatedAtCounter = sync.updatedAt.counter,
             rev = 0,
@@ -242,7 +299,7 @@ class SqlDelightCampaignStore(
 
     private fun SyncMeta.changeOp(): ChangeOp = if (deletedAt != null) ChangeOp.DELETE else ChangeOp.UPSERT
 
-    private fun Settlement.toPayloadDto(): SettlementDto =
+    private fun Settlement.toPayloadDto(state: SettlementState): SettlementDto =
         SettlementDto(
             id = id.value,
             campaignId = campaignId.value,
@@ -254,6 +311,7 @@ class SqlDelightCampaignStore(
             population = population,
             settlementEvent = settlementEvent,
             sync = sync.toPayloadDto(),
+            state = state,
         )
 
     private fun SyncMeta.toPayloadDto(): SyncMetaDto =
@@ -280,7 +338,7 @@ class SqlDelightCampaignStore(
         )
 
     private companion object {
-        private val json = Json
+        private val json = Json { ignoreUnknownKeys = true }
         private const val ENTITY_TYPE_CAMPAIGN = "campaign"
         private const val ENTITY_TYPE_SETTLEMENT = "settlement"
     }

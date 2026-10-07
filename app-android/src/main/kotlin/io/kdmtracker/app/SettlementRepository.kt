@@ -2,6 +2,7 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
@@ -38,11 +39,11 @@ data class CampaignCard(
  * On construction it loads the first stored snapshot. If the store is empty — or a campaign exists
  * with no live settlement, which can only result from an interrupted seed — it seeds a single
  * "Walking Skeleton" campaign and its first settlement atomically through the store. [update]
- * stamps the incoming settlement with a fresh [SyncClock] value and an incremented revision before
- * writing, so last-write-wins has an ordering signal. No rules live here; the controller drives the
- * loop.
+ * stamps the incoming record's settlement with a fresh [SyncClock] value and an incremented
+ * revision before writing, so last-write-wins has an ordering signal. No rules live here; the
+ * controller drives the loop.
  *
- * The held [campaign]/[settlement] can be swapped by [select] (Ruling AJ: selecting a campaign from
+ * The held [campaign]/[record] can be swapped by [select] (Ruling AJ: selecting a campaign from
  * Home re-scopes the cockpit) and by [create] (which opens the new campaign). [memberships] is the
  * optional offline membership cache used to badge [listCards] and to record the caller's `OWNER`
  * membership on create; when omitted (a test that does not exercise sharing) every campaign is
@@ -64,14 +65,24 @@ class SettlementRepository(
     var campaign: Campaign
         private set
 
-    var settlement: Settlement
+    /**
+     * The canonical held state: the settlement scalars together with its [SettlementState].
+     *
+     * [settlement] is the read-only compatibility accessor for callers that only need the scalars
+     * (the controller and the existing loop tests); the state is read and written through [record]
+     * and the [update] overloads.
+     */
+    var record: SettlementRecord
         private set
+
+    /** The held settlement scalars; a compatibility view over [record]'s settlement. */
+    val settlement: Settlement get() = record.settlement
 
     init {
         val existing = store.loadSnapshots().firstOrNull()
         val snapshot = if (existing == null || existing.settlements.isEmpty()) seed() else existing
         campaign = snapshot.campaign
-        settlement = snapshot.settlements.first()
+        record = storedRecord(snapshot.campaign.id.value, snapshot.settlements.first())
     }
 
     /**
@@ -106,7 +117,7 @@ class SettlementRepository(
         val snapshot = store.loadSnapshots().firstOrNull { it.campaign.id.value == campaignId } ?: return false
         val selected = snapshot.settlements.firstOrNull() ?: return false
         campaign = snapshot.campaign
-        settlement = selected
+        record = storedRecord(campaignId, selected)
         return true
     }
 
@@ -143,11 +154,11 @@ class SettlementRepository(
                 .copy(sync = SyncMeta(clock.tick(null), rev = 1))
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(settlement)
+            store.upsertSettlement(SettlementRecord(settlement))
             memberships?.upsertMembership(summary)
         }
         this.campaign = campaign
-        this.settlement = settlement
+        this.record = SettlementRecord(settlement)
         return CampaignCard(
             campaignId = campaignId.value,
             name = settlement.name,
@@ -170,22 +181,58 @@ class SettlementRepository(
         val selectedId = campaign.id.value
         val snapshot = store.loadSnapshots().firstOrNull { it.campaign.id.value == selectedId } ?: return
         campaign = snapshot.campaign
-        settlement = snapshot.settlements.firstOrNull() ?: return
+        val selected = snapshot.settlements.firstOrNull() ?: return
+        record = storedRecord(selectedId, selected)
     }
 
-    fun update(next: Settlement) {
-        val previous = settlement.sync
+    /**
+     * Writes [next] as the canonical record, stamping a fresh sync first.
+     *
+     * The record's settlement is stamped with `updatedAt` from `clock.tick(previous.updatedAt)` and
+     * `rev = previous.rev + 1`, where `previous` is the currently held record's sync, so
+     * last-write-wins has an ordering signal. The record's [SettlementState] is written alongside
+     * the scalars, so a state-carrying update is never lost.
+     */
+    fun update(next: SettlementRecord) {
+        val previous = record.settlement.sync
         val stamped =
             next.copy(
-                sync =
-                    next.sync.copy(
-                        updatedAt = clock.tick(previous.updatedAt),
-                        rev = previous.rev + 1,
+                settlement =
+                    next.settlement.copy(
+                        sync =
+                            next.settlement.sync.copy(
+                                updatedAt = clock.tick(previous.updatedAt),
+                                rev = previous.rev + 1,
+                            ),
                     ),
             )
         store.upsertSettlement(stamped)
-        settlement = stamped
+        record = stamped
     }
+
+    /**
+     * Compatibility overload: updates the settlement scalars, preserving the held record's state.
+     *
+     * Delegates to [update] with the current [record] and only [next] swapped in, so a caller that
+     * only knows the settlement (the controller) cannot clobber the stored state.
+     */
+    fun update(next: Settlement) {
+        update(record.copy(settlement = next))
+    }
+
+    /**
+     * The state-carrying record for [fallback] as stored under [campaignId].
+     *
+     * Reads the canonical `loadRecords` path; if a store somehow lists a settlement but returns no
+     * record for it, falls back to an empty-state record over the scalar settlement rather than
+     * dropping the settlement.
+     */
+    private fun storedRecord(
+        campaignId: String,
+        fallback: Settlement,
+    ): SettlementRecord =
+        store.loadRecords(campaignId).firstOrNull { it.settlement.id == fallback.id }
+            ?: SettlementRecord(fallback)
 
     private fun bannerFor(campaignId: String): CampaignBanner =
         memberships?.membership(campaignId)?.let { CampaignBadges.of(it) }
@@ -217,7 +264,7 @@ class SettlementRepository(
                 .copy(sync = SyncMeta(clock.tick(null), rev = 1))
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(settlement)
+            store.upsertSettlement(SettlementRecord(settlement))
         }
         return CampaignSnapshot(campaign, listOf(settlement))
     }

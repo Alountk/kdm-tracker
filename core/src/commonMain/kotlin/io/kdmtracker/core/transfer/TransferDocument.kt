@@ -2,27 +2,30 @@ package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.rules.MilestoneConditionSpec
 import kotlinx.serialization.Serializable
 
 /**
  * Top-level, versioned container for an exported campaign database.
  *
- * [schemaVersion] defaults to the current schema (4). Older v1/v2/v3 documents omit the
- * v3/v4-only fields and still decode, because every added field carries a default. v4
+ * [schemaVersion] defaults to the current schema (5). Older v1/v2/v3/v4 documents omit the
+ * newer fields and still decode, because every added field carries a default. v4
  * replaced the v3 `MilestoneDefinitionDto.key` enum with a stable string [MilestoneDefinitionDto.id]
  * plus a typed [MilestoneConditionSpec] and a prose `description`; a v3 document that
- * carried milestone overrides is not auto-migrated.
+ * carried milestone overrides is not auto-migrated. v5 carries the settlement's extra
+ * [SettlementState] on each [SettlementDto]; a pre-v5 document that omits `state` decodes
+ * to an empty state.
  */
 @Serializable
 data class TransferDocument(
-    val schemaVersion: Int = 4,
+    val schemaVersion: Int = 5,
     val exportedAt: String,
     val campaigns: List<CampaignDto>,
 ) {
     companion object {
         /** Schema versions this build can read. */
-        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4)
+        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5)
     }
 }
 
@@ -39,7 +42,13 @@ data class CampaignDto(
     val enabledPacks: List<String> = emptyList(),
 )
 
-/** Transfer representation of a [io.kdmtracker.core.domain.Settlement]. */
+/**
+ * Transfer representation of a [io.kdmtracker.core.domain.Settlement].
+ *
+ * [state] is the settlement's extra record (timeline, innovations, locations, resource
+ * ledger and counters). It defaults to an empty state so a pre-v5 document that omits it
+ * decodes unchanged.
+ */
 @Serializable
 data class SettlementDto(
     val id: String,
@@ -52,6 +61,7 @@ data class SettlementDto(
     val population: Int = 4,
     val settlementEvent: String? = null,
     val sync: SyncMetaDto = SyncMetaDto(),
+    val state: SettlementState = SettlementState(),
 )
 
 /** Transfer representation of [io.kdmtracker.core.ruleset.RulesetOverrides]. */

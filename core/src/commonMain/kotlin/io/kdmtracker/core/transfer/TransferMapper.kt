@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.MilestoneDefinition
@@ -13,14 +14,15 @@ import io.kdmtracker.core.ruleset.RulesetOverrides
 /** Converts between the domain aggregates and their versioned transfer DTOs. */
 object TransferMapper {
     /**
-     * Maps a [campaign] and its [settlements] to a single [CampaignDto].
+     * Maps a [campaign] and its settlement [records] to a single [CampaignDto].
      *
-     * The settlements are embedded in the returned DTO; the campaign's own
-     * [Campaign.settlementIds] are preserved so the mapping stays lossless.
+     * The records are embedded in the returned DTO, each carrying its full
+     * [SettlementRecord.state]; the campaign's own [Campaign.settlementIds] are preserved
+     * so the mapping stays lossless.
      */
     fun toDto(
         campaign: Campaign,
-        settlements: List<Settlement>,
+        records: List<SettlementRecord>,
     ): CampaignDto =
         CampaignDto(
             id = campaign.id.value,
@@ -29,17 +31,17 @@ object TransferMapper {
             rulesetOverrides = campaign.rulesetOverrides.toDto(),
             settlementIds = campaign.settlementIds.map { it.value },
             sync = campaign.sync.toDto(),
-            settlements = settlements.map { it.toDto() },
+            settlements = records.map { it.toDto() },
             enabledPacks = campaign.enabledPacks,
         )
 
     /**
-     * Maps a [CampaignDto] back into its [Campaign] and the settlements embedded in it.
+     * Maps a [CampaignDto] back into its [Campaign] and the settlement records embedded in it.
      *
      * The returned pair is equal to the pair passed to [toDto], provided the campaign's
-     * settlement ids and the embedded settlements describe the same set.
+     * settlement ids and the embedded records describe the same set.
      */
-    fun toDomain(dto: CampaignDto): Pair<Campaign, List<Settlement>> {
+    fun toDomain(dto: CampaignDto): Pair<Campaign, List<SettlementRecord>> {
         val campaign =
             Campaign(
                 id = Ulid.parse(dto.id),
@@ -53,32 +55,37 @@ object TransferMapper {
         return campaign to dto.settlements.map { it.toDomain() }
     }
 
-    private fun Settlement.toDto(): SettlementDto =
+    private fun SettlementRecord.toDto(): SettlementDto =
         SettlementDto(
-            id = id.value,
-            campaignId = campaignId.value,
-            name = name,
-            lanternYear = lanternYear,
-            phase = phase,
-            currentStep = currentStep,
-            endeavors = endeavors,
-            population = population,
-            settlementEvent = settlementEvent,
-            sync = sync.toDto(),
+            id = settlement.id.value,
+            campaignId = settlement.campaignId.value,
+            name = settlement.name,
+            lanternYear = settlement.lanternYear,
+            phase = settlement.phase,
+            currentStep = settlement.currentStep,
+            endeavors = settlement.endeavors,
+            population = settlement.population,
+            settlementEvent = settlement.settlementEvent,
+            sync = settlement.sync.toDto(),
+            state = state,
         )
 
-    private fun SettlementDto.toDomain(): Settlement =
-        Settlement(
-            id = Ulid.parse(id),
-            campaignId = Ulid.parse(campaignId),
-            name = name,
-            lanternYear = lanternYear,
-            phase = phase,
-            currentStep = currentStep,
-            endeavors = endeavors,
-            population = population,
-            settlementEvent = settlementEvent,
-            sync = sync.toDomain(),
+    private fun SettlementDto.toDomain(): SettlementRecord =
+        SettlementRecord(
+            settlement =
+                Settlement(
+                    id = Ulid.parse(id),
+                    campaignId = Ulid.parse(campaignId),
+                    name = name,
+                    lanternYear = lanternYear,
+                    phase = phase,
+                    currentStep = currentStep,
+                    endeavors = endeavors,
+                    population = population,
+                    settlementEvent = settlementEvent,
+                    sync = sync.toDomain(),
+                ),
+            state = state,
         )
 
     private fun RulesetOverrides.toDto(): RulesetOverridesDto =

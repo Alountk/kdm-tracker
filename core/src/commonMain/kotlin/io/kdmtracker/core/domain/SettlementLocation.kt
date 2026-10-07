@@ -20,6 +20,7 @@ data class SettlementLocation(
  * The set holds content only; the location definitions (with their [SettlementLocation.requires])
  * are passed in by the caller, so this type stays catalog-independent.
  */
+@Serializable
 data class LocationSet(
     val built: List<String> = emptyList(),
 ) {

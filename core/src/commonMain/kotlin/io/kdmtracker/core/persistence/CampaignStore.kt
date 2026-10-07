@@ -2,6 +2,7 @@ package io.kdmtracker.core.persistence
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementRecord
 
 /**
  * A campaign together with the settlements it owns.
@@ -33,6 +34,23 @@ interface CampaignStore {
 
     /** Inserts [settlement] or replaces the stored settlement sharing its id. */
     fun upsertSettlement(settlement: Settlement)
+
+    /**
+     * Inserts [record] or replaces the stored settlement sharing its id, carrying the full
+     * [io.kdmtracker.core.domain.SettlementState] alongside the settlement scalars.
+     *
+     * This is the canonical write. The scalar [upsertSettlement] overload preserves whatever
+     * state is already stored for the settlement, so it can never clobber a record's state.
+     */
+    fun upsertSettlement(record: SettlementRecord)
+
+    /**
+     * Returns every live settlement owned by [campaignId] together with its stored state.
+     *
+     * [loadSnapshots] remains the settlement-scalars-only view; this is the state-carrying read
+     * path the phase steps use.
+     */
+    fun loadRecords(campaignId: String): List<SettlementRecord>
 
     /**
      * Runs [block] as one atomic unit: every write it performs commits together, and a failure

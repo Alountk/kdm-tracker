@@ -12,11 +12,12 @@ CREATE TABLE settlement (
   updatedAtCounter INTEGER NOT NULL,
   rev INTEGER NOT NULL,
   deletedAtMillis INTEGER,
-  deletedAtCounter INTEGER
+  deletedAtCounter INTEGER,
+  stateJson TEXT NOT NULL DEFAULT '{}'
 );
 
 upsertSettlement:
-INSERT OR REPLACE INTO settlement VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+INSERT OR REPLACE INTO settlement VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 
 selectSettlementsByCampaign:
 SELECT * FROM settlement WHERE campaignId = ? AND deletedAtMillis IS NULL;
