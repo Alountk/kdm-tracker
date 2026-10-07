@@ -27,7 +27,23 @@ sections below list the remaining arguments.
 
 - Python 3 (standard library only).
 - [poppler](https://poppler.freedesktop.org/) on `PATH`, providing `pdftotext`
-  and `pdfinfo` (`brew install poppler` on macOS).
+  and `pdfinfo` (`brew install poppler` on macOS). **poppler >= 22.02.** The
+  generated output was produced and is verified with **poppler 26.04.0**; the
+  `-layout` text layer and the accent round-trip differ across older releases, so
+  pin or record the version when regenerating on a new machine.
+
+## Tests
+
+The parsers are exercised without the PDFs by a stdlib `unittest` suite that feeds
+small text fixtures to the pure functions (consequence graph, survival bonus, the
+anchored deck-prose, every abort path, and stable emission):
+
+```sh
+python3 -m unittest discover -s tools/content-ingest/tests -v
+```
+
+No third-party packages are required — `unittest` only. The suite runs in CI on any
+checkout, including worktrees that do not carry the untracked `external-assets/`.
 
 ## Innovations
 
@@ -65,8 +81,15 @@ git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/gener
   parent. The graph is built from sub-lines **only**.
 - The trailing `Añade las consecuencias …` prose is stripped from the description
   and used solely as a cross-check (every card that publishes consequences must
-  have children in the graph, and vice versa).
-- `Límite de Supervivencia +N` becomes `survivalLimitBonus` (default `0`).
+  have children in the graph, and vice versa). The footer is matched by the
+  anchored `^añade\s+(?:las\s+)?consecuencias\b`, so an effect line that merely
+  starts with "Añade" cannot truncate a card (the Amoníaco card prints the footer
+  without "las").
+- `Límite de Supervivencia +N` becomes `survivalLimitBonus` (default `0`). The
+  parser asserts the number of matched `Límite de Supervivencia +N` lines equals
+  the number of cards with a non-zero bonus, and that no `Límite de Supervivencia`
+  text leaked into a description.
+- Every card is asserted to have a non-empty `name` and `description`.
 - `description` is the remaining effect text, whitespace-normalized.
 
 ### Known parse gaps
@@ -110,6 +133,10 @@ tell BASIC from MONSTER. The deck is the section and the section decides:
 enum has no `VERMIN` member, and vermin are the deck's strange consumables, so
 `SPECIAL` is the closest existing category. The mapping is explicit: every deck must be
 listed, and an unrecognized deck aborts the run rather than inventing a category.
+
+One Básicos card is genuinely named `???` (an unidentified monster part), so the
+generated file carries a comment marking it as a real card name, not a parse artifact.
+It appears twice in the deck with identical text and is deduped to a single `BASIC` entry.
 
 ### Determinism and integrity
 
