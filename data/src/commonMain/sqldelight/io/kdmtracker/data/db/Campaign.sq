@@ -7,11 +7,12 @@ CREATE TABLE campaign (
   updatedAtCounter INTEGER NOT NULL,
   rev INTEGER NOT NULL,
   deletedAtMillis INTEGER,
-  deletedAtCounter INTEGER
+  deletedAtCounter INTEGER,
+  enabledPacksJson TEXT NOT NULL DEFAULT '[]'
 );
 
 upsertCampaign:
-INSERT OR REPLACE INTO campaign VALUES (?,?,?,?,?,?,?,?,?);
+INSERT OR REPLACE INTO campaign VALUES (?,?,?,?,?,?,?,?,?,?);
 
 selectAllCampaigns:
 SELECT * FROM campaign WHERE deletedAtMillis IS NULL;

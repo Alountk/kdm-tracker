@@ -68,7 +68,7 @@ class MembershipStoreTest {
         KdmDatabase.Schema.migrate(driver, 2L, KdmDatabase.Schema.version)
 
         val database = KdmDatabase(driver)
-        assertEquals(4L, KdmDatabase.Schema.version)
+        assertEquals(5L, KdmDatabase.Schema.version)
         assertTrue(
             database.membershipQueries
                 .selectAllMemberships()
