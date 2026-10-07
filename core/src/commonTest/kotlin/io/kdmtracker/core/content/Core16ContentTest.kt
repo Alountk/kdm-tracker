@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.InnovationCollection
@@ -64,6 +65,20 @@ class Core16ContentTest {
         val boneSmith = catalog().locationDefinitions.first { it.name == "Bone Smith" }
 
         assertEquals(listOf("Lantern Hoard"), boneSmith.requires)
+    }
+
+    @Test
+    fun lanternHoardOffersTheInnovateAction() {
+        val hoard = catalog().locationDefinitions.first { it.name == "Lantern Hoard" }
+        val innovate = hoard.actions.single { it.kind == ActionKind.INNOVATE }
+
+        assertEquals("Innovate", innovate.name)
+        assertEquals(1, innovate.endeavorCost)
+        assertEquals(mapOf("Bone" to 1, "Organ" to 1, "Hide" to 1), innovate.resourceCost)
+        assertTrue(innovate.oncePerPhase)
+        assertEquals(2, innovate.draw)
+        assertEquals(1, innovate.keep)
+        assertTrue(innovate.effect.isNotBlank())
     }
 
     @Test

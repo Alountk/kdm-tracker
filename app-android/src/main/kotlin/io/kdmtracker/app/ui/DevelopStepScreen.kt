@@ -74,32 +74,33 @@ private fun InnovateSection(
     state: UiState,
     onInnovate: (String) -> Unit,
 ) {
-    val hoards = state.buildableLocations.filter { location -> location.actions.any { it.kind == ActionKind.INNOVATE } }
+    val hoard =
+        state.buildableLocations.firstOrNull { location ->
+            location.actions.any { it.kind == ActionKind.INNOVATE }
+        }
     DevelopSection(title = "Innovate") {
-        if (hoards.isEmpty()) {
+        if (hoard == null) {
             Text(text = "No location offers Innovate", style = MaterialTheme.typography.bodySmall)
             return@DevelopSection
         }
-        hoards.forEach { hoard ->
-            val action = hoard.actions.first { it.kind == ActionKind.INNOVATE }
-            val used = state.record?.state?.usedInPhase(hoard.name) == true
-            Text(text = hoard.name, style = MaterialTheme.typography.titleSmall)
-            Text(text = "Cost: ${actionCost(action)}", style = MaterialTheme.typography.bodySmall)
+        val action = hoard.actions.first { it.kind == ActionKind.INNOVATE }
+        val used = state.record?.state?.usedInPhase(hoard.name) == true
+        Text(text = hoard.name, style = MaterialTheme.typography.titleSmall)
+        Text(text = "Cost: ${actionCost(action)}", style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = if (action.oncePerPhase) "Once per Settlement Phase" else "Repeatable this phase",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (used) {
             Text(
-                text = if (action.oncePerPhase) "Once per Settlement Phase" else "Repeatable this phase",
+                text = "Used this phase",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.error,
             )
-            if (used) {
-                Text(
-                    text = "Used this phase",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            if (action.effect.isNotBlank()) {
-                Text(text = action.effect, style = MaterialTheme.typography.bodySmall)
-            }
+        }
+        if (action.effect.isNotBlank()) {
+            Text(text = action.effect, style = MaterialTheme.typography.bodySmall)
         }
         state.innovationDefinitions.forEach { innovation ->
             Button(

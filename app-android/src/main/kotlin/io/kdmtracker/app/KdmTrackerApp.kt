@@ -94,6 +94,9 @@ fun KdmTrackerApp(
                                         onAdvance = viewModel::advance,
                                         onPrevious = viewModel::previous,
                                         onSelectStep = viewModel::selectStep,
+                                        onInnovate = viewModel::innovate,
+                                        onBuild = viewModel::build,
+                                        onSpendEndeavor = viewModel::spendEndeavor,
                                     )
                                 }
                             Screen.Hunt ->
