@@ -73,7 +73,7 @@ object Core15GearSeed {
                                             "Hierro" to 1,
                                             "Hueso de Monstruo" to 6,
                                         ),
-                                    requires = listOf("Calor"),
+                                    requires = listOf("Horno Linterna"),
                                 ),
                             ),
                     ),

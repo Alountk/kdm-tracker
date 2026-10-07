@@ -3,6 +3,8 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.ModifierScope
+import io.kdmtracker.core.domain.ModifierTarget
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
@@ -176,10 +178,11 @@ class LanternYearController(
     fun innovate(innovationName: String) {
         val location =
             content.locationDefinitions.firstOrNull { location ->
-                location.actions.any { it.kind == ActionKind.INNOVATE }
+                location.actions.any { it.kind == ActionKind.INNOVATE } &&
+                    location.name in repository.record.state.locations.built
             }
         if (location == null) {
-            publishBlocked("no settlement location offers Innovate")
+            publishBlocked("no built settlement location offers Innovate")
             return
         }
         applyResult(Innovate.run(repository.record, location.name, innovationName, content))
@@ -321,6 +324,13 @@ class LanternYearController(
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
             builtLocations = record.state.locations.built,
             gear = record.state.gear,
+            survivalLimit =
+                record.survivalLimit(ruleset) +
+                    DerivedValues.modifierTotal(
+                        content.gearModifiersFor(record.state.gear),
+                        ModifierTarget.SURVIVAL_LIMIT,
+                        ModifierScope.SETTLEMENT,
+                    ),
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }

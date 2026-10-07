@@ -29,11 +29,29 @@ class Core15GearSeedTest {
         val seedPack = ContentPack(id = "seed", version = "1.5", name = "seed", bundle = Core15GearSeed.bundle)
 
         val armeria =
-            ContentCatalog(
-                listOf(locationsPack, seedPack),
-            ).locationDefinitions.single { it.name == "Armería" }
+            ContentCatalog(listOf(locationsPack, seedPack)).locationDefinitions.single { it.name == "Armería" }
 
         assertTrue(armeria.buildCost.isNotEmpty())
         assertTrue(armeria.recipes.isNotEmpty())
+    }
+
+    @Test
+    fun everySeedRecipeResolvesAgainstTheShippedPack() {
+        val innovations =
+            Legacy15Content.pack.bundle.innovations
+                .map { it.name }
+                .toSet()
+        val resources =
+            Legacy15Content.pack.bundle.resources
+                .map { it.name }
+                .toSet()
+
+        Core15GearSeed.bundle.locations.flatMap { it.recipes }.forEach { recipe ->
+            assertTrue(recipe.requires.all { it in innovations }, "${recipe.gearName} requires ${recipe.requires}")
+            assertTrue(
+                recipe.resourceCost.keys.all { it in resources },
+                "${recipe.gearName} costs ${recipe.resourceCost.keys}",
+            )
+        }
     }
 }

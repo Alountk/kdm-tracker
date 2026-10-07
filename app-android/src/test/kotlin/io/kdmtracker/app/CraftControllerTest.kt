@@ -105,4 +105,27 @@ class CraftControllerTest {
                 .isEmpty(),
         )
     }
+
+    @Test
+    fun theSeededCampaignHasAReachableRecipe() {
+        val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
+
+        fun record(
+            name: String,
+            count: Int,
+        ) {
+            val definition =
+                controller.state.value.resourceDefinitions
+                    .single { it.name == name }
+            controller.addResource(ResourceEntry(name, definition.category, count))
+        }
+        record("Hueso de Monstruo", 2)
+        record("Piel de Monstruo", 1)
+        record("Órgano de Monstruo", 1)
+
+        controller.craft("Armería", "Hacha de Contrapeso")
+
+        assertNull(controller.state.value.actionError)
+        assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
+    }
 }

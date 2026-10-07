@@ -146,7 +146,7 @@ private fun SettlementHeader(state: UiState) {
         Text(
             text =
                 "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
-                    "Endeavors ${state.endeavors}",
+                    "Endeavors ${state.endeavors} · Survival Limit ${state.survivalLimit}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

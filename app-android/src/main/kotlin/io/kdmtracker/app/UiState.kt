@@ -41,6 +41,9 @@ sealed interface Screen {
  * inline and owns no rules.
  *
  * [gear] is the settlement's crafted gear, by name.
+ *
+ * [survivalLimit] is the derived survival limit — the ruleset base plus innovation bonuses plus any
+ * settlement-scope `SURVIVAL_LIMIT` modifier on the settlement's crafted gear.
  */
 data class UiState(
     val screen: Screen,
@@ -67,4 +70,5 @@ data class UiState(
     val yearEvents: List<String> = emptyList(),
     val actionError: String? = null,
     val gear: List<String> = emptyList(),
+    val survivalLimit: Int = 0,
 )

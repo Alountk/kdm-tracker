@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.content.Core16Content
+import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
@@ -215,8 +216,8 @@ class SetUpStepControllerTest {
     fun aSeededRepositoryComposesANonEmptyCatalog() {
         val repository = SettlementRepository(InMemoryCampaignStore())
 
-        assertEquals(listOf("core-1.6"), repository.campaign.enabledPacks)
-        assertEquals(listOf(Core16Content.pack.id), repository.campaign.enabledPacks)
+        assertEquals(listOf("core-1.6", "core-1.5"), repository.campaign.enabledPacks)
+        assertEquals(listOf(Core16Content.pack.id, Legacy15Content.pack.id), repository.campaign.enabledPacks)
         assertTrue(repository.catalog.locationDefinitions.isNotEmpty())
         assertTrue(repository.catalog.innovationDefinitions.isNotEmpty())
         assertNull(repository.catalogError)
@@ -234,8 +235,8 @@ class SetUpStepControllerTest {
 
         repository.create("Gloom")
 
-        assertEquals(listOf("core-1.6"), repository.campaign.enabledPacks)
-        assertEquals(listOf(Core16Content.pack.id), repository.campaign.enabledPacks)
+        assertEquals(listOf("core-1.6", "core-1.5"), repository.campaign.enabledPacks)
+        assertEquals(listOf(Core16Content.pack.id, Legacy15Content.pack.id), repository.campaign.enabledPacks)
         assertTrue(repository.catalog.locationDefinitions.isNotEmpty())
     }
 }
