@@ -55,4 +55,20 @@ class GearModelTest {
 
         assertTrue(gear.modifiers.isEmpty())
     }
+
+    @Test
+    fun recipeRequiresTextRoundTrips() {
+        val recipe = GearRecipe("Katana del Arcoíris", requiresText = "Calor")
+
+        val decoded = json.decodeFromString<GearRecipe>(json.encodeToString(recipe))
+
+        assertEquals(recipe, decoded)
+    }
+
+    @Test
+    fun legacyRecipeJsonWithoutRequiresTextDecodesNull() {
+        val recipe = json.decodeFromString<GearRecipe>("""{"gearName":"X"}""")
+
+        assertNull(recipe.requiresText)
+    }
 }
