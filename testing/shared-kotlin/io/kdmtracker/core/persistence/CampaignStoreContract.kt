@@ -2,8 +2,16 @@ package io.kdmtracker.core.persistence
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationSet
+import io.kdmtracker.core.domain.ResourceCategory
+import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.SyncMeta
+import io.kdmtracker.core.domain.Timeline
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
 import kotlin.test.AfterTest
@@ -60,6 +68,32 @@ abstract class CampaignStoreContract {
         name: String = "First Lantern",
     ): Settlement = Settlement.new(id = ulid(seed), campaignId = campaignId, name = name)
 
+    /** A non-trivial state so the round-trip cannot pass by writing an empty default. */
+    private fun populatedState(): SettlementState =
+        SettlementState(
+            timeline = Timeline.core16().withEvent(1, "Returning Survivors"),
+            innovations =
+                InnovationCollection(
+                    innovations =
+                        listOf(
+                            Innovation(
+                                name = "Lantern Oven",
+                                description = "Cook a resource to gain its benefit.",
+                                consequences = listOf("Lantern Oven", "Cooking"),
+                                survivalLimitBonus = 1,
+                            ),
+                        ),
+                ),
+            locations = LocationSet(built = listOf("Lantern Hoard")),
+            resourceEntries =
+                listOf(
+                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, 2),
+                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, -1),
+                ),
+            deaths = 3,
+            births = 5,
+        )
+
     @Test
     fun upsertingSameSettlementTwiceYieldsOneEntry() {
         val parent = campaign(1)
@@ -95,6 +129,16 @@ abstract class CampaignStoreContract {
             listOf(CampaignSnapshot(parent.copy(settlementIds = listOf(child.id)), listOf(child))),
             store.loadSnapshots(),
         )
+    }
+
+    @Test
+    fun aPopulatedSettlementStateRoundTripsThroughTheRecord() {
+        val parent = campaign(1)
+        val record = SettlementRecord(settlement(2, parent.id), populatedState())
+        store.upsertCampaign(parent)
+        store.upsertSettlement(record)
+
+        assertEquals(listOf(record), store.loadRecords(parent.id.value))
     }
 
     @Test

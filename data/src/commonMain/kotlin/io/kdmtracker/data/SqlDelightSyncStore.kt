@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.ruleset.RulesetOverrides
@@ -215,7 +216,8 @@ class SqlDelightSyncStore(
         payload: String,
         rev: Long,
     ) {
-        val settlement = json.decodeFromString(SettlementDto.serializer(), payload).toDomain()
+        val dto = json.decodeFromString(SettlementDto.serializer(), payload)
+        val settlement = dto.toDomain()
         val sync = settlement.sync
         database.settlementQueries.upsertSettlement(
             id = settlement.id.value,
@@ -232,6 +234,7 @@ class SqlDelightSyncStore(
             rev = rev,
             deletedAtMillis = sync.deletedAt?.millis,
             deletedAtCounter = sync.deletedAt?.counter?.toLong(),
+            stateJson = json.encodeToString(SettlementState.serializer(), dto.state),
         )
     }
 
@@ -319,6 +322,7 @@ class SqlDelightSyncStore(
                                 )
                             },
                     ),
+                state = json.decodeFromString(SettlementState.serializer(), stateJson),
             )
         return ChangeRecord(
             campaignId = campaignId,
