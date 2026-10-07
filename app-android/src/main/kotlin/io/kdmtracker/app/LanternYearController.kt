@@ -2,6 +2,8 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.rules.DerivedValues
 import io.kdmtracker.core.rules.FlowContext
 import io.kdmtracker.core.rules.FlowTransition
 import io.kdmtracker.core.rules.LanternYearFlow
@@ -26,7 +28,7 @@ class LanternYearController(
     private val ruleset: Ruleset = Core16Ruleset,
 ) {
     private val _state =
-        MutableStateFlow(uiState(repository.settlement, lastTransition = null))
+        MutableStateFlow(uiState(repository.record, lastTransition = null))
 
     val state: StateFlow<UiState> = _state.asStateFlow()
 
@@ -99,7 +101,7 @@ class LanternYearController(
                 context = context,
             )
         repository.update(result.settlement)
-        _state.value = uiState(result.settlement, result.transition.describe())
+        _state.value = uiState(repository.record, result.transition.describe())
     }
 
     /**
@@ -137,19 +139,20 @@ class LanternYearController(
      */
     fun reload() {
         repository.reload()
-        _state.value = uiState(repository.settlement, _state.value.lastTransition)
+        _state.value = uiState(repository.record, _state.value.lastTransition)
     }
 
     private fun moveToStep(step: Int) {
         val updated = repository.settlement.copy(currentStep = step)
         repository.update(updated)
-        _state.value = uiState(updated, _state.value.lastTransition)
+        _state.value = uiState(repository.record, _state.value.lastTransition)
     }
 
     private fun uiState(
-        settlement: Settlement,
+        record: SettlementRecord,
         lastTransition: String?,
     ): UiState {
+        val settlement = record.settlement
         val from = PhaseStep(settlement.phase, settlement.currentStep)
         val context = FlowContext(ruleset = ruleset)
         return UiState(
@@ -172,6 +175,12 @@ class LanternYearController(
                     .map { it.number }
                     .toSet(),
             lastTransition = lastTransition,
+            record = record,
+            buildableLocations = repository.catalog.locationDefinitions,
+            innovationDefinitions = repository.catalog.innovationDefinitions,
+            storageLines = record.storage(),
+            endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
+            catalogError = repository.catalogError,
         )
     }
 }

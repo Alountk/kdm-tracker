@@ -1,5 +1,11 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.content.CatalogResult
+import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.content.ContentCatalogComposer
+import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.Core16Content
+import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
@@ -77,6 +83,50 @@ class SettlementRepository(
 
     /** The held settlement scalars; a compatibility view over [record]'s settlement. */
     val settlement: Settlement get() = record.settlement
+
+    /** The shipped packs this app knows how to resolve, keyed by their ids. */
+    private val knownPacks: Map<String, ContentPack> =
+        listOf(Core16Content.pack, Legacy15Content.pack).associateBy { it.id }
+
+    /**
+     * The catalog composed from the held campaign's [Campaign.enabledPacks].
+     *
+     * Known pack ids (`core-1.6`, `core-1.5`) resolve to their shipped [ContentPack]s; the
+     * shipped default seed enables no packs, which composes an empty catalog. An unknown id,
+     * or a pack whose requirement is not enabled, does not crash: [catalogError] carries the
+     * reason and [catalog] falls back to an empty catalog, so the screens render nothing
+     * rather than the app failing to load.
+     */
+    val catalog: ContentCatalog
+        get() = (catalogResult as? CatalogResult.Ok)?.catalog ?: EMPTY_CATALOG
+
+    /** Why [catalog] is empty, or `null` when it composed cleanly. */
+    val catalogError: String?
+        get() {
+            val missing = catalogResult as? CatalogResult.MissingRequirement ?: return null
+            return if (missing.packId == missing.missing) {
+                "Cannot compose the campaign catalog: unknown content pack '${missing.packId}'"
+            } else {
+                "Cannot compose the campaign catalog: content pack '${missing.packId}' requires '${missing.missing}'"
+            }
+        }
+
+    /**
+     * Resolves the held campaign's enabled packs and composes them.
+     *
+     * An unknown id short-circuits to a [CatalogResult.MissingRequirement] (there is no pack to
+     * compose), otherwise the composition reports a genuine missing requirement or `Ok`.
+     */
+    private val catalogResult: CatalogResult
+        get() {
+            val enabled = campaign.enabledPacks
+            val unknown = enabled.firstOrNull { it !in knownPacks }
+            return if (unknown != null) {
+                CatalogResult.MissingRequirement(packId = unknown, missing = unknown)
+            } else {
+                ContentCatalogComposer.compose(enabled.map(knownPacks::getValue))
+            }
+        }
 
     init {
         val existing = store.loadSnapshots().firstOrNull()
@@ -269,3 +319,6 @@ class SettlementRepository(
         return CampaignSnapshot(campaign, listOf(settlement))
     }
 }
+
+/** A catalog with no packs, used when composition fails so the screens render nothing. */
+private val EMPTY_CATALOG = ContentCatalog(emptyList())
