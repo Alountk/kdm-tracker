@@ -146,10 +146,10 @@ and every cost and limit comes from the composed `ContentCatalog`, never a liter
   the derived **Innovation Deck** (the consequences the unlocked innovations add), the locations
   already built, and this lantern year's timeline/event, then a single *Confirm Setup* that advances.
 - **Step 7 — Develop** (`DevelopStepScreen`): rendered inside the cockpit's step rail and
-  Previous/Next chrome, so it is never a navigation dead-end. Four affordances with their real
+  Previous/Next chrome, so it is never a navigation dead-end. Five affordances with their real
   costs — **Record a Resource** (the manual funding bridge until hunt rewards are modeled),
-  **Innovate**, **Build** and a generic **Endeavor** — beside the storage ledger and the endeavor
-  pool. Rules text (effects) is shown verbatim; the group resolves it.
+  **Innovate**, **Build**, **Craft** and a generic **Endeavor** — beside the storage ledger and
+  the endeavor pool. Rules text (effects) is shown verbatim; the group resolves it.
 
 `SettlementScreen` dispatches on `currentStep`: step 1 renders Set Up, step 7 supplies the Develop
 body to the cockpit, and every other step shows the "Pendiente" placeholder — all inside the same
@@ -164,9 +164,21 @@ record unchanged.
 | **Endeavor income** | Entering Settlement Step 3 runs `GainEndeavors`, adding the Step 3 breakdown (base **+1 per returning survivor**, funded from the population in this slice) to the pool once per phase. |
 | **Innovate** | `Innovate`: only at a **built** location granting it (the Lantern Hoard is built in the seed) — spends the action's endeavors **and** resources (1 Bone + 1 Organ + 1 Hide in 1.5), is **once per Settlement Phase** (a phase marker reset at the year boundary), and **draws 2, keeps 1**. |
 | **Build** | `BuildLocation`: the location's `requires` must already be built, storage must cover its resource cost, and the pool must cover its `buildEndeavors` (prereq tree). |
+| **Craft** | `Craft`: only at a **built** location, using one of its `GearRecipe`s — the recipe's innovation `requires` must be unlocked and storage must cover its resource cost; the gear is then added to the settlement. |
 | **Generic endeavor** | `SpendEndeavor`: a rule carrying the `[endeavor]` symbol costs −1; the player resolves the effect. |
 | **Storage** | `AddResourceEntry` appends a gain, but blocks a spend that would take a resource below 0. |
 | **Step 11** | Unspent endeavors are discarded at the year boundary (`AdvanceStep`), not carried over. |
+
+**Craft (Step 7).** `Gear` carries a `keywords`/`rules`/`modifiers` model, and `GearRecipe` a
+resource cost plus innovation prerequisites; recipes travel on the built `SettlementLocation`.
+`Craft` enforces built location + recipe + prerequisites + storage, then adds the gear to the
+settlement. The **gear `Modifier` model** (`target`/`value`/`scope`/`condition`) is ready for
+curated data: settlement-scope modifiers feed derived values, survivor-scope ones are stored and
+applied once a `Survivor` model exists. Only a **curated seed** of 1.5 recipes (the Armería set)
+ships in this slice — bulk gear extraction was not viable with `pdftotext` (it strips spaces in
+`-raw` and splits columns in `-layout`, the cards are duplicated, and the bonuses are conditional
+rule text), so it is deferred to a dedicated content slice; icon-only / conditional values are
+recorded as `[gap]`, never guessed.
 
 **Known limitation (Ruling CB).** The extracted `buildCost`/`resourceCost` are keyed by a **specific
 resource card name** that approximates the card's printed material *type* (`3 x hueso` →
@@ -180,9 +192,12 @@ catalog with no in-app path to fix it. The app is pre-release with no persisted 
 campaigns, so this is deferred: an existing local campaign must be **re-created** (or the store
 re-seeded) to pick up `core-1.6`.
 
-**Deferred:** Craft/gear (no gear/recipe model), executable effects (shown as text, not resolved), a
-full per-survivor `Survivor` model (returnees and deaths are settlement-level counters), and
-1.6-specific rules (the local rulebook is 1.5 and the 1.6 sheet is image-only).
+**Deferred:** bulk gear/recipe extraction (a curated seed ships now — see *Craft (Step 7)*), gear
+`keywords`/`rules`/`modifiers` content (the card bonuses are conditional rule text, recorded as
+`[gap]`), applying survivor-scope modifiers (needs the `Survivor` model), executable effects (shown
+as text, not resolved), a full per-survivor `Survivor` model (returnees and deaths are
+settlement-level counters), and 1.6-specific rules (the local rulebook is 1.5 and the 1.6 sheet is
+image-only).
 
 ## Persistence
 
