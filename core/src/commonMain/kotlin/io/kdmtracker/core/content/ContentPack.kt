@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.ContentEntry
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementLocation
@@ -19,6 +20,8 @@ data class ContentBundle(
     val innovations: List<Innovation> = emptyList(),
     val locations: List<SettlementLocation> = emptyList(),
     val resources: List<ResourceDefinition> = emptyList(),
+    val fightingArts: List<ContentEntry> = emptyList(),
+    val disorders: List<ContentEntry> = emptyList(),
     val timeline: List<TimelineEntry> = emptyList(),
     val quarries: List<String> = emptyList(),
     val nemeses: List<String> = emptyList(),
