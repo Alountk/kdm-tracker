@@ -47,6 +47,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from kotlin_emit import indent, kotlin_escape, normalize_ws  # noqa: E402
 from pdf_text import pdf_info, pdf_text  # noqa: E402
 
 FORM_FEED = "\f"
@@ -61,6 +62,9 @@ DECK_CATEGORIES: Dict[str, str] = {
     "AF RecPre Fénix.pdf": "MONSTER",
     "AF RecPre León.pdf": "MONSTER",
 }
+
+# A card in the Básicos deck is genuinely named "???" (an unidentified monster part).
+UNKNOWN_RESOURCE_NAME = "???"
 
 # The material tags that may appear on a card's type line.
 KNOWN_TAGS = {
@@ -89,33 +93,9 @@ class Card:
     tags: Tuple[str, ...]
 
 
-def normalize_ws(text: str) -> str:
-    return " ".join(text.split())
-
-
 def nfc(text: str) -> str:
     """macOS stores filenames in NFD; compare against NFC literals."""
     return unicodedata.normalize("NFC", text)
-
-
-def kotlin_escape(text: str) -> str:
-    out = []
-    for char in text:
-        if char == "\\":
-            out.append("\\\\")
-        elif char == '"':
-            out.append('\\"')
-        elif char == "$":
-            out.append("\\$")
-        elif char == "\n":
-            out.append("\\n")
-        elif char == "\r":
-            out.append("\\r")
-        elif char == "\t":
-            out.append("\\t")
-        else:
-            out.append(char)
-    return "".join(out)
 
 
 def deck_title_page(lines: Sequence[str]) -> bool:
@@ -213,8 +193,13 @@ def emit_kotlin(resources: Sequence[Tuple[str, str]]) -> str:
     ]
     for name, category in resources:
         lines.append(" " * _CARD_INDENT + "ResourceDefinition(")
-        lines.append(f'{_indent(_NAME_INDENT)}name = "{kotlin_escape(name)}",')
-        lines.append(f"{_indent(_NAME_INDENT)}category = ResourceCategory.{category},")
+        if name == UNKNOWN_RESOURCE_NAME:
+            # The Básicos deck prints a card literally named "???" (an unidentified
+            # monster part): this is the real card name, not a parse artifact. It
+            # appears twice with identical text and is deduped to one BASIC entry.
+            lines.append(f"{indent(_NAME_INDENT)}// Literal card name from AF Rec Básicos.pdf — not a parse placeholder.")
+        lines.append(f'{indent(_NAME_INDENT)}name = "{kotlin_escape(name)}",')
+        lines.append(f"{indent(_NAME_INDENT)}category = ResourceCategory.{category},")
         lines.append(" " * _CARD_INDENT + "),")
     lines.extend(
         [
@@ -224,10 +209,6 @@ def emit_kotlin(resources: Sequence[Tuple[str, str]]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
-
-
-def _indent(width: int) -> str:
-    return " " * width
 
 
 DEFAULT_PDF_DIR_RELATIVE = Path("external-assets/Juego Completo/Formato Americano 57x88 mm/AF Recursos")

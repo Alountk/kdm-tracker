@@ -11,6 +11,7 @@ object Core15Resources {
             resources =
                 listOf(
                     ResourceDefinition(
+                        // Literal card name from AF Rec Básicos.pdf — not a parse placeholder.
                         name = "???",
                         category = ResourceCategory.BASIC,
                     ),
