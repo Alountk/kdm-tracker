@@ -13,6 +13,7 @@ import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.data.KdmDatabaseFactory
 import kotlinx.coroutines.CancellationException
@@ -222,6 +223,18 @@ class LanternYearViewModel(
     fun previous() = mutate { it.previous() }
 
     fun selectStep(number: Int) = mutate { it.selectStep(number) }
+
+    /** Unlocks [innovationName] through the Innovate action; a `Blocked` reason is published. */
+    fun innovate(innovationName: String) = mutate { it.innovate(innovationName) }
+
+    /** Builds the settlement location named [locationName]. */
+    fun build(locationName: String) = mutate { it.build(locationName) }
+
+    /** Spends one endeavor for a generic Settlement Phase action. */
+    fun spendEndeavor() = mutate { it.spendEndeavor() }
+
+    /** Appends [entry] to the settlement's resource ledger. */
+    fun addResource(entry: ResourceEntry) = mutate { it.addResource(entry) }
 
     fun syncNow() {
         components.get()?.syncCoordinator?.syncNow()

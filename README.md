@@ -114,11 +114,14 @@ database — campaign data survives container replacement.
 
 The `:app-android` module is a Compose Multiplatform Android app that consumes `:core`. It opens on
 a **Home** that lists every campaign (settlement) the signed-in user can reach, then enters a
-navigable lantern-year loop (Settlement → Hunt → Showdown) driven by `:core` rules, with "Pendiente"
-stubs for the step bodies. State persists locally through `:data` (see
-[Persistence](#persistence)) and syncs to the hub through the client sync engine (see
-[Sync (Android client)](#sync-android-client)); the real step UIs arrive in later plans. The Home
-and its sharing model are described in [Home and sharing](#home-and-sharing).
+navigable lantern-year loop (Settlement → Hunt → Showdown) driven by `:core` rules. Settlement
+Steps 1 (Set Up) and 7 (Develop) are implemented; the remaining step bodies show a "Pendiente"
+stub and arrive in later plans (see [Settlement Steps 1 & 7](#settlement-steps-1--7)). Entering
+Step 3 funds the endeavor pool; hunt rewards are not modeled yet, so resources are recorded
+manually on the Develop screen. State
+persists locally through `:data` (see [Persistence](#persistence)) and syncs to the hub through the
+client sync engine (see [Sync (Android client)](#sync-android-client)). The Home and its sharing
+model are described in [Home and sharing](#home-and-sharing).
 
 Build the debug APK:
 
@@ -132,6 +135,54 @@ Install it on a connected device or emulator:
 ```bash
 adb install -r app-android/build/outputs/apk/debug/app-debug.apk
 ```
+
+## Settlement Steps 1 & 7
+
+Two Settlement Phase steps are real in the Compose app; the rest keep their `Pendiente` body. Both
+are backed by a content-driven rules layer in `:core` — the screens render state and report intent,
+and every cost and limit comes from the composed `ContentCatalog`, never a literal in the UI.
+
+- **Step 1 — Set Up the Settlement** (`SetUpStepScreen`): read-only. Shows the principles in play,
+  the derived **Innovation Deck** (the consequences the unlocked innovations add), the locations
+  already built, and this lantern year's timeline/event, then a single *Confirm Setup* that advances.
+- **Step 7 — Develop** (`DevelopStepScreen`): rendered inside the cockpit's step rail and
+  Previous/Next chrome, so it is never a navigation dead-end. Four affordances with their real
+  costs — **Record a Resource** (the manual funding bridge until hunt rewards are modeled),
+  **Innovate**, **Build** and a generic **Endeavor** — beside the storage ledger and the endeavor
+  pool. Rules text (effects) is shown verbatim; the group resolves it.
+
+`SettlementScreen` dispatches on `currentStep`: step 1 renders Set Up, step 7 supplies the Develop
+body to the cockpit, and every other step shows the "Pendiente" placeholder — all inside the same
+cockpit chrome, so no step is unreachable. Each action calls a pure `:core` use-case through the
+controller and persists the mutated `SettlementRecord` via `SettlementRepository.update` (local
+store + outbox), so it syncs like any other change. Rules are **total**: an invalid action returns
+`StepResult.Blocked(reason)` instead of throwing, and the screen shows the reason inline with the
+record unchanged.
+
+| Rule | Enforcement |
+| --- | --- |
+| **Endeavor income** | Entering Settlement Step 3 runs `GainEndeavors`, adding the Step 3 breakdown (base **+1 per returning survivor**, funded from the population in this slice) to the pool once per phase. |
+| **Innovate** | `Innovate`: only at a **built** location granting it (the Lantern Hoard is built in the seed) — spends the action's endeavors **and** resources (1 Bone + 1 Organ + 1 Hide in 1.5), is **once per Settlement Phase** (a phase marker reset at the year boundary), and **draws 2, keeps 1**. |
+| **Build** | `BuildLocation`: the location's `requires` must already be built, storage must cover its resource cost, and the pool must cover its `buildEndeavors` (prereq tree). |
+| **Generic endeavor** | `SpendEndeavor`: a rule carrying the `[endeavor]` symbol costs −1; the player resolves the effect. |
+| **Storage** | `AddResourceEntry` appends a gain, but blocks a spend that would take a resource below 0. |
+| **Step 11** | Unspent endeavors are discarded at the year boundary (`AdvanceStep`), not carried over. |
+
+**Known limitation (Ruling CB).** The extracted `buildCost`/`resourceCost` are keyed by a **specific
+resource card name** that approximates the card's printed material *type* (`3 x hueso` →
+`Hueso de Monstruo`), because the model has no resource-type key yet. A settlement holding a
+different resource of the same type would be wrongly `Blocked`; resolving costs by type is a
+follow-up work unit.
+
+**Known limitation (upgrade path).** The shipped seed enables `core-1.6`, but a campaign stored
+before that change keeps its original `enabledPacks` (often empty) and therefore composes an empty
+catalog with no in-app path to fix it. The app is pre-release with no persisted production
+campaigns, so this is deferred: an existing local campaign must be **re-created** (or the store
+re-seeded) to pick up `core-1.6`.
+
+**Deferred:** Craft/gear (no gear/recipe model), executable effects (shown as text, not resolved), a
+full per-survivor `Survivor` model (returnees and deaths are settlement-level counters), and
+1.6-specific rules (the local rulebook is 1.5 and the 1.6 sheet is image-only).
 
 ## Persistence
 

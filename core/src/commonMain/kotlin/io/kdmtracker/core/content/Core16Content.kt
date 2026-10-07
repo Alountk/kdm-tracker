@@ -1,8 +1,10 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.Timeline
 
@@ -35,7 +37,22 @@ object Core16Content {
                         ),
                     locations =
                         listOf(
-                            SettlementLocation("Lantern Hoard"),
+                            SettlementLocation(
+                                "Lantern Hoard",
+                                actions =
+                                    listOf(
+                                        SettlementAction(
+                                            name = "Innovate",
+                                            kind = ActionKind.INNOVATE,
+                                            endeavorCost = 1,
+                                            resourceCost = mapOf("Bone" to 1, "Organ" to 1, "Hide" to 1),
+                                            oncePerPhase = true,
+                                            draw = 2,
+                                            keep = 1,
+                                            effect = "Draw 2 innovation cards, keep 1, return the other to the deck.",
+                                        ),
+                                    ),
+                            ),
                             SettlementLocation("Bone Smith", requires = listOf("Lantern Hoard")),
                             SettlementLocation("Skinnery"),
                             SettlementLocation("Organ Grinder"),

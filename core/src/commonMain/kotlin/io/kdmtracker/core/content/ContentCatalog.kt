@@ -31,7 +31,7 @@ data class ContentCatalog(
     val innovationDefinitions: List<Innovation> =
         mergeDefinition(packs.flatMap { it.bundle.innovations }) { it.name }
     val locationDefinitions: List<SettlementLocation> =
-        mergeDefinition(packs.flatMap { it.bundle.locations }) { it.name }
+        mergeLocationDefinitions(packs.flatMap { it.bundle.locations })
     val resourceDefinitions: List<ResourceDefinition> =
         mergeDefinition(packs.flatMap { it.bundle.resources }) { it.name }
     val fightingArtDefinitions: List<ContentEntry> =
@@ -57,6 +57,25 @@ data class ContentCatalog(
         name: (T) -> String,
     ): List<T> = definitions.sortedBy(name).distinctBy(name)
 }
+
+/**
+ * Merges [locations] by name, preferring the definition that carries modeled data
+ * (a non-empty [SettlementLocation.buildCost] or [SettlementLocation.actions]) over
+ * a bare seed. Ties — both modeled or both bare — keep the first occurrence in pack
+ * order, so the merge is deterministic and order-independent.
+ */
+private fun mergeLocationDefinitions(locations: List<SettlementLocation>): List<SettlementLocation> =
+    locations
+        .groupBy { it.name }
+        .map { (_, sameName) -> sameName.reduce(::preferModeledLocation) }
+        .sortedBy { it.name }
+
+private fun preferModeledLocation(
+    current: SettlementLocation,
+    candidate: SettlementLocation,
+): SettlementLocation = if (current.hasModeledData() || !candidate.hasModeledData()) current else candidate
+
+private fun SettlementLocation.hasModeledData(): Boolean = buildCost.isNotEmpty() || actions.isNotEmpty()
 
 object ContentCatalogComposer {
     fun compose(packs: List<ContentPack>): CatalogResult {
