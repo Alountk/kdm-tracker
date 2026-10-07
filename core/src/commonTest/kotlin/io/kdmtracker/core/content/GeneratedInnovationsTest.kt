@@ -14,6 +14,11 @@ class GeneratedInnovationsTest {
     }
 
     @Test
+    fun bundleHasTheExpectedCardCount() {
+        assertEquals(42, innovations.size)
+    }
+
+    @Test
     fun lenguajeExistsWithSurvivalLimitBonusOne() {
         val lenguaje = innovations.first { it.name == "Lenguaje" }
 
@@ -25,6 +30,13 @@ class GeneratedInnovationsTest {
         val lenguaje = innovations.first { it.name == "Lenguaje" }
 
         assertTrue("Linterna Interior" in lenguaje.consequences, "was ${lenguaje.consequences}")
+    }
+
+    @Test
+    fun simposioListsItsConsequences() {
+        val simposio = innovations.first { it.name == "Simposio" }
+
+        assertEquals(listOf("Entrenamiento de Pesadilla", "Narración"), simposio.consequences)
     }
 
     @Test

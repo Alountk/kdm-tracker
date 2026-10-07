@@ -36,9 +36,10 @@ SURVIVAL_LIMIT_RE = re.compile(r"^Límite de Supervivencia \+(\d+)$")
 PARENT_RE = re.compile(r"consecuencias?\s+de(?:l)?\s+(.+?)\s*\.?\s*$", re.IGNORECASE)
 DECK_PROSE_RE = re.compile(r"^añade\b", re.IGNORECASE)
 SUBLINE_RE = re.compile(
-    r"^(?:innovación inicial|principio de .+|[a-záéíóúüñ]+(?:,\s.*)?)$",
+    r"^(?:innovación inicial|principio de .+|consecuencias? de(?:l)? .+|[a-záéíóúüñ]+(?:,\s.*)?)$",
     re.IGNORECASE,
 )
+DECK_TITLE_PAGE = 1  # 1-based; the first page is the deck's title, not a card.
 
 FORM_FEED = "\f"
 
@@ -105,10 +106,15 @@ def parse_cards(text: str) -> List[Card]:
     pages = [page for page in text.split(FORM_FEED) if page.strip()]
     cards: List[Card] = []
 
-    for page in pages:
+    for page_number, page in enumerate(pages, start=1):
         lines = [line.strip() for line in page.splitlines() if line.strip()]
         if not is_card_page(lines):
-            continue
+            if page_number == DECK_TITLE_PAGE:
+                continue
+            raise SystemExit(
+                f"page {page_number} is neither the deck title nor a recognized card "
+                f"(first lines: {lines[:2]!r}); refusing to silently drop it"
+            )
 
         name, subline = lines[0], lines[1]
         body = lines[2:]
@@ -139,6 +145,13 @@ def parse_cards(text: str) -> List[Card]:
                 survival_limit_bonus=bonus,
                 has_deck_prose=has_deck_prose,
             )
+        )
+
+    expected_cards = len(pages) - 1  # one deck title page
+    if len(cards) != expected_cards:
+        raise SystemExit(
+            f"parsed {len(cards)} cards from {len(pages)} pages but expected {expected_cards}; "
+            "a card was dropped or a non-card page was parsed"
         )
 
     return cards
