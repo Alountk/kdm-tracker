@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializable
  * @property resourceEntries the append-only resource ledger; storage is projected from it.
  * @property deaths the survivors lost so far.
  * @property births the survivors born so far.
+ * @property phaseActionsUsed the action identifiers already spent this Settlement Phase, so
+ *   once-per-phase actions (such as Innovate) can be refused on a repeat attempt.
  */
 @Serializable
 data class SettlementState(
@@ -25,7 +27,18 @@ data class SettlementState(
     val resourceEntries: List<ResourceEntry> = emptyList(),
     val deaths: Int = 0,
     val births: Int = 0,
-)
+    val phaseActionsUsed: Set<String> = emptySet(),
+) {
+    /** Whether [key] has already been used during the current Settlement Phase. */
+    fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
+
+    /**
+     * Returns a copy marking [key] as used this phase. Idempotent: a key already
+     * present leaves the state unchanged.
+     */
+    fun withPhaseAction(key: String): SettlementState =
+        if (key in phaseActionsUsed) this else copy(phaseActionsUsed = phaseActionsUsed + key)
+}
 
 /** The storage lines projected from this state's resource ledger. */
 fun SettlementState.storage(): List<StorageLine> = Storage.project(resourceEntries)
