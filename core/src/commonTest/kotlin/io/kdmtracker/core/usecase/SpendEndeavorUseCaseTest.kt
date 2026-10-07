@@ -44,4 +44,34 @@ class SpendEndeavorUseCaseTest {
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(1, ok.value.settlement.endeavors)
     }
+
+    @Test
+    fun spendingExactlyThePoolLeavesNone() {
+        val result = SpendEndeavor.run(record(endeavors = 2), count = 2)
+
+        val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
+        assertEquals(0, ok.value.settlement.endeavors)
+    }
+
+    @Test
+    fun aNegativeCountIsBlockedAndLeavesThePoolUnchanged() {
+        val source = record(endeavors = 2)
+
+        val result = SpendEndeavor.run(source, count = -1)
+
+        val blocked = assertIs<StepResult.Blocked>(result)
+        assertEquals("invalid endeavor spend", blocked.reason)
+        assertEquals(2, source.settlement.endeavors)
+    }
+
+    @Test
+    fun aZeroCountIsBlockedAndLeavesThePoolUnchanged() {
+        val source = record(endeavors = 2)
+
+        val result = SpendEndeavor.run(source, count = 0)
+
+        val blocked = assertIs<StepResult.Blocked>(result)
+        assertEquals("invalid endeavor spend", blocked.reason)
+        assertEquals(2, source.settlement.endeavors)
+    }
 }

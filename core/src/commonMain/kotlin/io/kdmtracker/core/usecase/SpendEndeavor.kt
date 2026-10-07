@@ -15,14 +15,18 @@ import io.kdmtracker.core.rules.StepResult
 object SpendEndeavor {
     /**
      * Returns [StepResult.Ok] with [record]'s endeavor pool decremented by [count], or
-     * [StepResult.Blocked] with `"no endeavors"` when the pool cannot cover [count].
+     * [StepResult.Blocked] with `"invalid endeavor spend"` when [count] is not a positive
+     * amount, or `"no endeavors"` when the pool cannot cover a positive [count].
      *
-     * @param count the number of endeavors to spend; defaults to a single endeavor.
+     * @param count the number of endeavors to spend; must be a positive amount, defaults to one.
      */
     fun run(
         record: SettlementRecord,
         count: Int = 1,
     ): StepResult<SettlementRecord> {
+        if (count < 1) {
+            return StepResult.Blocked("invalid endeavor spend")
+        }
         if (record.settlement.endeavors < count) {
             return StepResult.Blocked("no endeavors")
         }
