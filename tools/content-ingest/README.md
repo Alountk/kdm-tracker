@@ -100,3 +100,51 @@ so a re-run is byte-identical. The card parser cross-checks `pdfinfo`'s page cou
 against the form-feed split, validates every card's type line against the known tag
 vocabulary, and aborts on any page that does not parse as a card or on a resource name
 that appears in two decks with different categories.
+
+## Fighting arts and disorders
+
+`ingest_fighting_arts.py` reads the fighting-arts deck
+`AF Artes de Combate/AF Artes de Combate.pdf` and the disorders deck
+`AF Trastornos.pdf`, and writes
+`core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15FightingArts.kt`
+as a `ContentBundle` with `fightingArts = List<ContentEntry>` and
+`disorders = List<ContentEntry>` (the minimal name + description card type).
+
+```sh
+python3 tools/content-ingest/ingest_fighting_arts.py \
+  --combate "path/to/external-assets/Juego Completo/Formato Americano 57x88 mm/AF Artes de Combate/AF Artes de Combate.pdf" \
+  --trastornos "path/to/external-assets/Juego Completo/Formato Americano 57x88 mm/AF Trastornos.pdf"
+```
+
+`--combate` / `--trastornos` override the source PDFs and `--out` the generated file.
+
+### Parsing model
+
+Both decks render one card per PDF page with page 1 as the deck title; each deck has
+its own card recognizer:
+
+- A **fighting-art** card's second line is its type line, either `- arte de combate -`
+  or `- arte de combate, cepa -`. It is validated against exactly that vocabulary, so
+  a shifted page aborts the run instead of being silently mis-read.
+- A **disorder** card has no type line; its last line is the `Anota y retira` reminder
+  that closes every card. A page that does not end with it aborts the run.
+
+The effect text is everything between the name (and type line, for arts) and the
+footer, whitespace-normalized. The `- arte de combate, cepa -` strain variant is
+recognized as a fighting art, not split into a separate list.
+
+### Determinism and integrity
+
+Entries are deduped and sorted by name; the output embeds no timestamps and no paths,
+so a re-run is byte-identical. Per deck, `pdfinfo`'s page count is cross-checked
+against the form-feed split, the parsed card count is asserted against `pages - 1`
+(one title page), and any page that does not parse as a card aborts the run. A card
+appearing twice with different descriptions also aborts.
+
+### Known parse gaps
+
+- The PDF's icon glyphs are dropped by `pdftotext`, leaving a dangling empty grant in
+  `Doble Esprint` and `Berserker` (e.g. `… puedes gastar para ganar .`). The tokens
+  were never in the extractable layer.
+- The `Apatía` card's placeholder art text (`Lorem ipsum`) is part of the extracted
+  body and is kept verbatim.

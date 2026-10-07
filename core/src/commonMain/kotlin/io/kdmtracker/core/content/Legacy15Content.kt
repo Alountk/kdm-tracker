@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.content.generated.Core15FightingArts
 import io.kdmtracker.core.content.generated.Core15Innovations
 import io.kdmtracker.core.content.generated.Core15Resources
 
@@ -8,9 +9,9 @@ import io.kdmtracker.core.content.generated.Core15Resources
  * `tools/content-ingest/`.
  *
  * It assembles the generated bundles (innovations with their consequence graph,
- * resources with their typed category) into a single [ContentPack]. The generated
- * Kotlin is the source of truth; this object only wires it up, so the pack has no
- * hand-transcribed content of its own.
+ * resources with their typed category, fighting arts and disorders with their effect
+ * text) into a single [ContentPack]. The generated Kotlin is the source of truth;
+ * this object only wires it up, so the pack has no hand-transcribed content of its own.
  */
 object Legacy15Content {
     val pack: ContentPack =
@@ -22,6 +23,8 @@ object Legacy15Content {
                 ContentBundle(
                     innovations = Core15Innovations.bundle.innovations,
                     resources = Core15Resources.bundle.resources,
+                    fightingArts = Core15FightingArts.bundle.fightingArts,
+                    disorders = Core15FightingArts.bundle.disorders,
                 ),
         )
 }
