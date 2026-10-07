@@ -147,6 +147,28 @@ Every table carries sync columns (`updatedAtMillis`, `updatedAtCounter`, `rev`, 
 pull/merge/push engine are implemented (see [Sync (Android client)](#sync-android-client)); this
 section covers only the local store.
 
+### The settlement record
+
+A settlement's scalar row is not the whole story. `:core` models the extra **settlement record** the
+phase steps read in `SettlementState` — the timeline, the unlocked innovations, the built locations,
+the append-only resource ledger and the death/birth counters — which composes with the `Settlement`
+whose scalars (`name`, `lanternYear`, `population`, `phase`, `currentStep`, `endeavors`, `sync`) it
+never duplicates. `SettlementRecord` pairs the two, and every record type is `@Serializable`.
+
+Locally, `:data` stores the state in the `settlement` table's `stateJson` column (added by the
+`3.sqm` migration — schema v4:
+`ALTER TABLE settlement ADD COLUMN stateJson TEXT NOT NULL DEFAULT '{}'`).
+`SqlDelightCampaignStore.upsertSettlement(SettlementRecord)` writes the scalars and the encoded state
+as one row — the outbox payload is the versioned DTO, so a later push cannot drop it — and
+`loadRecords(campaignId)` rehydrates `List<SettlementRecord>`. The legacy scalar
+`upsertSettlement(Settlement)` is additive: it re-reads the stored `stateJson` and preserves it, so
+an existing caller cannot clobber the record.
+
+On the wire the transfer schema is **v5**: `SettlementDto` carries the record as
+`state: SettlementState` (defaulting to an empty state, so a pre-v5 document decodes unchanged) and
+`TransferDocument.SUPPORTED_VERSIONS = [1, 2, 3, 4, 5]`. `TransferMapper` round-trips
+`SettlementRecord` both ways, keeping an export/import lossless.
+
 ## Sync (Android client)
 
 The app is **offline-first and syncs opportunistically**: every local mutation is written to
@@ -437,7 +459,7 @@ kdm-tracker/
 │       │   ├── rules/                 # LanternYearFlow, SettlementStepCatalog, DerivedValues
 │       │   ├── ruleset/               # Ruleset, Core16Ruleset, RulesetOverrides
 │       │   ├── sync/                  # SyncApi/SyncStore ports, MergePolicy (LWW), SyncEngine
-│       │   ├── transfer/              # TransferDocument/TransferMapper (schema v3)
+│       │   ├── transfer/              # TransferDocument/TransferMapper (schema v5)
 │       │   └── usecase/               # AdvanceStep (lantern-year transition use case)
 │       └── commonTest/kotlin/io/kdmtracker/core/  # unit tests for the above
 ├── data/                              # SQLDelight local persistence (Kotlin multiplatform: jvm + android)
