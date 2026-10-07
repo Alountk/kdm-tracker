@@ -11,3 +11,7 @@ out/
 **/data/*.mv.db
 **/data/*.trace.db
 **/data/*.lock.db
+
+# Untracked copyrighted source assets (card PDFs, art, rules reference material).
+# Consumed by tools/content-ingest; never committed.
+external-assets/
