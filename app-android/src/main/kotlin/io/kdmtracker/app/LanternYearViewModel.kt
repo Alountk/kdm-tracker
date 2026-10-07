@@ -236,6 +236,11 @@ class LanternYearViewModel(
     /** Appends [entry] to the settlement's resource ledger. */
     fun addResource(entry: ResourceEntry) = mutate { it.addResource(entry) }
 
+    fun craft(
+        locationName: String,
+        gearName: String,
+    ) = mutate { it.craft(locationName, gearName) }
+
     fun syncNow() {
         components.get()?.syncCoordinator?.syncNow()
     }

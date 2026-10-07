@@ -50,6 +50,7 @@ fun SettlementScreen(
     onBuild: (String) -> Unit = {},
     onSpendEndeavor: () -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
+    onCraft: (String, String) -> Unit = { _, _ -> },
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
@@ -68,6 +69,7 @@ fun SettlementScreen(
                 onBuild = onBuild,
                 onSpendEndeavor = onSpendEndeavor,
                 onAddResource = onAddResource,
+                onCraft = onCraft,
             )
         } else {
             PendientePlaceholder(modifier = Modifier.fillMaxWidth())
@@ -144,7 +146,7 @@ private fun SettlementHeader(state: UiState) {
         Text(
             text =
                 "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
-                    "Endeavors ${state.endeavors}",
+                    "Endeavors ${state.endeavors} · Survival Limit ${state.survivalLimit}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

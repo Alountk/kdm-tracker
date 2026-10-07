@@ -39,6 +39,11 @@ sealed interface Screen {
  * [actionError] is the trailing Step 7 (Develop) field: the reason the last develop action was
  * refused, or `null` after a successful action or a navigation. The Develop screen shows it
  * inline and owns no rules.
+ *
+ * [gear] is the settlement's crafted gear, by name.
+ *
+ * [survivalLimit] is the derived survival limit — the ruleset base plus innovation bonuses plus any
+ * settlement-scope `SURVIVAL_LIMIT` modifier on the settlement's crafted gear.
  */
 data class UiState(
     val screen: Screen,
@@ -64,4 +69,6 @@ data class UiState(
     val principles: List<String> = emptyList(),
     val yearEvents: List<String> = emptyList(),
     val actionError: String? = null,
+    val gear: List<String> = emptyList(),
+    val survivalLimit: Int = 0,
 )

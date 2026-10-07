@@ -3,6 +3,8 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.ModifierScope
+import io.kdmtracker.core.domain.ModifierTarget
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
@@ -18,6 +20,7 @@ import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.BuildLocation
+import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.SpendEndeavor
@@ -175,10 +178,11 @@ class LanternYearController(
     fun innovate(innovationName: String) {
         val location =
             content.locationDefinitions.firstOrNull { location ->
-                location.actions.any { it.kind == ActionKind.INNOVATE }
+                location.actions.any { it.kind == ActionKind.INNOVATE } &&
+                    location.name in repository.record.state.locations.built
             }
         if (location == null) {
-            publishBlocked("no settlement location offers Innovate")
+            publishBlocked("no built settlement location offers Innovate")
             return
         }
         applyResult(Innovate.run(repository.record, location.name, innovationName, content))
@@ -212,6 +216,20 @@ class LanternYearController(
      */
     fun addResource(entry: ResourceEntry) {
         applyResult(AddResourceEntry.run(repository.record, entry))
+    }
+
+    /**
+     * Crafts [gearName] at the built location [locationName].
+     *
+     * The whole rule — the location must be built, its recipe, the innovation prerequisite and the
+     * resource cost — is enforced by `:core`'s [Craft]; the controller mirrors the outcome like the
+     * other develop actions.
+     */
+    fun craft(
+        locationName: String,
+        gearName: String,
+    ) {
+        applyResult(Craft.run(repository.record, locationName, gearName, content))
     }
 
     /**
@@ -305,6 +323,14 @@ class LanternYearController(
             catalogError = repository.catalogError,
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
             builtLocations = record.state.locations.built,
+            gear = record.state.gear,
+            survivalLimit =
+                record.survivalLimit(ruleset) +
+                    DerivedValues.modifierTotal(
+                        content.gearModifiersFor(record.state.gear),
+                        ModifierTarget.SURVIVAL_LIMIT,
+                        ModifierScope.SETTLEMENT,
+                    ),
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }

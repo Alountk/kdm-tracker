@@ -1,7 +1,9 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ContentEntry
+import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.TimelineEntry
@@ -38,6 +40,8 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.fightingArts }) { it.name }
     val disorderDefinitions: List<ContentEntry> =
         mergeDefinition(packs.flatMap { it.bundle.disorders }) { it.name }
+    val gearDefinitions: List<Gear> =
+        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
     val timeline: List<TimelineEntry> =
         packs
             .flatMap { it.bundle.timeline }
@@ -56,26 +60,38 @@ data class ContentCatalog(
         definitions: List<T>,
         name: (T) -> String,
     ): List<T> = definitions.sortedBy(name).distinctBy(name)
+
+    /** The modifiers of every gear named in [gearNames]; unknown names are ignored. */
+    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> {
+        val byName = gearDefinitions.associateBy { it.name }
+        return gearNames.flatMap { byName[it]?.modifiers ?: emptyList() }
+    }
 }
 
 /**
- * Merges [locations] by name, preferring the definition that carries modeled data
- * (a non-empty [SettlementLocation.buildCost] or [SettlementLocation.actions]) over
- * a bare seed. Ties — both modeled or both bare — keep the first occurrence in pack
- * order, so the merge is deterministic and order-independent.
+ * Merges [locations] by name, combining the fields of same-name definitions so separate
+ * packs can contribute different aspects (one the build data, another the recipes). The
+ * result is deterministic: fields keep the first non-empty value in pack order, and lists
+ * are de-duplicated.
  */
 private fun mergeLocationDefinitions(locations: List<SettlementLocation>): List<SettlementLocation> =
     locations
         .groupBy { it.name }
-        .map { (_, sameName) -> sameName.reduce(::preferModeledLocation) }
+        .map { (_, sameName) -> sameName.reduce(::combineLocations) }
         .sortedBy { it.name }
 
-private fun preferModeledLocation(
+private fun combineLocations(
     current: SettlementLocation,
     candidate: SettlementLocation,
-): SettlementLocation = if (current.hasModeledData() || !candidate.hasModeledData()) current else candidate
-
-private fun SettlementLocation.hasModeledData(): Boolean = buildCost.isNotEmpty() || actions.isNotEmpty()
+): SettlementLocation =
+    SettlementLocation(
+        name = current.name,
+        requires = (current.requires + candidate.requires).distinct(),
+        buildEndeavors = if (current.buildEndeavors != 0) current.buildEndeavors else candidate.buildEndeavors,
+        buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
+        actions = (current.actions + candidate.actions).distinctBy { it.name },
+        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
+    )
 
 object ContentCatalogComposer {
     fun compose(packs: List<ContentPack>): CatalogResult {

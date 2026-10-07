@@ -199,7 +199,7 @@ class SettlementRepository(
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
                 sync = SyncMeta(clock.tick(null), rev = 1),
-                enabledPacks = listOf(Core16Content.pack.id),
+                enabledPacks = listOf(Core16Content.pack.id, Legacy15Content.pack.id),
             )
         val settlement =
             Settlement
@@ -310,7 +310,7 @@ class SettlementRepository(
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
                 sync = SyncMeta(clock.tick(null), rev = 1),
-                enabledPacks = listOf(Core16Content.pack.id),
+                enabledPacks = listOf(Core16Content.pack.id, Legacy15Content.pack.id),
             )
         val settlement =
             Settlement
@@ -326,19 +326,23 @@ class SettlementRepository(
     /**
      * The opening [SettlementRecord] for a new settlement: its starting locations are already built.
      *
-     * A settlement opens with the Lantern Hoard built, so Innovate is offered at a location the
-     * settlement actually has (the Innovate use-case refuses an unbuilt location). Without this the
-     * whole develop economy is unreachable — the Step 7 actions would all be `Blocked`.
+     * A settlement opens with the Lantern Hoard and the Armería built, so Innovate and Craft are
+     * offered at locations the settlement actually has (both use-cases refuse an unbuilt location).
+     * Without this the develop economy is unreachable — the Step 7 actions would all be `Blocked`.
+     * The Armería carries the curated 1.5 crafting recipes (see `Core15GearSeed`).
      */
     private fun startingRecord(settlement: Settlement): SettlementRecord =
         SettlementRecord(
             settlement = settlement,
-            state = SettlementState(locations = LocationSet(built = listOf(STARTING_LOCATION))),
+            state = SettlementState(locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION))),
         )
 }
 
 /** The location every settlement opens with, so Innovate is offered at a built location. */
 private const val STARTING_LOCATION = "Lantern Hoard"
+
+/** The location the curated 1.5 crafting recipes live on, built so Craft is reachable. */
+private const val CRAFT_LOCATION = "Armería"
 
 /** A catalog with no packs, used when composition fails so the screens render nothing. */
 private val EMPTY_CATALOG = ContentCatalog(emptyList())

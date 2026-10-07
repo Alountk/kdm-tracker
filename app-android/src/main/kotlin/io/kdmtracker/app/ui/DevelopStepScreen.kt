@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementAction
@@ -40,6 +41,7 @@ fun DevelopStepScreen(
     onBuild: (String) -> Unit,
     onSpendEndeavor: () -> Unit,
     onAddResource: (ResourceEntry) -> Unit,
+    onCraft: (String, String) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier =
@@ -59,6 +61,7 @@ fun DevelopStepScreen(
         RecordResourceSection(definitions = state.resourceDefinitions, onAddResource = onAddResource)
         InnovateSection(state = state, onInnovate = onInnovate)
         BuildSection(state = state, onBuild = onBuild)
+        CraftSection(state = state, onCraft = onCraft)
         EndeavorSection(state = state, onSpendEndeavor = onSpendEndeavor)
         StorageSection(lines = state.storageLines, breakdown = state.endeavorBreakdown)
     }
@@ -218,6 +221,52 @@ private fun StorageSection(
         }
     }
 }
+
+@Composable
+private fun CraftSection(
+    state: UiState,
+    onCraft: (String, String) -> Unit,
+) {
+    val craftable = state.catalogLocations.filter { it.name in state.builtLocations && it.recipes.isNotEmpty() }
+    DevelopSection(title = "Craft") {
+        if (craftable.isEmpty()) {
+            Text(text = "No built location can craft", style = MaterialTheme.typography.bodySmall)
+            return@DevelopSection
+        }
+        craftable.forEach { location ->
+            Text(text = location.name, style = MaterialTheme.typography.titleSmall)
+            location.recipes.forEach { recipe ->
+                Text(text = recipe.gearName, style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Cost: ${recipeCost(recipe)}", style = MaterialTheme.typography.bodySmall)
+                if (recipe.requires.isNotEmpty()) {
+                    Text(
+                        text = "Requires: ${recipe.requires.joinToString(", ")}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Button(
+                    onClick = { onCraft(location.name, recipe.gearName) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Craft ${recipe.gearName}")
+                }
+            }
+        }
+        if (state.gear.isNotEmpty()) {
+            Text(
+                text = "Gear: ${state.gear.joinToString(", ")}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun recipeCost(recipe: GearRecipe): String =
+    recipe.resourceCost.entries
+        .sortedBy { it.key }
+        .joinToString(", ") { (name, count) -> "$count $name" }
 
 @Composable
 private fun DevelopSection(
