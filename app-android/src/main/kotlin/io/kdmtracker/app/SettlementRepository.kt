@@ -197,6 +197,7 @@ class SettlementRepository(
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
                 sync = SyncMeta(clock.tick(null), rev = 1),
+                enabledPacks = listOf(Core16Content.pack.id),
             )
         val settlement =
             Settlement
@@ -307,6 +308,7 @@ class SettlementRepository(
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
                 sync = SyncMeta(clock.tick(null), rev = 1),
+                enabledPacks = listOf(Core16Content.pack.id),
             )
         val settlement =
             Settlement

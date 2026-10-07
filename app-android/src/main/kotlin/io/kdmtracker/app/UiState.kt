@@ -28,6 +28,11 @@ sealed interface Screen {
  * [storageLines] is the resource ledger projected for display, and [endeavorBreakdown] is
  * the derived endeavor composition for the current population. [catalogError] is set when
  * the held campaign names a pack the app cannot resolve.
+ *
+ * The trailing Step 1 (Set Up) view fields are additive and defaulted: [innovationDeck] is the
+ * consequence cards the unlocked innovations add, [builtLocations] is what the settlement has
+ * already built, [principles] is the ruleset's principle choices, and [yearEvents] is this
+ * year's timeline/event. They render the read-only set-up frame; the step screen owns no rules.
  */
 data class UiState(
     val screen: Screen,
@@ -47,4 +52,8 @@ data class UiState(
     val storageLines: List<StorageLine> = emptyList(),
     val endeavorBreakdown: EndeavorBreakdown = EndeavorBreakdown(base = 0, bonuses = emptyList()),
     val catalogError: String? = null,
+    val innovationDeck: List<String> = emptyList(),
+    val builtLocations: List<String> = emptyList(),
+    val principles: List<String> = emptyList(),
+    val yearEvents: List<String> = emptyList(),
 )

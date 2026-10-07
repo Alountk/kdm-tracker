@@ -41,7 +41,10 @@ class SettlementCatalogTest {
 
     @Test
     fun emptyPackSetYieldsAnEmptyCatalogAndNoError() {
-        val repository = SettlementRepository(InMemoryCampaignStore())
+        val store = InMemoryCampaignStore()
+        seed(store, name = "Empty", enabledPacks = emptyList())
+
+        val repository = SettlementRepository(store)
 
         assertTrue(repository.catalog.locationDefinitions.isEmpty())
         assertTrue(repository.catalog.innovationDefinitions.isEmpty())

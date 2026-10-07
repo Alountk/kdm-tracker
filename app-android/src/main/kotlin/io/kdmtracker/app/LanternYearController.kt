@@ -1,5 +1,6 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.domain.InnovationDeck
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -100,7 +101,14 @@ class LanternYearController(
                 returnedSurvivors = returnees,
                 context = context,
             )
-        repository.update(result.settlement)
+        val current = repository.record
+        val state =
+            if (result.transition.landsOnNewYear()) {
+                current.state.copy(phaseActionsUsed = emptySet())
+            } else {
+                current.state
+            }
+        repository.update(current.copy(settlement = result.settlement, state = state))
         _state.value = uiState(repository.record, result.transition.describe())
     }
 
@@ -181,6 +189,17 @@ class LanternYearController(
             storageLines = record.storage(),
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
             catalogError = repository.catalogError,
+            innovationDeck = InnovationDeck.of(record.state.innovations).cards,
+            builtLocations = record.state.locations.built,
+            principles =
+                ruleset.principles.entries
+                    .sortedBy { it.key.name }
+                    .flatMap { (category, choices) -> choices.map { "${category.name}: ${it.label}" } },
+            yearEvents =
+                repository.catalog.timeline
+                    .filter { it.lanternYear == settlement.lanternYear }
+                    .map { it.label } +
+                    listOfNotNull(settlement.settlementEvent),
         )
     }
 }
@@ -198,4 +217,19 @@ private fun FlowTransition.describe(): String =
         is FlowTransition.LoopBack -> "LoopBack → ${to.phase} ${to.step}"
         is FlowTransition.Commit -> "Commit → ${to.phase} ${to.step}"
         is FlowTransition.Blocked -> "Blocked: $reason"
+    }
+
+/**
+ * Whether this transition starts a fresh settlement year, so the once-per-phase actions reset.
+ *
+ * Committing out of the Settlement Phase ends the phase, and any transition landing on Settlement
+ * step 1 opens the next year empty (a successful Showdown's aftermath or a failed hunt). Every
+ * other move stays within the current year and must keep the spent phase actions.
+ */
+private fun FlowTransition.landsOnNewYear(): Boolean =
+    when (this) {
+        is FlowTransition.Commit -> true
+        is FlowTransition.Advance -> to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
+        is FlowTransition.LoopBack -> to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
+        is FlowTransition.Blocked -> false
     }
