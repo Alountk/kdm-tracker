@@ -6,6 +6,7 @@ import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.MilestoneConditionSpec
@@ -83,12 +84,13 @@ class TransferDocumentTest {
 
     @Test
     fun campaignAndSettlementsRoundTripThroughDto() {
-        val dto = TransferMapper.toDto(campaign, settlements)
+        val records = settlements.map { SettlementRecord(it) }
+        val dto = TransferMapper.toDto(campaign, records)
 
         val (domainCampaign, domainSettlements) = TransferMapper.toDomain(dto)
 
         assertEquals(campaign, domainCampaign)
-        assertEquals(settlements, domainSettlements)
+        assertEquals(records, domainSettlements)
     }
 
     @Test
@@ -96,7 +98,7 @@ class TransferDocumentTest {
         val document =
             TransferDocument(
                 exportedAt = "2026-10-05T00:00:00Z",
-                campaigns = listOf(TransferMapper.toDto(campaign, settlements)),
+                campaigns = listOf(TransferMapper.toDto(campaign, settlements.map { SettlementRecord(it) })),
             )
 
         val encoded = json.encodeToString(document)
@@ -136,7 +138,7 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV4() {
-        assertEquals(listOf(1, 2, 3, 4), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV5() {
+        assertEquals(listOf(1, 2, 3, 4, 5), TransferDocument.SUPPORTED_VERSIONS)
     }
 }

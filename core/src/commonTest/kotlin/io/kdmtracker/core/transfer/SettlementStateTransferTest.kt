@@ -1,0 +1,141 @@
+package io.kdmtracker.core.transfer
+
+import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationSet
+import io.kdmtracker.core.domain.ResourceCategory
+import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementPhase
+import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.SettlementState
+import io.kdmtracker.core.domain.SyncMeta
+import io.kdmtracker.core.domain.Timeline
+import io.kdmtracker.core.domain.TimelineEntry
+import io.kdmtracker.core.domain.Ulid
+import io.kdmtracker.core.ruleset.RulesetOverrides
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class SettlementStateTransferTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    private fun ulid(seed: Long): Ulid = Ulid.generate(seed) { 0 }
+
+    private val campaign =
+        Campaign(
+            id = ulid(1),
+            name = "Grey Havens",
+            rulesetId = "core-1.6",
+            rulesetOverrides = RulesetOverrides(),
+            settlementIds = listOf(ulid(2)),
+            sync = SyncMeta(HybridLogicalClock(1_700_000_000_000L, 4), rev = 7),
+        )
+
+    private val settlement =
+        Settlement(
+            id = ulid(2),
+            campaignId = campaign.id,
+            name = "First Cradle",
+            lanternYear = 5,
+            phase = SettlementPhase.HUNT,
+            currentStep = 3,
+            endeavors = 2,
+            population = 9,
+            settlementEvent = "The Hand",
+            sync = SyncMeta(HybridLogicalClock(1_700_000_000_100L, 1), rev = 3),
+        )
+
+    private val populatedState =
+        SettlementState(
+            timeline =
+                Timeline(
+                    entries = listOf(TimelineEntry(1, "Returning Survivors"), TimelineEntry(4, "Story Event")),
+                ),
+            innovations =
+                InnovationCollection(
+                    innovations =
+                        listOf(
+                            Innovation(
+                                name = "Lantern Oven",
+                                description = "Cook at the lantern oven",
+                                consequences = listOf("Cooking", "Storytelling"),
+                                survivalLimitBonus = 1,
+                            ),
+                            Innovation(
+                                name = "Paint",
+                                description = "Paint the settlement",
+                                consequences = listOf("Face Painting"),
+                            ),
+                        ),
+                ),
+            locations = LocationSet(built = listOf("Lantern Oven", "Organ Grinder")),
+            resourceEntries =
+                listOf(
+                    ResourceEntry("Bone", ResourceCategory.BASIC, 3),
+                    ResourceEntry("Bone", ResourceCategory.BASIC, -1),
+                    ResourceEntry("Skull", ResourceCategory.MONSTER, 2),
+                ),
+            deaths = 4,
+            births = 2,
+        )
+
+    @Test
+    fun mapperRoundTripsSettlementRecordWithPopulatedState() {
+        val records = listOf(SettlementRecord(settlement, populatedState))
+
+        val (domainCampaign, domainRecords) = TransferMapper.toDomain(TransferMapper.toDto(campaign, records))
+
+        assertEquals(campaign, domainCampaign)
+        assertEquals(records, domainRecords)
+    }
+
+    @Test
+    fun v4DocumentWithoutStateDecodesToEmptyState() {
+        val v4 =
+            """
+            {
+              "schemaVersion": 4,
+              "exportedAt": "2024-01-01T00:00:00Z",
+              "campaigns": [
+                {
+                  "id": "${campaign.id.value}",
+                  "name": "Grey Havens",
+                  "rulesetId": "core-1.6",
+                  "settlementIds": ["${settlement.id.value}"],
+                  "settlements": [
+                    {
+                      "id": "${settlement.id.value}",
+                      "campaignId": "${campaign.id.value}",
+                      "name": "First Cradle"
+                    }
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val document = json.decodeFromString<TransferDocument>(v4)
+
+        assertEquals(4, document.schemaVersion)
+        assertEquals(
+            SettlementState(),
+            document.campaigns
+                .single()
+                .settlements
+                .single()
+                .state,
+        )
+    }
+
+    @Test
+    fun newDocumentDefaultsToSchemaVersionFive() {
+        val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
+
+        assertEquals(5, document.schemaVersion)
+    }
+}
