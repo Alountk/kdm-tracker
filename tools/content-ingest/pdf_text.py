@@ -10,7 +10,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 PathLike = Union[str, Path]
 
@@ -36,6 +36,28 @@ def pdf_text(pdf_path: PathLike, *, layout: bool = True) -> str:
     args = [_require("pdftotext")]
     if layout:
         args.append("-layout")
+    args += [str(pdf_path), "-"]
+
+    completed = subprocess.run(args, check=True, capture_output=True, text=True, encoding="utf-8")
+    return completed.stdout
+
+
+def bbox_text(
+    pdf_path: PathLike,
+    *,
+    first: Optional[int] = None,
+    last: Optional[int] = None,
+) -> str:
+    """Return the `pdftotext -bbox-layout` XHTML for `pdf_path` (optionally a page range).
+
+    Each word carries its bounding box, so callers can recover spaced text and separate
+    columns by x — unlike `pdf_text`'s `-layout`, which flattens that structure.
+    """
+    args = [_require("pdftotext"), "-bbox-layout"]
+    if first is not None:
+        args += ["-f", str(first)]
+    if last is not None:
+        args += ["-l", str(last)]
     args += [str(pdf_path), "-"]
 
     completed = subprocess.run(args, check=True, capture_output=True, text=True, encoding="utf-8")
