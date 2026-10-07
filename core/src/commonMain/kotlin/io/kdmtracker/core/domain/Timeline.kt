@@ -8,6 +8,7 @@ data class TimelineEntry(
     val label: String,
 )
 
+@Serializable
 data class Timeline(
     val entries: List<TimelineEntry> = emptyList(),
     val length: Int = 40,

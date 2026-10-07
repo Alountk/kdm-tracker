@@ -24,6 +24,7 @@ data class Innovation(
  * The collection holds content only; anything derived from it — such as the
  * [InnovationDeck] — lives on the deck, never hardcoded here.
  */
+@Serializable
 data class InnovationCollection(
     val innovations: List<Innovation> = emptyList(),
 ) {

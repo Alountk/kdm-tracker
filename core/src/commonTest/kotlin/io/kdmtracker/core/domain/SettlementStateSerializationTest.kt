@@ -1,0 +1,94 @@
+package io.kdmtracker.core.domain
+
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class SettlementStateSerializationTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    private val populated =
+        SettlementState(
+            timeline =
+                Timeline(
+                    entries =
+                        listOf(
+                            TimelineEntry(1, "Returning Survivors"),
+                            TimelineEntry(4, "Story Event"),
+                            TimelineEntry(16, "Nemesis: The Butcher Lvl 2"),
+                        ),
+                    length = 40,
+                ),
+            innovations =
+                InnovationCollection(
+                    listOf(
+                        Innovation(
+                            name = "Language",
+                            description = "You can talk.",
+                            consequences = listOf("Language"),
+                            survivalLimitBonus = 1,
+                        ),
+                        Innovation(
+                            name = "Paint",
+                            description = "Face paint.",
+                            consequences = listOf("Paint", "Ammonia"),
+                            survivalLimitBonus = 1,
+                        ),
+                    ),
+                ),
+            locations = LocationSet(built = listOf("Lantern Hoard", "Bone Smith")),
+            resourceEntries =
+                listOf(
+                    ResourceEntry("Bone", ResourceCategory.BASIC, delta = 3),
+                    ResourceEntry("Bone", ResourceCategory.BASIC, delta = -1),
+                    ResourceEntry("Hide", ResourceCategory.BASIC, delta = 2),
+                    ResourceEntry("Skull", ResourceCategory.MONSTER, delta = -2),
+                ),
+            deaths = 2,
+            births = 3,
+        )
+
+    @Test
+    fun populatedStateRoundTripsThroughJson() {
+        val encoded = json.encodeToString(populated)
+        val decoded = json.decodeFromString<SettlementState>(encoded)
+
+        assertEquals(populated, decoded)
+    }
+
+    @Test
+    fun emptyStateRoundTripsThroughJson() {
+        val encoded = json.encodeToString(SettlementState())
+        val decoded = json.decodeFromString<SettlementState>(encoded)
+
+        assertEquals(SettlementState(), decoded)
+    }
+
+    @Test
+    fun jsonMissingFieldsDecodesWithDefaults() {
+        val older =
+            """
+            {
+              "timeline": {
+                "entries": [
+                  { "lanternYear": 4, "label": "Story Event" }
+                ]
+              },
+              "deaths": 1
+            }
+            """.trimIndent()
+
+        val decoded = json.decodeFromString<SettlementState>(older)
+
+        assertEquals(listOf(TimelineEntry(4, "Story Event")), decoded.timeline.entries)
+        assertEquals(40, decoded.timeline.length)
+        assertEquals(1, decoded.deaths)
+        assertTrue(decoded.innovations.innovations.isEmpty())
+        assertTrue(decoded.locations.built.isEmpty())
+        assertTrue(decoded.resourceEntries.isEmpty())
+        assertEquals(0, decoded.births)
+    }
+}
