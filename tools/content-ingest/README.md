@@ -5,6 +5,24 @@ committed Kotlin content for `:core`. The generator is the source of truth: the
 generated file is never edited by hand, and re-running the generator must be a
 no-op.
 
+## Pipeline
+
+The inputs are the **untracked** Spanish 1.5 card PDFs under `external-assets/**`,
+which is git-ignored and never committed. Each `ingest_*.py` script parses its PDFs with
+`pdftotext` (cross-checking page counts with `pdfinfo`) and writes a **committed** Kotlin
+file under `core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/`. The app
+never reads a PDF at runtime — it only reads the committed Kotlin.
+
+Output is **deterministic**: every list is sorted and no timestamps or paths are embedded,
+so re-running a script over unchanged inputs is byte-identical:
+
+```sh
+git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/
+```
+
+Each script accepts `--out` to override its generated file path; the deck-specific
+sections below list the remaining arguments.
+
 ## Prerequisites
 
 - Python 3 (standard library only).
@@ -148,3 +166,22 @@ appearing twice with different descriptions also aborts.
   were never in the extractable layer.
 - The `Apatía` card's placeholder art text (`Lorem ipsum`) is part of the extracted
   body and is kept verbatim.
+
+## Known gaps / not ingested
+
+Only decks with an extractable text layer are covered today. The rest are deferred to
+later ingestion waves:
+
+- **Image-only PDFs (OCR/vision later).** Several decks are scanned art with no text
+  layer — the **Gorm** expansion cards, and the **monster AI / terrain / gear** cards where
+  scanned. `pdftotext` returns nothing usable for them, so they need OCR or a vision model
+  before they can be parsed.
+- **`AF Artes de Combate Secretas.pdf`.** The **13 secret fighting arts** are not yet
+  ingested; `ingest_fighting_arts.py` reads only the public fighting-arts and disorders
+  decks.
+- **Cost-icon glyphs dropped.** `pdftotext` omits the PDF's icon glyphs, so a cost icon
+  leaves a dangling empty grant in a few cards (e.g. `Doble Esprint`, `Berserker`), and a
+  few innovation lines begin with a stray `:`.
+- **Source placeholder kept verbatim.** The `Apatía` card's placeholder art text
+  (`Lorem ipsum`) is part of the extracted body and is not cleaned up.
+

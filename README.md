@@ -279,6 +279,8 @@ data class ContentBundle(
     val innovations: List<Innovation> = emptyList(),        // names + consequences
     val locations: List<SettlementLocation> = emptyList(),  // names + prerequisites
     val resources: List<ResourceDefinition> = emptyList(),  // names + typed category
+    val fightingArts: List<ContentEntry> = emptyList(),     // names + effect text
+    val disorders: List<ContentEntry> = emptyList(),        // names + effect text
     val timeline: List<TimelineEntry> = emptyList(),
     val quarries: List<String> = emptyList(),
     val nemeses: List<String> = emptyList(),
@@ -311,6 +313,28 @@ serves any edition + expansion combination. `Core16Content.pack` is the shipped
 resources, and the core quarries and nemeses. It is deliberately not exhaustive: the
 full 1.5/1.6 card sets arrive later through the content-ingestion pipeline, split
 across edition and expansion packs.
+
+### Content ingestion pipeline
+
+The `core-1.5` edition pack (`Legacy15Content.pack`, id `core-1.5`) is built from the
+Spanish 1.5 card PDFs by the scripts in `tools/content-ingest/`. The source PDFs live under
+`external-assets/`, which is **git-ignored and never committed**; each `ingest_*.py` script
+parses its PDFs with `pdftotext` and writes **committed** Kotlin sources under
+`core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/`. The generator is the
+source of truth — the generated files are never edited by hand — and **the app never reads
+a PDF at runtime**; it only reads the committed Kotlin.
+
+| Generated file | Script | Content |
+| --- | --- | --- |
+| `Core15Innovations.kt` | `ingest_innovations.py` | 42 innovations + consequence graph |
+| `Core15Resources.kt` | `ingest_resources.py` | 56 resources + typed category |
+| `Core15FightingArts.kt` | `ingest_fighting_arts.py` | 24 fighting arts + 23 disorders |
+
+Output is **deterministic**: entries and every nested list are sorted, and no timestamps or
+paths are embedded, so re-running a script over unchanged inputs is **byte-identical**.
+See [`tools/content-ingest/README.md`](tools/content-ingest/README.md) for the exact
+re-run commands, the parsing model, and the known gaps (image-only card decks, the
+secret-arts deck, dropped cost-icon glyphs).
 
 ## Sync hub (server)
 
