@@ -69,24 +69,29 @@ data class ContentCatalog(
 }
 
 /**
- * Merges [locations] by name, preferring the definition that carries modeled data
- * (a non-empty [SettlementLocation.buildCost] or [SettlementLocation.actions]) over
- * a bare seed. Ties — both modeled or both bare — keep the first occurrence in pack
- * order, so the merge is deterministic and order-independent.
+ * Merges [locations] by name, combining the fields of same-name definitions so separate
+ * packs can contribute different aspects (one the build data, another the recipes). The
+ * result is deterministic: fields keep the first non-empty value in pack order, and lists
+ * are de-duplicated.
  */
 private fun mergeLocationDefinitions(locations: List<SettlementLocation>): List<SettlementLocation> =
     locations
         .groupBy { it.name }
-        .map { (_, sameName) -> sameName.reduce(::preferModeledLocation) }
+        .map { (_, sameName) -> sameName.reduce(::combineLocations) }
         .sortedBy { it.name }
 
-private fun preferModeledLocation(
+private fun combineLocations(
     current: SettlementLocation,
     candidate: SettlementLocation,
-): SettlementLocation = if (current.hasModeledData() || !candidate.hasModeledData()) current else candidate
-
-private fun SettlementLocation.hasModeledData(): Boolean =
-    buildCost.isNotEmpty() || actions.isNotEmpty() || recipes.isNotEmpty()
+): SettlementLocation =
+    SettlementLocation(
+        name = current.name,
+        requires = (current.requires + candidate.requires).distinct(),
+        buildEndeavors = if (current.buildEndeavors != 0) current.buildEndeavors else candidate.buildEndeavors,
+        buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
+        actions = (current.actions + candidate.actions).distinctBy { it.name },
+        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
+    )
 
 object ContentCatalogComposer {
     fun compose(packs: List<ContentPack>): CatalogResult {

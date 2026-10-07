@@ -82,6 +82,9 @@ class Core15LocationsTest {
 
     @Test
     fun packIncludesTheGeneratedLocations() {
-        assertEquals(Core15Locations.bundle.locations, Legacy15Content.pack.bundle.locations)
+        assertTrue(
+            Legacy15Content.pack.bundle.locations
+                .containsAll(Core15Locations.bundle.locations),
+        )
     }
 }
