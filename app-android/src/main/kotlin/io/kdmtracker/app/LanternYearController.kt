@@ -103,7 +103,7 @@ class LanternYearController(
             )
         val current = repository.record
         val state =
-            if (result.transition.landsOnNewYear()) {
+            if (result.transition.landsOnNewYear(settlement.phase)) {
                 current.state.copy(phaseActionsUsed = emptySet())
             } else {
                 current.state
@@ -220,16 +220,21 @@ private fun FlowTransition.describe(): String =
     }
 
 /**
- * Whether this transition starts a fresh settlement year, so the once-per-phase actions reset.
+ * Whether a transition out of [from] starts a fresh settlement year, so the once-per-phase
+ * actions reset.
  *
- * Committing out of the Settlement Phase ends the phase, and any transition landing on Settlement
- * step 1 opens the next year empty (a successful Showdown's aftermath or a failed hunt). Every
- * other move stays within the current year and must keep the spent phase actions.
+ * The boundary is scoped to the **source** phase: a [FlowTransition.Commit] counts only when it
+ * leaves the Settlement Phase (which is the only place `:core`'s
+ * [io.kdmtracker.core.rules.LanternYearFlow] emits one), and any transition landing on Settlement
+ * step 1 opens the next year empty (a successful Showdown's aftermath or a failed hunt). A
+ * mid-year move — including a hypothetical `Commit` from Hunt or Showdown — keeps the spent actions.
  */
-private fun FlowTransition.landsOnNewYear(): Boolean =
+internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
     when (this) {
-        is FlowTransition.Commit -> true
-        is FlowTransition.Advance -> to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
-        is FlowTransition.LoopBack -> to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
+        is FlowTransition.Commit -> from == SettlementPhase.SETTLEMENT
+        is FlowTransition.Advance ->
+            from != SettlementPhase.SETTLEMENT && to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
+        is FlowTransition.LoopBack ->
+            from != SettlementPhase.SETTLEMENT && to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
         is FlowTransition.Blocked -> false
     }

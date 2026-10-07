@@ -7,9 +7,12 @@ import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
+import io.kdmtracker.core.rules.FlowTransition
+import io.kdmtracker.core.rules.PhaseStep
 import io.kdmtracker.core.sync.CampaignSummary
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -162,9 +165,57 @@ class SetUpStepControllerTest {
     }
 
     @Test
+    fun aHuntToShowdownAdvanceKeepsThePhaseActionsUsed() {
+        val repository = repository()
+        repository.update(
+            repository.record.copy(
+                settlement = repository.settlement.copy(phase = SettlementPhase.HUNT, currentStep = 1),
+                state = repository.record.state.copy(phaseActionsUsed = setOf("Innovate")),
+            ),
+        )
+        val controller = LanternYearController(repository)
+
+        controller.advance()
+
+        val state = controller.state.value
+        assertEquals(SettlementPhase.SHOWDOWN, state.phase)
+        assertEquals(
+            setOf("Innovate"),
+            state.record
+                ?.state
+                ?.phaseActionsUsed,
+        )
+    }
+
+    @Test
+    fun aMidYearCommitDoesNotStartANewYear() {
+        val midYearCommit = FlowTransition.Commit(PhaseStep(SettlementPhase.HUNT, 1), 0)
+
+        assertFalse(midYearCommit.landsOnNewYear(SettlementPhase.HUNT))
+        assertFalse(midYearCommit.landsOnNewYear(SettlementPhase.SHOWDOWN))
+    }
+
+    @Test
+    fun aSettlementPhaseCommitStartsANewYear() {
+        val commit = FlowTransition.Commit(PhaseStep(SettlementPhase.HUNT, 1), 0)
+
+        assertTrue(commit.landsOnNewYear(SettlementPhase.SETTLEMENT))
+    }
+
+    @Test
+    fun returningToSettlementStepOneStartsANewYear() {
+        val aftermath = FlowTransition.Advance(PhaseStep(SettlementPhase.SETTLEMENT, 1))
+
+        assertTrue(aftermath.landsOnNewYear(SettlementPhase.SHOWDOWN))
+        assertTrue(aftermath.landsOnNewYear(SettlementPhase.HUNT))
+        assertFalse(aftermath.landsOnNewYear(SettlementPhase.SETTLEMENT))
+    }
+
+    @Test
     fun aSeededRepositoryComposesANonEmptyCatalog() {
         val repository = SettlementRepository(InMemoryCampaignStore())
 
+        assertEquals(listOf("core-1.6"), repository.campaign.enabledPacks)
         assertEquals(listOf(Core16Content.pack.id), repository.campaign.enabledPacks)
         assertTrue(repository.catalog.locationDefinitions.isNotEmpty())
         assertTrue(repository.catalog.innovationDefinitions.isNotEmpty())
@@ -183,6 +234,7 @@ class SetUpStepControllerTest {
 
         repository.create("Gloom")
 
+        assertEquals(listOf("core-1.6"), repository.campaign.enabledPacks)
         assertEquals(listOf(Core16Content.pack.id), repository.campaign.enabledPacks)
         assertTrue(repository.catalog.locationDefinitions.isNotEmpty())
     }
