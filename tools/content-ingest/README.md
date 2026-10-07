@@ -194,6 +194,67 @@ appearing twice with different descriptions also aborts.
 - The `Apatía` card's placeholder art text (`Lorem ipsum`) is part of the extracted
   body and is kept verbatim.
 
+## Settlement locations
+
+`ingest_locations.py` reads `AF Asentamientos Loc.pdf` and writes
+`core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15Locations.kt`
+as a `ContentBundle` with `locations = List<SettlementLocation>`, each carrying its
+build prerequisites, build cost, and actions.
+
+```sh
+python3 tools/content-ingest/ingest_locations.py \
+  --pdf "path/to/external-assets/Juego Completo/Formato XXL 102x204 mm/AF Asentamientos Loc.pdf"
+```
+
+`--pdf` overrides the source PDF (it defaults to that path) and `--out` the generated file.
+
+### Parsing model
+
+- The PDF is 14 pages: a blank cover, then one location card per page. The page count is
+  cross-checked against `pdfinfo`, and the blank page is skipped.
+- The first non-blank line of the default reading order is the location **name**.
+- A **build block** is a `Construir <Target>` line. Building `<Target>` requires the card
+  it is printed on, so `<Target>` gains `requires = [card name]` and `buildEndeavors = 1`
+  (the rulebook charges one endeavor per location; the card prints only the resources).
+  The three bars on the Lantern Hoard (Taller de Huesos / Peletería / Molino de Órganos)
+  carry no resource cost.
+- The Lantern Hoard's **Innovate** action is parsed from its `Esfuerzo` block:
+  `kind = INNOVATE`, `endeavorCost = 1`, `resourceCost = {Hueso de Monstruo: 1, Órgano de
+  Monstruo: 1, Piel de Monstruo: 1}`, `oncePerPhase = true`, `draw = 2`, `keep = 1`, and
+  the printed prose as `effect`.
+- Resource tokens resolve to the canonical names used by `Core15Resources.kt`
+  (`hueso` → `Hueso de Monstruo`, …). A token with no card definition is kept verbatim,
+  and nothing is invented: a location whose build cost is not on this PDF is emitted bare.
+
+### Determinism
+
+Locations are sorted by name; the output embeds no timestamps and no paths, so a re-run is
+byte-identical:
+
+```sh
+python3 tools/content-ingest/ingest_locations.py --pdf "<pdf>"
+git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15Locations.kt
+```
+
+### Known parse gaps
+
+- **Overlapping build bar on Peletería.** The source PDF draws a stray copy of the Taller
+  de Huesos → Armería bar on top of the visible Peletería → Curtiduría bar, so the default
+  reading order merges both cost boxes. The generator reads the cost from the `-raw`
+  content order (which binds the visible cost to `Curtiduría`) and falls back to the
+  default order elsewhere; this is the only card affected.
+- **`restos` (scrap) has no card.** Core15Resources.kt defines no `restos` card, so the
+  token is kept verbatim should it reach a cost box. Only gear recipes (not ingested here)
+  use it today.
+- **Locations outside the build tree.** Plumería, Felinarium, Cirujano Barbero, Artesano
+  de Máscaras, Herrería and Cúmulo de Linternas Extinto publish no `Construir` bar on any
+  base location card; they are unlocked by innovations, so their build costs live on the
+  innovation cards and are not extracted here. They are emitted as bare names.
+- **Activities beyond Innovate.** The base cards print other activities (Búsqueda de
+  Restos, Trepanación, Augurio, Investigar, Experiencia Compartida) as d10 tables/prose.
+  Only the Lantern Hoard's `Esfuerzo` Innovate action is modeled here; the rest are
+  deferred.
+
 ## Known gaps / not ingested
 
 Only decks with an extractable text layer are covered today. The rest are deferred to

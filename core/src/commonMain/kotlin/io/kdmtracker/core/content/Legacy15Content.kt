@@ -2,6 +2,7 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.content.generated.Core15FightingArts
 import io.kdmtracker.core.content.generated.Core15Innovations
+import io.kdmtracker.core.content.generated.Core15Locations
 import io.kdmtracker.core.content.generated.Core15Resources
 
 /**
@@ -22,6 +23,7 @@ object Legacy15Content {
             bundle =
                 ContentBundle(
                     innovations = Core15Innovations.bundle.innovations,
+                    locations = Core15Locations.bundle.locations,
                     resources = Core15Resources.bundle.resources,
                     fightingArts = Core15FightingArts.bundle.fightingArts,
                     disorders = Core15FightingArts.bundle.disorders,
