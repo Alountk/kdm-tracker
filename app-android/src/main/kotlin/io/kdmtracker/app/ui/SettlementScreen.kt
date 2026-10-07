@@ -31,7 +31,9 @@ private const val DISABLED_ALPHA = 0.38f
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
  *
  * Step 1 (Set Up) hands the whole frame to [SetUpStepScreen]: it is read-only content with its
- * own confirm action. Every other step shows the cockpit — the lantern year, population and
+ * own confirm action. Step 7 (Develop) hands the frame to [DevelopStepScreen], whose Innovate,
+ * Build and Endeavor actions are reported through their callbacks (defaulted to no-ops so existing
+ * callers keep compiling). Every other step shows the cockpit — the lantern year, population and
  * endeavors, a rail of the official settlement steps with [UiState.currentStep] highlighted, a
  * "Pendiente" body and the back/next controls. All navigation is reported through the callbacks;
  * this composable owns no state and no rules.
@@ -42,9 +44,21 @@ fun SettlementScreen(
     onAdvance: () -> Unit,
     onPrevious: () -> Unit,
     onSelectStep: (Int) -> Unit,
+    onInnovate: (String) -> Unit = {},
+    onBuild: (String) -> Unit = {},
+    onSpendEndeavor: () -> Unit = {},
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
+        return
+    }
+    if (state.currentStep == 7) {
+        DevelopStepScreen(
+            state = state,
+            onInnovate = onInnovate,
+            onBuild = onBuild,
+            onSpendEndeavor = onSpendEndeavor,
+        )
         return
     }
     SettlementCockpit(

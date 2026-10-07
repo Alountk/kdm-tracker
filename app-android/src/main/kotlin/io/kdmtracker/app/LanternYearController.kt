@@ -1,6 +1,9 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -9,9 +12,14 @@ import io.kdmtracker.core.rules.FlowContext
 import io.kdmtracker.core.rules.FlowTransition
 import io.kdmtracker.core.rules.LanternYearFlow
 import io.kdmtracker.core.rules.PhaseStep
+import io.kdmtracker.core.rules.StepResult
 import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.Ruleset
+import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
+import io.kdmtracker.core.usecase.BuildLocation
+import io.kdmtracker.core.usecase.Innovate
+import io.kdmtracker.core.usecase.SpendEndeavor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +35,17 @@ import kotlinx.coroutines.flow.asStateFlow
 class LanternYearController(
     private val repository: SettlementRepository,
     private val ruleset: Ruleset = Core16Ruleset,
+    private val catalog: ContentCatalog? = null,
 ) {
+    /**
+     * The content the step actions read.
+     *
+     * Production leaves [catalog] null so the repository's composed catalog is used; a JVM test can
+     * inject a composed catalog so the Step 7 use-cases run against a controlled pack. This is
+     * content plumbing only — every rule stays in `:core`.
+     */
+    private val content: ContentCatalog get() = catalog ?: repository.catalog
+
     private val _state =
         MutableStateFlow(uiState(repository.record, lastTransition = null))
 
@@ -139,6 +157,78 @@ class LanternYearController(
     }
 
     /**
+     * Runs the Step 7 Innovate action to unlock [innovationName].
+     *
+     * The innovating location is found from the content: the first catalog location offering an
+     * [ActionKind.INNOVATE] action (the Lantern Hoard and its variants). The whole rule — the
+     * once-per-phase limit, the cost, the inventory guard and adding the innovation — is enforced
+     * by `:core`'s [Innovate]; the controller only supplies the record, the location and [content].
+     * An [StepResult.Ok] is persisted and republished; a [StepResult.Blocked] surfaces its reason.
+     *
+     * When the catalog models no Innovate location, nothing runs and an explanatory reason is
+     * surfaced rather than silently doing nothing.
+     */
+    fun innovate(innovationName: String) {
+        val location =
+            content.locationDefinitions.firstOrNull { location ->
+                location.actions.any { it.kind == ActionKind.INNOVATE }
+            }
+        if (location == null) {
+            publishBlocked("no settlement location offers Innovate")
+            return
+        }
+        applyResult(Innovate.run(repository.record, location.name, innovationName, content))
+    }
+
+    /**
+     * Builds the settlement location named [locationName].
+     *
+     * Prerequisites, cost and storage are enforced entirely by `:core`'s [BuildLocation]; the
+     * controller passes the held record and [content] and mirrors the outcome.
+     */
+    fun build(locationName: String) {
+        applyResult(BuildLocation.run(repository.record, locationName, content))
+    }
+
+    /**
+     * Spends one endeavor for a generic Settlement Phase action.
+     *
+     * The single shared rule lives in `:core`'s [SpendEndeavor]; the action's effect is resolved by
+     * the players, so the controller only decrements the pool.
+     */
+    fun spendEndeavor() {
+        applyResult(SpendEndeavor.run(repository.record))
+    }
+
+    /**
+     * Appends [entry] to the settlement's resource ledger.
+     *
+     * `:core`'s [AddResourceEntry] guards a spend that would overdraw the ledger; the controller
+     * mirrors the outcome like the other develop actions.
+     */
+    fun addResource(entry: ResourceEntry) {
+        applyResult(AddResourceEntry.run(repository.record, entry))
+    }
+
+    /**
+     * Mirrors one `:core` action outcome: an [StepResult.Ok] is persisted and republished with no
+     * error, while a [StepResult.Blocked] leaves the record untouched and surfaces its reason.
+     */
+    private fun applyResult(result: StepResult<SettlementRecord>) {
+        when (result) {
+            is StepResult.Ok -> {
+                repository.update(result.value)
+                _state.value = uiState(repository.record, _state.value.lastTransition)
+            }
+            is StepResult.Blocked -> publishBlocked(result.reason)
+        }
+    }
+
+    private fun publishBlocked(reason: String) {
+        _state.value = _state.value.copy(actionError = reason)
+    }
+
+    /**
      * Re-reads the repository after an external (sync) change and republishes [state].
      *
      * The controller mirrors the settlement into [state] once per mutation; a sync pass mutates the
@@ -184,8 +274,8 @@ class LanternYearController(
                     .toSet(),
             lastTransition = lastTransition,
             record = record,
-            buildableLocations = repository.catalog.locationDefinitions,
-            innovationDefinitions = repository.catalog.innovationDefinitions,
+            buildableLocations = content.locationDefinitions,
+            innovationDefinitions = content.innovationDefinitions,
             storageLines = record.storage(),
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
             catalogError = repository.catalogError,
@@ -196,7 +286,7 @@ class LanternYearController(
                     .sortedBy { it.key.name }
                     .flatMap { (category, choices) -> choices.map { "${category.name}: ${it.label}" } },
             yearEvents =
-                repository.catalog.timeline
+                content.timeline
                     .filter { it.lanternYear == settlement.lanternYear }
                     .map { it.label } +
                     listOfNotNull(settlement.settlementEvent),

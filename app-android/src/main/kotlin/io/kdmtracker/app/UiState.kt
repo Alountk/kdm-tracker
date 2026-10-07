@@ -33,6 +33,10 @@ sealed interface Screen {
  * consequence cards the unlocked innovations add, [builtLocations] is what the settlement has
  * already built, [principles] is the ruleset's principle choices, and [yearEvents] is this
  * year's timeline/event. They render the read-only set-up frame; the step screen owns no rules.
+ *
+ * [actionError] is the trailing Step 7 (Develop) field: the reason the last develop action was
+ * refused, or `null` after a successful action or a navigation. The Develop screen shows it
+ * inline and owns no rules.
  */
 data class UiState(
     val screen: Screen,
@@ -56,4 +60,5 @@ data class UiState(
     val builtLocations: List<String> = emptyList(),
     val principles: List<String> = emptyList(),
     val yearEvents: List<String> = emptyList(),
+    val actionError: String? = null,
 )
