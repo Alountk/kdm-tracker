@@ -13,6 +13,7 @@ import io.kdmtracker.core.ruleset.Core16Ruleset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class EndeavorAndLedgerUseCaseTest {
     private fun record(endeavors: Int = 0): SettlementRecord =
@@ -67,5 +68,55 @@ class EndeavorAndLedgerUseCaseTest {
 
         val line = spent.value.storage().single { it.name == "Bone" }
         assertEquals(1, line.quantity)
+    }
+
+    @Test
+    fun spendingExactlyTheLedgerHoldsIsAllowed() {
+        val gained =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, 2)),
+            )
+        val spent =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                AddResourceEntry.run(gained.value, ResourceEntry("Bone", ResourceCategory.BASIC, -2)),
+            )
+
+        assertTrue(spent.value.storage().none { it.name == "Bone" })
+    }
+
+    @Test
+    fun gainingOntoANonzeroPoolKeepsThePriorQuantity() {
+        val gained =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, 3)),
+            )
+        val again =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                AddResourceEntry.run(gained.value, ResourceEntry("Bone", ResourceCategory.BASIC, 2)),
+            )
+
+        assertEquals(
+            5,
+            again.value
+                .storage()
+                .single { it.name == "Bone" }
+                .quantity,
+        )
+    }
+
+    @Test
+    fun gainingIsAllowedEvenWhenTheLedgerIsNetNegative() {
+        val overdrawn = record()
+        val withDeficit =
+            overdrawn.copy(
+                state =
+                    overdrawn.state.copy(
+                        resourceEntries = listOf(ResourceEntry("Bone", ResourceCategory.BASIC, -3)),
+                    ),
+            )
+
+        val result = AddResourceEntry.run(withDeficit, ResourceEntry("Bone", ResourceCategory.BASIC, 1))
+
+        assertIs<StepResult.Ok<SettlementRecord>>(result)
     }
 }

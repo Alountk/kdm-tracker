@@ -26,7 +26,7 @@ object AddResourceEntry {
                 .project(record.state.resourceEntries)
                 .filter { it.name == entry.name }
                 .sumOf { it.quantity }
-        if (projected + entry.delta < 0) {
+        if (entry.delta < 0 && projected + entry.delta < 0) {
             return StepResult.Blocked("insufficient ${entry.name}")
         }
         return StepResult.Ok(
