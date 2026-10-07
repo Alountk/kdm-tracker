@@ -222,9 +222,14 @@ python3 tools/content-ingest/ingest_locations.py \
   `kind = INNOVATE`, `endeavorCost = 1`, `resourceCost = {Hueso de Monstruo: 1, Órgano de
   Monstruo: 1, Piel de Monstruo: 1}`, `oncePerPhase = true`, `draw = 2`, `keep = 1`, and
   the printed prose as `effect`.
-- Resource tokens resolve to the canonical names used by `Core15Resources.kt`
-  (`hueso` → `Hueso de Monstruo`, …). A token with no card definition is kept verbatim,
-  and nothing is invented: a location whose build cost is not on this PDF is emitted bare.
+- Resource tokens are matched to a specific card name in `Core15Resources.kt` (`hueso` →
+  `Hueso de Monstruo`, …). That name is an **approximation of the card's material *type***:
+  the card prints a bare material tag (`3 x hueso`), but `buildCost`/`resourceCost` are keyed
+  by resource **name**, so a settlement holding a different bone-type resource would not
+  satisfy the cost. Resolving costs by **type** needs a resource-type model and a
+  type↔resource content pass (see the gap below). A token with no card definition is
+  lowercased and kept verbatim; nothing is invented: a location whose build cost is not on
+  this PDF is emitted bare.
 
 ### Determinism
 
@@ -243,9 +248,16 @@ git diff --exit-code core/src/commonMain/kotlin/io/kdmtracker/core/content/gener
   reading order merges both cost boxes. The generator reads the cost from the `-raw`
   content order (which binds the visible cost to `Curtiduría`) and falls back to the
   default order elsewhere; this is the only card affected.
+- **Costs are name-keyed, not type-keyed.** The cards print a material *type* tag
+  (`3 x hueso`), but `SettlementLocation.buildCost` and `SettlementAction.resourceCost` map
+  a resource **name**, so the extractor pins one representative card (`hueso` → `Hueso de
+  Monstruo`) as the stand-in for the type. Enforcement (`BuildLocation` / `AddResourceEntry`)
+  matches by name, so holding a different bone-type resource would wrongly `Blocked`.
+  Resolving costs by resource **type** is deferred to a follow-up work unit (it needs a
+  resource-type model plus a type↔resource content pass).
 - **`restos` (scrap) has no card.** Core15Resources.kt defines no `restos` card, so the
-  token is kept verbatim should it reach a cost box. Only gear recipes (not ingested here)
-  use it today.
+  token is lowercased and kept verbatim should it reach a cost box. Only gear recipes (not
+  ingested here) use it today.
 - **Locations outside the build tree.** Plumería, Felinarium, Cirujano Barbero, Artesano
   de Máscaras, Herrería and Cúmulo de Linternas Extinto publish no `Construir` bar on any
   base location card; they are unlocked by innovations, so their build costs live on the

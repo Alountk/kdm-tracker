@@ -140,7 +140,7 @@ class ParseCostTests(unittest.TestCase):
     def test_parses_a_comma_separated_cost(self) -> None:
         self.assertEqual({BONE: 3, HIDE: 1}, locations.parse_cost("3 x hueso, 1 x piel"))
 
-    def test_parses_the_raw_packt_cost_form(self) -> None:
+    def test_parses_the_raw_pack_cost_form(self) -> None:
         self.assertEqual({HIDE: 3, ORGAN: 1}, locations.parse_cost("3xpiel\n1xórgano"))
 
     def test_unknown_token_is_kept_verbatim(self) -> None:
