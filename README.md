@@ -174,11 +174,13 @@ resource cost plus innovation prerequisites; recipes travel on the built `Settle
 `Craft` enforces built location + recipe + prerequisites + storage, then adds the gear to the
 settlement. The **gear `Modifier` model** (`target`/`value`/`scope`/`condition`) is ready for
 curated data: settlement-scope modifiers feed derived values, survivor-scope ones are stored and
-applied once a `Survivor` model exists. Only a **curated seed** of 1.5 recipes (the Armería set)
-ships in this slice — bulk gear extraction was not viable with `pdftotext` (it strips spaces in
-`-raw` and splits columns in `-layout`, the cards are duplicated, and the bonuses are conditional
-rule text), so it is deferred to a dedicated content slice; icon-only / conditional values are
-recorded as `[gap]`, never guessed.
+applied once a `Survivor` model exists. The gear definitions and recipes are **auto-extracted** from
+the 1.5 cards by `tools/content-ingest/ingest_gear.py` (see *Content ingestion pipeline*):
+`pdftotext -raw`/`-layout` were not enough (they strip spaces or flatten columns), so it uses
+`pdftotext -bbox-layout` (word boxes) to recover spaced text and separate columns. A prerequisite
+that is not an innovation name (e.g. `Requiere Calor`) is kept as display-only `requiresText` and
+does not gate crafting. The card bonuses remain `[gap]` (they are conditional rule text), never
+guessed.
 
 **Known limitation (Ruling CB).** The extracted `buildCost`/`resourceCost` are keyed by a **specific
 resource card name** that approximates the card's printed material *type* (`3 x hueso` →
@@ -186,14 +188,13 @@ resource card name** that approximates the card's printed material *type* (`3 x 
 different resource of the same type would be wrongly `Blocked`; resolving costs by type is a
 follow-up work unit.
 
-**Known limitation (upgrade path).** The shipped seed enables `core-1.6`, but a campaign stored
-before that change keeps its original `enabledPacks` (often empty) and therefore composes an empty
-catalog with no in-app path to fix it. The app is pre-release with no persisted production
-campaigns, so this is deferred: an existing local campaign must be **re-created** (or the store
-re-seeded) to pick up `core-1.6`.
+**Known limitation (upgrade path).** The shipped seed enables `core-1.6` and `core-1.5`, but a
+campaign stored before that change keeps its original `enabledPacks` (often empty) and therefore
+composes an empty catalog with no in-app path to fix it. The app is pre-release with no persisted
+production campaigns, so this is deferred: an existing local campaign must be **re-created** (or the
+store re-seeded) to pick up the packs.
 
-**Deferred:** bulk gear/recipe extraction (a curated seed ships now — see *Craft (Step 7)*), gear
-`keywords`/`rules`/`modifiers` content (the card bonuses are conditional rule text, recorded as
+**Deferred:** gear `modifiers` content (the card bonuses are conditional rule text, recorded as
 `[gap]`), applying survivor-scope modifiers (needs the `Survivor` model), executable effects (shown
 as text, not resolved), a full per-survivor `Survivor` model (returnees and deaths are
 settlement-level counters), and 1.6-specific rules (the local rulebook is 1.5 and the 1.6 sheet is
@@ -419,6 +420,8 @@ a PDF at runtime**; it only reads the committed Kotlin.
 | `Core15Innovations.kt` | `ingest_innovations.py` | 42 innovations + consequence graph |
 | `Core15Resources.kt` | `ingest_resources.py` | 56 resources + typed category |
 | `Core15FightingArts.kt` | `ingest_fighting_arts.py` | 24 fighting arts + 23 disorders |
+| `Core15Locations.kt` | `ingest_locations.py` | settlement locations: build cost + actions |
+| `Core15Gear.kt` | `ingest_gear.py` | gear definitions + crafting recipes (via `pdftotext -bbox-layout`) |
 
 Output is **deterministic**: entries and every nested list are sorted, and no timestamps or
 paths are embedded, so re-running a script over unchanged inputs is **byte-identical**.
