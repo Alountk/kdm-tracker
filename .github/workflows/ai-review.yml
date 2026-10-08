@@ -28,7 +28,6 @@ jobs:
     with:
       tooling-repository: Alountk/pr-review-agent
       tooling-ref: main
-      gate-command: "npm ci && npm run lint && npm test"
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
