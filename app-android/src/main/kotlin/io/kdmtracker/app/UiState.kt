@@ -25,6 +25,8 @@ sealed interface Screen {
     data object Hunt : Screen
 
     data object Showdown : Screen
+
+    data object Account : Screen
 }
 
 /**

@@ -122,6 +122,8 @@ fun KdmTrackerApp(
                                         onAdvance = viewModel::advance,
                                     )
                                 }
+                            // The Account body arrives with the AppTopBar shell (Task 4).
+                            Screen.Account -> Unit
                         }
                 }
             }
