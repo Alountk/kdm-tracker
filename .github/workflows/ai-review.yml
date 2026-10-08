@@ -37,7 +37,7 @@ jobs:
   review:
     # Ignore unrelated comments up front so they never start a run.
     if: >-
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ai-review') ||
       (github.event.issue.pull_request &&
        github.event.comment.body == '/review' &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
