@@ -1,10 +1,12 @@
 package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
@@ -21,6 +23,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SettlementStateTransferTest {
     private val json = Json { ignoreUnknownKeys = true }
@@ -151,9 +154,76 @@ class SettlementStateTransferTest {
     }
 
     @Test
-    fun newDocumentDefaultsToSchemaVersionFive() {
+    fun newDocumentDefaultsToSchemaVersionSix() {
         val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
 
+        assertEquals(6, document.schemaVersion)
+    }
+
+    @Test
+    fun supportedVersionsIncludesSix() {
+        assertTrue(6 in TransferDocument.SUPPORTED_VERSIONS)
+    }
+
+    @Test
+    fun v5DocumentWithoutPrinciplesDecodes() {
+        val v5 =
+            """
+            {
+              "schemaVersion": 5,
+              "exportedAt": "2025-01-01T00:00:00Z",
+              "campaigns": [
+                {
+                  "id": "${campaign.id.value}",
+                  "name": "Grey Havens",
+                  "rulesetId": "core-1.6",
+                  "settlementIds": ["${settlement.id.value}"],
+                  "settlements": [
+                    {
+                      "id": "${settlement.id.value}",
+                      "campaignId": "${campaign.id.value}",
+                      "name": "First Cradle",
+                      "state": { "deaths": 2 }
+                    }
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val document = json.decodeFromString<TransferDocument>(v5)
+        val state =
+            document.campaigns
+                .single()
+                .settlements
+                .single()
+                .state
+
         assertEquals(5, document.schemaVersion)
+        assertTrue(state.principles.isEmpty())
+        assertTrue(state.resolvedMilestones.isEmpty())
+        assertEquals(2, state.deaths)
+    }
+
+    @Test
+    fun v6RoundTripCarriesPrinciplesAndMilestones() {
+        val state =
+            populatedState.copy(
+                principles = mapOf(PrincipleCategory.SOCIETY to "Collective Toil"),
+                resolvedMilestones = setOf(Core16Milestones.PRINCIPLE_DEATH),
+            )
+        val records = listOf(SettlementRecord(settlement, state))
+        val document =
+            TransferDocument(
+                schemaVersion = 6,
+                exportedAt = "2026-10-08T00:00:00Z",
+                campaigns = listOf(TransferMapper.toDto(campaign, records)),
+            )
+
+        val decoded = json.decodeFromString<TransferDocument>(json.encodeToString(document))
+        val (_, domainRecords) = TransferMapper.toDomain(decoded.campaigns.single())
+
+        assertEquals(records, domainRecords)
+        assertEquals(6, decoded.schemaVersion)
     }
 }

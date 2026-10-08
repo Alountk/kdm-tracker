@@ -19,6 +19,8 @@ import kotlinx.serialization.Serializable
  * @property phaseActionsUsed the action identifiers already spent this Settlement Phase, so
  *   once-per-phase actions (such as Innovate) can be refused on a repeat attempt.
  * @property gear the names of the gear the settlement has crafted.
+ * @property principles the chosen principle label per [PrincipleCategory] (step 5/6 decisions).
+ * @property resolvedMilestones the milestone ids the table has already resolved.
  */
 @Serializable
 data class SettlementState(
@@ -30,6 +32,8 @@ data class SettlementState(
     val births: Int = 0,
     val phaseActionsUsed: Set<String> = emptySet(),
     val gear: List<String> = emptyList(),
+    val principles: Map<PrincipleCategory, String> = emptyMap(),
+    val resolvedMilestones: Set<MilestoneId> = emptySet(),
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
