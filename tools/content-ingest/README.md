@@ -194,6 +194,37 @@ appearing twice with different descriptions also aborts.
 - The `Apatía` card's placeholder art text (`Lorem ipsum`) is part of the extracted
   body and is kept verbatim.
 
+## Settlement events
+
+`ingest_settlement_events.py` reads the settlement-events deck
+`AF Eventos.pdf` and writes
+`core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15SettlementEvents.kt`
+as a `ContentBundle` with `settlementEvents = List<SettlementEvent>` (the minimal
+name + text card type).
+
+```sh
+python3 tools/content-ingest/ingest_settlement_events.py \
+  --pdf "path/to/external-assets/Juego Completo/Formato XL 86x146 mm/AF Eventos.pdf"
+```
+
+`--pdf` overrides the source PDF (it defaults to that path) and `--out` the generated file.
+
+### Parsing model
+
+The deck renders one card per PDF page: page 1 is the deck cover and every later page
+is a card whose second line is the `- evento de asentamiento -` marker. That marker is
+validated against the exact vocabulary, so a shifted page aborts the run instead of
+being silently mis-read. The event name is the card's first line and the event text is
+everything after the marker, whitespace-normalized.
+
+### Determinism and integrity
+
+Entries are deduped and sorted by name; the output embeds no timestamps and no paths.
+`pdfinfo`'s page count is cross-checked against the form-feed split, the parsed card
+count is asserted against `pages - 1` (one cover page), and any page that does not parse
+as a card, or a card with an empty name/text, aborts the run. A card appearing twice with
+different text also aborts.
+
 ## Settlement locations
 
 `ingest_locations.py` reads `AF Asentamientos Loc.pdf` and writes

@@ -5,6 +5,7 @@ import io.kdmtracker.core.content.generated.Core15Gear
 import io.kdmtracker.core.content.generated.Core15Innovations
 import io.kdmtracker.core.content.generated.Core15Locations
 import io.kdmtracker.core.content.generated.Core15Resources
+import io.kdmtracker.core.content.generated.Core15SettlementEvents
 
 /**
  * The `core-1.5` content pack — the Spanish 1.5 card content ingested by
@@ -35,6 +36,7 @@ object Legacy15Content {
                         },
                     fightingArts = Core15FightingArts.bundle.fightingArts,
                     disorders = Core15FightingArts.bundle.disorders,
+                    settlementEvents = Core15SettlementEvents.bundle.settlementEvents,
                 ),
         )
 }
