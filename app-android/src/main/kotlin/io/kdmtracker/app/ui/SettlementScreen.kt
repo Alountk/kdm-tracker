@@ -150,17 +150,14 @@ private fun SettlementCockpit(
 
 @Composable
 private fun SettlementHeader(state: UiState) {
-    Column {
-        Text(text = state.settlementName, style = MaterialTheme.typography.headlineMedium)
-        Text(text = "Settlement", style = MaterialTheme.typography.titleMedium)
-        Text(
-            text =
-                "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
-                    "Endeavors ${state.endeavors} · Survival Limit ${state.survivalLimit}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    // The settlement name lives in the AppTopBar; only the derived stats are rendered here.
+    Text(
+        text =
+            "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
+                "Endeavors ${state.endeavors} · Survival Limit ${state.survivalLimit}",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
