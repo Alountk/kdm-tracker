@@ -20,6 +20,16 @@ data class SettlementRecord(
     val population: Int get() = state.survivors.count { it.status != SurvivorStatus.DEAD }
 
     /**
+     * Replaces the roster and keeps the legacy [Settlement.population] scalar equal to the derived
+     * [population], so the scalar (used by the Home cards and exports) never drifts from the roster.
+     */
+    fun withSurvivors(survivors: List<Survivor>): SettlementRecord =
+        copy(
+            settlement = settlement.copy(population = survivors.count { it.status != SurvivorStatus.DEAD }),
+            state = state.copy(survivors = survivors),
+        )
+
+    /**
      * Adapts the counters and the roster population to the milestone snapshot.
      *
      * The innovation counter is the number of unlocked innovations, not the deck size.
