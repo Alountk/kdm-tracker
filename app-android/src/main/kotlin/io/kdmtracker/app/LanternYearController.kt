@@ -2,9 +2,12 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.ModifierScope
 import io.kdmtracker.core.domain.ModifierTarget
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
@@ -21,10 +24,16 @@ import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
+import io.kdmtracker.core.usecase.AdvanceTimeline
 import io.kdmtracker.core.usecase.BuildLocation
+import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
+import io.kdmtracker.core.usecase.RecordBirths
+import io.kdmtracker.core.usecase.RecordDeaths
+import io.kdmtracker.core.usecase.RecordSettlementEvent
+import io.kdmtracker.core.usecase.ResolveMilestone
 import io.kdmtracker.core.usecase.SpendEndeavor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -119,6 +128,7 @@ class LanternYearController(
         context: FlowContext,
     ) {
         val settlement = repository.settlement
+        val fromStep = settlement.currentStep
         val result =
             AdvanceStep.run(
                 settlement = settlement,
@@ -135,7 +145,7 @@ class LanternYearController(
             } else {
                 current.copy(settlement = result.settlement)
             }
-        repository.update(fundGainEndeavors(moved))
+        repository.update(fundGainEndeavors(advanceTimelineIfNeeded(fromStep, moved)))
         _state.value = uiState(repository.record, result.transition.describe())
     }
 
@@ -235,6 +245,48 @@ class LanternYearController(
     }
 
     /**
+     * Records [count] deaths (Step 5): `:core`'s [RecordDeaths] raises the counter and lowers the
+     * population, floored at zero; the controller mirrors the outcome on a refusal.
+     */
+    fun recordDeaths(count: Int) {
+        applyResult(RecordDeaths.run(repository.record, count))
+    }
+
+    /**
+     * Records [count] births (Step 5's counter panel): `:core`'s [RecordBirths] raises the counter
+     * and the population; the controller mirrors the outcome on a refusal.
+     */
+    fun recordBirths(count: Int) {
+        applyResult(RecordBirths.run(repository.record, count))
+    }
+
+    /**
+     * Records the settlement's chosen principle [label] for [category] (Steps 5/6).
+     *
+     * The whole rule — the label must be a ruleset choice — lives in `:core`'s [ChoosePrinciple];
+     * an unknown choice surfaces its reason.
+     */
+    fun choosePrinciple(
+        category: PrincipleCategory,
+        label: String,
+    ) {
+        applyResult(ChoosePrinciple.run(repository.record, category, label, ruleset))
+    }
+
+    /** Ticks the reached milestone [id] as resolved (Step 6), via `:core`'s [ResolveMilestone]. */
+    fun resolveMilestone(id: MilestoneId) {
+        applyResult(ResolveMilestone.run(repository.record, id, ruleset))
+    }
+
+    /**
+     * Records the Settlement Event [name] drawn this year (Step 4), via `:core`'s
+     * [RecordSettlementEvent]; the name must be one the catalog ships.
+     */
+    fun recordSettlementEvent(name: String) {
+        applyResult(RecordSettlementEvent.run(repository.record, name, content))
+    }
+
+    /**
      * Mirrors one `:core` action outcome: an [StepResult.Ok] is persisted and republished with no
      * error, while a [StepResult.Blocked] leaves the record untouched and surfaces its reason.
      */
@@ -265,10 +317,29 @@ class LanternYearController(
     }
 
     private fun moveToStep(step: Int) {
+        val fromStep = repository.settlement.currentStep
         val moved = repository.record.copy(settlement = repository.settlement.copy(currentStep = step))
-        repository.update(fundGainEndeavors(moved))
+        repository.update(fundGainEndeavors(advanceTimelineIfNeeded(fromStep, moved)))
         _state.value = uiState(repository.record, _state.value.lastTransition)
     }
+
+    /**
+     * Advances the lantern year when a move leaves the Update Timeline step forward.
+     *
+     * The Step 4 rule lives in `:core`'s [AdvanceTimeline]; this helper only decides *when* it
+     * applies — a move whose source is Step 4 and whose target is later ([UPDATE_TIMELINE_STEP]).
+     * Going back into Step 4, or moving anywhere else, leaves the record untouched. [AdvanceTimeline]
+     * is idempotent per phase, so revisiting Step 4 cannot double-increment.
+     */
+    private fun advanceTimelineIfNeeded(
+        fromStep: Int,
+        record: SettlementRecord,
+    ): SettlementRecord =
+        if (fromStep == UPDATE_TIMELINE_STEP && record.settlement.currentStep > UPDATE_TIMELINE_STEP) {
+            AdvanceTimeline.run(record)
+        } else {
+            record
+        }
 
     /**
      * Funds the endeavor pool exactly once per Settlement Phase when the settlement enters Step 3.
@@ -355,6 +426,25 @@ class LanternYearController(
                             )
                         }
                 },
+            settlementEventDeck = content.settlementEventDefinitions,
+            settlementEvent = settlement.settlementEvent,
+            deaths = record.state.deaths,
+            births = record.state.births,
+            chosenPrinciples = record.state.principles,
+            milestoneViews =
+                ruleset.milestones.map { definition ->
+                    MilestoneView(
+                        id = definition.id,
+                        description = definition.description,
+                        reached = definition.id in record.reachedMilestones(ruleset),
+                        resolved = definition.id in record.state.resolvedMilestones,
+                        choices =
+                            Core16Milestones
+                                .principleCategoryOf(definition.id)
+                                ?.let { ruleset.principles[it] }
+                                .orEmpty(),
+                    )
+                },
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }
@@ -415,6 +505,9 @@ internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
 
 /** The Settlement Phase step where the survivors' endeavors are earned. */
 private const val GAIN_ENDEAVORS_STEP = 3
+
+/** The Settlement Phase step where the lantern year advances, Update Timeline. */
+private const val UPDATE_TIMELINE_STEP = 4
 
 /** The phase marker recording that Step 3 funded the pool, so a revisit cannot double-fund it. */
 private const val GAIN_ENDEAVORS_MARKER = "Gain Endeavors"

@@ -2,7 +2,10 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.MilestoneId
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -11,6 +14,7 @@ import io.kdmtracker.core.rules.CraftCheck
 import io.kdmtracker.core.rules.EndeavorBreakdown
 import io.kdmtracker.core.rules.InnovationView
 import io.kdmtracker.core.rules.SettlementStep
+import io.kdmtracker.core.ruleset.PrincipleChoice
 
 /** The top-level destination the UI renders: the Home campaign list, or the cockpit's phases. */
 sealed interface Screen {
@@ -47,6 +51,11 @@ sealed interface Screen {
  *
  * [survivalLimit] is the derived survival limit — the ruleset base plus innovation bonuses plus any
  * settlement-scope `SURVIVAL_LIMIT` modifier on the settlement's crafted gear.
+ *
+ * The trailing settlement-bookkeeping fields drive Steps 4, 5, 6, 10 and 11: [settlementEventDeck]
+ * is the content deck, [settlementEvent] the event recorded this year, [deaths]/[births] the
+ * counters, [milestoneViews] the Step 6 checklist, and [chosenPrinciples] the chosen principle per
+ * category.
  */
 data class UiState(
     val screen: Screen,
@@ -77,6 +86,24 @@ data class UiState(
     val resourceGroups: Map<String, List<ResourceDefinition>> = emptyMap(),
     val innovationViews: List<InnovationView> = emptyList(),
     val craftRecipes: List<CraftRecipeView> = emptyList(),
+    val settlementEventDeck: List<SettlementEvent> = emptyList(),
+    val settlementEvent: String? = null,
+    val deaths: Int = 0,
+    val births: Int = 0,
+    val milestoneViews: List<MilestoneView> = emptyList(),
+    val chosenPrinciples: Map<PrincipleCategory, String> = emptyMap(),
+)
+
+/**
+ * One row of the Step 6 milestone checklist: the milestone, its reached/resolved state and the
+ * principle choices it exposes (empty for the non-principle milestones).
+ */
+data class MilestoneView(
+    val id: MilestoneId,
+    val description: String,
+    val reached: Boolean,
+    val resolved: Boolean,
+    val choices: List<PrincipleChoice>,
 )
 
 /** A built location's recipe together with whether the settlement can craft it right now. */
