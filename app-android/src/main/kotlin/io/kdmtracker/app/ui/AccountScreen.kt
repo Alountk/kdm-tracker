@@ -36,6 +36,7 @@ fun AccountScreen(
     onSignOut: () -> Unit,
     onSync: () -> Unit,
     onClose: () -> Unit,
+    error: String? = null,
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -54,6 +55,14 @@ fun AccountScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        error?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
 
         if (syncState is SyncState.NotConfigured) {
             OutlinedTextField(

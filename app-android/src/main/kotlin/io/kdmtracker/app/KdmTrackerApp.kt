@@ -40,6 +40,7 @@ fun KdmTrackerApp(
     val loadError by viewModel.loadError.collectAsState()
     val homeCards by viewModel.homeCards.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
+    val signInError by viewModel.signInError.collectAsState()
     val createSucceeded by viewModel.createSucceeded.collectAsState()
     var newSettlementName by remember { mutableStateOf("") }
 
@@ -71,6 +72,14 @@ fun KdmTrackerApp(
                         .padding(innerPadding),
             ) {
                 val current = state
+                // System back on a phase returns to the Home list, mirroring the visible Home action
+                // (the Account overlay registers its own handler below and takes precedence).
+                BackHandler(
+                    enabled =
+                        current?.screen == Screen.Settlement ||
+                            current?.screen == Screen.Hunt ||
+                            current?.screen == Screen.Showdown,
+                ) { viewModel.goHome() }
                 val error = loadError
                 when {
                     current == null && error != null -> LoadFailure(error)
@@ -123,6 +132,7 @@ fun KdmTrackerApp(
                                     onSignOut = viewModel::signOut,
                                     onSync = viewModel::syncNow,
                                     onClose = viewModel::closeAccount,
+                                    error = signInError,
                                 )
                             }
                         }

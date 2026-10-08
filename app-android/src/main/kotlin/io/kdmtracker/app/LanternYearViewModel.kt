@@ -89,6 +89,13 @@ class LanternYearViewModel(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
+    /**
+     * Set when a sign-in attempt fails, so the Account screen can show it inline while the session
+     * stays signed out (a failed sign-in stores no token, so the form must remain).
+     */
+    private val _signInError = MutableStateFlow<String?>(null)
+    val signInError: StateFlow<String?> = _signInError.asStateFlow()
+
     /** Set when the initial load fails, so the UI can show an error instead of spinning forever. */
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
@@ -324,6 +331,7 @@ class LanternYearViewModel(
         username: String,
         password: String,
     ) {
+        _signInError.value = null
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
             val signIn = loaded.signIn ?: return@launch
@@ -333,7 +341,9 @@ class LanternYearViewModel(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                _syncState.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sign in failed")
+                // A failed sign-in stores no token: keep the session signed out (the form stays) and
+                // surface the reason, rather than flipping to Error which reads as "signed in".
+                _signInError.value = failure.message ?: failure::class.simpleName ?: "Sign in failed"
             }
         }
     }
