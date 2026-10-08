@@ -9,9 +9,11 @@ import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.rules.Craftability
 import io.kdmtracker.core.rules.DerivedValues
 import io.kdmtracker.core.rules.FlowContext
 import io.kdmtracker.core.rules.FlowTransition
+import io.kdmtracker.core.rules.InnovationAccess
 import io.kdmtracker.core.rules.LanternYearFlow
 import io.kdmtracker.core.rules.PhaseStep
 import io.kdmtracker.core.rules.StepResult
@@ -331,6 +333,28 @@ class LanternYearController(
                         ModifierTarget.SURVIVAL_LIMIT,
                         ModifierScope.SETTLEMENT,
                     ),
+            resourceGroups = content.resourceGroups(),
+            innovationViews = InnovationAccess.view(record.state, content),
+            craftRecipes =
+                record.state.locations.built.flatMap { locationName ->
+                    content.locationDefinitions
+                        .firstOrNull { it.name == locationName }
+                        ?.recipes
+                        .orEmpty()
+                        .map { recipe ->
+                            CraftRecipeView(
+                                locationName,
+                                recipe,
+                                Craftability.check(record, locationName, recipe, content),
+                                gearType(
+                                    content.gearDefinitions
+                                        .firstOrNull { it.name == recipe.gearName }
+                                        ?.keywords
+                                        .orEmpty(),
+                                ),
+                            )
+                        }
+                },
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }
@@ -343,6 +367,16 @@ class LanternYearController(
         )
     }
 }
+
+/** A gear's coarse type from its keywords, for grouping the Fabricar tab by type. */
+private fun gearType(keywords: List<String>): String =
+    when {
+        "arma" in keywords -> "Armas"
+        "armadura" in keywords -> "Armaduras"
+        "objeto" in keywords -> "Objetos"
+        "consumible" in keywords -> "Consumibles"
+        else -> "Otros"
+    }
 
 private fun SettlementPhase.toScreen(): Screen =
     when (this) {

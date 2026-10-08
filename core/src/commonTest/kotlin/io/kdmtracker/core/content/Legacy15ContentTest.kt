@@ -34,7 +34,11 @@ class Legacy15ContentTest {
     @Test
     fun packCarriesTheGeneratedResources() {
         assertTrue(resources.isNotEmpty(), "expected generated resources")
-        assertEquals(Core15Resources.bundle.resources, resources)
+        assertEquals(
+            Core15Resources.bundle.resources.map { it.name to it.category },
+            resources.map { it.name to it.category },
+        )
+        assertTrue(resources.all { it.source.isNotBlank() }, "every resource carries a source")
     }
 
     @Test

@@ -1,12 +1,15 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.StorageLine
+import io.kdmtracker.core.rules.CraftCheck
 import io.kdmtracker.core.rules.EndeavorBreakdown
+import io.kdmtracker.core.rules.InnovationView
 import io.kdmtracker.core.rules.SettlementStep
 
 /** The top-level destination the UI renders: the Home campaign list, or the cockpit's phases. */
@@ -71,4 +74,15 @@ data class UiState(
     val actionError: String? = null,
     val gear: List<String> = emptyList(),
     val survivalLimit: Int = 0,
+    val resourceGroups: Map<String, List<ResourceDefinition>> = emptyMap(),
+    val innovationViews: List<InnovationView> = emptyList(),
+    val craftRecipes: List<CraftRecipeView> = emptyList(),
+)
+
+/** A built location's recipe together with whether the settlement can craft it right now. */
+data class CraftRecipeView(
+    val locationName: String,
+    val recipe: GearRecipe,
+    val check: CraftCheck,
+    val type: String = "",
 )
