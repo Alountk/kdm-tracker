@@ -78,6 +78,22 @@ class RosterLifecycleUseCaseTest {
     }
 
     @Test
+    fun recordDeathsPrefersDepartingSurvivors() {
+        val alive = Survivor(id = Ulid.generate(11L) { 0 })
+        val departing = Survivor(id = Ulid.generate(12L) { 0 }, status = SurvivorStatus.DEPARTING)
+        val source = record(living = 0).let { it.copy(state = SettlementState(survivors = listOf(alive, departing))) }
+
+        val result = RecordDeaths.run(source, count = 1)
+
+        val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
+        val byId =
+            ok.value.state.survivors
+                .associateBy { it.id }
+        assertEquals(SurvivorStatus.DEAD, byId.getValue(departing.id).status)
+        assertEquals(SurvivorStatus.ALIVE, byId.getValue(alive.id).status)
+    }
+
+    @Test
     fun recordDeathsRejectsNonPositive() {
         val result = RecordDeaths.run(record(living = 4), count = 0)
 

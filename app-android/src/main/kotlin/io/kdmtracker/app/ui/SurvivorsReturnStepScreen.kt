@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,17 @@ fun SurvivorsReturnStepScreen(
     onSaveSurvivor: (Survivor) -> Unit,
 ) {
     var editing by remember { mutableStateOf<Survivor?>(null) }
+    var pending by remember { mutableStateOf<Survivor?>(null) }
+
+    // Close the editor only once the save actually landed (the record now holds the draft); a
+    // refused save keeps the editor open with the draft and surfaces the action error.
+    LaunchedEffect(state.survivors, pending) {
+        val draft = pending
+        if (draft != null && state.survivors.any { it.id == draft.id && it == draft }) {
+            editing = null
+            pending = null
+        }
+    }
 
     Column(
         modifier =
@@ -48,6 +60,9 @@ fun SurvivorsReturnStepScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(text = state.stepTitle, style = MaterialTheme.typography.headlineMedium)
+        state.actionError?.let { message ->
+            Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        }
         Button(onClick = onHeal, modifier = Modifier.fillMaxWidth()) {
             Text("Heal & clear tokens")
         }
@@ -67,11 +82,15 @@ fun SurvivorsReturnStepScreen(
         SurvivorEditorDialog(
             survivor = survivor,
             survivalLimit = state.survivalLimit,
+            error = state.actionError,
             onSave = {
                 onSaveSurvivor(it)
-                editing = null
+                pending = it
             },
-            onDismiss = { editing = null },
+            onDismiss = {
+                editing = null
+                pending = null
+            },
         )
     }
 }

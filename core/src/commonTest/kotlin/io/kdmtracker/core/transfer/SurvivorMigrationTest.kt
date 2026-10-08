@@ -45,12 +45,29 @@ class SurvivorMigrationTest {
 
     @Test
     fun migratedSeedsTheRosterFromTheLegacyPopulation() {
-        var n = 0L
-
-        val migrated = record(population = 4).migrated { Ulid.generate(++n) { n.toInt() } }
+        val migrated = record(population = 4).migrated { index -> Ulid.generate(index + 1L) { index } }
 
         assertEquals(4, migrated.state.survivors.size)
         assertEquals(4, migrated.population)
+    }
+
+    @Test
+    fun migratedWithDefaultIdsIsDeterministic() {
+        val source = record(population = 3)
+
+        val first =
+            source
+                .migrated()
+                .state.survivors
+                .map { it.id }
+        val second =
+            source
+                .migrated()
+                .state.survivors
+                .map { it.id }
+
+        assertEquals(first, second)
+        assertEquals(3, first.toSet().size)
     }
 
     @Test

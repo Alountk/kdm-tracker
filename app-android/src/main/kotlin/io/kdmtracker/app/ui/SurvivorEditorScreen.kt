@@ -43,6 +43,7 @@ fun SurvivorEditorDialog(
     survivalLimit: Int,
     onSave: (Survivor) -> Unit,
     onDismiss: () -> Unit,
+    error: String? = null,
 ) {
     var draft by remember(survivor) { mutableStateOf(survivor) }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -56,6 +57,14 @@ fun SurvivorEditorDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(text = "Edit survivor", style = MaterialTheme.typography.headlineSmall)
+
+                error?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
 
                 OutlinedTextField(
                     value = draft.name,

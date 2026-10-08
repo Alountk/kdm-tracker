@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +41,18 @@ fun PrepareDepartingStepScreen(
     onSaveSurvivor: (Survivor) -> Unit,
 ) {
     var editing by remember { mutableStateOf<Survivor?>(null) }
+    var pending by remember { mutableStateOf<Survivor?>(null) }
     val departing = state.survivors.filter { it.status == SurvivorStatus.DEPARTING }.map { it.id }
     val limit = state.population.coerceAtMost(4)
+
+    // Close the editor only once the save landed; a refused save keeps it open with the error.
+    LaunchedEffect(state.survivors, pending) {
+        val draft = pending
+        if (draft != null && state.survivors.any { it.id == draft.id && it == draft }) {
+            editing = null
+            pending = null
+        }
+    }
 
     Column(
         modifier =
@@ -52,6 +63,9 @@ fun PrepareDepartingStepScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(text = state.stepTitle, style = MaterialTheme.typography.headlineMedium)
+        state.actionError?.let { message ->
+            Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        }
         Text(
             text = "Pick up to $limit departing survivors (${departing.size} selected) and load their gear.",
             style = MaterialTheme.typography.bodySmall,
@@ -84,11 +98,15 @@ fun PrepareDepartingStepScreen(
         SurvivorEditorDialog(
             survivor = survivor,
             survivalLimit = state.survivalLimit,
+            error = state.actionError,
             onSave = {
                 onSaveSurvivor(it)
-                editing = null
+                pending = it
             },
-            onDismiss = { editing = null },
+            onDismiss = {
+                editing = null
+                pending = null
+            },
         )
     }
 }

@@ -26,15 +26,16 @@ object RecordDeaths {
         if (count < 1) {
             return StepResult.Blocked("invalid death count")
         }
-        var remaining = count
+        // Prefer the departing survivors (the ones who actually left on the hunt), then the rest.
+        val toKill =
+            record.state.survivors
+                .filter { it.status != SurvivorStatus.DEAD }
+                .sortedBy { if (it.status == SurvivorStatus.DEPARTING) 0 else 1 }
+                .take(count)
+                .mapTo(mutableSetOf()) { it.id }
         val marked =
             record.state.survivors.map { survivor ->
-                if (remaining > 0 && survivor.status != SurvivorStatus.DEAD) {
-                    remaining--
-                    survivor.copy(status = SurvivorStatus.DEAD)
-                } else {
-                    survivor
-                }
+                if (survivor.id in toKill) survivor.copy(status = SurvivorStatus.DEAD) else survivor
             }
         val withRoster = record.withSurvivors(marked)
         return StepResult.Ok(withRoster.copy(state = withRoster.state.copy(deaths = withRoster.state.deaths + count)))
