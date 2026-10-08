@@ -16,8 +16,11 @@ data class SettlementRecord(
     val settlement: Settlement,
     val state: SettlementState = SettlementState(),
 ) {
+    /** The living survivors: everyone in the roster whose status is not [SurvivorStatus.DEAD]. */
+    val population: Int get() = state.survivors.count { it.status != SurvivorStatus.DEAD }
+
     /**
-     * Adapts the counters and the settlement population to the milestone snapshot.
+     * Adapts the counters and the roster population to the milestone snapshot.
      *
      * The innovation counter is the number of unlocked innovations, not the deck size.
      */
@@ -25,7 +28,7 @@ data class SettlementRecord(
         MilestoneState(
             deaths = state.deaths,
             births = state.births,
-            population = settlement.population,
+            population = population,
             innovations = state.innovations.innovations.size,
         )
 
