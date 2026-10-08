@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.StepResult
@@ -34,7 +35,13 @@ class CountersAndTimelineUseCaseTest {
                     settlementEvent = null,
                     sync = SyncMeta(HybridLogicalClock(0, 0)),
                 ),
-            state = SettlementState(deaths = deaths, births = births, phaseActionsUsed = phaseActionsUsed),
+            state =
+                SettlementState(
+                    deaths = deaths,
+                    births = births,
+                    phaseActionsUsed = phaseActionsUsed,
+                    survivors = List(population) { Survivor(id = Ulid.generate(it.toLong() + 10) { 0 }) },
+                ),
         )
 
     @Test
@@ -43,7 +50,7 @@ class CountersAndTimelineUseCaseTest {
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(2, ok.value.state.deaths)
-        assertEquals(2, ok.value.settlement.population)
+        assertEquals(2, ok.value.population)
     }
 
     @Test
@@ -52,7 +59,7 @@ class CountersAndTimelineUseCaseTest {
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(3, ok.value.state.deaths)
-        assertEquals(0, ok.value.settlement.population)
+        assertEquals(0, ok.value.population)
     }
 
     @Test
@@ -64,21 +71,22 @@ class CountersAndTimelineUseCaseTest {
         val blocked = assertIs<StepResult.Blocked>(result)
         assertEquals("invalid death count", blocked.reason)
         assertEquals(0, source.state.deaths)
-        assertEquals(4, source.settlement.population)
+        assertEquals(4, source.population)
     }
 
     @Test
     fun recordBirthsAddsToCounterAndRaisesPopulation() {
-        val result = RecordBirths.run(record(), count = 3)
+        var n = 0L
+        val result = RecordBirths.run(record(), count = 3) { Ulid.generate(++n) { n.toInt() } }
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(3, ok.value.state.births)
-        assertEquals(7, ok.value.settlement.population)
+        assertEquals(7, ok.value.population)
     }
 
     @Test
     fun recordBirthsRejectsNonPositive() {
-        val result = RecordBirths.run(record(), count = -1)
+        val result = RecordBirths.run(record(), count = -1) { Ulid.generate(1L) { 0 } }
 
         assertEquals("invalid birth count", assertIs<StepResult.Blocked>(result).reason)
     }

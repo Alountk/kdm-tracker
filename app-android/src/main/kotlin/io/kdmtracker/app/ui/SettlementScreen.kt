@@ -24,6 +24,8 @@ import io.kdmtracker.app.UiState
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.Survivor
+import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.SettlementStep
 
 /** Standard Material disabled alpha, so an unreachable step reads as non-interactive. */
@@ -56,6 +58,11 @@ fun SettlementScreen(
     onRecordBirths: (Int) -> Unit = {},
     onChoosePrinciple: (PrincipleCategory, String) -> Unit = { _, _ -> },
     onResolveMilestone: (MilestoneId) -> Unit = {},
+    onHealSurvivors: () -> Unit = {},
+    onDepartingChange: (List<Ulid>) -> Unit = {},
+    onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
+    onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
+    onSaveSurvivor: (Survivor) -> Unit = {},
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
@@ -68,6 +75,12 @@ fun SettlementScreen(
         onSelectStep = onSelectStep,
     ) {
         when (state.currentStep) {
+            2 ->
+                SurvivorsReturnStepScreen(
+                    state = state,
+                    onHeal = onHealSurvivors,
+                    onSaveSurvivor = onSaveSurvivor,
+                )
             4 -> TimelineStepScreen(state = state, onRecordEvent = onRecordEvent, onDrawEvent = onDrawEvent)
             5 ->
                 DeathCountStepScreen(
@@ -90,6 +103,14 @@ fun SettlementScreen(
                     onSpendEndeavor = onSpendEndeavor,
                     onAddResource = onAddResource,
                     onCraft = onCraft,
+                )
+            8 ->
+                PrepareDepartingStepScreen(
+                    state = state,
+                    onDepartingChange = onDepartingChange,
+                    onAssignGear = onAssignGear,
+                    onUnassignGear = onUnassignGear,
+                    onSaveSurvivor = onSaveSurvivor,
                 )
             10 -> ArchiveStepScreen(state = state)
             11 -> EndPhaseStepScreen(state = state)

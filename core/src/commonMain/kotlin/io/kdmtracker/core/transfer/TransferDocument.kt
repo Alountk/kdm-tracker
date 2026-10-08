@@ -9,24 +9,26 @@ import kotlinx.serialization.Serializable
 /**
  * Top-level, versioned container for an exported campaign database.
  *
- * [schemaVersion] defaults to the current schema (6). Older v1/v2/v3/v4/v5 documents omit the
+ * [schemaVersion] defaults to the current schema (7). Older v1/v2/v3/v4/v5/v6 documents omit the
  * newer fields and still decode, because every added field carries a default. v4
  * replaced the v3 `MilestoneDefinitionDto.key` enum with a stable string [MilestoneDefinitionDto.id]
  * plus a typed [MilestoneConditionSpec] and a prose `description`; a v3 document that
  * carried milestone overrides is not auto-migrated. v5 carries the settlement's extra
  * [SettlementState] on each [SettlementDto]; a pre-v5 document that omits `state` decodes
  * to an empty state. v6 adds the settlement's chosen `principles` and `resolvedMilestones`
- * to [SettlementState]; a pre-v6 state that omits them decodes to empty.
+ * to [SettlementState]; a pre-v6 state that omits them decodes to empty. v7 adds the
+ * settlement's survivor roster to [SettlementState]; a pre-v7 state that omits `survivors`
+ * decodes to an empty roster and is seeded from the legacy [SettlementDto.population] on decode.
  */
 @Serializable
 data class TransferDocument(
-    val schemaVersion: Int = 6,
+    val schemaVersion: Int = 7,
     val exportedAt: String,
     val campaigns: List<CampaignDto>,
 ) {
     companion object {
         /** Schema versions this build can read. */
-        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6)
+        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7)
     }
 }
 

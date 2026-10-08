@@ -16,8 +16,39 @@ data class SettlementRecord(
     val settlement: Settlement,
     val state: SettlementState = SettlementState(),
 ) {
+    /** The living survivors: everyone in the roster whose status is not [SurvivorStatus.DEAD]. */
+    val population: Int get() = state.survivors.count { it.status != SurvivorStatus.DEAD }
+
     /**
-     * Adapts the counters and the settlement population to the milestone snapshot.
+     * Replaces the roster and keeps the legacy [Settlement.population] scalar equal to the derived
+     * [population], so the scalar (used by the Home cards and exports) never drifts from the roster.
+     */
+    fun withSurvivors(survivors: List<Survivor>): SettlementRecord =
+        copy(
+            settlement = settlement.copy(population = survivors.count { it.status != SurvivorStatus.DEAD }),
+            state = state.copy(survivors = survivors),
+        )
+
+    /**
+     * Seeds the roster from the legacy [Settlement.population] when it is empty but the scalar is
+     * positive (a record written before the roster existed). A record that already has a roster, or
+     * a zero population, is returned unchanged.
+     *
+     * [newId] supplies a fresh id per seeded survivor; the default derives a **deterministic** id
+     * from the settlement id and the survivor index, so re-running the migration (e.g. on each
+     * `reload()`) yields the same ids instead of churning them.
+     */
+    fun migrated(
+        newId: (Int) -> Ulid = { index -> Ulid.generate(index.toLong()) { settlement.id.value.hashCode() } },
+    ): SettlementRecord {
+        if (state.survivors.isNotEmpty() || settlement.population <= 0) {
+            return this
+        }
+        return withSurvivors(List(settlement.population) { Survivor(id = newId(it)) })
+    }
+
+    /**
+     * Adapts the counters and the roster population to the milestone snapshot.
      *
      * The innovation counter is the number of unlocked innovations, not the deck size.
      */
@@ -25,7 +56,7 @@ data class SettlementRecord(
         MilestoneState(
             deaths = state.deaths,
             births = state.births,
-            population = settlement.population,
+            population = population,
             innovations = state.innovations.innovations.size,
         )
 

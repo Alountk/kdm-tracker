@@ -32,6 +32,8 @@ object Core16Ruleset : Ruleset {
      */
     override val survivalLimit: Int = 1
 
+    override val departingLimit: Int = 4
+
     override val milestones: List<MilestoneDefinition> =
         listOf(
             MilestoneDefinition(

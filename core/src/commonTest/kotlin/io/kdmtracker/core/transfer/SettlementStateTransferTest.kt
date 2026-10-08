@@ -13,6 +13,7 @@ import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Timeline
 import io.kdmtracker.core.domain.TimelineEntry
@@ -86,6 +87,7 @@ class SettlementStateTransferTest {
                 ),
             deaths = 4,
             births = 2,
+            survivors = List(9) { Survivor(id = Ulid.generate(100L + it) { 0 }) },
         )
 
     @Test
@@ -154,15 +156,15 @@ class SettlementStateTransferTest {
     }
 
     @Test
-    fun newDocumentDefaultsToSchemaVersionSix() {
+    fun newDocumentDefaultsToSchemaVersionSeven() {
         val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
 
-        assertEquals(6, document.schemaVersion)
+        assertEquals(7, document.schemaVersion)
     }
 
     @Test
-    fun supportedVersionsIncludesSix() {
-        assertTrue(6 in TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsIncludesSeven() {
+        assertTrue(7 in TransferDocument.SUPPORTED_VERSIONS)
     }
 
     @Test

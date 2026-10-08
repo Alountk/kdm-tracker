@@ -43,6 +43,10 @@ interface Ruleset {
     val endeavorsPerReturnee: Int
 
     val survivalLimit: Int
+
+    /** The maximum number of survivors that may depart for a hunt (rulebook 1.6: 4). */
+    val departingLimit: Int
+
     val milestones: List<MilestoneDefinition>
     val principles: Map<PrincipleCategory, List<PrincipleChoice>>
 }
@@ -75,6 +79,7 @@ fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
         deathCountStep = overrides.deathCountStep ?: deathCountStep,
         endeavorsPerReturnee = overrides.endeavorsPerReturnee ?: endeavorsPerReturnee,
         survivalLimit = overrides.survivalLimit ?: survivalLimit,
+        departingLimit = departingLimit,
         milestones = mergeMilestones(milestones, overrides.extraMilestones),
         principles = principles + overrides.principleOverrides,
     )
@@ -103,6 +108,7 @@ private data class OverrideRuleset(
     override val deathCountStep: Int,
     override val endeavorsPerReturnee: Int,
     override val survivalLimit: Int,
+    override val departingLimit: Int,
     override val milestones: List<MilestoneDefinition>,
     override val principles: Map<PrincipleCategory, List<PrincipleChoice>>,
 ) : Ruleset
