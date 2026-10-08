@@ -36,6 +36,7 @@ class SettlementStateTest {
                     resourceEntries = resourceEntries,
                     deaths = deaths,
                     births = births,
+                    survivors = List(population) { Survivor(id = Ulid.generate(it.toLong() + 10) { 0 }) },
                 ),
         )
 
@@ -105,7 +106,7 @@ class SettlementStateTest {
     fun aDefaultSettlementRecordStartsWithFourSurvivorsAndReachesNoMilestones() {
         val record = record()
 
-        assertEquals(4, record.settlement.population)
+        assertEquals(4, record.population)
         assertTrue(record.reachedMilestones(Core16Ruleset).isEmpty())
     }
 
