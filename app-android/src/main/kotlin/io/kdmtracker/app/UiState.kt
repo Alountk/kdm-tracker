@@ -10,6 +10,7 @@ import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.StorageLine
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.rules.CraftCheck
 import io.kdmtracker.core.rules.EndeavorBreakdown
 import io.kdmtracker.core.rules.InnovationView
@@ -94,6 +95,7 @@ data class UiState(
     val births: Int = 0,
     val milestoneViews: List<MilestoneView> = emptyList(),
     val chosenPrinciples: Map<PrincipleCategory, String> = emptyMap(),
+    val survivors: List<Survivor> = emptyList(),
 )
 
 /**

@@ -12,6 +12,7 @@ import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.Craftability
 import io.kdmtracker.core.rules.DerivedValues
@@ -26,16 +27,21 @@ import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.AdvanceTimeline
+import io.kdmtracker.core.usecase.AssignGear
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
+import io.kdmtracker.core.usecase.MarkDeparting
 import io.kdmtracker.core.usecase.RecordBirths
 import io.kdmtracker.core.usecase.RecordDeaths
 import io.kdmtracker.core.usecase.RecordSettlementEvent
 import io.kdmtracker.core.usecase.ResolveMilestone
+import io.kdmtracker.core.usecase.ReturnSurvivors
 import io.kdmtracker.core.usecase.SpendEndeavor
+import io.kdmtracker.core.usecase.UnassignGear
+import io.kdmtracker.core.usecase.UpdateSurvivor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -263,6 +269,37 @@ class LanternYearController(
         applyResult(RecordBirths.run(repository.record, count, newSurvivorId))
     }
 
+    /** Heals the returning survivors (Step 2): erase light/heavy injuries and clear tokens. */
+    fun healSurvivors() {
+        applyResult(StepResult.Ok(ReturnSurvivors.run(repository.record)))
+    }
+
+    /** Chooses the departing survivors (Step 8), capped at the ruleset's departing limit. */
+    fun markDeparting(ids: List<Ulid>) {
+        applyResult(MarkDeparting.run(repository.record, ids, ruleset.departingLimit))
+    }
+
+    /** Assigns [gearName] from the settlement's crafted gear to a survivor (Step 8). */
+    fun assignGear(
+        survivorId: Ulid,
+        gearName: String,
+    ) {
+        applyResult(AssignGear.run(repository.record, survivorId, gearName))
+    }
+
+    /** Removes [gearName] from a survivor (Step 8). */
+    fun unassignGear(
+        survivorId: Ulid,
+        gearName: String,
+    ) {
+        applyResult(UnassignGear.run(repository.record, survivorId, gearName))
+    }
+
+    /** Saves an edited survivor from the Survivor Editor. */
+    fun updateSurvivor(survivor: Survivor) {
+        applyResult(UpdateSurvivor.run(repository.record, survivor))
+    }
+
     /**
      * Records the settlement's chosen principle [label] for [category] (Steps 5/6).
      *
@@ -433,6 +470,7 @@ class LanternYearController(
             settlementEvent = settlement.settlementEvent,
             deaths = record.state.deaths,
             births = record.state.births,
+            survivors = record.state.survivors,
             chosenPrinciples = record.state.principles,
             milestoneViews =
                 ruleset.milestones.map { definition ->
