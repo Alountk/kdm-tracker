@@ -35,3 +35,4 @@ jobs:
       REVIEW_API_KEY: ${{ secrets.REVIEW_API_KEY }}
       REVIEW_MIMO_API_KEY: ${{ secrets.REVIEW_MIMO_API_KEY }}
       REVIEW_DEEPSEEK_API_KEY: ${{ secrets.REVIEW_DEEPSEEK_API_KEY }}
+      REVIEW_TOOLING_TOKEN: ${{ secrets.REVIEW_TOOLING_TOKEN }}
