@@ -99,6 +99,12 @@ fun KdmTrackerApp(
                                         onSpendEndeavor = viewModel::spendEndeavor,
                                         onAddResource = viewModel::addResource,
                                         onCraft = viewModel::craft,
+                                        onRecordEvent = viewModel::recordSettlementEvent,
+                                        onDrawEvent = viewModel::drawSettlementEvent,
+                                        onRecordDeaths = viewModel::recordDeaths,
+                                        onRecordBirths = viewModel::recordBirths,
+                                        onChoosePrinciple = viewModel::choosePrinciple,
+                                        onResolveMilestone = viewModel::resolveMilestone,
                                     )
                                 }
                             Screen.Hunt ->
