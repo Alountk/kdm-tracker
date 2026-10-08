@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.TimelineEntry
 
@@ -40,6 +41,8 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.fightingArts }) { it.name }
     val disorderDefinitions: List<ContentEntry> =
         mergeDefinition(packs.flatMap { it.bundle.disorders }) { it.name }
+    val settlementEventDefinitions: List<SettlementEvent> =
+        mergeDefinition(packs.flatMap { it.bundle.settlementEvents }) { it.name }
     val gearDefinitions: List<Gear> =
         mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
     val timeline: List<TimelineEntry> =
@@ -53,6 +56,7 @@ data class ContentCatalog(
     val resources: List<String> = resourceDefinitions.map { it.name }.sorted()
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
     val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
+    val settlementEvents: List<String> = settlementEventDefinitions.map { it.name }.sorted()
     val quarries: List<String> = packs.flatMap { it.bundle.quarries }.distinct().sorted()
     val nemeses: List<String> = packs.flatMap { it.bundle.nemeses }.distinct().sorted()
 

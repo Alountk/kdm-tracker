@@ -21,6 +21,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.MilestoneId
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.rules.SettlementStep
 
@@ -48,6 +50,12 @@ fun SettlementScreen(
     onSpendEndeavor: () -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
     onCraft: (String, String) -> Unit = { _, _ -> },
+    onRecordEvent: (String) -> Unit = {},
+    onDrawEvent: () -> Unit = {},
+    onRecordDeaths: (Int) -> Unit = {},
+    onRecordBirths: (Int) -> Unit = {},
+    onChoosePrinciple: (PrincipleCategory, String) -> Unit = { _, _ -> },
+    onResolveMilestone: (MilestoneId) -> Unit = {},
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
@@ -59,17 +67,33 @@ fun SettlementScreen(
         onPrevious = onPrevious,
         onSelectStep = onSelectStep,
     ) {
-        if (state.currentStep == 7) {
-            DevelopStepScreen(
-                state = state,
-                onInnovate = onInnovate,
-                onBuild = onBuild,
-                onSpendEndeavor = onSpendEndeavor,
-                onAddResource = onAddResource,
-                onCraft = onCraft,
-            )
-        } else {
-            PendientePlaceholder(modifier = Modifier.fillMaxWidth())
+        when (state.currentStep) {
+            4 -> TimelineStepScreen(state = state, onRecordEvent = onRecordEvent, onDrawEvent = onDrawEvent)
+            5 ->
+                DeathCountStepScreen(
+                    state = state,
+                    onRecordDeaths = onRecordDeaths,
+                    onRecordBirths = onRecordBirths,
+                    onChoosePrinciple = onChoosePrinciple,
+                )
+            6 ->
+                MilestonesStepScreen(
+                    state = state,
+                    onChoosePrinciple = onChoosePrinciple,
+                    onResolveMilestone = onResolveMilestone,
+                )
+            7 ->
+                DevelopStepScreen(
+                    state = state,
+                    onInnovate = onInnovate,
+                    onBuild = onBuild,
+                    onSpendEndeavor = onSpendEndeavor,
+                    onAddResource = onAddResource,
+                    onCraft = onCraft,
+                )
+            10 -> ArchiveStepScreen(state = state)
+            11 -> EndPhaseStepScreen(state = state)
+            else -> PendientePlaceholder(modifier = Modifier.fillMaxWidth())
         }
     }
 }

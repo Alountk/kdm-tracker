@@ -101,4 +101,26 @@ class SettlementStateSerializationTest {
         assertTrue(decoded.resourceEntries.isEmpty())
         assertEquals(0, decoded.births)
     }
+
+    @Test
+    fun principlesAndResolvedMilestonesRoundTrip() {
+        val state =
+            SettlementState(
+                principles = mapOf(PrincipleCategory.DEATH to "The First Grave → Graves"),
+                resolvedMilestones = setOf(Core16Milestones.PRINCIPLE_DEATH),
+            )
+
+        val decoded = json.decodeFromString<SettlementState>(json.encodeToString(state))
+
+        assertEquals(state, decoded)
+        assertEquals("The First Grave → Graves", decoded.principles[PrincipleCategory.DEATH])
+    }
+
+    @Test
+    fun jsonMissingNewFieldsDecodesWithDefaults() {
+        val decoded = json.decodeFromString<SettlementState>("""{ "deaths": 1 }""")
+
+        assertTrue(decoded.principles.isEmpty())
+        assertTrue(decoded.resolvedMilestones.isEmpty())
+    }
 }

@@ -25,4 +25,16 @@ object Core16Milestones {
 
     val ALL: List<MilestoneId> =
         listOf(PRINCIPLE_DEATH, PRINCIPLE_NEW_LIFE, PRINCIPLE_SOCIETY, HOODED_KNIGHT, GAME_OVER)
+
+    /**
+     * The [PrincipleCategory] a principle milestone resolves into, or `null` for a milestone
+     * that is not a principle event (Hooded Knight, Game Over).
+     */
+    fun principleCategoryOf(id: MilestoneId): PrincipleCategory? =
+        when (id) {
+            PRINCIPLE_DEATH -> PrincipleCategory.DEATH
+            PRINCIPLE_NEW_LIFE -> PrincipleCategory.NEW_LIFE
+            PRINCIPLE_SOCIETY -> PrincipleCategory.SOCIETY
+            else -> null
+        }
 }

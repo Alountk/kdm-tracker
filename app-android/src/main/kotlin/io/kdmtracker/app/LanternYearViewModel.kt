@@ -13,6 +13,8 @@ import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.core.domain.MilestoneId
+import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.data.KdmDatabaseFactory
@@ -240,6 +242,32 @@ class LanternYearViewModel(
         locationName: String,
         gearName: String,
     ) = mutate { it.craft(locationName, gearName) }
+
+    /** Records [count] deaths at Step 5. */
+    fun recordDeaths(count: Int) = mutate { it.recordDeaths(count) }
+
+    /** Records [count] births at Step 5. */
+    fun recordBirths(count: Int) = mutate { it.recordBirths(count) }
+
+    /** Records the chosen principle [label] for [category] (Steps 5/6). */
+    fun choosePrinciple(
+        category: PrincipleCategory,
+        label: String,
+    ) = mutate { it.choosePrinciple(category, label) }
+
+    /** Ticks the reached milestone [id] as resolved (Step 6). */
+    fun resolveMilestone(id: MilestoneId) = mutate { it.resolveMilestone(id) }
+
+    /** Records the Settlement Event [name] drawn this year (Step 4). */
+    fun recordSettlementEvent(name: String) = mutate { it.recordSettlementEvent(name) }
+
+    /** Draws a random settlement event from the deck and records it (Step 4 convenience). */
+    fun drawSettlementEvent() {
+        val deck = _state.value?.settlementEventDeck.orEmpty()
+        if (deck.isNotEmpty()) {
+            recordSettlementEvent(deck.random().name)
+        }
+    }
 
     fun syncNow() {
         components.get()?.syncCoordinator?.syncNow()

@@ -1,6 +1,7 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.SettlementAction
+import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,6 +21,28 @@ class ContentCatalogMergeTest {
     private fun ok(result: CatalogResult): ContentCatalog {
         assertTrue(result is CatalogResult.Ok, "expected Ok but was $result")
         return result.catalog
+    }
+
+    private fun packWithSettlementEvents(vararg events: SettlementEvent) =
+        ContentPack(
+            id = "events-${events.size}",
+            version = "1.0.0",
+            name = "events",
+            bundle = ContentBundle(settlementEvents = events.toList()),
+        )
+
+    @Test
+    fun settlementEventsMergeAcrossPacksSortedAndDeduped() {
+        val a = packWithSettlementEvents(SettlementEvent("Plaga", "plaga text"))
+        val b =
+            packWithSettlementEvents(
+                SettlementEvent("Rivalidad", "rivalidad text"),
+                SettlementEvent("Plaga", "plaga text"),
+            )
+        val catalog = ok(ContentCatalogComposer.compose(listOf(a, b)))
+
+        assertEquals(listOf("Plaga", "Rivalidad"), catalog.settlementEvents)
+        assertEquals(2, catalog.settlementEventDefinitions.size)
     }
 
     @Test
