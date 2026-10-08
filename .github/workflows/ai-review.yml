@@ -1,0 +1,38 @@
+# Copy to .github/workflows/ai-review.yml in the repository you want reviewed.
+# Fallback chain (preferred): repo variable REVIEW_CHAIN="mimo,deepseek" plus per-profile
+# variables REVIEW_MIMO_BASE_URL / REVIEW_MIMO_MODEL / REVIEW_DEEPSEEK_BASE_URL /
+# REVIEW_DEEPSEEK_MODEL and secrets REVIEW_MIMO_API_KEY / REVIEW_DEEPSEEK_API_KEY.
+# Single provider: REVIEW_PROVIDER (claude|codex|gemini|openai-compatible), REVIEW_MODEL,
+# and (openai-compatible only) REVIEW_BASE_URL, with the matching secret.
+name: ai-review
+
+on:
+  pull_request:
+    types: [labeled]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/package-lock.json"
+      - "**/yarn.lock"
+      - "**/pnpm-lock.yaml"
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    uses: Alountk/pr-review-agent/.github/workflows/pr-review.yml@main
+    with:
+      tooling-repository: Alountk/pr-review-agent
+      tooling-ref: main
+      gate-command: "npm ci && npm run lint && npm test"
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      REVIEW_API_KEY: ${{ secrets.REVIEW_API_KEY }}
+      REVIEW_MIMO_API_KEY: ${{ secrets.REVIEW_MIMO_API_KEY }}
+      REVIEW_DEEPSEEK_API_KEY: ${{ secrets.REVIEW_DEEPSEEK_API_KEY }}
