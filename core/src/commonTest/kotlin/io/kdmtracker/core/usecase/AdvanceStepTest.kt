@@ -12,6 +12,7 @@ import io.kdmtracker.core.ruleset.Core16Ruleset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 class AdvanceStepTest {
     private val id = Ulid.generate(1L) { 0 }
@@ -77,5 +78,26 @@ class AdvanceStepTest {
         assertEquals(SettlementPhase.SETTLEMENT, result.settlement.phase)
         assertEquals(1, result.settlement.currentStep)
         assertEquals(0, result.settlement.endeavors)
+    }
+
+    @Test
+    fun committingClearsTheYearsSettlementEvent() {
+        val source = settlement(SettlementPhase.SETTLEMENT, 11, endeavors = 0).copy(settlementEvent = "Rivalidad")
+
+        val result = AdvanceStep.run(source, 3, context)
+
+        assertEquals(SettlementPhase.HUNT, result.settlement.phase)
+        assertNull(result.settlement.settlementEvent)
+    }
+
+    @Test
+    fun landingOnTheNewYearClearsTheYearsSettlementEvent() {
+        val source = settlement(SettlementPhase.HUNT, 1, endeavors = 0).copy(settlementEvent = "Rivalidad")
+
+        val result = AdvanceStep.run(source, 0, context.copy(huntFailed = true))
+
+        assertEquals(SettlementPhase.SETTLEMENT, result.settlement.phase)
+        assertEquals(1, result.settlement.currentStep)
+        assertNull(result.settlement.settlementEvent)
     }
 }

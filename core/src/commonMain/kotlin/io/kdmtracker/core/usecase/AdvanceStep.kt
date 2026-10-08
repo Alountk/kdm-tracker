@@ -15,8 +15,9 @@ import io.kdmtracker.core.rules.PhaseStep
  * year boundary: a [FlowTransition.Commit] out of the Settlement Phase discards the pool
  * (the commit already carries the exact count being discarded), and any transition landing
  * on Settlement step 1 starts the new year empty — endeavors are not earned until the
- * Gains Endeavors step. [io.kdmtracker.core.rules.recompute] stays a pure helper for the
- * future earn/spend ledger.
+ * Gains Endeavors step. At the same boundary the drawn [Settlement.settlementEvent] is
+ * cleared, since it belongs to the year that just ended and step 4 records the next one.
+ * [io.kdmtracker.core.rules.recompute] stays a pure helper for the future earn/spend ledger.
  */
 object AdvanceStep {
     /** The resulting settlement together with the transition that produced it. */
@@ -55,7 +56,11 @@ object AdvanceStep {
         val discardsEndeavors =
             transition is FlowTransition.Commit ||
                 to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
-        return if (discardsEndeavors) moved.copy(endeavors = 0) else moved
+        return if (discardsEndeavors) {
+            moved.copy(endeavors = 0, settlementEvent = null)
+        } else {
+            moved
+        }
     }
 
     private fun FlowTransition.target(): PhaseStep? =
