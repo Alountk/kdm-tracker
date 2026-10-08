@@ -27,7 +27,12 @@ object Legacy15Content {
                     innovations = Core15Innovations.bundle.innovations,
                     locations = Core15Locations.bundle.locations + Core15Gear.bundle.locations,
                     gear = Core15Gear.bundle.gear,
-                    resources = Core15Resources.bundle.resources,
+                    resources =
+                        Core15Resources.bundle.resources.map {
+                            it.copy(
+                                source = ResourceSources.sourceOf(it.name),
+                            )
+                        },
                     fightingArts = Core15FightingArts.bundle.fightingArts,
                     disorders = Core15FightingArts.bundle.disorders,
                 ),

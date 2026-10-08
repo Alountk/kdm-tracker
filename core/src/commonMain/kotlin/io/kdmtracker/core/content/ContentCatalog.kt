@@ -66,6 +66,18 @@ data class ContentCatalog(
         val byName = gearDefinitions.associateBy { it.name }
         return gearNames.flatMap { byName[it]?.modifiers ?: emptyList() }
     }
+
+    /**
+     * The resource definitions grouped by their [ResourceDefinition.source] (falling back to
+     * [ResourceSources.sourceOf] when a definition carries no source), sorted by source then name.
+     * Every resource appears in exactly one group — nothing is dropped.
+     */
+    fun resourceGroups(): Map<String, List<ResourceDefinition>> =
+        resourceDefinitions
+            .groupBy { it.source.ifBlank { ResourceSources.sourceOf(it.name) } }
+            .toList()
+            .sortedBy { (source, _) -> source }
+            .associate { (source, definitions) -> source to definitions.sortedBy { it.name } }
 }
 
 /**

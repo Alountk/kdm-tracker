@@ -21,11 +21,15 @@ data class ResourceEntry(
  *
  * Content packs carry these definitions, so a resource's category is content, never
  * inferred from its name.
+ *
+ * @property source the monster/deck the resource comes from, for grouping in the UI. Empty when
+ *   unknown; it never affects the ledger, which keys resources by name.
  */
 @Serializable
 data class ResourceDefinition(
     val name: String,
     val category: ResourceCategory,
+    val source: String = "",
 )
 
 /**
