@@ -14,16 +14,23 @@ object ResourceSources {
 
     private val rules: List<Pair<List<String>, String>> =
         listOf(
-            listOf("León", "Felino") to "León Blanco",
-            listOf("Fénix", "Ave", "Plumas", "Cresta") to "Fénix",
-            listOf("Cuerno", "Antílope", "Tendón", "Pellejo") to "Antílope Bramador",
-            listOf("Araña", "Cucaracha", "Escarabajo", "Hormiga", "Mosca", "Garrapata", "Parásitos") to "Insectos",
+            listOf("león", "felino") to "León Blanco",
+            listOf("fénix", "ave", "pluma", "plumas", "pico", "cresta", "bigote", "bigotes") to "Fénix",
+            listOf("cuerno", "cuernos", "antílope", "tendón", "pellejo", "filete", "vejiga") to "Antílope Bramador",
+            listOf("pústulas", "segundo", "corazón") to "Carnicero",
+            listOf("araña", "cucaracha", "escarabajo", "hormiga", "mosca", "garrapata", "parásitos") to "Insectos",
         )
 
-    /** The source group for [name], or `"Otros"` when it matches nothing. */
+    /**
+     * The source group for [name], or `"Otros"` when no token matches a whole word of the name.
+     *
+     * Matching is **word-boundary**, not substring — `"Ave"` matches `"Pico de Ave"` but not
+     * `"Calavera"`.
+     */
     fun sourceOf(name: String): String {
         if (name in basics) return "Básicos"
-        val rule = rules.firstOrNull { (tokens, _) -> tokens.any { name.contains(it, ignoreCase = true) } }
+        val words = name.lowercase().split(" ")
+        val rule = rules.firstOrNull { (tokens, _) -> tokens.any { token -> token in words } }
         return rule?.second ?: "Otros"
     }
 }

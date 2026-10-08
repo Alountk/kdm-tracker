@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.StorageLine
 
 private enum class DevelopTab { RECURSOS, INNOVAR, FABRICAR }
 
@@ -53,6 +54,12 @@ fun DevelopStepScreen(
             ChoiceChip("Innovar", tab == DevelopTab.INNOVAR) { tab = DevelopTab.INNOVAR }
             ChoiceChip("Fabricar", tab == DevelopTab.FABRICAR) { tab = DevelopTab.FABRICAR }
         }
+
+        Text(
+            text = "Endeavors ${state.endeavors} · ${storageText(state.storageLines)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
         when (tab) {
             DevelopTab.RECURSOS -> RecursosTab(state = state, onAddResource = onAddResource)
@@ -98,3 +105,6 @@ internal fun ChoiceChip(
         )
     }
 }
+
+private fun storageText(lines: List<StorageLine>): String =
+    if (lines.isEmpty()) "Storage: empty" else "Storage: " + lines.joinToString(" · ") { "${it.name} ${it.quantity}" }

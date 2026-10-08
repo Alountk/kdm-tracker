@@ -55,7 +55,19 @@ internal fun FabricarTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = location.name, style = MaterialTheme.typography.bodyMedium)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = location.name, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "Cost: ${buildCostText(location)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = "Requires: ${location.requires.ifEmpty { listOf("None") }.joinToString(", ")}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Button(onClick = { onBuild(location.name) }) { Text("Build") }
                 }
             }
@@ -120,3 +132,12 @@ private fun costText(recipe: GearRecipe): String =
     recipe.resourceCost.entries
         .sortedBy { it.key }
         .joinToString(", ") { (name, count) -> "$count $name" }
+
+private fun buildCostText(location: io.kdmtracker.core.domain.SettlementLocation): String {
+    val parts = mutableListOf<String>()
+    if (location.buildEndeavors > 0) parts += "${location.buildEndeavors} endeavors"
+    location.buildCost.entries
+        .sortedBy { it.key }
+        .forEach { (name, count) -> parts += "$count $name" }
+    return if (parts.isEmpty()) "free" else parts.joinToString(", ")
+}

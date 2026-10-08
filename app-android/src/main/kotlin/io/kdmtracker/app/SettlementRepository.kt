@@ -7,6 +7,8 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
@@ -334,9 +336,22 @@ class SettlementRepository(
     private fun startingRecord(settlement: Settlement): SettlementRecord =
         SettlementRecord(
             settlement = settlement,
-            state = SettlementState(locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION))),
+            state =
+                SettlementState(
+                    locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION)),
+                    innovations = InnovationCollection(STARTING_INNOVATIONS),
+                ),
         )
 }
+
+/** The game's initial innovation(s), seeded so the unlock tree has a root to grow from. */
+private val STARTING_INNOVATIONS: List<Innovation> =
+    listOfNotNull(
+        Core16Content.pack.bundle.innovations
+            .firstOrNull { it.name == "Language" },
+        Legacy15Content.pack.bundle.innovations
+            .firstOrNull { it.name == "Lenguaje" },
+    )
 
 /** The location every settlement opens with, so Innovate is offered at a built location. */
 private const val STARTING_LOCATION = "Lantern Hoard"

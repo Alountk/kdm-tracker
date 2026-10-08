@@ -88,7 +88,7 @@ private fun InnovarRow(
     val subtitle =
         when (view.status) {
             InnovationStatus.UNLOCKED -> "desbloqueada"
-            InnovationStatus.AVAILABLE -> "disponible · 1 esfuerzo"
+            InnovationStatus.AVAILABLE -> "disponible · ${actionCost(view)}"
             InnovationStatus.NO_ACCESS -> "sin acceso — requiere ${view.missingParent ?: "?"}"
         }
     Row(
@@ -116,7 +116,17 @@ private fun InnovarRow(
             )
         }
         if (view.status == InnovationStatus.AVAILABLE) {
-            Button(onClick = { onInnovate(view.innovation.name) }) { Text("Innovar") }
+            Button(onClick = { onInnovate(view.innovation.name) }, enabled = !view.used) {
+                Text(if (view.used) "Usada esta fase" else "Innovar")
+            }
         }
     }
+}
+
+private fun actionCost(view: InnovationView): String {
+    val parts = mutableListOf("${view.endeavorCost} esfuerzo")
+    view.resourceCost.entries
+        .sortedBy { it.key }
+        .forEach { (name, count) -> parts += "$count $name" }
+    return parts.joinToString(" + ")
 }

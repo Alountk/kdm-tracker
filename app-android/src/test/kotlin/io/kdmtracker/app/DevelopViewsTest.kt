@@ -33,10 +33,14 @@ class DevelopViewsTest {
     }
 
     @Test
-    fun everyInnovationIsClassified() {
+    fun aFreshSettlementHasARootAndAvailableInnovations() {
         val state = controller().state.value
 
         assertEquals(state.innovationDefinitions.size, state.innovationViews.size)
-        assertTrue(state.innovationViews.all { it.status == InnovationStatus.NO_ACCESS })
+        assertTrue(state.innovationViews.any { it.status == InnovationStatus.UNLOCKED }, "the root is unlocked")
+        assertTrue(
+            state.innovationViews.any { it.status == InnovationStatus.AVAILABLE },
+            "its consequences are available",
+        )
     }
 }

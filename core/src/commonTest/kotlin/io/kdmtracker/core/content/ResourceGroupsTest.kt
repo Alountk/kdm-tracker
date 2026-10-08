@@ -17,6 +17,9 @@ class ResourceGroupsTest {
         assertEquals("Fénix", ResourceSources.sourceOf("Pico de Ave"))
         assertEquals("Antílope Bramador", ResourceSources.sourceOf("Cuerno en Espiral"))
         assertEquals("Básicos", ResourceSources.sourceOf("Hueso de Monstruo"))
+        assertEquals("Fénix", ResourceSources.sourceOf("Pico de Ave"))
+        // whole-word match: "Ave" must not catch "Calavera".
+        assertEquals("Otros", ResourceSources.sourceOf("Calavera"))
         assertEquals("Otros", ResourceSources.sourceOf("Nombre Desconocido"))
     }
 
