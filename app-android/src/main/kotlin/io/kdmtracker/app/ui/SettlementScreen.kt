@@ -1,5 +1,6 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,17 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
@@ -32,13 +30,12 @@ private const val DISABLED_ALPHA = 0.38f
 /**
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
  *
- * Step 1 (Set Up) hands the whole frame to [SetUpStepScreen]: it is read-only content with its
- * own confirm action. Every other step shows the cockpit — the lantern year, population and
- * endeavors, a rail of the official settlement steps with [UiState.currentStep] highlighted, a
- * body and the back/next controls — with Step 7 (Develop) supplying [DevelopStepScreen] as that
- * body, so its Innovate, Build and Endeavor actions live inside the same navigation chrome (a user
- * at step 7 can always reach the later steps). All navigation is reported through the callbacks;
- * this composable owns no state and no rules.
+ * Step 1 (Set Up) hands the whole frame to [SetUpStepScreen]: it is read-only content with its own
+ * confirm action. Every other step shows the cockpit — a header, a **thin top step bar** (the 11
+ * steps as numbered chips, the current one highlighted and unreachable ones disabled, so the
+ * navigation never eats half the width), a full-width body and the back/next controls. Step 7
+ * (Develop) supplies [DevelopStepScreen] as that body. All navigation is reported through the
+ * callbacks; this composable owns no state and no rules.
  */
 @Composable
 fun SettlementScreen(
@@ -90,41 +87,30 @@ private fun SettlementCockpit(
             Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         SettlementHeader(state)
 
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            SettlementStepRail(
-                steps = state.steps,
-                currentStep = state.currentStep,
-                reachableSteps = state.reachableSteps,
-                onSelectStep = onSelectStep,
-                modifier =
-                    Modifier
-                        .width(180.dp)
-                        .verticalScroll(rememberScrollState()),
+        SettlementStepBar(
+            steps = state.steps,
+            currentStep = state.currentStep,
+            reachableSteps = state.reachableSteps,
+            onSelectStep = onSelectStep,
+        )
+
+        Text(
+            text = "Step ${state.currentStep} · ${state.stepTitle}",
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        Box(modifier = Modifier.weight(1f)) { body() }
+
+        state.lastTransition?.let { transition ->
+            Text(
+                text = transition,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Step ${state.currentStep} · ${state.stepTitle}",
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                Box(modifier = Modifier.weight(1f)) { body() }
-                state.lastTransition?.let { transition ->
-                    Text(
-                        text = transition,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -154,19 +140,21 @@ private fun SettlementHeader(state: UiState) {
 }
 
 @Composable
-private fun SettlementStepRail(
+private fun SettlementStepBar(
     steps: List<SettlementStep>,
     currentStep: Int,
     reachableSteps: Set<Int>,
     onSelectStep: (Int) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         steps.forEach { step ->
-            SettlementStepRailItem(
+            SettlementStepItem(
                 step = step,
                 selected = step.number == currentStep,
                 enabled = step.number in reachableSteps,
@@ -177,7 +165,7 @@ private fun SettlementStepRail(
 }
 
 @Composable
-private fun SettlementStepRailItem(
+private fun SettlementStepItem(
     step: SettlementStep,
     selected: Boolean,
     enabled: Boolean,
@@ -187,7 +175,7 @@ private fun SettlementStepRailItem(
         if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
-            MaterialTheme.colorScheme.surface
+            MaterialTheme.colorScheme.surfaceVariant
         }
     val contentColor =
         if (selected) {
@@ -198,7 +186,6 @@ private fun SettlementStepRailItem(
     Surface(
         modifier =
             Modifier
-                .fillMaxWidth()
                 .alpha(if (enabled) 1f else DISABLED_ALPHA)
                 .selectable(
                     selected = selected,
@@ -210,21 +197,10 @@ private fun SettlementStepRailItem(
         contentColor = contentColor,
         shape = MaterialTheme.shapes.small,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = "${step.number}",
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.width(20.dp),
-            )
-            Text(
-                text = step.title,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-            )
-        }
+        Text(
+            text = "${step.number}",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+        )
     }
 }
