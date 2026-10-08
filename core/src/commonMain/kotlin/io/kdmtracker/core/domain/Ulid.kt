@@ -1,5 +1,7 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.Serializable
+
 /**
  * A 26-character, lexicographically sortable identifier generated on the client.
  *
@@ -7,6 +9,7 @@ package io.kdmtracker.core.domain
  * remaining 16 characters encode 80 bits of randomness, using the Crockford base32 alphabet.
  * Because every value has the same length, [compareTo] over the raw [value] yields time order.
  */
+@Serializable
 @JvmInline
 value class Ulid(
     val value: String,

@@ -34,6 +34,7 @@ data class SettlementState(
     val gear: List<String> = emptyList(),
     val principles: Map<PrincipleCategory, String> = emptyMap(),
     val resolvedMilestones: Set<MilestoneId> = emptySet(),
+    val survivors: List<Survivor> = emptyList(),
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
