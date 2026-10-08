@@ -12,6 +12,7 @@ import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.Craftability
 import io.kdmtracker.core.rules.DerivedValues
 import io.kdmtracker.core.rules.FlowContext
@@ -38,6 +39,7 @@ import io.kdmtracker.core.usecase.SpendEndeavor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
 
 /**
  * Drives the lantern-year loop for the UI.
@@ -51,6 +53,7 @@ class LanternYearController(
     private val repository: SettlementRepository,
     private val ruleset: Ruleset = Core16Ruleset,
     private val catalog: ContentCatalog? = null,
+    private val newSurvivorId: () -> Ulid = { Ulid.generate(System.currentTimeMillis()) { Random.nextInt() } },
 ) {
     /**
      * The content the step actions read.
@@ -257,7 +260,7 @@ class LanternYearController(
      * and the population; the controller mirrors the outcome on a refusal.
      */
     fun recordBirths(count: Int) {
-        applyResult(RecordBirths.run(repository.record, count))
+        applyResult(RecordBirths.run(repository.record, count, newSurvivorId))
     }
 
     /**

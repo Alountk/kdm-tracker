@@ -6,7 +6,9 @@ import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementState
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Timeline
+import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import io.kdmtracker.data.SqlDelightCampaignStore
 import io.kdmtracker.data.db.KdmDatabase
@@ -125,5 +127,7 @@ class SettlementRecordRepositoryTest {
             resourceEntries = listOf(ResourceEntry(name = "Bone", category = ResourceCategory.BASIC, delta = 3)),
             deaths = 5,
             births = 2,
+            // Matches the seeded settlement's population, so loading does not seed a roster.
+            survivors = List(4) { Survivor(id = Ulid.generate(200L + it) { 0 }) },
         )
 }

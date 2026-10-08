@@ -13,6 +13,7 @@ import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
@@ -286,8 +287,10 @@ class SettlementRepository(
         campaignId: String,
         fallback: Settlement,
     ): SettlementRecord =
-        store.loadRecords(campaignId).firstOrNull { it.settlement.id == fallback.id }
-            ?: SettlementRecord(fallback)
+        (
+            store.loadRecords(campaignId).firstOrNull { it.settlement.id == fallback.id }
+                ?: SettlementRecord(fallback)
+        ).migrated()
 
     private fun bannerFor(campaignId: String): CampaignBanner =
         memberships?.membership(campaignId)?.let { CampaignBadges.of(it) }
@@ -341,6 +344,10 @@ class SettlementRepository(
                     locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION)),
                     innovations = InnovationCollection(STARTING_INNOVATIONS),
                 ),
+        ).withSurvivors(
+            List(FOUNDING_SURVIVORS) {
+                Survivor(id = Ulid.generate(clock.tick(null).millis) { Random.nextInt() })
+            },
         )
 }
 
@@ -358,6 +365,9 @@ private const val STARTING_LOCATION = "Lantern Hoard"
 
 /** The location the curated 1.5 crafting recipes live on, built so Craft is reachable. */
 private const val CRAFT_LOCATION = "Armería"
+
+/** The founding survivors a new settlement opens with. */
+private const val FOUNDING_SURVIVORS = 4
 
 /** A catalog with no packs, used when composition fails so the screens render nothing. */
 private val EMPTY_CATALOG = ContentCatalog(emptyList())

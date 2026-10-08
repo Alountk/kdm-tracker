@@ -86,7 +86,7 @@ object TransferMapper {
                     sync = sync.toDomain(),
                 ),
             state = state,
-        )
+        ).migrated()
 
     private fun RulesetOverrides.toDto(): RulesetOverridesDto =
         RulesetOverridesDto(

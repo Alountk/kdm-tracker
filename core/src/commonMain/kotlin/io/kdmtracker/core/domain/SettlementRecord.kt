@@ -3,6 +3,7 @@ package io.kdmtracker.core.domain
 import io.kdmtracker.core.rules.MilestoneState
 import io.kdmtracker.core.rules.reachedMilestones
 import io.kdmtracker.core.ruleset.Ruleset
+import kotlin.random.Random
 
 /**
  * The full step-facing view of a settlement, composed from the [Settlement] scalars and
@@ -28,6 +29,18 @@ data class SettlementRecord(
             settlement = settlement.copy(population = survivors.count { it.status != SurvivorStatus.DEAD }),
             state = state.copy(survivors = survivors),
         )
+
+    /**
+     * Seeds the roster from the legacy [Settlement.population] when it is empty but the scalar is
+     * positive (a record written before the roster existed). A record that already has a roster, or
+     * a zero population, is returned unchanged. [newId] supplies a fresh id per seeded survivor.
+     */
+    fun migrated(newId: () -> Ulid = { Ulid.generate(0L) { Random.nextInt() } }): SettlementRecord {
+        if (state.survivors.isNotEmpty() || settlement.population <= 0) {
+            return this
+        }
+        return withSurvivors(List(settlement.population) { Survivor(id = newId()) })
+    }
 
     /**
      * Adapts the counters and the roster population to the milestone snapshot.

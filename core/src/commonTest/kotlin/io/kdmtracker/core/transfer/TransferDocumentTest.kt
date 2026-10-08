@@ -7,6 +7,7 @@ import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.MilestoneConditionSpec
@@ -82,9 +83,17 @@ class TransferDocumentTest {
             ),
         )
 
+    /** A roster-bearing record matching [settlement]'s population, so a DTO round-trip is exact. */
+    private fun record(settlement: Settlement): SettlementRecord {
+        var n = 0L
+        return SettlementRecord(
+            settlement,
+        ).withSurvivors(List(settlement.population) { Survivor(id = ulid(1_000L + n++)) })
+    }
+
     @Test
     fun campaignAndSettlementsRoundTripThroughDto() {
-        val records = settlements.map { SettlementRecord(it) }
+        val records = settlements.map { record(it) }
         val dto = TransferMapper.toDto(campaign, records)
 
         val (domainCampaign, domainSettlements) = TransferMapper.toDomain(dto)
@@ -98,7 +107,7 @@ class TransferDocumentTest {
         val document =
             TransferDocument(
                 exportedAt = "2026-10-05T00:00:00Z",
-                campaigns = listOf(TransferMapper.toDto(campaign, settlements.map { SettlementRecord(it) })),
+                campaigns = listOf(TransferMapper.toDto(campaign, settlements.map { record(it) })),
             )
 
         val encoded = json.encodeToString(document)
@@ -138,7 +147,7 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV6() {
-        assertEquals(listOf(1, 2, 3, 4, 5, 6), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV7() {
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7), TransferDocument.SUPPORTED_VERSIONS)
     }
 }
