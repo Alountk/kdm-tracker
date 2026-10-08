@@ -112,6 +112,11 @@ fun KdmTrackerApp(
                                     onRecordBirths = viewModel::recordBirths,
                                     onChoosePrinciple = viewModel::choosePrinciple,
                                     onResolveMilestone = viewModel::resolveMilestone,
+                                    onHealSurvivors = viewModel::healSurvivors,
+                                    onDepartingChange = viewModel::markDeparting,
+                                    onAssignGear = viewModel::assignGear,
+                                    onUnassignGear = viewModel::unassignGear,
+                                    onSaveSurvivor = viewModel::updateSurvivor,
                                 )
                             Screen.Hunt ->
                                 HuntScreen(

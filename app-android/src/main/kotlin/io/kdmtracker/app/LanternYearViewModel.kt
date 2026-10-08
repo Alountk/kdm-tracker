@@ -16,6 +16,8 @@ import io.kdmtracker.app.sync.SyncState
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.Survivor
+import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.data.KdmDatabaseFactory
 import kotlinx.coroutines.CancellationException
@@ -312,6 +314,27 @@ class LanternYearViewModel(
     fun syncNow() {
         components.get()?.syncCoordinator?.syncNow()
     }
+
+    /** Heals the returning survivors (Step 2). */
+    fun healSurvivors() = mutate { it.healSurvivors() }
+
+    /** Chooses the departing survivors (Step 8). */
+    fun markDeparting(ids: List<Ulid>) = mutate { it.markDeparting(ids) }
+
+    /** Assigns settlement gear to a survivor (Step 8). */
+    fun assignGear(
+        survivorId: Ulid,
+        gearName: String,
+    ) = mutate { it.assignGear(survivorId, gearName) }
+
+    /** Removes gear from a survivor (Step 8). */
+    fun unassignGear(
+        survivorId: Ulid,
+        gearName: String,
+    ) = mutate { it.unassignGear(survivorId, gearName) }
+
+    /** Saves an edited survivor from the Survivor Editor. */
+    fun updateSurvivor(survivor: Survivor) = mutate { it.updateSurvivor(survivor) }
 
     /**
      * Signs the session out: clears the stored token through the components and marks the state
