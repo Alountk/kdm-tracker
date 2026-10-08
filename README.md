@@ -145,15 +145,23 @@ and every cost and limit comes from the composed `ContentCatalog`, never a liter
 - **Step 1 — Set Up the Settlement** (`SetUpStepScreen`): read-only. Shows the principles in play,
   the derived **Innovation Deck** (the consequences the unlocked innovations add), the locations
   already built, and this lantern year's timeline/event, then a single *Confirm Setup* that advances.
-- **Step 7 — Develop** (`DevelopStepScreen`): rendered inside the cockpit's step rail and
-  Previous/Next chrome, so it is never a navigation dead-end. Five affordances with their real
-  costs — **Record a Resource** (the manual funding bridge until hunt rewards are modeled),
-  **Innovate**, **Build**, **Craft** and a generic **Endeavor** — beside the storage ledger and
-  the endeavor pool. Rules text (effects) is shown verbatim; the group resolves it.
+- **Step 7 — Develop** (`DevelopStepScreen`): rendered inside the cockpit's chrome, so it is never
+  a navigation dead-end. Three tabs, all drawn from `:core`-derived views:
+  - **Recursos** — resources grouped by **source** (Básicos / León Blanco / Fénix / …), each with a
+    `+1` (the manual funding bridge until hunt rewards are modeled).
+  - **Innovar** — the **unlock tree** by access state: filter chips *Todas / Disponibles /
+    Desbloqueadas / Sin acceso*, coloured **green** (unlocked) / **blue** (available — its parent is
+    unlocked, i.e. in the `InnovationDeck`) / **grey** (no access; names the parent it still needs).
+  - **Fabricar** — the locations you can still build, plus gear grouped by **localización** or by
+    **tipo**; a recipe is **green with an enabled *Crear*** iff `Craft` would succeed, and otherwise
+    dimmed with what is missing.
+  Rules text (effects) is shown verbatim; the group resolves it.
 
-`SettlementScreen` dispatches on `currentStep`: step 1 renders Set Up, step 7 supplies the Develop
-body to the cockpit, and every other step shows the "Pendiente" placeholder — all inside the same
-cockpit chrome, so no step is unreachable. Each action calls a pure `:core` use-case through the
+`SettlementScreen` renders a **thin top step bar** (the 11 steps as numbered chips, the current one
+highlighted and forward-skips disabled) with the body spanning the full width — the old
+half-screen left rail is gone. Step 1 renders Set Up, step 7 supplies the Develop body, and every
+other step shows the "Pendiente" placeholder — all inside the same chrome, so no step is
+unreachable. Each action calls a pure `:core` use-case through the
 controller and persists the mutated `SettlementRecord` via `SettlementRepository.update` (local
 store + outbox), so it syncs like any other change. Rules are **total**: an invalid action returns
 `StepResult.Blocked(reason)` instead of throwing, and the screen shows the reason inline with the
