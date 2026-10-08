@@ -346,6 +346,12 @@ class LanternYearController(
                                 locationName,
                                 recipe,
                                 Craftability.check(record, locationName, recipe, content),
+                                gearType(
+                                    content.gearDefinitions
+                                        .firstOrNull { it.name == recipe.gearName }
+                                        ?.keywords
+                                        .orEmpty(),
+                                ),
                             )
                         }
                 },
@@ -361,6 +367,16 @@ class LanternYearController(
         )
     }
 }
+
+/** A gear's coarse type from its keywords, for grouping the Fabricar tab by type. */
+private fun gearType(keywords: List<String>): String =
+    when {
+        "arma" in keywords -> "Armas"
+        "armadura" in keywords -> "Armaduras"
+        "objeto" in keywords -> "Objetos"
+        "consumible" in keywords -> "Consumibles"
+        else -> "Otros"
+    }
 
 private fun SettlementPhase.toScreen(): Screen =
     when (this) {

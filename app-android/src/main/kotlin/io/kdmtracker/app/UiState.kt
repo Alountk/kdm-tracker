@@ -84,4 +84,5 @@ data class CraftRecipeView(
     val locationName: String,
     val recipe: GearRecipe,
     val check: CraftCheck,
+    val type: String = "",
 )
