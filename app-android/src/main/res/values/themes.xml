@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- NoActionBar: the app draws its own Compose AppTopBar, so the platform ActionBar
+         (android:label) must not render a second chrome. Framework parent because the module
+         has no Material Components XML theme dependency. -->
+    <style name="Theme.KdmTracker" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application android:label="KDM Tracker">
+    <application android:label="KDM Tracker" android:theme="@style/Theme.KdmTracker">
         <activity
             android:name=".MainActivity"
             android:exported="true">

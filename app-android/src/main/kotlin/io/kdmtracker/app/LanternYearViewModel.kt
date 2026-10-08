@@ -42,6 +42,7 @@ class AppComponents(
     val controller: LanternYearController,
     val syncCoordinator: SyncCoordinator? = null,
     val signIn: SyncSignIn? = null,
+    val signOut: (() -> Unit)? = null,
     val close: () -> Unit = {},
 )
 
@@ -88,6 +89,13 @@ class LanternYearViewModel(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
+    /**
+     * Set when a sign-in attempt fails, so the Account screen can show it inline while the session
+     * stays signed out (a failed sign-in stores no token, so the form must remain).
+     */
+    private val _signInError = MutableStateFlow<String?>(null)
+    val signInError: StateFlow<String?> = _signInError.asStateFlow()
+
     /** Set when the initial load fails, so the UI can show an error instead of spinning forever. */
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
@@ -100,6 +108,13 @@ class LanternYearViewModel(
      */
     @Volatile
     private var onHome = true
+
+    /**
+     * Whether the Account overlay is showing. It sits above Home and the phases; [forDisplay] renders
+     * [Screen.Account] while it is set. Volatile for the same reason as [onHome].
+     */
+    @Volatile
+    private var accountOpen = false
 
     /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
@@ -147,8 +162,13 @@ class LanternYearViewModel(
         }
     }
 
-    /** Overrides the phase-derived screen with [Screen.Home] while the Home is showing (Ruling AK). */
-    private fun UiState.forDisplay(): UiState = if (onHome) copy(screen = Screen.Home) else this
+    /** Overrides the phase-derived screen with [Screen.Home] or [Screen.Account] while set. */
+    private fun UiState.forDisplay(): UiState =
+        when {
+            accountOpen -> copy(screen = Screen.Account)
+            onHome -> copy(screen = Screen.Home)
+            else -> this
+        }
 
     /**
      * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
@@ -181,6 +201,26 @@ class LanternYearViewModel(
                 loaded.controller.state.value
                     .forDisplay()
             _homeCards.value = loaded.controller.cards()
+        }
+    }
+
+    /** Opens the Account overlay above the current screen; [closeAccount] returns to it. */
+    fun goAccount() {
+        accountOpen = true
+        components.get()?.let {
+            _state.value =
+                it.controller.state.value
+                    .forDisplay()
+        }
+    }
+
+    /** Closes the Account overlay, returning to Home or the phase it was opened from. */
+    fun closeAccount() {
+        accountOpen = false
+        components.get()?.let {
+            _state.value =
+                it.controller.state.value
+                    .forDisplay()
         }
     }
 
@@ -274,6 +314,15 @@ class LanternYearViewModel(
     }
 
     /**
+     * Signs the session out: clears the stored token through the components and marks the state
+     * signed out, so the chip and Account screen reflect it without waiting for a failed sync.
+     */
+    fun signOut() {
+        components.get()?.signOut?.invoke()
+        _syncState.value = SyncState.NotConfigured
+    }
+
+    /**
      * Signs in with the given credentials on the IO thread, stores the token, then attempts a sync.
      *
      * A failure surfaces as [SyncState.Error] instead of crashing, mirroring the sync path.
@@ -282,6 +331,7 @@ class LanternYearViewModel(
         username: String,
         password: String,
     ) {
+        _signInError.value = null
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
             val signIn = loaded.signIn ?: return@launch
@@ -291,7 +341,9 @@ class LanternYearViewModel(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                _syncState.value = SyncState.Error(failure.message ?: failure::class.simpleName ?: "Sign in failed")
+                // A failed sign-in stores no token: keep the session signed out (the form stays) and
+                // surface the reason, rather than flipping to Error which reads as "signed in".
+                _signInError.value = failure.message ?: failure::class.simpleName ?: "Sign in failed"
             }
         }
     }
@@ -333,18 +385,23 @@ class LanternYearViewModel(
                                     api = api,
                                     store = handle.syncStore,
                                 )
+                            val syncCoordinator =
+                                SyncCoordinator(
+                                    engine = engine,
+                                    campaignId = repository.campaign.id.value,
+                                    memberships = handle.membershipStore,
+                                    scope = scope,
+                                    tokenProvider = tokenStore::read,
+                                    onSynced = controller::reload,
+                                )
                             AppComponents(
                                 controller = controller,
-                                syncCoordinator =
-                                    SyncCoordinator(
-                                        engine = engine,
-                                        campaignId = repository.campaign.id.value,
-                                        memberships = handle.membershipStore,
-                                        scope = scope,
-                                        tokenProvider = tokenStore::read,
-                                        onSynced = controller::reload,
-                                    ),
+                                syncCoordinator = syncCoordinator,
                                 signIn = SyncSignIn(HttpSyncAuthApi(DEFAULT_SYNC_BASE_URL), tokenStore),
+                                signOut = {
+                                    tokenStore.write(null)
+                                    syncCoordinator.markSignedOut()
+                                },
                                 close = handle::close,
                             )
                         },

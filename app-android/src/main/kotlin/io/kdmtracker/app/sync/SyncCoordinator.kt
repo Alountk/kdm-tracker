@@ -88,6 +88,11 @@ class SyncCoordinator(
             SyncState.Idle()
         }
 
+    /** Marks the session signed out (its token was cleared), so the UI reflects it immediately. */
+    fun markSignedOut() {
+        _state.value = SyncState.NotConfigured
+    }
+
     /**
      * Increments once per completed sync pass, whatever its outcome.
      *
