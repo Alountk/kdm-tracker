@@ -1,9 +1,20 @@
-# Copy to .github/workflows/ai-review.yml in the repository you want reviewed.
-# Fallback chain (preferred): repo variable REVIEW_CHAIN="mimo,deepseek" plus per-profile
-# variables REVIEW_MIMO_BASE_URL / REVIEW_MIMO_MODEL / REVIEW_DEEPSEEK_BASE_URL /
-# REVIEW_DEEPSEEK_MODEL and secrets REVIEW_MIMO_API_KEY / REVIEW_DEEPSEEK_API_KEY.
-# Single provider: REVIEW_PROVIDER (claude|codex|gemini|openai-compatible), REVIEW_MODEL,
-# and (openai-compatible only) REVIEW_BASE_URL, with the matching secret.
+# On-demand AI review for pull requests, powered by Alountk/pr-review-agent.
+#
+# Triggers:
+#   - label `ai-review` on a PR  -> runs only if the PR is above the size thresholds
+#   - comment `/review`          -> always runs (owner/member/collaborator only)
+#
+# Repository variables:
+#   REVIEW_CHAIN                 ordered provider profiles, e.g. "mimo,deepseek"
+#   REVIEW_<PROFILE>_BASE_URL    per-profile endpoint (OpenAI-compatible)
+#   REVIEW_<PROFILE>_MODEL       per-profile model id
+#   REVIEW_FILES_THRESHOLD       label trigger runs when changed files > N (0 = disabled)
+#   REVIEW_LINES_THRESHOLD       label trigger runs when added+deleted lines > N (0 = disabled)
+# Repository secrets:
+#   REVIEW_MIMO_API_KEY, REVIEW_DEEPSEEK_API_KEY, REVIEW_TOOLING_TOKEN (read-only PAT)
+#
+# The reusable workflow and `tooling-ref` are pinned to the same commit SHA on purpose:
+# change both together when upgrading pr-review-agent.
 name: ai-review
 
 on:
@@ -24,17 +35,19 @@ permissions:
 
 jobs:
   review:
-    uses: Alountk/pr-review-agent/.github/workflows/pr-review.yml@main
+    # Ignore unrelated comments up front so they never start a run.
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.issue.pull_request &&
+       github.event.comment.body == '/review' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    uses: Alountk/pr-review-agent/.github/workflows/pr-review.yml@b19b572ee24ad1c564954831481b6cb7833e03fa # main
     with:
       tooling-repository: Alountk/pr-review-agent
-      tooling-ref: main
+      tooling-ref: b19b572ee24ad1c564954831481b6cb7833e03fa
       files-threshold: ${{ fromJSON(vars.REVIEW_FILES_THRESHOLD || '0') }}
       lines-threshold: ${{ fromJSON(vars.REVIEW_LINES_THRESHOLD || '0') }}
     secrets:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      REVIEW_API_KEY: ${{ secrets.REVIEW_API_KEY }}
       REVIEW_MIMO_API_KEY: ${{ secrets.REVIEW_MIMO_API_KEY }}
       REVIEW_DEEPSEEK_API_KEY: ${{ secrets.REVIEW_DEEPSEEK_API_KEY }}
       REVIEW_TOOLING_TOKEN: ${{ secrets.REVIEW_TOOLING_TOKEN }}
