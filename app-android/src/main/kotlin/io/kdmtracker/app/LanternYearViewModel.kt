@@ -42,6 +42,7 @@ class AppComponents(
     val controller: LanternYearController,
     val syncCoordinator: SyncCoordinator? = null,
     val signIn: SyncSignIn? = null,
+    val signOut: (() -> Unit)? = null,
     val close: () -> Unit = {},
 )
 
@@ -102,6 +103,13 @@ class LanternYearViewModel(
     private var onHome = true
 
     /**
+     * Whether the Account overlay is showing. It sits above Home and the phases; [forDisplay] renders
+     * [Screen.Account] while it is set. Volatile for the same reason as [onHome].
+     */
+    @Volatile
+    private var accountOpen = false
+
+    /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
      * [onCleared] on other threads. Held behind an [AtomicReference] so a reader never observes a
      * half-published trio (a stale `null` controller would silently drop a mutation).
@@ -147,8 +155,13 @@ class LanternYearViewModel(
         }
     }
 
-    /** Overrides the phase-derived screen with [Screen.Home] while the Home is showing (Ruling AK). */
-    private fun UiState.forDisplay(): UiState = if (onHome) copy(screen = Screen.Home) else this
+    /** Overrides the phase-derived screen with [Screen.Home] or [Screen.Account] while set. */
+    private fun UiState.forDisplay(): UiState =
+        when {
+            accountOpen -> copy(screen = Screen.Account)
+            onHome -> copy(screen = Screen.Home)
+            else -> this
+        }
 
     /**
      * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
@@ -181,6 +194,26 @@ class LanternYearViewModel(
                 loaded.controller.state.value
                     .forDisplay()
             _homeCards.value = loaded.controller.cards()
+        }
+    }
+
+    /** Opens the Account overlay above the current screen; [closeAccount] returns to it. */
+    fun goAccount() {
+        accountOpen = true
+        components.get()?.let {
+            _state.value =
+                it.controller.state.value
+                    .forDisplay()
+        }
+    }
+
+    /** Closes the Account overlay, returning to Home or the phase it was opened from. */
+    fun closeAccount() {
+        accountOpen = false
+        components.get()?.let {
+            _state.value =
+                it.controller.state.value
+                    .forDisplay()
         }
     }
 
@@ -274,6 +307,15 @@ class LanternYearViewModel(
     }
 
     /**
+     * Signs the session out: clears the stored token through the components and marks the state
+     * signed out, so the chip and Account screen reflect it without waiting for a failed sync.
+     */
+    fun signOut() {
+        components.get()?.signOut?.invoke()
+        _syncState.value = SyncState.NotConfigured
+    }
+
+    /**
      * Signs in with the given credentials on the IO thread, stores the token, then attempts a sync.
      *
      * A failure surfaces as [SyncState.Error] instead of crashing, mirroring the sync path.
@@ -333,18 +375,23 @@ class LanternYearViewModel(
                                     api = api,
                                     store = handle.syncStore,
                                 )
+                            val syncCoordinator =
+                                SyncCoordinator(
+                                    engine = engine,
+                                    campaignId = repository.campaign.id.value,
+                                    memberships = handle.membershipStore,
+                                    scope = scope,
+                                    tokenProvider = tokenStore::read,
+                                    onSynced = controller::reload,
+                                )
                             AppComponents(
                                 controller = controller,
-                                syncCoordinator =
-                                    SyncCoordinator(
-                                        engine = engine,
-                                        campaignId = repository.campaign.id.value,
-                                        memberships = handle.membershipStore,
-                                        scope = scope,
-                                        tokenProvider = tokenStore::read,
-                                        onSynced = controller::reload,
-                                    ),
+                                syncCoordinator = syncCoordinator,
                                 signIn = SyncSignIn(HttpSyncAuthApi(DEFAULT_SYNC_BASE_URL), tokenStore),
+                                signOut = {
+                                    tokenStore.write(null)
+                                    syncCoordinator.markSignedOut()
+                                },
                                 close = handle::close,
                             )
                         },
