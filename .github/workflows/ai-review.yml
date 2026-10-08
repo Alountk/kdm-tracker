@@ -28,6 +28,8 @@ jobs:
     with:
       tooling-repository: Alountk/pr-review-agent
       tooling-ref: main
+      files-threshold: ${{ fromJSON(vars.REVIEW_FILES_THRESHOLD || '0') }}
+      lines-threshold: ${{ fromJSON(vars.REVIEW_LINES_THRESHOLD || '0') }}
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
