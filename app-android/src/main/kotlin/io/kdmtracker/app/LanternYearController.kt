@@ -36,6 +36,7 @@ import io.kdmtracker.core.usecase.AssignHuntEvent
 import io.kdmtracker.core.usecase.AssignPlayer
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
+import io.kdmtracker.core.usecase.ClearShowdown
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.DrawShowdownCard
 import io.kdmtracker.core.usecase.GainEndeavors
@@ -120,10 +121,17 @@ class LanternYearController(
 
     /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
+        val context = flowContext()
         applyStep(
             returnees = repository.settlement.population,
-            context = flowContext(),
+            context = context,
         )
+        if (context.hasSpecialShowdown) {
+            // The special showdown is resolved: clear it and the encounter so the phase continues
+            // normally instead of looping at step 9 forever and reusing the encounter.
+            applyResult(SetSpecialShowdown.run(repository.record, false))
+            applyResult(ClearShowdown.run(repository.record))
+        }
     }
 
     /**

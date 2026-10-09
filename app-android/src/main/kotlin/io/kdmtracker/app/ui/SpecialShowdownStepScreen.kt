@@ -56,6 +56,9 @@ fun SpecialShowdownStepScreen(
             Text(text = "Special Showdown this year", modifier = Modifier.weight(1f))
             Switch(checked = state.specialShowdown, onCheckedChange = onDeclareSpecialShowdown)
         }
+        state.actionError?.let { message ->
+            Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        }
 
         if (!state.specialShowdown) {
             return@Column

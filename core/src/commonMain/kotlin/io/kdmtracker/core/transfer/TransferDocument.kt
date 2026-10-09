@@ -20,7 +20,10 @@ import kotlinx.serialization.Serializable
  * settlement's survivor roster to [SettlementState]; a pre-v7 state that omits `survivors`
  * decodes to an empty roster and is seeded from the legacy [SettlementDto.population] on decode.
  * v8 adds the settlement's hunt state to [SettlementState]; a pre-v8 state that omits `hunt`
- * decodes to an empty [io.kdmtracker.core.domain.HuntState].
+ * decodes to an empty [io.kdmtracker.core.domain.HuntState]. v9 adds the settlement's showdown
+ * state; a pre-v9 state that omits `showdown` decodes to an empty
+ * [io.kdmtracker.core.domain.ShowdownState]. v10 adds the settlement's `specialShowdown` flag; a
+ * pre-v10 state that omits it decodes to `false`.
  */
 @Serializable
 data class TransferDocument(

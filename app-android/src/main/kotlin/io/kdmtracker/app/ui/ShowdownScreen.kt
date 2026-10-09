@@ -36,7 +36,15 @@ fun ShowdownScreen(
 ) {
     val showdown = state.showdown
     if (showdown == null || showdown.monster.isBlank()) {
-        EncounterSetup(state = state, onSetUpShowdown = onSetUpShowdown)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+        ) {
+            EncounterSetup(state = state, onSetUpShowdown = onSetUpShowdown)
+        }
         return
     }
 

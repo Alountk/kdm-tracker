@@ -72,4 +72,25 @@ class SettlementFlowBranchControllerTest {
 
         assertEquals(true, repository.record.state.specialShowdown)
     }
+
+    @Test
+    fun stepNineWithoutTheFlagAdvancesToStepTen() {
+        val (controller, _) = controller(year = 9, step = 9)
+
+        controller.advance()
+
+        assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
+        assertEquals(10, controller.state.value.currentStep)
+    }
+
+    @Test
+    fun concludingTheSpecialShowdownClearsItAndTheEncounter() {
+        val (controller, repository) = controller(year = 9, step = 9, special = true)
+
+        controller.advance()
+
+        assertEquals(5, controller.state.value.currentStep)
+        assertEquals(false, repository.record.state.specialShowdown)
+        assertEquals("", repository.record.state.showdown.monster)
+    }
 }

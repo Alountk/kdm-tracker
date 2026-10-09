@@ -73,10 +73,10 @@ data class SettlementRecord(
         state.timeline
             .entriesFor(year)
             .map { it.label }
-            .firstOrNull { it.startsWith("Nemesis") }
-            ?.removePrefix("Nemesis:")
+            .firstOrNull { it.startsWith(NEMESIS_PREFIX) }
+            ?.removePrefix(NEMESIS_PREFIX)
             ?.trim()
-            ?.replace(Regex("\\s+Lvl\\s+\\d+$"), "")
+            ?.replace(NEMESIS_LEVEL_SUFFIX, "")
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
@@ -86,3 +86,6 @@ data class SettlementRecord(
     /** The derived survival limit for [ruleset]. */
     fun survivalLimit(ruleset: Ruleset): Int = state.survivalLimit(ruleset)
 }
+
+private const val NEMESIS_PREFIX = "Nemesis:"
+private val NEMESIS_LEVEL_SUFFIX = Regex("\\s+Lvl\\s+\\d+$")

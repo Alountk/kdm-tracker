@@ -53,9 +53,35 @@ class SpecialShowdownStateTest {
     }
 
     @Test
-    fun v9DocumentDecodesWithSpecialShowdownFalse() {
+    fun missingFieldDefaultsSpecialShowdownToFalse() {
         val decoded = json.decodeFromString<SettlementState>("""{ "deaths": 1 }""")
 
         assertEquals(false, decoded.specialShowdown)
+    }
+
+    @Test
+    fun nemesisOfIgnoresALabelWithoutTheColon() {
+        val record = record(TimelineEntry(16, "Nemesis"))
+
+        assertNull(record.nemesisOf(16))
+    }
+
+    @Test
+    fun nemesisOfIgnoresAnEmptyName() {
+        val record = record(TimelineEntry(16, "Nemesis:"))
+
+        assertNull(record.nemesisOf(16))
+    }
+
+    @Test
+    fun nemesisOfPicksTheNemesisAmongOtherEntries() {
+        val record =
+            record(
+                TimelineEntry(16, "Story Event"),
+                TimelineEntry(16, "Nemesis: The Hand Lvl 3"),
+                TimelineEntry(16, "Settlement Event"),
+            )
+
+        assertEquals("The Hand", record.nemesisOf(16))
     }
 }
