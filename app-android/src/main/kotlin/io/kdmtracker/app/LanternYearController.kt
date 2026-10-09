@@ -548,6 +548,11 @@ class LanternYearController(
             births = record.state.births,
             survivors = record.state.survivors,
             hunt = record.state.hunt,
+            quarries = content.quarries,
+            huntEvents =
+                record.state.hunt.quarry
+                    ?.let { content.huntEventsFor(it) }
+                    .orEmpty(),
             chosenPrinciples = record.state.principles,
             milestoneViews =
                 ruleset.milestones.map { definition ->
