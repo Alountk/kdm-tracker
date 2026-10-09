@@ -121,7 +121,7 @@ class SurvivorMigrationTest {
     }
 
     @Test
-    fun v7RoundTripCarriesTheRoster() {
+    fun v8RoundTripCarriesTheRoster() {
         val campaign =
             Campaign(
                 id = ulid(1),
@@ -147,7 +147,7 @@ class SurvivorMigrationTest {
         val decoded = json.decodeFromString<TransferDocument>(json.encodeToString(document))
         val (_, domainRecords) = TransferMapper.toDomain(decoded.campaigns.single())
 
-        assertEquals(7, decoded.schemaVersion)
+        assertEquals(8, decoded.schemaVersion)
         assertEquals(records, domainRecords)
     }
 }
