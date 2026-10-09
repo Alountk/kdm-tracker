@@ -102,6 +102,7 @@ data class UiState(
     val survivors: List<Survivor> = emptyList(),
     val hunt: HuntState? = null,
     val quarries: List<String> = emptyList(),
+    val nemeses: List<String> = emptyList(),
     val huntEvents: List<HuntEvent> = emptyList(),
     val showdown: ShowdownState? = null,
     val monsterCards: List<MonsterCard> = emptyList(),

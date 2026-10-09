@@ -600,10 +600,9 @@ class LanternYearController(
             survivors = record.state.survivors,
             hunt = record.state.hunt,
             showdown = record.state.showdown,
-            monsterCards =
-                record.state.showdown.monster
-                    .let { content.monsterCardsFor(it) },
+            monsterCards = content.monsterCardDefinitions,
             quarries = content.quarries,
+            nemeses = content.nemeses,
             huntEvents =
                 record.state.hunt.quarry
                     ?.let { content.huntEventsFor(it) }
