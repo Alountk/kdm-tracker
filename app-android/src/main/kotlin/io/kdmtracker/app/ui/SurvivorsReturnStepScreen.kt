@@ -71,6 +71,10 @@ fun SurvivorsReturnStepScreen(
                 expanded = expandedId == survivor.id,
                 onToggle = { expandedId = if (expandedId == survivor.id) null else survivor.id },
                 onEdit = { editing = survivor },
+                huntXpTrackMax = state.huntXpTrackMax,
+                insanityThreshold = state.insanityThreshold,
+                settlementGear = state.gear,
+                onSave = onSaveSurvivor,
             )
         }
     }
