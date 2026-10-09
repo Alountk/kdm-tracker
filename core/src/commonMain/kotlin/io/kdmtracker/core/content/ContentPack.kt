@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.ContentEntry
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.MonsterCard
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
@@ -31,6 +32,7 @@ data class ContentBundle(
     val gear: List<Gear> = emptyList(),
     val settlementEvents: List<SettlementEvent> = emptyList(),
     val huntEvents: List<HuntEvent> = emptyList(),
+    val monsterCards: List<MonsterCard> = emptyList(),
 )
 
 @Serializable
