@@ -3,6 +3,8 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Core16Milestones
+import io.kdmtracker.core.domain.HuntSpaceKind
+import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.InnovationDeck
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.ModifierScope
@@ -25,20 +27,27 @@ import io.kdmtracker.core.rules.StepResult
 import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.Ruleset
 import io.kdmtracker.core.usecase.AddResourceEntry
+import io.kdmtracker.core.usecase.AdvanceHunt
 import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.AdvanceTimeline
 import io.kdmtracker.core.usecase.AssignGear
+import io.kdmtracker.core.usecase.AssignHuntEvent
+import io.kdmtracker.core.usecase.AssignPlayer
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.MarkDeparting
+import io.kdmtracker.core.usecase.MarkSpaceKind
 import io.kdmtracker.core.usecase.RecordBirths
 import io.kdmtracker.core.usecase.RecordDeaths
 import io.kdmtracker.core.usecase.RecordSettlementEvent
+import io.kdmtracker.core.usecase.ResolveHuntEvent
 import io.kdmtracker.core.usecase.ResolveMilestone
 import io.kdmtracker.core.usecase.ReturnSurvivors
+import io.kdmtracker.core.usecase.SetHuntOutcome
+import io.kdmtracker.core.usecase.SetUpHunt
 import io.kdmtracker.core.usecase.SpendEndeavor
 import io.kdmtracker.core.usecase.UnassignGear
 import io.kdmtracker.core.usecase.UpdateSurvivor
@@ -300,6 +309,83 @@ class LanternYearController(
         applyResult(UpdateSurvivor.run(repository.record, survivor))
     }
 
+    /** Sets up the hunt board (quarry + level + players). */
+    fun setUpHunt(
+        quarry: String,
+        level: Int,
+        players: Int,
+    ) {
+        applyResult(SetUpHunt.run(repository.record, quarry, level, players))
+    }
+
+    /** Edits a hunt-board space's kind. */
+    fun markSpaceKind(
+        index: Int,
+        kind: HuntSpaceKind,
+    ) {
+        applyResult(MarkSpaceKind.run(repository.record, index, kind))
+    }
+
+    /** Advances the hunt party one space. */
+    fun advanceHunt() {
+        applyResult(AdvanceHunt.run(repository.record))
+    }
+
+    /** Assigns a party survivor to a player (1-based). */
+    fun assignPlayer(
+        survivorId: Ulid,
+        player: Int,
+    ) {
+        applyResult(AssignPlayer.run(repository.record, survivorId, player))
+    }
+
+    /** Places a hunt event on a space. */
+    fun assignHuntEvent(
+        index: Int,
+        eventName: String,
+    ) {
+        applyResult(AssignHuntEvent.run(repository.record, index, eventName))
+    }
+
+    /** Marks a hunt event resolved. */
+    fun resolveHuntEvent(
+        index: Int,
+        eventName: String,
+    ) {
+        applyResult(ResolveHuntEvent.run(repository.record, index, eventName))
+    }
+
+    /**
+     * Records the hunt outcome and moves the lantern year: a failed hunt restarts the Settlement
+     * Phase (no returnees); otherwise the settlement proceeds to the Showdown.
+     */
+    fun finishHunt(outcome: HuntStatus) {
+        when (val result = SetHuntOutcome.run(repository.record, outcome)) {
+            is StepResult.Ok -> {
+                repository.update(result.value)
+                when (outcome) {
+                    // Found or ambushed: the showdown begins.
+                    HuntStatus.QUARRY_FOUND, HuntStatus.AMBUSH ->
+                        applyStep(
+                            returnees = repository.settlement.population,
+                            context = FlowContext(ruleset = ruleset),
+                        )
+                    // The hunt ends without a showdown: a party wipe (no returnees) or a run away
+                    // (the survivors return); both re-enter the Settlement Phase.
+                    HuntStatus.FAILED ->
+                        applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
+                    HuntStatus.RUN_AWAY ->
+                        applyStep(
+                            returnees = repository.settlement.population,
+                            context = FlowContext(ruleset = ruleset, huntFailed = true),
+                        )
+                    HuntStatus.ACTIVE -> publishBlocked("invalid outcome")
+                }
+            }
+            is StepResult.Blocked -> publishBlocked(result.reason)
+        }
+    }
+
     /**
      * Records the settlement's chosen principle [label] for [category] (Steps 5/6).
      *
@@ -471,6 +557,12 @@ class LanternYearController(
             deaths = record.state.deaths,
             births = record.state.births,
             survivors = record.state.survivors,
+            hunt = record.state.hunt,
+            quarries = content.quarries,
+            huntEvents =
+                record.state.hunt.quarry
+                    ?.let { content.huntEventsFor(it) }
+                    .orEmpty(),
             chosenPrinciples = record.state.principles,
             milestoneViews =
                 ruleset.milestones.map { definition ->

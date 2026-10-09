@@ -2,6 +2,7 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.content.generated.Core15FightingArts
 import io.kdmtracker.core.content.generated.Core15Gear
+import io.kdmtracker.core.content.generated.Core15HuntEvents
 import io.kdmtracker.core.content.generated.Core15Innovations
 import io.kdmtracker.core.content.generated.Core15Locations
 import io.kdmtracker.core.content.generated.Core15Resources
@@ -37,6 +38,7 @@ object Legacy15Content {
                     fightingArts = Core15FightingArts.bundle.fightingArts,
                     disorders = Core15FightingArts.bundle.disorders,
                     settlementEvents = Core15SettlementEvents.bundle.settlementEvents,
+                    huntEvents = Core15HuntEvents.bundle.huntEvents,
                 ),
         )
 }

@@ -156,15 +156,15 @@ class SettlementStateTransferTest {
     }
 
     @Test
-    fun newDocumentDefaultsToSchemaVersionSeven() {
+    fun newDocumentDefaultsToSchemaVersionEight() {
         val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
 
-        assertEquals(7, document.schemaVersion)
+        assertEquals(8, document.schemaVersion)
     }
 
     @Test
-    fun supportedVersionsIncludesSeven() {
-        assertTrue(7 in TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsIncludesEight() {
+        assertTrue(8 in TransferDocument.SUPPORTED_VERSIONS)
     }
 
     @Test

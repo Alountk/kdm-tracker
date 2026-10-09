@@ -1,0 +1,46 @@
+package io.kdmtracker.core.domain
+
+import kotlinx.serialization.Serializable
+
+/** The kind of a hunt-board space: the special spaces plus normal event spaces. */
+enum class HuntSpaceKind { START, NORMAL, MONSTER_E, OVERWHELMING_DARKNESS, STARVATION, MONSTER }
+
+/**
+ * One space of the 13-space hunt board.
+ *
+ * @property kind the space's role; the layout is player-set (the per-monster diagram is an image).
+ * @property events the hunt-event names placed on this space.
+ * @property resolved the subset of [events] already resolved.
+ */
+@Serializable
+data class HuntSpace(
+    val kind: HuntSpaceKind = HuntSpaceKind.NORMAL,
+    val events: List<String> = emptyList(),
+    val resolved: List<String> = emptyList(),
+)
+
+/**
+ * The Hunting Phase's tracked state for the current lantern year.
+ *
+ * The hunt board has thirteen spaces; the party is the Step-8 departing survivors, optionally
+ * assigned to players (1..[players]). The d100 hunt-event table lives on the board, so "random
+ * events" are recorded by hand — they are not [events].
+ *
+ * @property quarry the chosen quarry (a catalog quarry name), or `null` before setup.
+ * @property level the monster level (1–3).
+ * @property players the number of players (1–4).
+ * @property assignments the party's player assignment, keyed by survivor id (1-based player index).
+ * @property spaces the thirteen board spaces once set up.
+ * @property position the current space index.
+ * @property status the hunt outcome; [HuntStatus.ACTIVE] while in progress.
+ */
+@Serializable
+data class HuntState(
+    val quarry: String? = null,
+    val level: Int = 1,
+    val players: Int = 1,
+    val assignments: Map<Ulid, Int> = emptyMap(),
+    val spaces: List<HuntSpace> = emptyList(),
+    val position: Int = 0,
+    val status: HuntStatus = HuntStatus.ACTIVE,
+)

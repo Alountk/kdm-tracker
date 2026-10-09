@@ -121,8 +121,13 @@ fun KdmTrackerApp(
                             Screen.Hunt ->
                                 HuntScreen(
                                     state = current,
-                                    onAdvance = viewModel::advance,
-                                    onFail = viewModel::failHunt,
+                                    onSetUpHunt = viewModel::setUpHunt,
+                                    onAssignPlayer = viewModel::assignPlayer,
+                                    onMarkSpaceKind = viewModel::markSpaceKind,
+                                    onAssignHuntEvent = viewModel::assignHuntEvent,
+                                    onResolveHuntEvent = viewModel::resolveHuntEvent,
+                                    onAdvanceHunt = viewModel::advanceHunt,
+                                    onFinishHunt = viewModel::finishHunt,
                                 )
                             Screen.Showdown ->
                                 ShowdownScreen(

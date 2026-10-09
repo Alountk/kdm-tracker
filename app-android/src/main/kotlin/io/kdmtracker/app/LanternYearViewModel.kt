@@ -13,6 +13,8 @@ import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.core.domain.HuntSpaceKind
+import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -335,6 +337,43 @@ class LanternYearViewModel(
 
     /** Saves an edited survivor from the Survivor Editor. */
     fun updateSurvivor(survivor: Survivor) = mutate { it.updateSurvivor(survivor) }
+
+    /** Sets up the hunt board (quarry + level + players). */
+    fun setUpHunt(
+        quarry: String,
+        level: Int,
+        players: Int,
+    ) = mutate { it.setUpHunt(quarry, level, players) }
+
+    /** Assigns a party survivor to a player (1-based). */
+    fun assignPlayer(
+        survivorId: Ulid,
+        player: Int,
+    ) = mutate { it.assignPlayer(survivorId, player) }
+
+    /** Edits a hunt-board space's kind. */
+    fun markSpaceKind(
+        index: Int,
+        kind: HuntSpaceKind,
+    ) = mutate { it.markSpaceKind(index, kind) }
+
+    /** Advances the hunt party one space. */
+    fun advanceHunt() = mutate { it.advanceHunt() }
+
+    /** Places a hunt event on a space. */
+    fun assignHuntEvent(
+        index: Int,
+        eventName: String,
+    ) = mutate { it.assignHuntEvent(index, eventName) }
+
+    /** Marks a hunt event resolved. */
+    fun resolveHuntEvent(
+        index: Int,
+        eventName: String,
+    ) = mutate { it.resolveHuntEvent(index, eventName) }
+
+    /** Records the hunt outcome and moves the lantern year. */
+    fun finishHunt(outcome: HuntStatus) = mutate { it.finishHunt(outcome) }
 
     /**
      * Signs the session out: clears the stored token through the components and marks the state

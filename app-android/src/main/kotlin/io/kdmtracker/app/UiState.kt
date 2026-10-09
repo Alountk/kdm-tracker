@@ -1,6 +1,8 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.HuntEvent
+import io.kdmtracker.core.domain.HuntState
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
@@ -96,6 +98,9 @@ data class UiState(
     val milestoneViews: List<MilestoneView> = emptyList(),
     val chosenPrinciples: Map<PrincipleCategory, String> = emptyMap(),
     val survivors: List<Survivor> = emptyList(),
+    val hunt: HuntState? = null,
+    val quarries: List<String> = emptyList(),
+    val huntEvents: List<HuntEvent> = emptyList(),
 )
 
 /**
