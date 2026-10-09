@@ -90,6 +90,8 @@ data class UiState(
     val actionError: String? = null,
     val gear: List<String> = emptyList(),
     val survivalLimit: Int = 0,
+    val huntXpTrackMax: Int = 0,
+    val insanityThreshold: Int = 0,
     val resourceGroups: Map<String, List<ResourceDefinition>> = emptyMap(),
     val innovationViews: List<InnovationView> = emptyList(),
     val craftRecipes: List<CraftRecipeView> = emptyList(),
