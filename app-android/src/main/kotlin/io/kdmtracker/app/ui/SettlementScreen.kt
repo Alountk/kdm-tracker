@@ -63,6 +63,11 @@ fun SettlementScreen(
     onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
     onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
     onSaveSurvivor: (Survivor) -> Unit = {},
+    onDeclareSpecialShowdown: (Boolean) -> Unit = {},
+    onSetUpShowdown: (String, Int, List<String>) -> Unit = { _, _, _ -> },
+    onDrawShowdownCard: () -> Unit = {},
+    onWoundMonster: () -> Unit = {},
+    onGrantHuntXp: (List<Ulid>) -> Unit = {},
 ) {
     if (state.currentStep == 1) {
         SetUpStepScreen(state = state, onConfirm = onAdvance)
@@ -111,6 +116,17 @@ fun SettlementScreen(
                     onAssignGear = onAssignGear,
                     onUnassignGear = onUnassignGear,
                     onSaveSurvivor = onSaveSurvivor,
+                )
+            9 ->
+                SpecialShowdownStepScreen(
+                    state = state,
+                    onDeclareSpecialShowdown = onDeclareSpecialShowdown,
+                    onSetUpShowdown = onSetUpShowdown,
+                    onDrawShowdownCard = onDrawShowdownCard,
+                    onWoundMonster = onWoundMonster,
+                    onGrantHuntXp = onGrantHuntXp,
+                    onRecordDeaths = onRecordDeaths,
+                    onConclude = onAdvance,
                 )
             10 -> ArchiveStepScreen(state = state)
             11 -> EndPhaseStepScreen(state = state)
