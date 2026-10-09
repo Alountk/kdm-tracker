@@ -225,6 +225,36 @@ count is asserted against `pages - 1` (one cover page), and any page that does n
 as a card, or a card with an empty name/text, aborts the run. A card appearing twice with
 different text also aborts.
 
+## Hunt events
+
+`ingest_hunt_events.py` reads the hunt-event decks under `AF Caza/` (`AF Caza Básicos.pdf` for the
+basic and special events, and `AF Caza León / Antílope / Fénix.pdf` for each monster's events) and
+writes `core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15HuntEvents.kt` as a
+`ContentBundle` with `huntEvents = List<HuntEvent>` (name + text + kind + the monster for a monster
+event).
+
+```sh
+python3 tools/content-ingest/ingest_hunt_events.py \
+  --dir "path/to/external-assets/Juego Completo/Formato Americano 57x88 mm/AF Caza"
+```
+
+`--dir` overrides the deck directory (it defaults to that path) and `--out` the generated file.
+
+### Parsing model
+
+Each deck renders one card per page with page 1 as the cover; a card's second line is its type
+sub-line — `- evento de caza básico -` (BASIC), `- evento de caza especial -` (SPECIAL), or
+`- evento de caza de <monster> -` (MONSTER, tagged with the deck's quarry from a curated map). Any
+other sub-line aborts the run. The basic deck's twelve identical `Evento Aleatorio` cards dedupe to
+one. The d100 hunt-event table is on the board, not in these decks.
+
+### Determinism and integrity
+
+Entries are deduped and sorted by name; the output embeds no timestamps and no paths. `pdfinfo`'s
+page count is cross-checked against the form-feed split, the parsed count is asserted against
+`pages - 1`, and any card with an empty name/text aborts. A card appearing twice with different text
+also aborts.
+
 ## Settlement locations
 
 `ingest_locations.py` reads `AF Asentamientos Loc.pdf` and writes
