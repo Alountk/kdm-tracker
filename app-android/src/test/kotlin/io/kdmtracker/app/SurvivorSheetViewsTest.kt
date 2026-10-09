@@ -4,6 +4,7 @@ import io.kdmtracker.app.ui.MentalState
 import io.kdmtracker.app.ui.SurvivorSheetModel
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
+import io.kdmtracker.core.usecase.AssignGear
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -43,12 +44,16 @@ class SurvivorSheetViewsTest {
     fun survivalSpendingClosesAtTheLimit() {
         assertTrue(modelOf(survivor().copy(survival = 1)).canSpendSurvival)
         assertFalse(modelOf(survivor().copy(survival = 2)).canSpendSurvival)
+        assertFalse(modelOf(survivor().copy(survival = 5)).canSpendSurvival)
     }
 
     @Test
-    fun theGearGridAlwaysOffersNineSlots() {
-        assertEquals(9, modelOf(survivor()).gearSlots)
-        assertEquals(9, modelOf(survivor().copy(gear = List(9) { "gear-$it" })).gearSlots)
+    fun theGearGridOffersTheCoreSlotCountWhateverIsCarried() {
+        val empty = modelOf(survivor()).gearSlots
+        val full = modelOf(survivor().copy(gear = List(AssignGear.MAX_GEAR_SLOTS) { "gear-$it" })).gearSlots
+
+        assertEquals(AssignGear.MAX_GEAR_SLOTS, empty)
+        assertEquals(empty, full)
     }
 
     @Test
@@ -63,10 +68,18 @@ class SurvivorSheetViewsTest {
     }
 
     @Test
-    fun theHuntXpTrackTakesItsLengthAndItsCarryFromTheRuleset() {
-        val model = modelOf(survivor().copy(huntXp = 4))
+    fun theHuntXpTrackTakesItsLengthFromTheRulesetNotFromAConstant() {
+        val wide = modelOf(survivor().copy(huntXp = 4))
+        val narrow =
+            SurvivorSheetModel.from(
+                survivor = survivor().copy(huntXp = 4),
+                survivalLimit = 2,
+                huntXpTrackMax = 8,
+                insanityThreshold = 3,
+            )
 
-        assertEquals(4, model.huntXp)
-        assertEquals(16, model.huntXpMax)
+        assertEquals(4, wide.huntXp)
+        assertEquals(16, wide.huntXpMax)
+        assertEquals(8, narrow.huntXpMax)
     }
 }

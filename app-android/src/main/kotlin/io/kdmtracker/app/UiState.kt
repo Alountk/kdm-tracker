@@ -19,6 +19,7 @@ import io.kdmtracker.core.rules.CraftCheck
 import io.kdmtracker.core.rules.EndeavorBreakdown
 import io.kdmtracker.core.rules.InnovationView
 import io.kdmtracker.core.rules.SettlementStep
+import io.kdmtracker.core.ruleset.Core16Ruleset
 import io.kdmtracker.core.ruleset.PrincipleChoice
 
 /** The top-level destination the UI renders: the Home campaign list, or the cockpit's phases. */
@@ -90,8 +91,8 @@ data class UiState(
     val actionError: String? = null,
     val gear: List<String> = emptyList(),
     val survivalLimit: Int = 0,
-    val huntXpTrackMax: Int = 0,
-    val insanityThreshold: Int = 0,
+    val huntXpTrackMax: Int = Core16Ruleset.huntXpTrackMax,
+    val insanityThreshold: Int = Core16Ruleset.insanityThreshold,
     val resourceGroups: Map<String, List<ResourceDefinition>> = emptyMap(),
     val innovationViews: List<InnovationView> = emptyList(),
     val craftRecipes: List<CraftRecipeView> = emptyList(),

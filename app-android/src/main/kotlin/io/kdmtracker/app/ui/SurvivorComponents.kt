@@ -86,7 +86,7 @@ fun SurvivorCard(
     huntXpTrackMax: Int = 16,
     insanityThreshold: Int = 3,
     settlementGear: List<String> = emptyList(),
-    onSave: (Survivor) -> Unit = {},
+    onSave: (Survivor) -> Unit,
     onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
     onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
     trailing: @Composable () -> Unit = {},
