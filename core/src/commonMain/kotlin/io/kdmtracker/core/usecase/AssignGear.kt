@@ -12,6 +12,9 @@ import io.kdmtracker.core.rules.StepResult
  * modifiers feed the effective attributes ([io.kdmtracker.core.rules.SurvivorValues]).
  */
 object AssignGear {
+    /** The survivor gear grid holds at most nine items (the 3×3 card). */
+    const val MAX_GEAR_SLOTS = 9
+
     /** Returns [StepResult.Ok] with the gear assigned, or [StepResult.Blocked] with `"unknown survivor"`. */
     fun run(
         record: SettlementRecord,
@@ -23,6 +26,9 @@ object AssignGear {
                 ?: return StepResult.Blocked("unknown survivor")
         if (gearName in survivor.gear) {
             return StepResult.Ok(record)
+        }
+        if (survivor.gear.size >= MAX_GEAR_SLOTS) {
+            return StepResult.Blocked("gear grid is full")
         }
         val updated =
             record.state.survivors.map { if (it.id == survivorId) it.copy(gear = it.gear + gearName) else it }
