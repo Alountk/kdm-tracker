@@ -81,7 +81,7 @@ object Core16Content {
                         ),
                     timeline = Timeline.core16().entries,
                     quarries = listOf("White Lion", "Screaming Antelope", "Phoenix"),
-                    nemeses = listOf("The Butcher", "King's Man", "The Hand"),
+                    nemeses = listOf("The Butcher", "King's Man", "The Hand", "The Watcher", "Golden Smoke Knight"),
                 ),
         )
 }

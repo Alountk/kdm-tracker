@@ -321,7 +321,7 @@ class LanternYearController(
         level: Int,
         deck: List<String>,
     ) {
-        applyResult(SetUpShowdown.run(repository.record, monster, level, deck))
+        applyResult(SetUpShowdown.run(repository.record, monster, level, deck.shuffled()))
     }
 
     /** Draws the monster's AI card (the monster's turn). */

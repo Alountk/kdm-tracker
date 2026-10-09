@@ -2417,14 +2417,175 @@ object Core15Monsters {
                         monster = "The Butcher",
                     ),
                     MonsterCard(
-                        name = "Cristalino Verde - Abierto",
+                        name = "Alinear",
                         text =
-                            "Rasgo Mientras el Cristalino Verde esté Abierto, La Mano gana . Mientras el " +
-                                "Cristalino Verde esté Abierto, las tiradas de ataque de los supervivientes con " +
-                                "aura verde sólo impactan con un impacto perfecto.",
+                            "Duración Cuando esta carta se roba bocabajo, el monstruo abre despreocupadamente " +
+                                "sus brazos. Cuando esta carta se roba bocarriba, elige como objetivo y ataca a " +
+                                "todos los supervivientes en el lugar adecuado. El lugar adecuado Velocidad " +
+                                "Precisión Daño Activación 2 2+ 6 El ataque gana Tras Dañar: Sangrado 2. El " +
+                                "ataque gana +1 a velocidad y +1 a daño. Los impactos no se pueden esquivar ni " +
+                                "ignorar con bloqueo. Si el monstruo no ataca a todos los supervivientes vivos, " +
+                                "ejecuta El Castigo.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Aplauso",
+                        text =
+                            "Al comienzo del enfrentamiento, coloca esta carta bocabajo en la parte de abajo " +
+                                "del mazo IA. Los supervivientes caen de rodillas agónicamente, con sus huesos " +
+                                "retorciéndose y cambiando de forma. Cada superviviente se cura todas las " +
+                                "lesiones de hueso roto y tira 1d10. Luego, finaliza el enfrentamiento. Los " +
+                                "supervivientes salen victoriosos. 1d10 Resultado 1 El dolor es demasiado grande. " +
+                                "Mueres. 2-3 Gasta 1 de supervivencia o mueres por el shock. 4-6 Ganas +1 " +
+                                "permanente a fuerza. 7+ Ganas +1 permanente a fuerza, precisión, evasión y un " +
+                                "arte de combate aleatorio.",
                         kind = MonsterCardKind.AI,
                         monster = "The Hand",
                         rank = "S",
+                    ),
+                    MonsterCard(
+                        name = "Aura Polarizada",
+                        text =
+                            "- estado de superviviente - Si un superviviente tiene el mismo numero de " +
+                                "afinidades rojas, verdes y azules, tiene aura blanca. Si un superviviente tiene " +
+                                "más afinidades de cualquier color (rojas, azules o verdes), su aura es de ese " +
+                                "color. El aura de un superviviente puede tener, como máximo, dos colores.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "S",
+                    ),
+                    MonsterCard(
+                        name = "Bofetada Violenta",
+                        text =
+                            "Duración Cuando esta carta se roba bocabajo, el monstruo señala hacia el suelo. " +
+                                "Cuando esta carta se roba bocarriba, elige como objetivo y ataca al " +
+                                "superviviente en el lugar adecuado. El lugar adecuado Velocidad Precisión Daño " +
+                                "Activación 2 2+ 6 El ataque gana Tras Dañar: Sangrado 2. El ataque gana +1 a " +
+                                "velocidad y +1 a daño. Los impactos no se pueden esquivar ni ignorar con " +
+                                "bloqueo. Si el monstruo no ataca, ejecuta El Castigo.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Da Tu Mejor Golpe",
+                        text =
+                            "Duración Cuando esta carta se roba bocabajo, el monstruo se gira para dejar de " +
+                                "encarar al mayor número posible de supervivientes. Luego, se mueve un espacio " +
+                                "hacia adelante y se cruza de brazos. Mientras esta carta esté en juego, el " +
+                                "monstruo gana -10 a evasión. Si se revela una carta de Trampa por cualquier " +
+                                "razón, sitúa al monstruo detrás de quien haya revelado esa carta. El revelador " +
+                                "sufre lo siguiente: Sufre 2 lesiones graves aleatorias en la cabeza. Tira 2 " +
+                                "veces en la tabla de traumas cerebrales. Sufre 2 lesiones graves aleatorias en " +
+                                "el torso. Cuando se roba bocarriba, roba .",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Derechazo Atronador",
+                        text =
+                            "Selección de Objetivo superviviente con más afinidades rojas amenaza más cercana " +
+                                "sin objetivo: el castigo Ejecuta Paso Fantasma. Atacar Objetivo. Velocidad " +
+                                "Precisión Daño Activación 2 4+ 7 Tras Dañar: retroceso 12, golpetazo. El ataque " +
+                                "gana Cazador de Cabezas y +1 a velocidad. -3 a los resultados en las tiradas de " +
+                                "lesiones graves.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Directos como Balas",
+                        text =
+                            "Selección de Objetivo superviviente con más afinidades azules amenaza más " +
+                                "cercana sin objetivo: el castigo Ejecuta Paso Fantasma. Atacar Objetivo. " +
+                                "Velocidad Precisión Daño Activación 5 2+ 2 Tras Dañar: Sangrado 2. El ataque " +
+                                "gana +4 a precisión y +1 a daño. Los impactos no se pueden esquivar ni ignorar " +
+                                "con bloqueo.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Gancho Corto",
+                        text =
+                            "Selección de Objetivo superviviente aleatorio con aura blanca amenaza más " +
+                                "cercana sin objetivo: el castigo Ejecuta Paso Fantasma. El objetivo es " +
+                                "condenado. Ataca al objetivo. Velocidad Precisión Daño Activación 1 2+ 9 El " +
+                                "ataque gana +1 a velocidad. Tras Dañar: El objetivo es derribado. Tras Dañar: El " +
+                                "objetivo pierde toda su supervivencia. Roba .",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "A",
+                    ),
+                    MonsterCard(
+                        name = "Golpe al Hígado",
+                        text =
+                            "Selección de Objetivo superviviente con más afinidades verdes amenaza más " +
+                                "cercana sin objetivo: el castigo Ejecuta Paso Fantasma. Atacar Objetivo. " +
+                                "Velocidad Precisión Daño Activación 2 2+ 5 El ataque gana +3 a velocidad y +3 a " +
+                                "daño. Tras Dañar: El objetivo gana +5 a locura. Tras Dañar: El objetivo pierde " +
+                                "toda su supervivencia.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Palmada del Rey",
+                        text =
+                            "Selección de Objetivo superviviente aleatorio sin objetivo: el castigo El " +
+                                "monstruo da una fuerte palmada que genera una explosión atronadora. Todos los " +
+                                "supervivientes adyacentes no sordos sufren 5 de daño en la localización de la " +
+                                "cabeza. Ejecuta Paso Fantasma. El objetivo es condenado. Ataca al objetivo. " +
+                                "Velocidad Precisión Daño Activación 1 2+ 9 Tras Dañar Sangrado 4: el objetivo " +
+                                "gana 4 fichas de sangrado. -4 al resultado de las tiradas de lesiones graves. Si " +
+                                "el objetivo muere, roba .",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "A",
+                    ),
+                    MonsterCard(
+                        name = "Paso Fantasma",
+                        text =
+                            "Rasgo Paso Fantasma tiene alcance ilimitado. Mueve al monstruo hasta que pase a " +
+                                "través del objetivo. Luego, detenlo y encáralo al objetivo. Cualquier " +
+                                "superviviente, a través del cual pase La Mano mientras ejecuta Paso Fantasma " +
+                                "sufre 1 daño cerebral por nivel del monstruo en lugar de colisión. Cualquier " +
+                                "superviviente sobre el que La Mano acabe su movimiento al ejecutar Paso Fantasma " +
+                                "sufre colisión de manera normal.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "S",
+                    ),
+                    MonsterCard(
+                        name = "Risita Contenida",
+                        text =
+                            "El ruido hace que un terror sin precedentes sobrecoja a los supervivientes. " +
+                                "Todos los supervivientes no sordos pierden 1 de supervivencia y tiran 1d10. " +
+                                "Añade el valor del superviviente a cada resultado. Con 15+, el superviviente cae " +
+                                "derribado por el miedo. De lo contrario, sufre 5 de daño cerebral, gana una " +
+                                "ficha de -1 a precisión debido al temblor en sus extremidades y hace un " +
+                                "movimiento completo alejándose directamente del monstruo. El monstruo estira sus " +
+                                "extremidades. Gira todos sus cristalinos a Cerrado.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
+                    ),
+                    MonsterCard(
+                        name = "Toque Superpotente",
+                        text =
+                            "Duración Cuando esta carta se roba bocabajo, el monstruo levanta con orgullo uno " +
+                                "de sus dedos. Cuando esta carta se roba bocarriba, toma como objetivo al " +
+                                "superviviente con más puntos de armadura. El objetivo es condenado. Ejecuta Paso " +
+                                "Fantasma, luego ataca al objetivo. Velocidad Precisión Daño Activación 2 2+ 4 " +
+                                "Tras Dañar: Golpetazo, retroceso 19. Durante el retroceso, en lugar de detener " +
+                                "al superviviente en el borde del tablero, ¡el superviviente sale disparado hacia " +
+                                "la oscuridad y no volvéis a saber de él nunca más! Ha muerto.",
+                        kind = MonsterCardKind.AI,
+                        monster = "The Hand",
+                        rank = "B",
                     ),
                     MonsterCard(
                         name = "Blusón Exótico de Poeta",

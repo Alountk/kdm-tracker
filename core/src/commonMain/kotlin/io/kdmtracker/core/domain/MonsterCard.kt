@@ -9,7 +9,7 @@ enum class MonsterCardKind { AI, BASIC_ACTION, HIT_LOCATION }
  * A monster showdown card: an AI card, the Basic Action card, or a hit location.
  *
  * @property monster the catalog monster the card belongs to (the quarry/nemesis name).
- * @property rank an AI card's rank letter (`B`/`A`/`L`), or `null` when not an AI card or unreadable.
+ * @property rank an AI card's rank letter (`B`/`A`/`L`/`S`), or `null` when not an AI card or unreadable.
  */
 @Serializable
 data class MonsterCard(

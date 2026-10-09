@@ -136,6 +136,7 @@ fun KdmTrackerApp(
                                     onDrawShowdownCard = viewModel::drawShowdownCard,
                                     onWoundMonster = viewModel::woundMonster,
                                     onGrantHuntXp = viewModel::grantHuntXp,
+                                    onRecordDeaths = viewModel::recordDeaths,
                                     onFinishShowdown = viewModel::finishShowdown,
                                 )
                             Screen.Account -> {

@@ -25,4 +25,14 @@ class MonstersContentTest {
     fun packCarriesTheGeneratedMonsterCards() {
         assertEquals(Core15Monsters.bundle.monsterCards, monsterCards)
     }
+
+    @Test
+    fun everyMonsterHasMoreThanOneAiCard() {
+        val byMonster = monsterCards.filter { it.kind == MonsterCardKind.AI }.groupBy { it.monster }
+
+        assertTrue(byMonster.isNotEmpty(), "expected AI cards per monster")
+        byMonster.forEach { (monster, cards) ->
+            assertTrue(cards.size > 1, "$monster has only ${cards.size} AI card(s)")
+        }
+    }
 }

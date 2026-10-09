@@ -43,6 +43,7 @@ fun ShowdownScreen(
     onDrawShowdownCard: () -> Unit,
     onWoundMonster: () -> Unit,
     onGrantHuntXp: (List<Ulid>) -> Unit,
+    onRecordDeaths: (Int) -> Unit,
     onFinishShowdown: (ShowdownStatus) -> Unit,
 ) {
     val showdown = state.showdown
@@ -57,6 +58,7 @@ fun ShowdownScreen(
     val lastDrawnText = aiCards.firstOrNull { it.name == showdown.lastDrawn }?.text
     val party = state.survivors.filter { it.status == SurvivorStatus.DEPARTING }
     var showHitLocations by remember { mutableStateOf(false) }
+    var deaths by remember { mutableIntStateOf(0) }
 
     Column(
         modifier =
@@ -128,6 +130,17 @@ fun ShowdownScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Grant +1 hunt XP to the party (${party.size})")
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = "Deaths", modifier = Modifier.weight(1f))
+            OutlinedButton(onClick = { deaths = (deaths - 1).coerceAtLeast(0) }) { Text("−") }
+            Text(text = deaths.toString(), style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = { deaths += 1 }) { Text("+") }
+            OutlinedButton(onClick = { onRecordDeaths(deaths) }, enabled = deaths > 0) { Text("Record") }
         }
     }
 }
