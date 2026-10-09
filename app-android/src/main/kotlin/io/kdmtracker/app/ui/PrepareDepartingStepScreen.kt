@@ -83,6 +83,8 @@ fun PrepareDepartingStepScreen(
                 insanityThreshold = state.insanityThreshold,
                 settlementGear = state.gear,
                 onSave = onSaveSurvivor,
+                onAssignGear = onAssignGear,
+                onUnassignGear = onUnassignGear,
                 muted = isDead,
                 trailing = {
                     if (!isDead) {
@@ -93,16 +95,6 @@ fun PrepareDepartingStepScreen(
                         ) {
                             Text(if (isDeparting) "Departing" else "Depart")
                         }
-                    }
-                },
-                expandedExtra = {
-                    if (isDeparting) {
-                        GearGrid(
-                            assigned = survivor.gear,
-                            settlementGear = state.gear,
-                            onAssign = { onAssignGear(survivor.id, it) },
-                            onUnassign = { onUnassignGear(survivor.id, it) },
-                        )
                     }
                 },
             )

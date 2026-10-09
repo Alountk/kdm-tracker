@@ -33,6 +33,8 @@ fun SurvivorsReturnStepScreen(
     state: UiState,
     onHeal: () -> Unit,
     onSaveSurvivor: (Survivor) -> Unit,
+    onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
+    onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
 ) {
     var filter by remember { mutableStateOf(SurvivorFilter.ALL) }
     var expandedId by remember { mutableStateOf<Ulid?>(null) }
@@ -75,6 +77,8 @@ fun SurvivorsReturnStepScreen(
                 insanityThreshold = state.insanityThreshold,
                 settlementGear = state.gear,
                 onSave = onSaveSurvivor,
+                onAssignGear = onAssignGear,
+                onUnassignGear = onUnassignGear,
             )
         }
     }

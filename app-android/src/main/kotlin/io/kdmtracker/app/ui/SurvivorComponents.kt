@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.core.domain.HitLocation
 import io.kdmtracker.core.domain.Survivor
+import io.kdmtracker.core.domain.Ulid
 
 /** The coloured status dot for a survivor. */
 @Composable
@@ -86,6 +87,8 @@ fun SurvivorCard(
     insanityThreshold: Int = 3,
     settlementGear: List<String> = emptyList(),
     onSave: (Survivor) -> Unit = {},
+    onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
+    onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
     trailing: @Composable () -> Unit = {},
     expandedExtra: @Composable () -> Unit = {},
 ) {
@@ -128,6 +131,8 @@ fun SurvivorCard(
                     insanityThreshold = insanityThreshold,
                     settlementGear = settlementGear,
                     onSave = onSave,
+                    onAssignGear = { onAssignGear(survivor.id, it) },
+                    onUnassignGear = { onUnassignGear(survivor.id, it) },
                     onEditSheet = onEdit,
                 )
                 expandedExtra()

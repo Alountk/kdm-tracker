@@ -125,6 +125,7 @@ Colour (rendered tokens → Material 3 roles):
 | inverseOnSurface | `#313032` | | onTertiaryContainer | `#b9332e` |
 | inversePrimary | `#5f5f59` | | error | `#ffb4ab` |
 | surfaceTint | `#c8c6c0` | | onError | `#690005` |
+| surfaceBright | `#39393b` | | | |
 | | | | errorContainer | `#93000a` |
 | | | | onErrorContainer | `#ffdad6` |
 

@@ -41,6 +41,8 @@ fun SurvivorSheet(
     insanityThreshold: Int,
     settlementGear: List<String>,
     onSave: (Survivor) -> Unit,
+    onAssignGear: (String) -> Unit,
+    onUnassignGear: (String) -> Unit,
     onEditSheet: () -> Unit,
 ) {
     val model =
@@ -141,12 +143,8 @@ fun SurvivorSheet(
             GearGrid(
                 assigned = survivor.gear,
                 settlementGear = settlementGear,
-                onAssign = { name ->
-                    if (survivor.gear.size < model.gearSlots) {
-                        onSave(survivor.copy(gear = survivor.gear + name))
-                    }
-                },
-                onUnassign = { name -> onSave(survivor.copy(gear = survivor.gear - name)) },
+                onAssign = onAssignGear,
+                onUnassign = onUnassignGear,
             )
         }
 
@@ -359,6 +357,16 @@ private fun HitLocationRow(
     }
 }
 
+/**
+ * The colour of a wound box's label. Checked must stay legible on the panel's `surfaceContainerLow`
+ * background — `onPrimary` (the obvious choice for a filled button) is nearly invisible there, so
+ * the checked state uses the panel-safe [androidx.compose.material3.ColorScheme.secondary].
+ */
+internal fun woundBoxColor(
+    checked: Boolean,
+    scheme: androidx.compose.material3.ColorScheme,
+): androidx.compose.ui.graphics.Color = if (checked) scheme.secondary else scheme.onSurfaceVariant
+
 @Composable
 private fun WoundBox(
     label: String,
@@ -370,12 +378,7 @@ private fun WoundBox(
             text = label,
             style = KdmType.labelCaps,
             fontWeight = if (checked) FontWeight.Bold else FontWeight.Normal,
-            color =
-                if (checked) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+            color = woundBoxColor(checked, MaterialTheme.colorScheme),
         )
     }
 }
