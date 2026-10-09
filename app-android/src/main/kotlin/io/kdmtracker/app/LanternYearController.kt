@@ -36,6 +36,7 @@ import io.kdmtracker.core.usecase.AssignHuntEvent
 import io.kdmtracker.core.usecase.AssignPlayer
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
+import io.kdmtracker.core.usecase.ClearShowdown
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.DrawShowdownCard
 import io.kdmtracker.core.usecase.GainEndeavors
@@ -51,6 +52,7 @@ import io.kdmtracker.core.usecase.ResolveMilestone
 import io.kdmtracker.core.usecase.ReturnSurvivors
 import io.kdmtracker.core.usecase.SetHuntOutcome
 import io.kdmtracker.core.usecase.SetShowdownOutcome
+import io.kdmtracker.core.usecase.SetSpecialShowdown
 import io.kdmtracker.core.usecase.SetUpHunt
 import io.kdmtracker.core.usecase.SetUpShowdown
 import io.kdmtracker.core.usecase.SpendEndeavor
@@ -119,10 +121,36 @@ class LanternYearController(
 
     /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
+        val context = flowContext()
         applyStep(
             returnees = repository.settlement.population,
-            context = FlowContext(ruleset = ruleset),
+            context = context,
         )
+        if (context.hasSpecialShowdown) {
+            // The special showdown is resolved: clear it and the encounter so the phase continues
+            // normally instead of looping at step 9 forever and reusing the encounter.
+            applyResult(SetSpecialShowdown.run(repository.record, false))
+            applyResult(ClearShowdown.run(repository.record))
+        }
+    }
+
+    /**
+     * The flow context for an advance: the current year is a nemesis year when its timeline lists a
+     * nemesis, and step 9 loops back when a Special Showdown is declared.
+     */
+    private fun flowContext(): FlowContext =
+        FlowContext(
+            ruleset = ruleset,
+            isNemesisYear = nemesisFor(repository.record) != null,
+            hasSpecialShowdown = repository.record.state.specialShowdown,
+        )
+
+    /** The nemesis the current year's timeline lists, or `null`. */
+    fun nemesisFor(record: SettlementRecord): String? = record.nemesisOf(record.settlement.lanternYear)
+
+    /** Declares (or clears) a Special Showdown for the current year. */
+    fun declareSpecialShowdown(enabled: Boolean) {
+        applyResult(SetSpecialShowdown.run(repository.record, enabled))
     }
 
     /**
@@ -600,6 +628,8 @@ class LanternYearController(
             survivors = record.state.survivors,
             hunt = record.state.hunt,
             showdown = record.state.showdown,
+            specialShowdown = record.state.specialShowdown,
+            nemesis = nemesisFor(record),
             monsterCards = content.monsterCardDefinitions,
             quarries = content.quarries,
             nemeses = content.nemeses,

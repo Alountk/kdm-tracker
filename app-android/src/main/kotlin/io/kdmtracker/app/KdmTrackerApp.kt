@@ -117,6 +117,11 @@ fun KdmTrackerApp(
                                     onAssignGear = viewModel::assignGear,
                                     onUnassignGear = viewModel::unassignGear,
                                     onSaveSurvivor = viewModel::updateSurvivor,
+                                    onDeclareSpecialShowdown = viewModel::declareSpecialShowdown,
+                                    onSetUpShowdown = viewModel::setUpShowdown,
+                                    onDrawShowdownCard = viewModel::drawShowdownCard,
+                                    onWoundMonster = viewModel::woundMonster,
+                                    onGrantHuntXp = viewModel::grantHuntXp,
                                 )
                             Screen.Hunt ->
                                 HuntScreen(

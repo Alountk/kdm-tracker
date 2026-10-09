@@ -392,6 +392,9 @@ class LanternYearViewModel(
     /** Grants +1 hunt XP to each listed survivor. */
     fun grantHuntXp(survivorIds: List<Ulid>) = mutate { it.grantHuntXp(survivorIds) }
 
+    /** Declares (or clears) a Special Showdown for the current year. */
+    fun declareSpecialShowdown(enabled: Boolean) = mutate { it.declareSpecialShowdown(enabled) }
+
     /** Records the showdown outcome and returns the settlement to its next phase. */
     fun finishShowdown(status: ShowdownStatus) = mutate { it.finishShowdown(status) }
 

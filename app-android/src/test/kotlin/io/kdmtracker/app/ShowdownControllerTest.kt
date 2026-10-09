@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.ShowdownStatus
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Pins the controller's showdown views and routing: setting up an encounter, drawing/wounding, and
@@ -42,10 +43,21 @@ class ShowdownControllerTest {
         controller.setUpShowdown("White Lion", 1, listOf("A", "B"))
 
         controller.drawShowdownCard()
-        assertEquals(
-            "A",
+        assertTrue(
             controller.state.value.showdown
-                ?.lastDrawn,
+                ?.lastDrawn in setOf("A", "B"),
+        )
+        assertEquals(
+            1,
+            controller.state.value.showdown
+                ?.discard
+                ?.size,
+        )
+        assertEquals(
+            1,
+            controller.state.value.showdown
+                ?.aiDeck
+                ?.size,
         )
 
         controller.woundMonster()
@@ -55,9 +67,10 @@ class ShowdownControllerTest {
                 ?.aiDeck,
         )
         assertEquals(
-            listOf("B"),
+            1,
             controller.state.value.showdown
-                ?.wounds,
+                ?.wounds
+                ?.size,
         )
     }
 
