@@ -48,12 +48,33 @@ class HuntControllerTest {
 
     @Test
     fun finishingWithQuarryFoundMovesToTheShowdown() {
-        val (controller, _) = controller()
+        val (controller, repository) = controller()
         controller.setUpHunt("White Lion", 1, 4)
 
         controller.finishHunt(HuntStatus.QUARRY_FOUND)
 
         assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
+        assertEquals(HuntStatus.QUARRY_FOUND, repository.record.state.hunt.status)
+    }
+
+    @Test
+    fun finishingWithAmbushMovesToTheShowdown() {
+        val (controller, _) = controller()
+        controller.setUpHunt("White Lion", 1, 4)
+
+        controller.finishHunt(HuntStatus.AMBUSH)
+
+        assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
+    }
+
+    @Test
+    fun finishingWithRunAwayRestartsTheSettlement() {
+        val (controller, _) = controller()
+        controller.setUpHunt("White Lion", 1, 4)
+
+        controller.finishHunt(HuntStatus.RUN_AWAY)
+
+        assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
     }
 
     @Test

@@ -27,6 +27,7 @@ import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SurvivorStatus
+import io.kdmtracker.core.domain.Ulid
 
 /**
  * Stateless Hunting Phase body.
@@ -39,6 +40,7 @@ import io.kdmtracker.core.domain.SurvivorStatus
 fun HuntScreen(
     state: UiState,
     onSetUpHunt: (String, Int, Int) -> Unit,
+    onAssignPlayer: (Ulid, Int) -> Unit,
     onMarkSpaceKind: (Int, HuntSpaceKind) -> Unit,
     onAssignHuntEvent: (Int, String) -> Unit,
     onResolveHuntEvent: (Int, String) -> Unit,
@@ -73,6 +75,29 @@ fun HuntScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        if (party.isNotEmpty() && hunt.players > 1) {
+            Text(text = "Assign players", style = MaterialTheme.typography.titleSmall)
+            party.forEach { survivor ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = survivor.name.ifBlank { "Unnamed" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    (1..hunt.players).forEach { player ->
+                        val selected = hunt.assignments[survivor.id] == player
+                        OutlinedButton(onClick = { onAssignPlayer(survivor.id, player) }) {
+                            Text(if (selected) "• P$player" else "P$player")
+                        }
+                    }
+                }
+            }
+        }
+
         HuntBoard(hunt = hunt, selectedIndex = selected, onSelectIndex = { selected = it })
 
         HuntEventPanel(
@@ -95,12 +120,15 @@ fun HuntScreen(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onFinishHunt(HuntStatus.FAILED) }, modifier = Modifier.weight(1f)) {
+                Text("Starvation")
+            }
             OutlinedButton(onClick = { onFinishHunt(HuntStatus.RUN_AWAY) }, modifier = Modifier.weight(1f)) {
                 Text("Run away")
             }
-            OutlinedButton(onClick = { onFinishHunt(HuntStatus.FAILED) }, modifier = Modifier.weight(1f)) {
-                Text("Hunt fails")
-            }
+        }
+        OutlinedButton(onClick = { onFinishHunt(HuntStatus.FAILED) }, modifier = Modifier.fillMaxWidth()) {
+            Text("Hunt fails")
         }
     }
 }

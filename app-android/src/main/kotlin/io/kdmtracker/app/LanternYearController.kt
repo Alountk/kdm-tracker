@@ -363,13 +363,23 @@ class LanternYearController(
         when (val result = SetHuntOutcome.run(repository.record, outcome)) {
             is StepResult.Ok -> {
                 repository.update(result.value)
-                if (outcome == HuntStatus.FAILED) {
-                    applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
-                } else {
-                    applyStep(
-                        returnees = repository.settlement.population,
-                        context = FlowContext(ruleset = ruleset),
-                    )
+                when (outcome) {
+                    // Found or ambushed: the showdown begins.
+                    HuntStatus.QUARRY_FOUND, HuntStatus.AMBUSH ->
+                        applyStep(
+                            returnees = repository.settlement.population,
+                            context = FlowContext(ruleset = ruleset),
+                        )
+                    // The hunt ends without a showdown: a party wipe (no returnees) or a run away
+                    // (the survivors return); both re-enter the Settlement Phase.
+                    HuntStatus.FAILED ->
+                        applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
+                    HuntStatus.RUN_AWAY ->
+                        applyStep(
+                            returnees = repository.settlement.population,
+                            context = FlowContext(ruleset = ruleset, huntFailed = true),
+                        )
+                    HuntStatus.ACTIVE -> publishBlocked("invalid outcome")
                 }
             }
             is StepResult.Blocked -> publishBlocked(result.reason)

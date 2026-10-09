@@ -7,6 +7,7 @@ import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.Survivor
+import io.kdmtracker.core.domain.SurvivorStatus
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.StepResult
@@ -18,7 +19,10 @@ import kotlin.test.assertTrue
 class HuntPartyOutcomeUseCaseTest {
     private val survivorId = Ulid.generate(1L) { 0 }
 
-    private fun record(players: Int = 3): SettlementRecord {
+    private fun record(
+        players: Int = 3,
+        survivorStatus: SurvivorStatus = SurvivorStatus.DEPARTING,
+    ): SettlementRecord {
         val base =
             SettlementRecord(
                 settlement =
@@ -34,7 +38,7 @@ class HuntPartyOutcomeUseCaseTest {
                         settlementEvent = null,
                         sync = SyncMeta(HybridLogicalClock(0, 0)),
                     ),
-                state = SettlementState(survivors = listOf(Survivor(id = survivorId))),
+                state = SettlementState(survivors = listOf(Survivor(id = survivorId, status = survivorStatus))),
             )
         return assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(base, "White Lion", 1, players)).value
     }
@@ -46,6 +50,13 @@ class HuntPartyOutcomeUseCaseTest {
 
         assertIs<StepResult.Blocked>(AssignPlayer.run(record(players = 3), survivorId, 4))
         assertIs<StepResult.Blocked>(AssignPlayer.run(record(players = 3), survivorId, 0))
+    }
+
+    @Test
+    fun assignPlayerRejectsANonDepartingSurvivor() {
+        val result = AssignPlayer.run(record(survivorStatus = SurvivorStatus.ALIVE), survivorId, 1)
+
+        assertIs<StepResult.Blocked>(result)
     }
 
     @Test
@@ -89,5 +100,15 @@ class HuntPartyOutcomeUseCaseTest {
         assertEquals(HuntStatus.QUARRY_FOUND, ok.value.state.hunt.status)
 
         assertIs<StepResult.Blocked>(SetHuntOutcome.run(record(), HuntStatus.ACTIVE))
+    }
+
+    @Test
+    fun setHuntOutcomeRejectsAReEntry() {
+        val finished =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                SetHuntOutcome.run(record(), HuntStatus.QUARRY_FOUND),
+            ).value
+
+        assertIs<StepResult.Blocked>(SetHuntOutcome.run(finished, HuntStatus.FAILED))
     }
 }

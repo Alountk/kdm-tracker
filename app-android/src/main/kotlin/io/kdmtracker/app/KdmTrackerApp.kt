@@ -122,6 +122,7 @@ fun KdmTrackerApp(
                                 HuntScreen(
                                     state = current,
                                     onSetUpHunt = viewModel::setUpHunt,
+                                    onAssignPlayer = viewModel::assignPlayer,
                                     onMarkSpaceKind = viewModel::markSpaceKind,
                                     onAssignHuntEvent = viewModel::assignHuntEvent,
                                     onResolveHuntEvent = viewModel::resolveHuntEvent,

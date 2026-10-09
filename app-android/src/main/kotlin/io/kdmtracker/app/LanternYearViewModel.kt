@@ -345,6 +345,12 @@ class LanternYearViewModel(
         players: Int,
     ) = mutate { it.setUpHunt(quarry, level, players) }
 
+    /** Assigns a party survivor to a player (1-based). */
+    fun assignPlayer(
+        survivorId: Ulid,
+        player: Int,
+    ) = mutate { it.assignPlayer(survivorId, player) }
+
     /** Edits a hunt-board space's kind. */
     fun markSpaceKind(
         index: Int,

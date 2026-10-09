@@ -11,13 +11,16 @@ import io.kdmtracker.core.rules.StepResult
  * (a starvation or party wipe), or run away. The transition itself is driven by the caller.
  */
 object SetHuntOutcome {
-    /** Returns [StepResult.Ok] with the status set, or [StepResult.Blocked] with `"invalid outcome"`. */
+    /** Returns [StepResult.Ok] with the status set, or [StepResult.Blocked]. */
     fun run(
         record: SettlementRecord,
         status: HuntStatus,
     ): StepResult<SettlementRecord> {
         if (status == HuntStatus.ACTIVE) {
             return StepResult.Blocked("invalid outcome")
+        }
+        if (record.state.hunt.status != HuntStatus.ACTIVE) {
+            return StepResult.Blocked("hunt is over")
         }
         return StepResult.Ok(record.copy(state = record.state.copy(hunt = record.state.hunt.copy(status = status))))
     }
