@@ -83,6 +83,7 @@ fun SurvivorSheet(
                 onMinus = { onSave(SurvivorSheetEdits.survival(survivor, model.survivalLimit, -1)) },
                 onPlus = { onSave(SurvivorSheetEdits.survival(survivor, model.survivalLimit, 1)) },
                 plusEnabled = model.canSpendSurvival,
+                minusEnabled = model.survival > 0,
             )
             if (!model.canSpendSurvival) {
                 Text(
@@ -104,6 +105,7 @@ fun SurvivorSheet(
                 onMinus = { onSave(SurvivorSheetEdits.insanity(survivor, -1)) },
                 onPlus = { onSave(SurvivorSheetEdits.insanity(survivor, 1)) },
                 badge = if (model.mentalState == MentalState.INSANE) "Loco" else "Cuerdo",
+                minusEnabled = model.insanity > 0,
             )
             Text(
                 text = "Si locura es 3+ estás loco.",
@@ -120,7 +122,11 @@ fun SurvivorSheet(
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 model.attributes.forEachIndexed { index, row ->
-                    AttributeStat(label = row.label, value = row.value, icon = ATTRIBUTE_ICONS[index])
+                    AttributeStat(
+                        label = row.label,
+                        value = row.value,
+                        icon = ATTRIBUTE_ICONS.getOrElse(index) { FALLBACK_ICON },
+                    )
                 }
             }
         }
@@ -164,6 +170,8 @@ fun SurvivorSheet(
 }
 
 /** The six attribute icons, in the design's order (MOV, PREC, FZA, EVA, SUE, VEL). */
+private const val FALLBACK_ICON = "crop_square"
+
 private val ATTRIBUTE_ICONS =
     listOf("directions_walk", "target", "fitness_center", "airline_stops", "casino", "bolt")
 
@@ -240,6 +248,7 @@ private fun CounterRow(
     onMinus: () -> Unit,
     onPlus: () -> Unit,
     plusEnabled: Boolean = true,
+    minusEnabled: Boolean = true,
     badge: String? = null,
 ) {
     Row(
@@ -257,7 +266,7 @@ private fun CounterRow(
                 Text(text = badge, style = MaterialTheme.typography.bodyMedium)
             }
         }
-        OutlinedButton(onClick = onMinus) { Text("−") }
+        OutlinedButton(onClick = onMinus, enabled = minusEnabled) { Text("−") }
         Text(
             text = value.toString(),
             style = KdmType.statDisplay,
@@ -346,7 +355,7 @@ private fun HitLocationRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        StoneButton(label = "−", onClick = onArmorMinus)
+        StoneButton(label = "−", onClick = onArmorMinus, enabled = row.armor > 0)
         Box(
             modifier =
                 Modifier
@@ -383,6 +392,7 @@ private fun StoneButton(
     label: String,
     onClick: () -> Unit,
     checked: Boolean = false,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier =
@@ -405,7 +415,12 @@ private fun StoneButton(
             text = label,
             style = KdmType.labelCaps,
             fontWeight = if (checked) FontWeight.Bold else FontWeight.Normal,
-            color = woundBoxColor(checked, MaterialTheme.colorScheme),
+            color =
+                if (enabled) {
+                    woundBoxColor(checked, MaterialTheme.colorScheme)
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant
+                },
         )
     }
 }
