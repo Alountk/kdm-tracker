@@ -63,6 +63,23 @@ data class SettlementRecord(
     /** Exactly the milestones the [ruleset]'s definitions mark as reached. */
     fun reachedMilestones(ruleset: Ruleset): Set<MilestoneId> = reachedMilestones(milestoneState(), ruleset.milestones)
 
+    /**
+     * The nemesis a lantern [year]'s timeline lists, or `null` when the year has none.
+     *
+     * A label like `"Nemesis: The Butcher Lvl 2"` yields `"The Butcher"` (the `Nemesis:` prefix and
+     * the ` Lvl N` suffix stripped).
+     */
+    fun nemesisOf(year: Int): String? =
+        state.timeline
+            .entriesFor(year)
+            .map { it.label }
+            .firstOrNull { it.startsWith("Nemesis") }
+            ?.removePrefix("Nemesis:")
+            ?.trim()
+            ?.replace(Regex("\\s+Lvl\\s+\\d+$"), "")
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
     /** The storage lines projected from the state's resource ledger. */
     fun storage(): List<StorageLine> = state.storage()
 

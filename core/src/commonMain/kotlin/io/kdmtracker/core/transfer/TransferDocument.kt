@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 /**
  * Top-level, versioned container for an exported campaign database.
  *
- * [schemaVersion] defaults to the current schema (9). Older v1/v2/v3/v4/v5/v6/v7 documents omit the
+ * [schemaVersion] defaults to the current schema (10). Older v1/v2/v3/v4/v5/v6/v7 documents omit the
  * newer fields and still decode, because every added field carries a default. v4
  * replaced the v3 `MilestoneDefinitionDto.key` enum with a stable string [MilestoneDefinitionDto.id]
  * plus a typed [MilestoneConditionSpec] and a prose `description`; a v3 document that
@@ -24,13 +24,13 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class TransferDocument(
-    val schemaVersion: Int = 9,
+    val schemaVersion: Int = 10,
     val exportedAt: String,
     val campaigns: List<CampaignDto>,
 ) {
     companion object {
         /** Schema versions this build can read. */
-        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
+        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     }
 }
 

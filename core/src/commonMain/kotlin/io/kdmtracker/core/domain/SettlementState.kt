@@ -37,6 +37,7 @@ data class SettlementState(
     val survivors: List<Survivor> = emptyList(),
     val hunt: HuntState = HuntState(),
     val showdown: ShowdownState = ShowdownState(),
+    val specialShowdown: Boolean = false,
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
