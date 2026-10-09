@@ -106,6 +106,8 @@ data class UiState(
     val huntEvents: List<HuntEvent> = emptyList(),
     val showdown: ShowdownState? = null,
     val monsterCards: List<MonsterCard> = emptyList(),
+    val specialShowdown: Boolean = false,
+    val nemesis: String? = null,
 )
 
 /**
