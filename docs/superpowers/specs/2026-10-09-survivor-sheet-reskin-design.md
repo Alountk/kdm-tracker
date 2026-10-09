@@ -98,7 +98,7 @@ These become follow-up slices. This slice still validates the whole design syste
 - `ui/theme/KdmTypography.kt` — the type scale mapped to Material 3 `Typography`, plus three named extras Material 3 has no role for.
 - `ui/theme/KdmShapes.kt` — corner shapes.
 - `ui/theme/KdmTheme.kt` — the `KdmTheme { }` composable.
-- `ui/theme/KdmIcons.kt` — the ~12 Material Symbols glyphs the sheet uses, as `ImageVector`s.
+- `ui/theme/KdmSymbols.kt` — the Material Symbols `FontFamily` and the name → codepoint map for the glyphs the sheet uses.
 - `res/font/` — Playfair Display (600, 700, italic 400) and Inter (400, 600, 700), both OFL.
 - `ui/SurvivorSheet.kt` — the rebuilt sheet and its pieces: `SheetPanel`, `CounterRow`, `PipTrack`, `AttributeStat`, `HitLocationRow`, `ChipRow`.
 - `ui/SurvivorComponents.kt` — the current text-dump `SurvivorSheet` is replaced; `SurvivorCard`/`StatusDot` (the roster) are untouched.
@@ -131,7 +131,11 @@ Typography: the design scale has 11 steps; Material 3 has 15 fixed roles. The cl
 
 Shapes: `rounded` (4px) as the default, `rounded-lg` (8px) as large, pills via `RoundedCornerShape(percent = 50)` — matching the render, **not** the prose's "strict 0px".
 
-Icons: the design renders its icons with the **Material Symbols Outlined** web font. Compose's `material-icons-extended` is a *different, older* icon set — the glyphs do not match — and the project currently has **no icon dependency at all**. Rather than approximate (wrong glyphs) or bundle a multi-megabyte variable font for ~12 icons, the dozen glyphs the sheet needs are added as local `ImageVector`s derived from the official Material Symbols set (Apache-2.0). This keeps the glyphs faithful with no heavy dependency and no R8 dependency. Any glyph that has to be substituted is recorded in the apply-progress.
+Icons: the design renders its icons with the **Material Symbols Outlined** web font, using **27 distinct glyphs**. Two alternatives were rejected with evidence: hand-authored `ImageVector`s (faithful but 400+ lines of path data, which alone exceeds the review budget) and Compose's `material-icons-extended` (zero code, but a *different, older* icon set — `psychology`, `directions_walk` and others do not match). **The Material Symbols Outlined font is bundled instead**, and the sheet renders glyphs as text by codepoint via a name → codepoint map. This is the only option that gives identical glyphs without inflating the PR; the cost is a font file in the APK. Subsetting the font is deliberately **out of scope** (YAGNI).
+
+### Copy language (validated with the user)
+
+The design is entirely in Spanish and its `designMd` declares an "authoritative **Spanish** mobile companion app", while the merged app's UI copy is English (`Advance`, `Draw`, `Wound`, `Defeat`, `Find quarry`, …). **The sheet's labels follow the design's Spanish** ("Supervivencia", "Locura (Cerebro)", "Atributos Primarios", "Localizaciones de Impacto"), because the copy is part of what "pixel perfect" means. The rest of the app stays English for now, so the sheet reads Spanish while surrounding chrome reads English — a transitional mix. Migrating the whole app to Spanish is a separate slice.
 
 ## Data flow
 
@@ -189,8 +193,8 @@ The project has **no Compose UI test infrastructure** (`app-android/src/test/` h
 - **Every screen changes appearance in this PR.** Existing screens inherit the dark scheme; a screen whose contrast suffers must be reported, not silently tolerated. Rollback is a single revert of the theme mount.
 - **Text metrics differ from the browser.** Sizes, weights and spacing are exact; line boxes may differ by a pixel or two. Accepted and stated up front.
 - **Token drift.** Mitigated by `KdmThemeTest`.
-- **Font bundling increases the APK** (two families, five faces). Accepted; both are OFL.
-- **Icon coverage.** Glyphs are hand-added vectors from the official Material Symbols set; any glyph that has to be substituted is recorded rather than silently approximated.
+- **Font bundling increases the APK** (Playfair Display and Inter plus the Material Symbols icon font). Accepted; the text families are OFL, Material Symbols is Apache-2.0.
+- **Icon fidelity.** Glyphs come from the same Material Symbols font the design uses, keyed by an explicit name → codepoint map. A wrong codepoint renders a *different* icon (or tofu), so each mapping is pinned by the theme test.
 - **Slice size against the 400-line review budget.** This slice carries two deliverables (the theme layer plus ruleset constants, and the dense sheet rebuild) and will likely exceed the project's 400-changed-line PR policy. If the task-phase forecast crosses it, split into two PRs — theme + constants first, then the sheet — rather than seeking a `size:exception`.
 
 ## References
