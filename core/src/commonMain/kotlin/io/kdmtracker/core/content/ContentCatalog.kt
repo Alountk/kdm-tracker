@@ -2,6 +2,8 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ContentEntry
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.HuntEvent
+import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ResourceDefinition
@@ -43,6 +45,8 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.disorders }) { it.name }
     val settlementEventDefinitions: List<SettlementEvent> =
         mergeDefinition(packs.flatMap { it.bundle.settlementEvents }) { it.name }
+    val huntEventDefinitions: List<HuntEvent> =
+        mergeDefinition(packs.flatMap { it.bundle.huntEvents }) { it.name }
     val gearDefinitions: List<Gear> =
         mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
     val timeline: List<TimelineEntry> =
@@ -82,6 +86,13 @@ data class ContentCatalog(
             .toList()
             .sortedBy { (source, _) -> source }
             .associate { (source, definitions) -> source to definitions.sortedBy { it.name } }
+
+    /**
+     * The hunt events [quarry] draws on a hunt: every basic and special event plus the monster
+     * events whose [HuntEvent.monster] is [quarry].
+     */
+    fun huntEventsFor(quarry: String): List<HuntEvent> =
+        huntEventDefinitions.filter { it.kind != HuntEventKind.MONSTER || it.monster == quarry }
 }
 
 /**
