@@ -58,7 +58,7 @@ Not "identical to the binary". This is stated so it is not re-litigated mid-impl
 | Armaduras rotas | not modelled |
 | Acto del Superviviente panel | static rules reference |
 
-Four smaller unbacked elements are also out, under the same ruling:
+Five smaller unbacked elements are also out, under the same ruling:
 
 | Element | Why it is out |
 | --- | --- |
@@ -66,6 +66,7 @@ Four smaller unbacked elements are also out, under the same ruling:
 | Attribute `+0` modifier column ("Base + Modificadores") | only base values are modelled, no modifiers |
 | "Derribado" on a wound | `WoundState` has `armor`/`light`/`heavy`, no knocked-down |
 | "Afinidades Activas" on the gear grid | no affinity model |
+| Milestone glyphs inside the 16-cell Hunt-XP track | the track is 16 cells, but the `●`/`✕` milestone markers are not modelled |
 
 These become follow-up slices. This slice still validates the whole design system, because the colour, type, shape and spacing tokens all appear in the backed regions.
 
@@ -78,7 +79,7 @@ These become follow-up slices. This slice still validates the whole design syste
 
 ### Out (explicitly deferred)
 
-- The four region gaps and four element gaps above.
+- The four region gaps and five element gaps above.
 - Reskinning the Settlement, Hunt and Showdown screens (they inherit the theme, but their layouts are unchanged).
 - Compose screenshot/UI test infrastructure (there is none today; adding Paparazzi/Robolectric is a separate decision).
 - Any change to the survivor **editor** screen beyond the "Arma Melé" entry point.
