@@ -5,12 +5,14 @@ import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.HuntState
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.MilestoneId
+import io.kdmtracker.core.domain.MonsterCard
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.ShowdownState
 import io.kdmtracker.core.domain.StorageLine
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.rules.CraftCheck
@@ -101,6 +103,8 @@ data class UiState(
     val hunt: HuntState? = null,
     val quarries: List<String> = emptyList(),
     val huntEvents: List<HuntEvent> = emptyList(),
+    val showdown: ShowdownState? = null,
+    val monsterCards: List<MonsterCard> = emptyList(),
 )
 
 /**
