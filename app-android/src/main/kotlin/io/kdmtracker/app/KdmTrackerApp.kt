@@ -29,6 +29,7 @@ import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
+import io.kdmtracker.app.ui.theme.KdmTheme
 
 @Composable
 fun KdmTrackerApp(
@@ -50,7 +51,7 @@ fun KdmTrackerApp(
         if (createSucceeded > 0L) newSettlementName = ""
     }
 
-    MaterialTheme {
+    KdmTheme {
         Scaffold(
             topBar = {
                 state?.let { current ->
