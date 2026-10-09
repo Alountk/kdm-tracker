@@ -94,7 +94,7 @@ The Hunt Phase is a stub. This slice makes it a real, faithful tracker:
 
 - **Board layout is content-uncertain** (the diagram is an image) — the board is player-set with a default; pin the default and the edit path.
 - **Content ingest shape** — the hunt decks mix instruction cards, specials and basics; the parser must dedupe and reject empty cards. Pin with fixtures.
-- **Outcome → flow** — the mapping to `LanternYearFlow` must not break the existing nemesis/TBD transitions; pin with tests.
+- **Outcome → flow** — the mapping to `LanternYearFlow` must not break the existing nemesis/special-showdown transitions; pin with tests.
 - **Scope creep** — the hunt is a big body; keep the board model small (spaces + events), not a rules engine.
 
 ## References
