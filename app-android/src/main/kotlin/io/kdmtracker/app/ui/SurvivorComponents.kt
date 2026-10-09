@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.core.domain.HitLocation
@@ -80,11 +81,13 @@ fun SurvivorCard(
     expanded: Boolean,
     onToggle: () -> Unit,
     onEdit: () -> Unit,
+    muted: Boolean = false,
     trailing: @Composable () -> Unit = {},
+    expandedExtra: @Composable () -> Unit = {},
 ) {
     Surface(
         onClick = onToggle,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().alpha(if (muted) 0.55f else 1f),
         color =
             if (expanded) {
                 MaterialTheme.colorScheme.secondaryContainer
@@ -115,6 +118,7 @@ fun SurvivorCard(
             Text(text = survivor.headerSummary(), style = MaterialTheme.typography.bodySmall)
             if (expanded) {
                 SurvivorSheet(survivor = survivor, survivalLimit = survivalLimit)
+                expandedExtra()
                 OutlinedButton(onClick = onEdit) { Text("Edit sheet") }
             }
         }
@@ -182,55 +186,4 @@ private fun Survivor.headerSummary(): String {
         }
     val token = if (tokens.isEmpty()) "" else " · ${tokens.size} token(s)"
     return base + if (marks == 0) token else " · $marks wound(s)$token"
-}
-
-// Legacy summary card kept until Step 8 is rewritten on SurvivorCard (Task 4), so the build stays green.
-@Composable
-internal fun SurvivorSummaryCard(
-    survivor: Survivor,
-    onEdit: () -> Unit,
-    trailing: @Composable () -> Unit = {},
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = "${survivor.name.ifBlank { "Unnamed" }} · ${survivor.sex.name} · ${survivor.status.name}",
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(
-                text =
-                    "Survival ${survivor.survival} · Insanity ${survivor.insanity} · Hunt XP ${survivor.huntXp} · " +
-                        "Courage ${survivor.courage} · Understanding ${survivor.understanding}",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            val injured =
-                HitLocation.entries.mapNotNull { location ->
-                    val wound = survivor.wounds[location]
-                    when {
-                        wound == null -> null
-                        wound.heavy -> "${location.name} heavy"
-                        wound.light -> "${location.name} light"
-                        else -> null
-                    }
-                }
-            if (injured.isNotEmpty()) {
-                Text(text = "Injuries: ${injured.joinToString()}", style = MaterialTheme.typography.bodySmall)
-            }
-            if (survivor.gear.isNotEmpty()) {
-                Text(text = "Gear: ${survivor.gear.joinToString()}", style = MaterialTheme.typography.bodySmall)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                trailing()
-                OutlinedButton(onClick = onEdit) { Text("Edit") }
-            }
-        }
-    }
 }

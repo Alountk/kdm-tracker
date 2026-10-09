@@ -2,15 +2,12 @@ package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,9 +25,9 @@ import io.kdmtracker.core.domain.Ulid
 /**
  * Step 8 "Prepare Departing Survivors" body.
  *
- * Toggles up to four departing survivors and assigns the settlement's crafted gear to each. The
- * cap lives in `:core` (`MarkDeparting`), so an over-selection surfaces as an action error rather
- * than being silently dropped here. Stateless beyond the open editor.
+ * Toggles up to four departing survivors and, on an expanded departing card, the 3×3 gear grid that
+ * assigns the settlement's crafted gear. The cap lives in `:core` (`MarkDeparting`), so an
+ * over-selection surfaces as an action error. Dead survivors are shown greyed and cannot depart.
  */
 @Composable
 fun PrepareDepartingStepScreen(
@@ -40,12 +37,13 @@ fun PrepareDepartingStepScreen(
     onUnassignGear: (Ulid, String) -> Unit,
     onSaveSurvivor: (Survivor) -> Unit,
 ) {
+    var filter by remember { mutableStateOf(SurvivorFilter.ALL) }
+    var expandedId by remember { mutableStateOf<Ulid?>(null) }
     var editing by remember { mutableStateOf<Survivor?>(null) }
     var pending by remember { mutableStateOf<Survivor?>(null) }
     val departing = state.survivors.filter { it.status == SurvivorStatus.DEPARTING }.map { it.id }
     val limit = state.population.coerceAtMost(4)
 
-    // Close the editor only once the save landed; a refused save keeps it open with the error.
     LaunchedEffect(state.survivors, pending) {
         val draft = pending
         if (draft != null && state.survivors.any { it.id == draft.id && it == draft }) {
@@ -71,26 +69,39 @@ fun PrepareDepartingStepScreen(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
-        state.survivors.filter { it.status != SurvivorStatus.DEAD }.forEach { survivor ->
+        RosterFilterChips(selected = filter, onSelect = { filter = it })
+        filterSurvivors(state.survivors, filter).forEach { survivor ->
             val isDeparting = survivor.id in departing
-            SurvivorSummaryCard(survivor = survivor, onEdit = { editing = survivor }) {
-                OutlinedButton(
-                    onClick = {
-                        onDepartingChange(if (isDeparting) departing - survivor.id else departing + survivor.id)
-                    },
-                ) {
-                    Text(if (isDeparting) "Departing" else "Depart")
-                }
-            }
-            if (isDeparting) {
-                GearAssignment(
-                    survivor = survivor,
-                    settlementGear = state.gear,
-                    onAssign = onAssignGear,
-                    onUnassign = onUnassignGear,
-                )
-            }
+            val isDead = survivor.status == SurvivorStatus.DEAD
+            SurvivorCard(
+                survivor = survivor,
+                survivalLimit = state.survivalLimit,
+                expanded = expandedId == survivor.id,
+                onToggle = { expandedId = if (expandedId == survivor.id) null else survivor.id },
+                onEdit = { editing = survivor },
+                muted = isDead,
+                trailing = {
+                    if (!isDead) {
+                        OutlinedButton(
+                            onClick = {
+                                onDepartingChange(if (isDeparting) departing - survivor.id else departing + survivor.id)
+                            },
+                        ) {
+                            Text(if (isDeparting) "Departing" else "Depart")
+                        }
+                    }
+                },
+                expandedExtra = {
+                    if (isDeparting) {
+                        GearGrid(
+                            assigned = survivor.gear,
+                            settlementGear = state.gear,
+                            onAssign = { onAssignGear(survivor.id, it) },
+                            onUnassign = { onUnassignGear(survivor.id, it) },
+                        )
+                    }
+                },
+            )
         }
     }
 
@@ -108,44 +119,5 @@ fun PrepareDepartingStepScreen(
                 pending = null
             },
         )
-    }
-}
-
-@Composable
-private fun GearAssignment(
-    survivor: Survivor,
-    settlementGear: List<String>,
-    onAssign: (Ulid, String) -> Unit,
-    onUnassign: (Ulid, String) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(text = "Gear", style = MaterialTheme.typography.titleSmall)
-            if (settlementGear.isEmpty()) {
-                Text(text = "No crafted gear in the settlement.", style = MaterialTheme.typography.bodySmall)
-            }
-            survivor.gear.forEach { gear ->
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = gear, modifier = Modifier.weight(1f))
-                    OutlinedButton(onClick = { onUnassign(survivor.id, gear) }) { Text("Remove") }
-                }
-            }
-            settlementGear.filter { it !in survivor.gear }.forEach { gear ->
-                OutlinedButton(
-                    onClick = { onAssign(survivor.id, gear) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Assign $gear")
-                }
-            }
-        }
     }
 }
