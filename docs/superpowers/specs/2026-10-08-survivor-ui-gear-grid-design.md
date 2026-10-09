@@ -60,7 +60,7 @@ Filter chips (**default Todos**, choice **3a**) + the roster; each card's traili
 - `AssignGear`: refuse assigning beyond `MAX_GEAR_SLOTS = 9` (a new constant; the refusal reason is surfaced like the others).
 
 ### `:app-android`
-- New stateless composables (above) + a `SurvivorFilter { NONE, INJURED, DEPARTING, UNNAMED, DEAD }` enum and a pure `filterSurvivors(...)` (testable, no Compose).
+- New stateless composables (above) + a `SurvivorFilter { ALL, INJURED, DEPARTING, UNNAMED, DEAD }` enum and a pure `filterSurvivors(...)` (testable, no Compose). The category filters are derived from `survivorTone`, so a chip never shows a survivor whose dot contradicts it.
 - `SurvivorsReturnStepScreen` / `PrepareDepartingStepScreen` rewritten on the component set (keep the existing `onX` callbacks; the editor wiring stays).
 - `SettlementScreen` dispatch unchanged (steps 2/8 already routed).
 

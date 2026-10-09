@@ -11,6 +11,7 @@ import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.domain.WoundState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SurvivorRosterTest {
     private fun survivor(
@@ -62,6 +63,21 @@ class SurvivorRosterTest {
         val roster = listOf(lightHead, heavyTorso, clean)
 
         assertEquals(listOf(lightHead, heavyTorso), filterSurvivors(roster, SurvivorFilter.INJURED))
+    }
+
+    @Test
+    fun filtersAgreeWithTheDotsOnOverlappingStates() {
+        val departingInjured = survivor(1, SurvivorStatus.DEPARTING, injured = true)
+        val deadInjured = survivor(2, SurvivorStatus.DEAD, injured = true)
+        val unnamedInjured = survivor(3, name = "", injured = true)
+        val roster = listOf(departingInjured, deadInjured, unnamedInjured)
+
+        // Each survivor appears under exactly the chip its dot matches — dead/departing never under
+        // "Injured"; an injured blank-name survivor is "Injured", not "Unnamed".
+        assertEquals(listOf(departingInjured), filterSurvivors(roster, SurvivorFilter.DEPARTING))
+        assertEquals(listOf(deadInjured), filterSurvivors(roster, SurvivorFilter.DEAD))
+        assertEquals(listOf(unnamedInjured), filterSurvivors(roster, SurvivorFilter.INJURED))
+        assertTrue(filterSurvivors(roster, SurvivorFilter.UNNAMED).isEmpty())
     }
 
     @Test

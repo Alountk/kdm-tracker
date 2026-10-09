@@ -3,6 +3,7 @@ package io.kdmtracker.app.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -109,7 +110,13 @@ private fun GearCell(
                 )
                 Spacer(Modifier.weight(1f))
                 onRemove?.let { remove ->
-                    TextButton(onClick = remove) { Text("Remove", style = MaterialTheme.typography.labelSmall) }
+                    TextButton(
+                        onClick = remove,
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier.height(24.dp),
+                    ) {
+                        Text("Remove", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
@@ -118,4 +125,4 @@ private fun GearCell(
 
 private const val ROWS = 3
 private const val COLUMNS = 3
-private val CELL_HEIGHT = 84.dp
+private val CELL_HEIGHT = 104.dp
