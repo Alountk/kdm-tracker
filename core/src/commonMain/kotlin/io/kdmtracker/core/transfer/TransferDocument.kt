@@ -22,13 +22,13 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class TransferDocument(
-    val schemaVersion: Int = 7,
+    val schemaVersion: Int = 8,
     val exportedAt: String,
     val campaigns: List<CampaignDto>,
 ) {
     companion object {
         /** Schema versions this build can read. */
-        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7)
+        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7, 8)
     }
 }
 

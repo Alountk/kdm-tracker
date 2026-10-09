@@ -147,7 +147,7 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV7() {
-        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV8() {
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8), TransferDocument.SUPPORTED_VERSIONS)
     }
 }

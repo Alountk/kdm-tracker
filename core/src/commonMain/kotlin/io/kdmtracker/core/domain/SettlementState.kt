@@ -35,6 +35,7 @@ data class SettlementState(
     val principles: Map<PrincipleCategory, String> = emptyMap(),
     val resolvedMilestones: Set<MilestoneId> = emptySet(),
     val survivors: List<Survivor> = emptyList(),
+    val hunt: HuntState = HuntState(),
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed
