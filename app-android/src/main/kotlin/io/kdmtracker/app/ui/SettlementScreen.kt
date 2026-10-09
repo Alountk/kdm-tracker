@@ -85,6 +85,8 @@ fun SettlementScreen(
                     state = state,
                     onHeal = onHealSurvivors,
                     onSaveSurvivor = onSaveSurvivor,
+                    onAssignGear = onAssignGear,
+                    onUnassignGear = onUnassignGear,
                 )
             4 -> TimelineStepScreen(state = state, onRecordEvent = onRecordEvent, onDrawEvent = onDrawEvent)
             5 ->

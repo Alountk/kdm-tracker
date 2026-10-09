@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.core.domain.HitLocation
 import io.kdmtracker.core.domain.Survivor
+import io.kdmtracker.core.domain.Ulid
 
 /** The coloured status dot for a survivor. */
 @Composable
@@ -82,6 +83,12 @@ fun SurvivorCard(
     onToggle: () -> Unit,
     onEdit: () -> Unit,
     muted: Boolean = false,
+    huntXpTrackMax: Int = 16,
+    insanityThreshold: Int = 3,
+    settlementGear: List<String> = emptyList(),
+    onSave: (Survivor) -> Unit = {},
+    onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
+    onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
     trailing: @Composable () -> Unit = {},
     expandedExtra: @Composable () -> Unit = {},
 ) {
@@ -117,62 +124,20 @@ fun SurvivorCard(
             }
             Text(text = survivor.headerSummary(), style = MaterialTheme.typography.bodySmall)
             if (expanded) {
-                SurvivorSheet(survivor = survivor, survivalLimit = survivalLimit)
+                SurvivorSheet(
+                    survivor = survivor,
+                    survivalLimit = survivalLimit,
+                    huntXpTrackMax = huntXpTrackMax,
+                    insanityThreshold = insanityThreshold,
+                    settlementGear = settlementGear,
+                    onSave = onSave,
+                    onAssignGear = { onAssignGear(survivor.id, it) },
+                    onUnassignGear = { onUnassignGear(survivor.id, it) },
+                    onEditSheet = onEdit,
+                )
                 expandedExtra()
                 OutlinedButton(onClick = onEdit) { Text("Edit sheet") }
             }
-        }
-    }
-}
-
-/** The read-only expanded sheet content. */
-@Composable
-fun SurvivorSheet(
-    survivor: Survivor,
-    survivalLimit: Int,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text =
-                "Survival ${survivor.survival}/$survivalLimit · Insanity ${survivor.insanity} · " +
-                    "Hunt XP ${survivor.huntXp} · Courage ${survivor.courage} · Understanding ${survivor.understanding}",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Text(
-            text =
-                "MOV ${survivor.attributes.movement} · ACC ${survivor.attributes.accuracy} · " +
-                    "STR ${survivor.attributes.strength} · EVA ${survivor.attributes.evasion} · " +
-                    "LUCK ${survivor.attributes.luck} · SPD ${survivor.attributes.speed}",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        val wounds =
-            HitLocation.entries.mapNotNull { location ->
-                val wound = survivor.wounds[location] ?: return@mapNotNull null
-                when {
-                    wound.heavy -> "${location.name} grave"
-                    wound.light -> "${location.name} firme"
-                    else -> null
-                }
-            }
-        if (wounds.isNotEmpty()) {
-            Text(text = "Wounds: ${wounds.joinToString()}", style = MaterialTheme.typography.bodySmall)
-        }
-        if (survivor.tokens.isNotEmpty()) {
-            Text(text = "Tokens: ${survivor.tokens.joinToString()}", style = MaterialTheme.typography.bodySmall)
-        }
-        if (survivor.gear.isNotEmpty()) {
-            Text(text = "Gear: ${survivor.gear.joinToString()}", style = MaterialTheme.typography.bodySmall)
-        }
-        if (survivor.disorders.isNotEmpty() || survivor.fightingArts.isNotEmpty()) {
-            Text(
-                text =
-                    "Disorders: ${survivor.disorders.ifEmpty { listOf("—") }.joinToString()} · " +
-                        "Fighting arts: ${survivor.fightingArts.ifEmpty { listOf("—") }.joinToString()}",
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        if (survivor.notes.isNotBlank()) {
-            Text(text = survivor.notes, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

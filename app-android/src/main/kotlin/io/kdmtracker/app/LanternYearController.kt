@@ -599,6 +599,8 @@ class LanternYearController(
                         ModifierTarget.SURVIVAL_LIMIT,
                         ModifierScope.SETTLEMENT,
                     ),
+            huntXpTrackMax = ruleset.huntXpTrackMax,
+            insanityThreshold = ruleset.insanityThreshold,
             resourceGroups = content.resourceGroups(),
             innovationViews = InnovationAccess.view(record.state, content),
             craftRecipes =
