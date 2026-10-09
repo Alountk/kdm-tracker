@@ -97,9 +97,9 @@ fun SurvivorCard(
         modifier = Modifier.fillMaxWidth().alpha(if (muted) 0.55f else 1f),
         color =
             if (expanded) {
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.surfaceContainer
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.surfaceContainerHigh
             },
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = MaterialTheme.shapes.medium,

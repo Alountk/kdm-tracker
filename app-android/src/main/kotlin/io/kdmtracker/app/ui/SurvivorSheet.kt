@@ -2,6 +2,7 @@ package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.app.ui.theme.KdmType
@@ -209,7 +212,7 @@ private fun SheetPanel(
             Modifier
                 .fillMaxWidth()
                 .border(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.shapes.small)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow, MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest, MaterialTheme.shapes.small)
                 .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -336,6 +339,14 @@ private fun HitLocationRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        Text(
+            text = row.label,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        StoneButton(label = "−", onClick = onArmorMinus)
         Box(
             modifier =
                 Modifier
@@ -345,35 +356,51 @@ private fun HitLocationRow(
         ) {
             Text(text = row.armor.toString(), style = MaterialTheme.typography.bodyMedium)
         }
-        OutlinedButton(onClick = onArmorMinus) { Text("−") }
-        OutlinedButton(onClick = onArmorPlus) { Text("+") }
-        Text(
-            text = row.label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        WoundBox(label = "F", checked = row.light, onClick = onLight)
-        WoundBox(label = "G", checked = row.heavy, onClick = onHeavy)
+        StoneButton(label = "+", onClick = onArmorPlus)
+        StoneButton(label = "F", onClick = onLight, checked = row.light)
+        StoneButton(label = "G", onClick = onHeavy, checked = row.heavy)
     }
 }
 
 /**
- * The colour of a wound box's label. Checked must stay legible on the panel's `surfaceContainerLow`
- * background — `onPrimary` (the obvious choice for a filled button) is nearly invisible there, so
- * the checked state uses the panel-safe [androidx.compose.material3.ColorScheme.secondary].
+ * The colour of a stone box's label. Checked must stay legible on the panel background —
+ * `onPrimary` (the obvious choice for a filled button) is nearly invisible there, so the checked
+ * state uses the panel-safe [androidx.compose.material3.ColorScheme.secondary].
  */
 internal fun woundBoxColor(
     checked: Boolean,
     scheme: androidx.compose.material3.ColorScheme,
 ): androidx.compose.ui.graphics.Color = if (checked) scheme.secondary else scheme.onSurfaceVariant
 
+/**
+ * A compact 28dp stone square — the design's "minimalist stone square with a centered numeral".
+ *
+ * It has a fixed size on purpose: a row of Material buttons squeezed the neighbouring label down to
+ * one character per line, so every control in a crowded row is explicitly sized.
+ */
 @Composable
-private fun WoundBox(
+private fun StoneButton(
     label: String,
-    checked: Boolean,
     onClick: () -> Unit,
+    checked: Boolean = false,
 ) {
-    OutlinedButton(onClick = onClick) {
+    Box(
+        modifier =
+            Modifier
+                .size(28.dp)
+                .border(
+                    1.dp,
+                    if (checked) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        MaterialTheme.colorScheme.outlineVariant
+                    },
+                    MaterialTheme.shapes.small,
+                ).background(
+                    if (checked) MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f) else Color.Transparent,
+                ).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
             text = label,
             style = KdmType.labelCaps,
