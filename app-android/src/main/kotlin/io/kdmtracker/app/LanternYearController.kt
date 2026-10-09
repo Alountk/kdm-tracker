@@ -14,6 +14,7 @@ import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.ShowdownStatus
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.Craftability
@@ -36,21 +37,26 @@ import io.kdmtracker.core.usecase.AssignPlayer
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.Craft
+import io.kdmtracker.core.usecase.DrawShowdownCard
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.MarkDeparting
 import io.kdmtracker.core.usecase.MarkSpaceKind
 import io.kdmtracker.core.usecase.RecordBirths
 import io.kdmtracker.core.usecase.RecordDeaths
+import io.kdmtracker.core.usecase.RecordHuntXp
 import io.kdmtracker.core.usecase.RecordSettlementEvent
 import io.kdmtracker.core.usecase.ResolveHuntEvent
 import io.kdmtracker.core.usecase.ResolveMilestone
 import io.kdmtracker.core.usecase.ReturnSurvivors
 import io.kdmtracker.core.usecase.SetHuntOutcome
+import io.kdmtracker.core.usecase.SetShowdownOutcome
 import io.kdmtracker.core.usecase.SetUpHunt
+import io.kdmtracker.core.usecase.SetUpShowdown
 import io.kdmtracker.core.usecase.SpendEndeavor
 import io.kdmtracker.core.usecase.UnassignGear
 import io.kdmtracker.core.usecase.UpdateSurvivor
+import io.kdmtracker.core.usecase.WoundMonster
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -309,6 +315,41 @@ class LanternYearController(
         applyResult(UpdateSurvivor.run(repository.record, survivor))
     }
 
+    /** Sets up the showdown encounter (monster + level + the assembled AI deck). */
+    fun setUpShowdown(
+        monster: String,
+        level: Int,
+        deck: List<String>,
+    ) {
+        applyResult(SetUpShowdown.run(repository.record, monster, level, deck.shuffled()))
+    }
+
+    /** Draws the monster's AI card (the monster's turn). */
+    fun drawShowdownCard() {
+        applyResult(DrawShowdownCard.run(repository.record))
+    }
+
+    /** Wounds the monster (removes the top AI card to the wound stack). */
+    fun woundMonster() {
+        applyResult(WoundMonster.run(repository.record))
+    }
+
+    /** Grants +1 hunt XP to each listed survivor. */
+    fun grantHuntXp(survivorIds: List<Ulid>) {
+        applyResult(RecordHuntXp.run(repository.record, survivorIds))
+    }
+
+    /** Records the showdown outcome and returns the settlement to its next phase. */
+    fun finishShowdown(status: ShowdownStatus) {
+        when (val result = SetShowdownOutcome.run(repository.record, status)) {
+            is StepResult.Ok -> {
+                repository.update(result.value)
+                advance()
+            }
+            is StepResult.Blocked -> publishBlocked(result.reason)
+        }
+    }
+
     /** Sets up the hunt board (quarry + level + players). */
     fun setUpHunt(
         quarry: String,
@@ -558,7 +599,10 @@ class LanternYearController(
             births = record.state.births,
             survivors = record.state.survivors,
             hunt = record.state.hunt,
+            showdown = record.state.showdown,
+            monsterCards = content.monsterCardDefinitions,
             quarries = content.quarries,
+            nemeses = content.nemeses,
             huntEvents =
                 record.state.hunt.quarry
                     ?.let { content.huntEventsFor(it) }

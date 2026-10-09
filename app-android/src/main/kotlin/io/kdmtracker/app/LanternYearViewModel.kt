@@ -18,6 +18,7 @@ import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ShowdownStatus
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.sync.SyncEngine
@@ -374,6 +375,25 @@ class LanternYearViewModel(
 
     /** Records the hunt outcome and moves the lantern year. */
     fun finishHunt(outcome: HuntStatus) = mutate { it.finishHunt(outcome) }
+
+    /** Sets up the showdown encounter (monster + level + the assembled AI deck). */
+    fun setUpShowdown(
+        monster: String,
+        level: Int,
+        deck: List<String>,
+    ) = mutate { it.setUpShowdown(monster, level, deck) }
+
+    /** Draws the monster's AI card. */
+    fun drawShowdownCard() = mutate { it.drawShowdownCard() }
+
+    /** Wounds the monster. */
+    fun woundMonster() = mutate { it.woundMonster() }
+
+    /** Grants +1 hunt XP to each listed survivor. */
+    fun grantHuntXp(survivorIds: List<Ulid>) = mutate { it.grantHuntXp(survivorIds) }
+
+    /** Records the showdown outcome and returns the settlement to its next phase. */
+    fun finishShowdown(status: ShowdownStatus) = mutate { it.finishShowdown(status) }
 
     /**
      * Signs the session out: clears the stored token through the components and marks the state

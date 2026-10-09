@@ -255,6 +255,34 @@ page count is cross-checked against the form-feed split, the parsed count is ass
 `pages - 1`, and any card with an empty name/text aborts. A card appearing twice with different text
 also aborts.
 
+## Monsters
+
+`ingest_monsters.py` reads every monster folder under `AF Enfrentamientos/` (its `AF AI <monster>.pdf`
+AI deck and `AF HL <monster>.pdf` hit locations) and writes
+`core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15Monsters.kt` as a
+`ContentBundle` with `monsterCards = List<MonsterCard>` (name + text + kind AI/BASIC_ACTION/HIT_LOCATION
++ the catalog monster + an AI card's rank letter).
+
+```sh
+python3 tools/content-ingest/ingest_monsters.py \
+  --dir "path/to/external-assets/Juego Completo/Formato Americano 57x88 mm/AF Enfrentamientos"
+```
+
+`--dir` overrides the folder (it defaults to that path) and `--out` the generated file. The
+`AF AI <monster> - Acción Básica.pdf` files duplicate the AI deck and are not ingested.
+
+### Parsing model
+
+One card per page with page 1 as the cover. An **AI** card's top lines are an optional `xN` quantity
+and a rank letter (`B`/`A`/`L`/`S`), then the name and text; a monster's **stat sheet** (its second
+line starts with `Nivel`) is skipped; a page starting with `Acción Básica` becomes a `BASIC_ACTION`
+card. A **hit location** card's first line is its name. Any other page aborts the run.
+
+### Determinism and integrity
+
+Entries are deduped by (monster, kind, name) and sorted; the output embeds no timestamps and no paths.
+`pdfinfo`'s page count is cross-checked against the form-feed split, and empty cards abort.
+
 ## Settlement locations
 
 `ingest_locations.py` reads `AF Asentamientos Loc.pdf` and writes

@@ -6,6 +6,7 @@ import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.Modifier
+import io.kdmtracker.core.domain.MonsterCard
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
@@ -47,6 +48,8 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.settlementEvents }) { it.name }
     val huntEventDefinitions: List<HuntEvent> =
         mergeDefinition(packs.flatMap { it.bundle.huntEvents }) { it.name }
+    val monsterCardDefinitions: List<MonsterCard> =
+        mergeDefinition(packs.flatMap { it.bundle.monsterCards }) { "${it.monster}|${it.kind}|${it.name}" }
     val gearDefinitions: List<Gear> =
         mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
     val timeline: List<TimelineEntry> =
@@ -93,6 +96,9 @@ data class ContentCatalog(
      */
     fun huntEventsFor(quarry: String): List<HuntEvent> =
         huntEventDefinitions.filter { it.kind != HuntEventKind.MONSTER || it.monster == quarry }
+
+    /** The showdown cards (AI, Basic Action, hit locations) for [monster]. */
+    fun monsterCardsFor(monster: String): List<MonsterCard> = monsterCardDefinitions.filter { it.monster == monster }
 }
 
 /**

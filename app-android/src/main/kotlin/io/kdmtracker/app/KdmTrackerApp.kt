@@ -132,7 +132,12 @@ fun KdmTrackerApp(
                             Screen.Showdown ->
                                 ShowdownScreen(
                                     state = current,
-                                    onAdvance = viewModel::advance,
+                                    onSetUpShowdown = viewModel::setUpShowdown,
+                                    onDrawShowdownCard = viewModel::drawShowdownCard,
+                                    onWoundMonster = viewModel::woundMonster,
+                                    onGrantHuntXp = viewModel::grantHuntXp,
+                                    onRecordDeaths = viewModel::recordDeaths,
+                                    onFinishShowdown = viewModel::finishShowdown,
                                 )
                             Screen.Account -> {
                                 BackHandler { viewModel.closeAccount() }
