@@ -79,3 +79,8 @@ data class Survivor(
     val gear: List<String> = emptyList(),
     val status: SurvivorStatus = SurvivorStatus.ALIVE,
 )
+
+/**
+ * Whether the survivor's insanity reaches the ruleset's [threshold] and their mind is lost.
+ */
+fun Survivor.isInsane(threshold: Int): Boolean = insanity >= threshold

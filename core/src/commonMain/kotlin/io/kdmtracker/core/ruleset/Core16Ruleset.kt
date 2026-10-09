@@ -34,6 +34,9 @@ object Core16Ruleset : Ruleset {
 
     override val departingLimit: Int = 4
 
+    override val huntXpTrackMax: Int = 16
+    override val insanityThreshold: Int = 3
+
     override val milestones: List<MilestoneDefinition> =
         listOf(
             MilestoneDefinition(
