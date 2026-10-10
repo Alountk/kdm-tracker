@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.Screen
@@ -47,6 +49,10 @@ fun ShellBottomNav(
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.97f))
                 .shadow(elevation = 8.dp)
                 .height(NavHeight)
+                // The design's `justify-around` with `px-gutter`; a long label can still never
+                // widen the row past the bar, because the strip is clipped and each label is
+                // single-line and ellipsised.
+                .clipToBounds()
                 .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceAround,
@@ -66,6 +72,7 @@ private fun Tab(
     tab: ShellTab,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val color =
         if (selected) {
@@ -76,7 +83,7 @@ private fun Tab(
 
     Column(
         modifier =
-            Modifier
+            modifier
                 .widthIn(min = 56.dp)
                 .height(44.dp)
                 .clickable(onClick = onClick),
@@ -93,6 +100,9 @@ private fun Tab(
             text = tab.label.uppercase(),
             style = KdmType.labelCaps,
             color = color,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

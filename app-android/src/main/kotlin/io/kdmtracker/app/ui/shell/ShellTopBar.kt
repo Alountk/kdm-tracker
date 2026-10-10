@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +57,9 @@ fun ShellTopBar(
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
                 .shadow(elevation = 8.dp)
                 .height(BarHeight)
+                // The bar's contents must never escape its box: the avatar and the stat cluster are
+                // fixed-size, and an expanded touch target would otherwise draw outside the bar.
+                .clipToBounds()
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
