@@ -5,9 +5,12 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -68,25 +71,27 @@ class SettlementStateStoreTest {
                     innovations =
                         listOf(
                             Innovation(
-                                name = "Lantern Oven",
+                                id = InnovationId("lantern_oven"),
+                                names = LocalizedText(es = "Lantern Oven"),
                                 description = "Cook a resource to gain its benefit.",
                                 consequences = listOf("Lantern Oven", "Cooking"),
                                 survivalLimitBonus = 1,
                             ),
                             Innovation(
-                                name = "Paint",
+                                id = InnovationId("paint"),
+                                names = LocalizedText(es = "Paint"),
                                 description = "Survivors gain survival at the start of the hunt.",
                                 consequences = listOf("Paint"),
                                 survivalLimitBonus = 0,
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Hoard", "Organ Grinder")),
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"), LocationId("organ_grinder"))),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, -1),
-                    ResourceEntry("White Lion Skull", ResourceCategory.MONSTER, 1),
+                    ResourceEntry(ResourceId("Broken Lantern"), 2),
+                    ResourceEntry(ResourceId("Broken Lantern"), -1),
+                    ResourceEntry(ResourceId("White Lion Skull"), 1),
                 ),
             deaths = 3,
             births = 5,

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.ResourceId
 
 /**
  * Step 10 "Record & Archive Resources" body.
@@ -51,7 +52,7 @@ fun ArchiveStepScreen(state: UiState) {
                 } else {
                     state.storageLines.forEach { line ->
                         Text(
-                            text = "${line.name} × ${line.quantity}",
+                            text = "${state.resourceName(line.id)} × ${line.quantity}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -60,3 +61,12 @@ fun ArchiveStepScreen(state: UiState) {
         }
     }
 }
+
+/**
+ * The localized name of a storage line's resource, or its id when the catalog does not carry it.
+ *
+ * The ledger keeps ids only, so the display name is resolved here from the catalog rather than
+ * being stored and going stale.
+ */
+private fun UiState.resourceName(id: ResourceId): String =
+    resourceDefinitions.firstOrNull { it.id == id }?.names?.es ?: id.value

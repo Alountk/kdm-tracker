@@ -1,8 +1,22 @@
 package io.kdmtracker.core.domain
 
+import io.kdmtracker.core.content.ContentIdentity
 import io.kdmtracker.core.rules.DerivedValues
 import io.kdmtracker.core.ruleset.Ruleset
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The **extra** settlement record the phase steps read, separate from [Settlement].
@@ -18,7 +32,7 @@ import kotlinx.serialization.Serializable
  * @property births the survivors born so far.
  * @property phaseActionsUsed the action identifiers already spent this Settlement Phase, so
  *   once-per-phase actions (such as Innovate) can be refused on a repeat attempt.
- * @property gear the names of the gear the settlement has crafted.
+ * @property gear the ids of the gear the settlement has crafted.
  * @property principles the chosen principle label per [PrincipleCategory] (step 5/6 decisions).
  * @property resolvedMilestones the milestone ids the table has already resolved.
  */
@@ -31,7 +45,8 @@ data class SettlementState(
     val deaths: Int = 0,
     val births: Int = 0,
     val phaseActionsUsed: Set<String> = emptySet(),
-    val gear: List<String> = emptyList(),
+    @Serializable(with = GearIdListSerializer::class)
+    val gear: List<GearId> = emptyList(),
     val principles: Map<PrincipleCategory, String> = emptyMap(),
     val resolvedMilestones: Set<MilestoneId> = emptySet(),
     val survivors: List<Survivor> = emptyList(),
@@ -49,8 +64,8 @@ data class SettlementState(
     fun withPhaseAction(key: String): SettlementState =
         if (key in phaseActionsUsed) this else copy(phaseActionsUsed = phaseActionsUsed + key)
 
-    /** Returns a copy that also holds [name] in its gear, deduped by name. */
-    fun withGear(name: String): SettlementState = if (name in gear) this else copy(gear = gear + name)
+    /** Returns a copy that also holds [id] in its gear, deduped by id. */
+    fun withGear(id: GearId): SettlementState = if (id in gear) this else copy(gear = gear + id)
 }
 
 /** The storage lines projected from this state's resource ledger. */
@@ -62,3 +77,43 @@ fun SettlementState.storage(): List<StorageLine> = Storage.project(resourceEntri
  */
 fun SettlementState.survivalLimit(ruleset: Ruleset): Int =
     DerivedValues.survivalLimit(ruleset, innovations.survivalLimitBonus())
+
+/**
+ * Reads both shapes the settlement's crafted-gear list has ever been written in.
+ *
+ * The new shape stores each entry as an `{"id": …}` object. The old one stored the gear's
+ * display name, because that *was* the identity — so it is mapped through [ContentIdentity]. An
+ * old name the table does not know survives under a synthesized `unknown.…` id rather than
+ * being dropped: a discarded entry is crafted gear the settlement silently loses.
+ */
+internal object GearIdListSerializer : KSerializer<List<GearId>> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("io.kdmtracker.core.domain.SettlementState.gear") {
+            element("gear", ListSerializer(JsonElement.serializer()).descriptor)
+        }
+
+    override fun serialize(
+        encoder: Encoder,
+        value: List<GearId>,
+    ) {
+        val json = encoder as? JsonEncoder ?: error("SettlementState.gear is persisted as JSON")
+        json.encodeJsonElement(
+            kotlinx.serialization.json.JsonArray(value.map { JsonObject(mapOf("id" to JsonPrimitive(it.value))) }),
+        )
+    }
+
+    override fun deserialize(decoder: Decoder): List<GearId> {
+        val json = decoder as? JsonDecoder ?: error("SettlementState.gear is persisted as JSON")
+        return json.decodeJsonElement().jsonArray.map { element ->
+            val id =
+                when (element) {
+                    is JsonPrimitive ->
+                        ContentIdentity.gearIdFor(element.content)?.value
+                            ?: ContentIdentity.synthesizedId(element.content)
+                    is JsonObject -> element.getValue("id").jsonPrimitive.content
+                    else -> error("a crafted gear needs an id, or a legacy name to resolve one")
+                }
+            GearId(id)
+        }
+    }
+}

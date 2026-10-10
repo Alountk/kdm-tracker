@@ -61,8 +61,10 @@ internal fun RecursosTab(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(text = definition.name, style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = { onAddResource(ResourceEntry(definition.name, definition.category, 1)) }) {
+                        Text(text = definition.names.es, style = MaterialTheme.typography.bodyMedium)
+                        Button(
+                            onClick = { onAddResource(ResourceEntry(definition.id, 1)) },
+                        ) {
                             Text("+1")
                         }
                     }

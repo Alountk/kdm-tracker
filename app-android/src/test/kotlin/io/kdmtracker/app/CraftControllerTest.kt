@@ -3,12 +3,16 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -35,25 +39,29 @@ class CraftControllerTest {
                             locations =
                                 listOf(
                                     SettlementLocation(
-                                        "Armería",
+                                        LocationId("weapon_crafter"),
+                                        LocalizedText(es = "Armería"),
                                         recipes =
                                             listOf(
                                                 GearRecipe(
-                                                    "Hacha de Contrapeso",
-                                                    resourceCost = mapOf("Hueso de Monstruo" to 2),
+                                                    GearId("hacha_de_contrapeso"),
+                                                    resourceCost = mapOf(ResourceId("Hueso de Monstruo") to 2),
                                                 ),
                                             ),
                                     ),
                                 ),
-                            resources = listOf(ResourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
-                            gear = listOf(Gear("Hacha de Contrapeso")),
+                            resources = listOf(resourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
+                            gear =
+                                listOf(
+                                    Gear(GearId("hacha_de_contrapeso"), LocalizedText(es = "Hacha de Contrapeso")),
+                                ),
                         ),
                 ),
             ),
         )
 
     private fun storeWith(
-        built: List<String>,
+        built: List<LocationId>,
         bones: Int,
     ): InMemoryCampaignStore {
         val store = InMemoryCampaignStore()
@@ -63,7 +71,7 @@ class CraftControllerTest {
                 state =
                     repository.record.state.copy(
                         locations = LocationSet(built = built),
-                        resourceEntries = listOf(ResourceEntry("Hueso de Monstruo", ResourceCategory.MONSTER, bones)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Hueso de Monstruo"), bones)),
                     ),
             ),
         )
@@ -75,7 +83,7 @@ class CraftControllerTest {
 
     @Test
     fun aValidCraftPersistsAndAFreshRepositoryReadsIt() {
-        val store = storeWith(built = listOf("Armería"), bones = 3)
+        val store = storeWith(built = listOf(LocationId("weapon_crafter")), bones = 3)
         val controller = controller(store)
 
         controller.craft("Armería", "Hacha de Contrapeso")
@@ -83,8 +91,8 @@ class CraftControllerTest {
         assertNull(controller.state.value.actionError)
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
         val fresh = SettlementRepository(store).record
-        assertTrue("Hacha de Contrapeso" in fresh.state.gear)
-        assertEquals(1, fresh.storage().single { it.name == "Hueso de Monstruo" }.quantity)
+        assertTrue(GearId("hacha_de_contrapeso") in fresh.state.gear)
+        assertEquals(1, fresh.storage().single { it.id.value == "Hueso de Monstruo" }.quantity)
     }
 
     @Test
@@ -116,8 +124,8 @@ class CraftControllerTest {
         ) {
             val definition =
                 controller.state.value.resourceDefinitions
-                    .single { it.name == name }
-            controller.addResource(ResourceEntry(name, definition.category, count))
+                    .single { it.names.es == name }
+            controller.addResource(ResourceEntry(definition.id, count))
         }
         record("Hueso de Monstruo", 2)
         record("Piel de Monstruo", 1)

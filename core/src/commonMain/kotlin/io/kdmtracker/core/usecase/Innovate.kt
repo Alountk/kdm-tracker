@@ -2,6 +2,8 @@ package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
@@ -26,48 +28,49 @@ object Innovate {
      * Returns [StepResult.Ok] with the advanced record, or [StepResult.Blocked] with the
      * reason the action could not run.
      *
-     * Blocks, without changing anything, when: [locationName] is unknown, the location offers
+     * Blocks, without changing anything, when: [locationId] is unknown, the location offers
      * no [ActionKind.INNOVATE] action, the location is not yet built, the location's action was
-     * already used this phase, [innovationName] is unknown, the endeavor pool cannot fund the
+     * already used this phase, [innovationId] is unknown, the endeavor pool cannot fund the
      * action, a cost resource has no catalog definition, or the ledger cannot cover a spend. On
      * success it spends the cost, unlocks the innovation, and marks the location's action used
      * for the phase.
      *
-     * @param locationName the name of the settlement location whose Innovate action runs.
-     * @param innovationName the name of the innovation to unlock.
+     * @param locationId the id of the settlement location whose Innovate action runs.
+     * @param innovationId the id of the innovation to unlock.
      */
     fun run(
         record: SettlementRecord,
-        locationName: String,
-        innovationName: String,
+        locationId: LocationId,
+        innovationId: InnovationId,
         catalog: ContentCatalog,
     ): StepResult<SettlementRecord> {
         val location =
-            catalog.locationDefinitions.firstOrNull { it.name == locationName }
-                ?: return StepResult.Blocked("unknown location $locationName")
+            catalog.locationDefinitions.firstOrNull { it.id == locationId }
+                ?: return StepResult.Blocked("unknown location ${locationId.value}")
+        val displayName = location.names.es
         val action =
             location.actions.firstOrNull { it.kind == ActionKind.INNOVATE }
-                ?: return StepResult.Blocked("$locationName offers no Innovate action")
-        if (locationName !in record.state.locations.built) {
-            return StepResult.Blocked("$locationName is not built")
+                ?: return StepResult.Blocked("$displayName offers no Innovate action")
+        if (locationId !in record.state.locations.built) {
+            return StepResult.Blocked("$displayName is not built")
         }
-        if (record.state.usedInPhase(locationName)) {
-            return StepResult.Blocked("$locationName already used this phase")
+        if (record.state.usedInPhase(locationId.value)) {
+            return StepResult.Blocked("$displayName already used this phase")
         }
         val innovation =
-            catalog.innovationDefinitions.firstOrNull { it.name == innovationName }
-                ?: return StepResult.Blocked("unknown innovation $innovationName")
+            catalog.innovationDefinitions.firstOrNull { it.id == innovationId }
+                ?: return StepResult.Blocked("unknown innovation ${innovationId.value}")
         if (record.settlement.endeavors < action.endeavorCost) {
             return StepResult.Blocked("insufficient endeavors")
         }
 
         var spent = record
-        for ((name, count) in action.resourceCost) {
-            val category =
-                catalog.resourceDefinitions.firstOrNull { it.name == name }?.category
-                    ?: return StepResult.Blocked("unknown resource $name")
+        for ((resourceId, count) in action.resourceCost) {
+            val definition =
+                catalog.resourceDefinitions.firstOrNull { it.id == resourceId }
+                    ?: return StepResult.Blocked("unknown resource ${resourceId.value}")
             spent =
-                when (val result = AddResourceEntry.run(spent, ResourceEntry(name, category, -count))) {
+                when (val result = AddResourceEntry.run(spent, ResourceEntry(definition.id, -count))) {
                     is StepResult.Ok -> result.value
                     is StepResult.Blocked -> return result
                 }
@@ -81,7 +84,7 @@ object Innovate {
                     ),
                 state =
                     spent.state
-                        .withPhaseAction(locationName)
+                        .withPhaseAction(locationId.value)
                         .copy(innovations = spent.state.innovations.with(innovation)),
             ),
         )

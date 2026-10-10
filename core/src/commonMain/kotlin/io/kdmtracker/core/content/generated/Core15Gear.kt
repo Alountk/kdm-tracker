@@ -3,7 +3,12 @@ package io.kdmtracker.core.content.generated
 
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 
 object Core15Gear {
@@ -12,7 +17,8 @@ object Core15Gear {
             gear =
                 listOf(
                     Gear(
-                        name = "Abrigo Bramador",
+                        id = GearId("abrigo_bramador"),
+                        names = LocalizedText(es = "Abrigo Bramador"),
                         keywords = listOf("armadura", "conjunto", "pelaje"),
                         rules =
                             "Embestir: Gasta para hacer un movimiento completo en línea recta. Si mueves 4+ " +
@@ -20,57 +26,66 @@ object Core15Gear {
                                 "resistencia hasta el final de la ronda.",
                     ),
                     Gear(
-                        name = "Abrigo de León Blanco",
+                        id = GearId("abrigo_de_leon_blanco"),
+                        names = LocalizedText(es = "Abrigo de León Blanco"),
                         keywords = listOf("armadura", "conjunto", "pelaje", "pesado"),
                         rules =
                             "Abalanzarse: Gasta y para mover 3 espacios en línea recta. Luego, si has movido " +
                                 "3 espacios, activa un arma de melé con un +1 a fuerza.",
                     ),
                     Gear(
-                        name = "Acanto Desecado",
+                        id = GearId("acanto_desecado"),
+                        names = LocalizedText(es = "Acanto Desecado"),
                         keywords = listOf("objeto", "hierba", "consumible"),
                         rules =
                             "Cuando partes, ganas +2 a supervivencia. Cuando sufras una lesión grave, " +
                                 "ignórala y retira esta carta en su lugar.",
                     ),
                     Gear(
-                        name = "Alabarda Linterna",
+                        id = GearId("alabarda_linterna"),
+                        names = LocalizedText(es = "Alabarda Linterna"),
                         keywords = listOf("arma", "melé", "a dos manos", "lanza", "linterna", "otro"),
                         rules =
                             "4 + 7 A Distancia 2, Irremplazable, Único Si estás en pie tras tu ataque, puedes " +
                                 "moverte hasta 2 espacios alejándote del monstruo.",
                     ),
                     Gear(
-                        name = "Almanaque",
+                        id = GearId("almanaque"),
+                        names = LocalizedText(es = "Almanaque"),
                         keywords = listOf("objeto", "soluble", "inflamable"),
                         rules = "Cuando partes, ganas +2 a locura. No puedes ganar trastornos.",
                     ),
                     Gear(
-                        name = "Amuleto Azul",
+                        id = GearId("amuleto_azul"),
+                        names = LocalizedText(es = "Amuleto Azul"),
                         keywords = listOf("objeto", "joyería", "frágil"),
                         rules =
                             "Resuelto: Cuando robes una trampa, tira 1d10. Con un 6+ descarta la trampa y " +
                                 "baraja el mazo.",
                     ),
                     Gear(
-                        name = "Amuleto Rojo",
+                        id = GearId("amuleto_rojo"),
+                        names = LocalizedText(es = "Amuleto Rojo"),
                         keywords = listOf("objeto", "joyería", "frágil"),
                         rules =
                             "Imparable: Cuando intentes herir, tira 1d10 en su lugar. Con 1-5 fallas, con " +
                                 "6-10 hieres.",
                     ),
                     Gear(
-                        name = "Amuleto Verde",
+                        id = GearId("amuleto_verde"),
+                        names = LocalizedText(es = "Amuleto Verde"),
                         keywords = listOf("objeto", "joyería", "frágil"),
                         rules = "Inmatable: Si vas a morir, tira 1d10. Con un 6+ sobrevives inexplicablemente.",
                     ),
                     Gear(
-                        name = "Amuleto de la Suerte",
+                        id = GearId("amuleto_de_la_suerte"),
+                        names = LocalizedText(es = "Amuleto de la Suerte"),
                         keywords = listOf("objeto", "joyería"),
                         rules = "+1 a suerte",
                     ),
                     Gear(
-                        name = "Anillo del Tiempo",
+                        id = GearId("anillo_del_tiempo"),
+                        names = LocalizedText(es = "Anillo del Tiempo"),
                         keywords = listOf("objeto", "otro"),
                         rules =
                             "Único Si, como resultado del enfrentamiento, mueres o dejas de existir, puedes " +
@@ -78,14 +93,16 @@ object Core15Gear {
                                 "la fase de asentamiento previa a que partieras.",
                     ),
                     Gear(
-                        name = "Arco Recurvado",
+                        id = GearId("arco_recurvado"),
+                        names = LocalizedText(es = "Arco Recurvado"),
                         keywords = listOf("arma", "de alcance", "arco", "a dos manos"),
                         rules =
                             "6 + 9 Lento, Alcance: 6 Dificultoso: Gasta tu como coste adicional de activación " +
                                 "de este arma Alcance +2",
                     ),
                     Gear(
-                        name = "Arco de Tripa de Felino",
+                        id = GearId("arco_de_tripa_de_felino"),
+                        names = LocalizedText(es = "Arco de Tripa de Felino"),
                         keywords = listOf("arma", "alcance", "arco", "a dos manos"),
                         rules =
                             "7 + 3 Dificultoso, Alcance: 6 Apuntar: Cuando ataques, antes de tirar para " +
@@ -93,14 +110,16 @@ object Core15Gear {
                                 "este ataque.",
                     ),
                     Gear(
-                        name = "Arpa de Bigotes",
+                        id = GearId("arpa_de_bigotes"),
+                        names = LocalizedText(es = "Arpa de Bigotes"),
                         keywords = listOf("objeto", "instrumento", "ruidoso"),
                         rules =
                             "Al Llegar, todos los supervivientes ganan +1 a supervivencia. : Rasguear. Tira " +
                                 "1d10. Con un resultado de 6+, descarta un ánimo en juego.",
                     ),
                     Gear(
-                        name = "Asesino Perfecto",
+                        id = GearId("asesino_perfecto"),
+                        names = LocalizedText(es = "Asesino Perfecto"),
                         keywords =
                             listOf(
                                 "arma",
@@ -115,12 +134,14 @@ object Core15Gear {
                         rules = "6 + 14 Lento, Afilado, Devastador 2, Irremplazable -2 a Movimiento.",
                     ),
                     Gear(
-                        name = "Bebida de Frenesí",
+                        id = GearId("bebida_de_frenesi"),
+                        names = LocalizedText(es = "Bebida de Frenesí"),
                         keywords = listOf("objeto", "consumible", "frágil"),
                         rules = "Consumir: Sufres el trauma cerebral Frenesí. Un solo uso por enfrentamiento.",
                     ),
                     Gear(
-                        name = "Bomba de Almizcle",
+                        id = GearId("bomba_de_almizcle"),
+                        names = LocalizedText(es = "Bomba de Almizcle"),
                         keywords = listOf("objeto", "apestoso", "arrojadizo", "frágil"),
                         rules =
                             "Si estas adyacente a un monstruo cuando roba una carta de , puedes gastar 2 de " +
@@ -128,29 +149,34 @@ object Core15Gear {
                                 "la carta de sin jugarla.",
                     ),
                     Gear(
-                        name = "Botas de Cuero",
+                        id = GearId("botas_de_cuero"),
+                        names = LocalizedText(es = "Botas de Cuero"),
                         keywords = listOf("armadura", "conjunto", "cuero"),
                         rules = "Al final tu acto, puedes mover 1 espacio.",
                     ),
                     Gear(
-                        name = "Botas de León Blanco",
+                        id = GearId("botas_de_leon_blanco"),
+                        names = LocalizedText(es = "Botas de León Blanco"),
                         keywords = listOf("armadura", "conjunto", "pelaje", "pesado"),
                         rules = "+1 a movimiento.",
                     ),
                     Gear(
-                        name = "Botas de Piel",
+                        id = GearId("botas_de_piel"),
+                        names = LocalizedText(es = "Botas de Piel"),
                         keywords = listOf("armadura", "conjunto", "piel cruda"),
                         rules = "Cuando partes, ganas +1 a supervivencia.",
                     ),
                     Gear(
-                        name = "Botiquín de Primeros Auxilios",
+                        id = GearId("botiquin_de_primeros_auxilios"),
+                        names = LocalizedText(es = "Botiquín de Primeros Auxilios"),
                         keywords = listOf("objeto", "pesado"),
                         rules =
                             "Al Llegar, todos los supervivientes ganan +3 a supervivencia. : Quita 1 ficha de " +
                                 "sangrado o atributo negativo de ti mismo o de un superviviente adyacente.",
                     ),
                     Gear(
-                        name = "Brazales Bramadores",
+                        id = GearId("brazales_bramadores"),
+                        names = LocalizedText(es = "Brazales Bramadores"),
                         keywords = listOf("armadura", "conjunto", "pelaje"),
                         rules =
                             "Al Llegar, si es posible, añade una carta de terreno Plantas de Acanto al " +
@@ -158,84 +184,98 @@ object Core15Gear {
                                 "tirada.",
                     ),
                     Gear(
-                        name = "Brazales de Cuero",
+                        id = GearId("brazales_de_cuero"),
+                        names = LocalizedText(es = "Brazales de Cuero"),
                         keywords = listOf("armadura", "conjunto", "cuero"),
                         rules = "Cuando partes, ganas +2 a supervivencia.",
                     ),
                     Gear(
-                        name = "Camisote de Piel",
+                        id = GearId("camisote_de_piel"),
+                        names = LocalizedText(es = "Camisote de Piel"),
                         keywords = listOf("armadura", "conjunto", "piel cruda"),
                         rules = "+1 a evasión.",
                     ),
                     Gear(
-                        name = "Capa de Piel de León",
+                        id = GearId("capa_de_piel_de_leon"),
+                        names = LocalizedText(es = "Capa de Piel de León"),
                         keywords = listOf("armadura", "hueso", "pelaje", "pesado", "inflamable"),
                         rules = "Reduce el daño de cada impacto recibido en 1 hasta un mínimo de 1.",
                     ),
                     Gear(
-                        name = "Cinta de Piel",
+                        id = GearId("cinta_de_piel"),
+                        names = LocalizedText(es = "Cinta de Piel"),
                         keywords = listOf("armadura", "conjunto", "piel cruda"),
                         rules =
                             ": Revela las dos cartas superiores de . Vuelve a colocarlas sobre el mazo en el " +
                                 "orden que quieras.",
                     ),
                     Gear(
-                        name = "Collar de Dientes de Monstruo",
+                        id = GearId("collar_de_dientes_de_monstruo"),
+                        names = LocalizedText(es = "Collar de Dientes de Monstruo"),
                         rules = "Objeto, joyería, hueso Ganas +1 a fuerza. +1 a fuerza",
                     ),
                     Gear(
-                        name = "Coraza Linterna",
+                        id = GearId("coraza_linterna"),
+                        names = LocalizedText(es = "Coraza Linterna"),
                         keywords = listOf("armadura", "conjunto", "metal", "pesado"),
                         rules =
                             "-2 a Movimiento. Cuando partes, añade 3 a todas las localizaciones de impacto " +
                                 "que tengan armadura de metal.",
                     ),
                     Gear(
-                        name = "Coraza Real",
+                        id = GearId("coraza_real"),
+                        names = LocalizedText(es = "Coraza Real"),
                         keywords = listOf("armadura", "hueso", "metal"),
                         rules = "Maldito La Maldición del Rey. En el Resultado,",
                     ),
                     Gear(
-                        name = "Coraza de Cuero",
+                        id = GearId("coraza_de_cuero"),
+                        names = LocalizedText(es = "Coraza de Cuero"),
                         keywords = listOf("armadura", "conjunto", "cuero"),
                     ),
                     Gear(
-                        name = "Coraza de Fénix",
+                        id = GearId("coraza_de_fenix"),
+                        names = LocalizedText(es = "Coraza de Fénix"),
                         keywords = listOf("armadura", "conjunto", "pluma", "metal", "inflamable"),
                         rules =
                             "Si estás loco, ignora el primer impacto de cada ronda y sufre 1 daño cerebral en " +
                                 "su lugar.",
                     ),
                     Gear(
-                        name = "Cresta Coronada",
+                        id = GearId("cresta_coronada"),
+                        names = LocalizedText(es = "Cresta Coronada"),
                         keywords = listOf("objeto", "otro"),
                         rules =
                             ": Si estás loco, vuelve a barajar el mazo de localización de impacto. Cuando " +
                                 "partes, ganas +1 a locura y +1 a supervivencia por cada que tengas.",
                     ),
                     Gear(
-                        name = "Cuchilla de Hueso",
+                        id = GearId("cuchilla_de_hueso"),
+                        names = LocalizedText(es = "Cuchilla de Hueso"),
                         keywords = listOf("arma", "melé", "espada", "hueso"),
                         rules =
                             "6 + 2 Débil: Cuando intentas herir una localización de impacto superdensa, el " +
                                 "arma se rompe. Retira esta carta al final del ataque.",
                     ),
                     Gear(
-                        name = "Cuchillo de Colmillo Felino",
+                        id = GearId("cuchillo_de_colmillo_felino"),
+                        names = LocalizedText(es = "Cuchillo de Colmillo Felino"),
                         keywords = listOf("arma", "melé", "daga", "hueso"),
                         rules =
                             "6 + 2 Con un Impacto Perfecto ganas una ficha de +1 a fuerza. Cuando te " +
                                 "derriben, pierdes todas tus fichas de +1 a fuerza.",
                     ),
                     Gear(
-                        name = "Cuernos Bramadores",
+                        id = GearId("cuernos_bramadores"),
+                        names = LocalizedText(es = "Cuernos Bramadores"),
                         keywords = listOf("armadura", "conjunto", "hueso"),
                         rules =
                             "Grito: Los supervivientes locos no sordos ganan +1 a movimiento hasta el final " +
                                 "de ronda. Los demás supervivientes ganan +1 a locura.",
                     ),
                     Gear(
-                        name = "Daga Linterna",
+                        id = GearId("daga_linterna"),
+                        names = LocalizedText(es = "Daga Linterna"),
                         keywords = listOf("arma", "melé", "daga", "magistral", "metal"),
                         rules =
                             "7 + 1 Duales Afilado: Suma 1d10 de fuerza a cada intento de herir. Hierro " +
@@ -243,53 +283,61 @@ object Core15Gear {
                                 "finaliza tu ataque.",
                     ),
                     Gear(
-                        name = "Daga Linterna Oxidada",
+                        id = GearId("daga_linterna_oxidada"),
+                        names = LocalizedText(es = "Daga Linterna Oxidada"),
                         keywords = listOf("arma", "melé", "daga", "delicado", "metal"),
                         rules = "6 + 4 Afilado, Duales Con un Impacto Perfecto ganas +1 a supervivencia.",
                     ),
                     Gear(
-                        name = "Daga de Hueso",
+                        id = GearId("daga_de_hueso"),
+                        names = LocalizedText(es = "Daga de Hueso"),
                         keywords = listOf("arma", "melé", "daga", "hueso"),
                         rules =
                             "7 + 1 Con un Impacto Perfecto, ganas +1 a supervivencia. Impacto Perfecto: Un " +
                                 "resultado de linterna 10 en la tirada de ataque.",
                     ),
                     Gear(
-                        name = "Daga de Restos",
+                        id = GearId("daga_de_restos"),
+                        names = LocalizedText(es = "Daga de Restos"),
                         rules =
                             "arma. melé, daga, metal 7 + 2 Con un Impacto Perfecto el filo penetra. Ganas +2 " +
                                 "a fuerza para el resto del ataque.",
                     ),
                     Gear(
-                        name = "Dardos de Hueso",
+                        id = GearId("dardos_de_hueso"),
+                        names = LocalizedText(es = "Dardos de Hueso"),
                         keywords = listOf("arma", "de alcance", "arrojadiza", "hueso"),
                         rules =
                             "7 + 3 Alcance: 6 Débil: Cuando intentas herir una localización de impacto " +
                                 "superdensa, el arma se rompe. Retira esta carta al final del ataque.",
                     ),
                     Gear(
-                        name = "Dedo de Dios",
+                        id = GearId("dedo_de_dios"),
+                        names = LocalizedText(es = "Dedo de Dios"),
                         keywords = listOf("arma", "melé", "lanza", "a dos manos"),
                         rules =
                             "5 + 5 A Distancia 2 Mientras tengas 5+ de supervivencia, ganas +1 a precisión y " +
                                 "+1 a fuerza.",
                     ),
                     Gear(
-                        name = "Diadema de Ojo Felino",
+                        id = GearId("diadema_de_ojo_felino"),
+                        names = LocalizedText(es = "Diadema de Ojo Felino"),
                         keywords = listOf("objeto", "joyería", "otro"),
                         rules =
                             ": Revela las siguientes 3 localizaciones de impacto del monstruo y vuelve a " +
                                 "colocarlas en cualquier orden.",
                     ),
                     Gear(
-                        name = "Equipo de Saqueador",
+                        id = GearId("equipo_de_saqueador"),
+                        names = LocalizedText(es = "Equipo de Saqueador"),
                         keywords = listOf("objeto", "pesado"),
                         rules =
                             "Único Cuando derrotas a un monstruo, ganas 1 recurso básico aleatorio, o 1 " +
                                 "recurso aleatorio del mazo de recursos de ese monstruo.",
                     ),
                     Gear(
-                        name = "Escudo Luminoso",
+                        id = GearId("escudo_luminoso"),
+                        names = LocalizedText(es = "Escudo Luminoso"),
                         keywords = listOf("arma", "melé", "escudo", "metal", "pesado"),
                         rules =
                             "6 + 5 Añade 2 a todas las localizaciones. Bloqueo 2: Gasta para ignorar 2 " +
@@ -297,7 +345,8 @@ object Core15Gear {
                                 "usar bloqueo más de una vez por ataque.",
                     ),
                     Gear(
-                        name = "Escudo Luminoso Oxidado",
+                        id = GearId("escudo_luminoso_oxidado"),
+                        names = LocalizedText(es = "Escudo Luminoso Oxidado"),
                         keywords = listOf("arma", "melé", "escudo", "metal", "pesado"),
                         rules =
                             "6 + 6 Añade 2 a todas las localizaciones. Desvío 2: Gasta , ahora tienes " +
@@ -305,7 +354,8 @@ object Core15Gear {
                                 "uno y pierde 1 ficha de desvío.",
                     ),
                     Gear(
-                        name = "Escudo Redondo de Cuero",
+                        id = GearId("escudo_redondo_de_cuero"),
+                        names = LocalizedText(es = "Escudo Redondo de Cuero"),
                         keywords = listOf("arma", "melé", "escudo", "cuero"),
                         rules =
                             "8 + 1 Añade 1 a todas las localizaciones. Bloqueo 1: Gasta para ignorar 1 " +
@@ -313,19 +363,22 @@ object Core15Gear {
                                 "usar bloqueo más de una vez por ataque.",
                     ),
                     Gear(
-                        name = "Escudo de Acero",
+                        id = GearId("escudo_de_acero"),
+                        names = LocalizedText(es = "Escudo de Acero"),
                         keywords = listOf("arma", "melé", "escudo", "metal", "pesado"),
                         rules =
                             "6 + 6 Irremplazable -3 a Movimiento. o 1 de supervivencia para ignorar un " +
                                 "impacto. Gasta",
                     ),
                     Gear(
-                        name = "Escudo de Plumas",
+                        id = GearId("escudo_de_plumas"),
+                        names = LocalizedText(es = "Escudo de Plumas"),
                         keywords = listOf("arma", "melé", "escudo", "inflamable"),
                         rules = "7 + 0 Bloqueo 1 Reduce cualquier daño cerebral que sufras en 1 hasta un mínimo de 1.",
                     ),
                     Gear(
-                        name = "Escudo de Restos",
+                        id = GearId("escudo_de_restos"),
+                        names = LocalizedText(es = "Escudo de Restos"),
                         keywords = listOf("arma", "melé", "escudo", "hueso", "metal"),
                         rules =
                             "7 + 3 Añade 1 a todas las localizaciones de impacto. Bloqueo 1: Gasta para " +
@@ -333,24 +386,28 @@ object Core15Gear {
                                 "No puedes usar bloqueo más de una vez por ataque.",
                     ),
                     Gear(
-                        name = "Esfera Floral",
+                        id = GearId("esfera_floral"),
+                        names = LocalizedText(es = "Esfera Floral"),
                         keywords = listOf("objeto", "apestoso", "otro"),
                         rules =
                             "Cuando seas seleccionado como objetivo, tira 1d10. Con un 6+ el monstruo debe " +
                                 "seleccionar otro objetivo, si es posible.",
                     ),
                     Gear(
-                        name = "Espada Aventurera",
+                        id = GearId("espada_aventurera"),
+                        names = LocalizedText(es = "Espada Aventurera"),
                         keywords = listOf("arma", "melé", "espada", "magistral", "otro"),
                         rules = "6 + 0 Único, Irremplazable Tu valor se añade a la fuerza de este arma.",
                     ),
                     Gear(
-                        name = "Espada Hueca",
+                        id = GearId("espada_hueca"),
+                        names = LocalizedText(es = "Espada Hueca"),
                         keywords = listOf("arma", "melé", "espada", "hueso"),
                         rules = "5 + 3 Débil, Duales Con un Impacto Perfecto, haz 1 tirada de ataque adicional.",
                     ),
                     Gear(
-                        name = "Espada Linterna",
+                        id = GearId("espada_linterna"),
+                        names = LocalizedText(es = "Espada Linterna"),
                         keywords = listOf("arma", "melé", "espada", "magistral", "metal"),
                         rules =
                             "5 + 3 Afilado: Suma 1d10 de fuerza a cada intento de herir. Hierro Prematuro: Si " +
@@ -358,7 +415,8 @@ object Core15Gear {
                                 "ataque.",
                     ),
                     Gear(
-                        name = "Espada Linterna Oxidada",
+                        id = GearId("espada_linterna_oxidada"),
+                        names = LocalizedText(es = "Espada Linterna Oxidada"),
                         keywords = listOf("arma", "melé", "espada", "magistral", "metal"),
                         rules =
                             "3 1 5 + 1 5 1 Afilado Desvío 1: Gasta , ahora tienes exactamente 1 ficha de " +
@@ -366,21 +424,24 @@ object Core15Gear {
                                 "desvío.",
                     ),
                     Gear(
-                        name = "Espada de Acero",
+                        id = GearId("espada_de_acero"),
+                        names = LocalizedText(es = "Espada de Acero"),
                         keywords = listOf("arma", "melé", "espada", "magistral", "metal"),
                         rules =
                             "4 + 5 Irremplazable, Lento, Afilado Con un Impacto Perfecto el filo penetra. " +
                                 "Ganas +1d10 de fuerza para el resto del ataque.",
                     ),
                     Gear(
-                        name = "Espada de Restos",
+                        id = GearId("espada_de_restos"),
+                        names = LocalizedText(es = "Espada de Restos"),
                         keywords = listOf("arma", "melé", "espada", "metal"),
                         rules =
                             "5 + 3 Con un Impacto Perfecto el filo penetra. Ganas +4 a fuerza para el resto " +
                                 "del ataque. Gana Letal",
                     ),
                     Gear(
-                        name = "Espada del Crepúsculo",
+                        id = GearId("espada_del_crepusculo"),
+                        names = LocalizedText(es = "Espada del Crepúsculo"),
                         keywords = listOf("arma", "melé", "a dos manos", "magistral", "otro"),
                         rules =
                             "* + 9 Lento, Maldito, Dificultoso, Sensitivo, Irremplazable Gana Devastador 2 si " +
@@ -388,39 +449,46 @@ object Core15Gear {
                                 "Espada del Crepúsculo.",
                     ),
                     Gear(
-                        name = "Faldar Real",
+                        id = GearId("faldar_real"),
+                        names = LocalizedText(es = "Faldar Real"),
                         keywords = listOf("armadura", "hueso", "metal"),
                         rules = "Maldito La Maldición del Rey. En el Resultado,",
                     ),
                     Gear(
-                        name = "Faldar de Fénix",
+                        id = GearId("faldar_de_fenix"),
+                        names = LocalizedText(es = "Faldar de Fénix"),
                         keywords = listOf("armadura", "conjunto", "pluma", "metal", "inflamable"),
                         rules = "Cuando partes, ganas +1 a locura.",
                     ),
                     Gear(
-                        name = "Faldón Bramador",
+                        id = GearId("faldon_bramador"),
+                        names = LocalizedText(es = "Faldón Bramador"),
                         keywords = listOf("armadura", "conjunto", "pelaje"),
                         rules =
                             "Un grueso pellejo protege tus partes. Añade +1 a las tiradas de lesión grave en " +
                                 "la cintura.",
                     ),
                     Gear(
-                        name = "Faldón de Cuero",
+                        id = GearId("faldon_de_cuero"),
+                        names = LocalizedText(es = "Faldón de Cuero"),
                         keywords = listOf("armadura", "conjunto", "cuero"),
                     ),
                     Gear(
-                        name = "Faldón de León Blanco",
+                        id = GearId("faldon_de_leon_blanco"),
+                        names = LocalizedText(es = "Faldón de León Blanco"),
                         keywords = listOf("armadura", "conjunto", "pelaje", "pesado"),
                     ),
                     Gear(
-                        name = "Flecha de Punta Hueca",
+                        id = GearId("flecha_de_punta_hueca"),
+                        names = LocalizedText(es = "Flecha de Punta Hueca"),
                         keywords = listOf("objeto", "munición", "arco"),
                         rules =
                             "6 + 11 Lento, Munición - Arco Con un impacto, el monstruo gana una ficha de -1 a " +
                                 "movimiento. Un solo uso por enfrentamiento.",
                     ),
                     Gear(
-                        name = "Flecha de Punta de Zarpa",
+                        id = GearId("flecha_de_punta_de_zarpa"),
+                        names = LocalizedText(es = "Flecha de Punta de Zarpa"),
                         keywords = listOf("objeto", "munición", "flecha"),
                         rules =
                             "6 + 6 Lento, Munición - Arco: Debes tener un arco en tu cuadrícula de equipo " +
@@ -428,59 +496,70 @@ object Core15Gear {
                                 "evasión. Un solo uso por enfrentamiento.",
                     ),
                     Gear(
-                        name = "Garrote de Hueso",
+                        id = GearId("garrote_de_hueso"),
+                        names = LocalizedText(es = "Garrote de Hueso"),
                         keywords = listOf("arma", "melé", "a dos manos", "pesado", "garrote", "hueso"),
                         rules =
                             "6 + 5 Dificultoso: Gasta como coste adicional para activar este arma. Ignora " +
                                 "esto si este arma se activa indirectamente (Abalanzarse, Carga, etc.)",
                     ),
                     Gear(
-                        name = "Grasa de Monstruo",
+                        id = GearId("grasa_de_monstruo"),
+                        names = LocalizedText(es = "Grasa de Monstruo"),
                         keywords = listOf("objeto", "consumible", "soluble", "apestoso"),
                         rules = "Ganas +1 a evasión. +1 a evasión",
                     ),
                     Gear(
-                        name = "Grebas Linterna",
+                        id = GearId("grebas_linterna"),
+                        names = LocalizedText(es = "Grebas Linterna"),
                         keywords = listOf("armadura", "conjunto", "metal", "pesado"),
                         rules = "+2 a movimiento.",
                     ),
                     Gear(
-                        name = "Grebas Reales",
+                        id = GearId("grebas_reales"),
+                        names = LocalizedText(es = "Grebas Reales"),
                         keywords = listOf("armadura", "hueso", "metal"),
                         rules = "Maldito La Maldición del Rey. En el Resultado,",
                     ),
                     Gear(
-                        name = "Grebas de Fénix",
+                        id = GearId("grebas_de_fenix"),
+                        names = LocalizedText(es = "Grebas de Fénix"),
                         keywords = listOf("armadura", "conjunto", "pluma", "metal", "inflamable"),
                         rules = "Si estás loco, ganas +2 a movimiento.",
                     ),
                     Gear(
-                        name = "Guanteletes Linterna",
+                        id = GearId("guanteletes_linterna"),
+                        names = LocalizedText(es = "Guanteletes Linterna"),
                         keywords = listOf("armadura", "conjunto", "metal", "pesado"),
                         rules = "+2 a precisión con armas de tipo garrote.",
                     ),
                     Gear(
-                        name = "Guanteletes Reales",
+                        id = GearId("guanteletes_reales"),
+                        names = LocalizedText(es = "Guanteletes Reales"),
                         keywords = listOf("armadura", "hueso", "metal"),
                         rules = "Maldito La Maldición del Rey. En el Resultado,",
                     ),
                     Gear(
-                        name = "Guanteletes de Fénix",
+                        id = GearId("guanteletes_de_fenix"),
+                        names = LocalizedText(es = "Guanteletes de Fénix"),
                         keywords = listOf("armadura", "conjunto", "pluma", "metal", "inflamable"),
                         rules = "Cuando partes, ganas +1 a locura.",
                     ),
                     Gear(
-                        name = "Guantes de León Blanco",
+                        id = GearId("guantes_de_leon_blanco"),
+                        names = LocalizedText(es = "Guantes de León Blanco"),
                         keywords = listOf("armadura", "conjunto", "pelaje", "pesado"),
                         rules = "Cuando te abalanzas, ganas +1 a precisión en tu próximo ataque este turno.",
                     ),
                     Gear(
-                        name = "Guantes de Piel",
+                        id = GearId("guantes_de_piel"),
+                        names = LocalizedText(es = "Guantes de Piel"),
                         keywords = listOf("armadura", "conjunto", "piel cruda"),
                         rules = "Cuando partes, ganas +1 a supervivencia.",
                     ),
                     Gear(
-                        name = "Guja Linterna",
+                        id = GearId("guja_linterna"),
+                        names = LocalizedText(es = "Guja Linterna"),
                         keywords = listOf("arma", "melé", "lanza", "hacha", "a dos manos", "magistral", "metal"),
                         rules =
                             "6 + 4 A Distancia 2 Afilado: Suma 1d10 de fuerza a cada intento de herir. Hierro " +
@@ -488,28 +567,32 @@ object Core15Gear {
                                 "finaliza tu ataque.",
                     ),
                     Gear(
-                        name = "Guja Linterna Oxidada",
+                        id = GearId("guja_linterna_oxidada"),
+                        names = LocalizedText(es = "Guja Linterna Oxidada"),
                         keywords = listOf("arma", "melé", "lanza", "hacha", "a dos manos", "magistral", "metal"),
                         rules =
                             "5 + 6 Afilado, A Distancia 2 Con un Impacto Perfecto el filo penetra. Este arma " +
                                 "gana +4 a fuerza para este ataque.",
                     ),
                     Gear(
-                        name = "Hacha de Carnicero",
+                        id = GearId("hacha_de_carnicero"),
+                        names = LocalizedText(es = "Hacha de Carnicero"),
                         keywords = listOf("arma", "melé", "hacha", "otro"),
                         rules =
                             "5 + 5 Duales Sensitivo: Debes estar loco para activarlo. Irremplazable: Si " +
                                 "mueres, retira esta carta.",
                     ),
                     Gear(
-                        name = "Hacha de Contrapeso",
+                        id = GearId("hacha_de_contrapeso"),
+                        names = LocalizedText(es = "Hacha de Contrapeso"),
                         keywords = listOf("arma", "melé", "hacha", "a dos manos"),
                         rules =
                             "6 + 4 A Distancia 2 Con un Impacto Perfecto, no robes localización de impacto " +
                                 "para ese impacto. El monstruo sufre 1 herida.",
                     ),
                     Gear(
-                        name = "Hacha de Hueso",
+                        id = GearId("hacha_de_hueso"),
+                        names = LocalizedText(es = "Hacha de Hueso"),
                         keywords = listOf("arma", "melé", "hacha", "hueso"),
                         rules =
                             "6 + 3 Débil Salvaje: Una vez por ataque, si consigues una herida crítica, causas " +
@@ -517,19 +600,22 @@ object Core15Gear {
                                 "impenetrables.",
                     ),
                     Gear(
-                        name = "Hoz de Hueso",
+                        id = GearId("hoz_de_hueso"),
+                        names = LocalizedText(es = "Hoz de Hueso"),
                         keywords = listOf("objeto", "herramienta", "hoz", "hueso"),
                         rules =
                             "8 + 1 Después de preparar la Fase de Caza, coloca el evento Recolección de " +
                                 "Hierbas en cualquier espacio de caza.",
                     ),
                     Gear(
-                        name = "Katana del Arcoíris",
+                        id = GearId("katana_del_arcoiris"),
+                        names = LocalizedText(es = "Katana del Arcoíris"),
                         keywords = listOf("arma", "melé", "katana", "magistral", "a dos manos"),
                         rules = "4 + 4 Débil Gana Letal",
                     ),
                     Gear(
-                        name = "Katar de León Salvaje",
+                        id = GearId("katar_de_leon_salvaje"),
+                        names = LocalizedText(es = "Katar de León Salvaje"),
                         keywords = listOf("arma", "melé", "katar"),
                         rules =
                             "7 + 3 Letal: +1 a suerte a todos los ataques con este arma. Duales: Cuando " +
@@ -537,58 +623,68 @@ object Core15Gear {
                                 "que tengas en tu cuadrícula de equipo.",
                     ),
                     Gear(
-                        name = "Lanza de Longinos",
+                        id = GearId("lanza_de_longinos"),
+                        names = LocalizedText(es = "Lanza de Longinos"),
                         keywords = listOf("arma", "melé", "lanza", "a dos manos", "hueso"),
                         rules =
                             "6 + 9 Irremplazable, A Distancia 2 En un enfrentamiento, la primera vez que " +
                                 "hieres al monstruo, este gana una ficha de -1 a resistencia.",
                     ),
                     Gear(
-                        name = "Lanza del Rey",
+                        id = GearId("lanza_del_rey"),
+                        names = LocalizedText(es = "Lanza del Rey"),
                         keywords = listOf("arma", "melé", "lanza", "pesada", "a dos manos"),
                         rules = "6 + 3 A Distancia 2: Puede atacar a 2 espacios de distancia.",
                     ),
                     Gear(
-                        name = "Linterna de Superviviente",
+                        id = GearId("linterna_de_superviviente"),
+                        names = LocalizedText(es = "Linterna de Superviviente"),
                         keywords = listOf("objeto", "linterna"),
                     ),
                     Gear(
-                        name = "Látigo Linterna Oxidado",
+                        id = GearId("latigo_linterna_oxidado"),
+                        names = LocalizedText(es = "Látigo Linterna Oxidado"),
                         keywords = listOf("arma", "melé", "látigo", "magistral", "metal"),
                         rules = "5 + 3 Afilado, A Distancia 2 Gana Provocar (ver Látigo de Piel)",
                     ),
                     Gear(
-                        name = "Látigo de Anillas",
+                        id = GearId("latigo_de_anillas"),
+                        names = LocalizedText(es = "Látigo de Anillas"),
                         keywords = listOf("arma", "melé", "látigo", "magistral", "metal"),
                         rules =
                             "5 + 0 Afilado, A Distancia 2 Hierro Prematuro: Si un resultado en tu tirada de " +
                                 "ataque es 1, cancela los impactos y finaliza tu ataque.",
                     ),
                     Gear(
-                        name = "Látigo de Cazador",
+                        id = GearId("latigo_de_cazador"),
+                        names = LocalizedText(es = "Látigo de Cazador"),
                         keywords = listOf("arma", "melé", "látigo", "cuero"),
                         rules = "6 + 3 Con un Impacto Perfecto, descarta un ánimo en juego.",
                     ),
                     Gear(
-                        name = "Látigo de Piel",
+                        id = GearId("latigo_de_piel"),
+                        names = LocalizedText(es = "Látigo de Piel"),
                         keywords = listOf("arma", "melé", "látigo", "piel cruda"),
                         rules =
                             "7 + 1 Provocar: Cuando hieras usando este arma, ganas la ficha de objetivo " +
                                 "prioritario.",
                     ),
                     Gear(
-                        name = "Malla Linterna",
+                        id = GearId("malla_linterna"),
+                        names = LocalizedText(es = "Malla Linterna"),
                         keywords = listOf("armadura", "conjunto", "metal", "pesado"),
                     ),
                     Gear(
-                        name = "Manto de Plumas",
+                        id = GearId("manto_de_plumas"),
+                        names = LocalizedText(es = "Manto de Plumas"),
                         keywords = listOf("objeto", "inflamable"),
                         rules =
                             "Cuando sufras retroceso, puedes ignorar la colisión con otros supervivientes y " +
                                 "reducir el movimiento hasta en 3 espacios.",
                     ),
                     Gear(
-                        name = "Martillo de Cráneo",
+                        id = GearId("martillo_de_craneo"),
+                        names = LocalizedText(es = "Martillo de Cráneo"),
                         keywords = listOf("arma", "melé", "garrote", "hueso"),
                         rules =
                             "7 + 3 Con un Impacto Perfecto, el monstruo queda aturdido y gana una ficha de -1 " +
@@ -596,14 +692,16 @@ object Core15Gear {
                                 "vez por ronda.",
                     ),
                     Gear(
-                        name = "Matadragones",
+                        id = GearId("matadragones"),
+                        names = LocalizedText(es = "Matadragones"),
                         keywords = listOf("arma", "melé", "arma grande", "a dos manos", "pesada", "metal"),
                         rules =
                             "6 + 9 Débil, Lento, Afilado, Devastador 1 Hierro Prematuro: Si un resultado en " +
                                 "tu tirada de ataque es 1, cancela los impactos y finaliza tu ataque.",
                     ),
                     Gear(
-                        name = "Maza Silbadora",
+                        id = GearId("maza_silbadora"),
+                        names = LocalizedText(es = "Maza Silbadora"),
                         keywords = listOf("arma", "melé", "garrote", "hueso"),
                         rules =
                             "6 + 3 Con un Impacto Perfecto, revela la siguiente carta de IA. Ponla en lo alto " +
@@ -611,7 +709,8 @@ object Core15Gear {
                                 "hieres a ti mismo y sufres 1 daño.",
                     ),
                     Gear(
-                        name = "Mazo del Trueno",
+                        id = GearId("mazo_del_trueno"),
+                        names = LocalizedText(es = "Mazo del Trueno"),
                         keywords = listOf("arma", "melé", "garrote", "a dos manos", "otro"),
                         rules =
                             "6 + 10 Irremplazable, Único, Maldito Con un Impacto Perfecto el monstruo es " +
@@ -619,73 +718,84 @@ object Core15Gear {
                                 "sordos sufren 1 daño cerebral.",
                     ),
                     Gear(
-                        name = "Mehndi de Líder",
+                        id = GearId("mehndi_de_lider"),
+                        names = LocalizedText(es = "Mehndi de Líder"),
                         keywords = listOf("objeto", "soluble"),
                         rules =
                             "El líder es valiente. Mientras estén adyacentes a ti, los supervivientes locos " +
                                 "ganan +1 a velocidad.",
                     ),
                     Gear(
-                        name = "Menta de Cerebro",
+                        id = GearId("menta_de_cerebro"),
+                        names = LocalizedText(es = "Menta de Cerebro"),
                         keywords = listOf("objeto", "consumible"),
                         rules =
                             "Consumir: Quita todas tus fichas y ponte en pie. Puedes usarlo mientras estás " +
                                 "derribado. Un solo uso por enfrentamiento.",
                     ),
                     Gear(
-                        name = "Muramasa",
+                        id = GearId("muramasa"),
+                        names = LocalizedText(es = "Muramasa"),
                         keywords = listOf("arma", "melé", "katana", "a dos manos", "magistral", "otro"),
                         rules =
                             "6 + 6 Débil, Afilado, Sensitivo, Letal 2, Único Cuando hagas una herida crítica " +
                                 "con este arma, ganas 2 fichas de sangrado.",
                     ),
                     Gear(
-                        name = "Máscara de Antílope",
+                        id = GearId("mascara_de_antilope"),
+                        names = LocalizedText(es = "Máscara de Antílope"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules = "Único, Irremplazable, Accesorio Al comienzo de tu acto, si estás loco, gana +1 .",
                     ),
                     Gear(
-                        name = "Máscara de Cuero",
+                        id = GearId("mascara_de_cuero"),
+                        names = LocalizedText(es = "Máscara de Cuero"),
                         keywords = listOf("armadura", "conjunto", "cuero"),
                         rules = "Cuando partes, ganas +2 a locura.",
                     ),
                     Gear(
-                        name = "Máscara de Dios",
+                        id = GearId("mascara_de_dios"),
+                        names = LocalizedText(es = "Máscara de Dios"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Al comienzo de tu acto, si estás loco, ganas +1 " +
                                 "a supervivencia.",
                     ),
                     Gear(
-                        name = "Máscara de Fénix",
+                        id = GearId("mascara_de_fenix"),
+                        names = LocalizedText(es = "Máscara de Fénix"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Si estás loco, puedes esquivar 1 vez adicional " +
                                 "por ronda.",
                     ),
                     Gear(
-                        name = "Máscara de León Blanco",
+                        id = GearId("mascara_de_leon_blanco"),
+                        names = LocalizedText(es = "Máscara de León Blanco"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Si estás loco, gasta para perder toda tu " +
                                 "supervivencia y ganar la misma cantidad de fichas de +1 a fuerza.",
                     ),
                     Gear(
-                        name = "Máscara de la Muerte",
+                        id = GearId("mascara_de_la_muerte"),
+                        names = LocalizedText(es = "Máscara de la Muerte"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Si no tienes afinidades, ganas +4 a suerte y " +
                                 "sufres -4 a todas las tiradas de lesión grave.",
                     ),
                     Gear(
-                        name = "Máscara del Hombre",
+                        id = GearId("mascara_del_hombre"),
+                        names = LocalizedText(es = "Máscara del Hombre"),
                         keywords = listOf("objeto", "máscara", "hueso", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Si estás loco, puedes gastar fichas de atributo " +
                                 "negativo en vez de supervivencia.",
                     ),
                     Gear(
-                        name = "Máscara del Renegado",
+                        id = GearId("mascara_del_renegado"),
+                        names = LocalizedText(es = "Máscara del Renegado"),
                         keywords = listOf("objeto", "máscara", "metal", "otro"),
                         rules =
                             "Único, Irremplazable, Accesorio Tras el Resultado del enfrentamiento te adentras " +
@@ -693,14 +803,16 @@ object Core15Gear {
                                 "puedes retirar este objeto para construir la localización Artesano de Máscaras.",
                     ),
                     Gear(
-                        name = "Narices de Piedra",
+                        id = GearId("narices_de_piedra"),
+                        names = LocalizedText(es = "Narices de Piedra"),
                         keywords = listOf("objeto", "joyería"),
                         rules =
                             "Al Llegar, ganas +1 a supervivencia y +1 a locura. Llegar: Al comienzo del " +
                                 "enfrentamiento.",
                     ),
                     Gear(
-                        name = "Pan de Ave",
+                        id = GearId("pan_de_ave"),
+                        names = LocalizedText(es = "Pan de Ave"),
                         keywords = listOf("objeto", "consumible", "soluble"),
                         rules =
                             "Consumir: Una vez por enfrentamiento, añade 1 a todas las localizaciones de " +
@@ -708,32 +820,37 @@ object Core15Gear {
                                 "supervivencia a 0.",
                     ),
                     Gear(
-                        name = "Pantalones de Piel",
+                        id = GearId("pantalones_de_piel"),
+                        names = LocalizedText(es = "Pantalones de Piel"),
                         keywords = listOf("armadura", "conjunto", "piel cruda"),
                     ),
                     Gear(
-                        name = "Pendientes Antiguos",
+                        id = GearId("pendientes_antiguos"),
+                        names = LocalizedText(es = "Pendientes Antiguos"),
                         keywords = listOf("objeto", "joyería"),
                         rules =
                             "Al comienzo del enfrentamiento, ganas +2 a supervivencia. +1 PE de Caza después " +
                                 "del enfrentamiento.",
                     ),
                     Gear(
-                        name = "Pendientes de Hueso",
+                        id = GearId("pendientes_de_hueso"),
+                        names = LocalizedText(es = "Pendientes de Hueso"),
                         keywords = listOf("objeto", "joyería", "hueso"),
                         rules =
                             "Al comienzo del enfrentamiento, ganas fichas de +2 a velocidad y +2 a fuerza si " +
                                 "estás loco y todo tu equipo tiene el descriptor hueso.",
                     ),
                     Gear(
-                        name = "Pico de Hueso",
+                        id = GearId("pico_de_hueso"),
+                        names = LocalizedText(es = "Pico de Hueso"),
                         keywords = listOf("objeto", "herramienta", "pico", "hueso"),
                         rules =
                             "8 + 2 Después de preparar la Fase de Caza, coloca el evento Recolección de " +
                                 "Minerales en cualquier espacio de caza.",
                     ),
                     Gear(
-                        name = "Piedra de Fundador",
+                        id = GearId("piedra_de_fundador"),
+                        names = LocalizedText(es = "Piedra de Fundador"),
                         keywords = listOf("arma", "melé", "piedra"),
                         rules =
                             "7 + 1 ¡Gasta para lanzar la piedra desde cualquier lugar del tablero! Retira " +
@@ -741,72 +858,83 @@ object Core15Gear {
                                 "Retirar: Devolver la carta a la caja del juego.",
                     ),
                     Gear(
-                        name = "Pinturas de Guerra",
+                        id = GearId("pinturas_de_guerra"),
+                        names = LocalizedText(es = "Pinturas de Guerra"),
                         keywords = listOf("objeto", "soluble"),
                         rules =
                             ": Activa las armas de tu equipo a la izquierda y a la derecha de esta carta. " +
                                 "Esto son 2 ataques distintos. No puede usarse con armas a 2 manos.",
                     ),
                     Gear(
-                        name = "Polainas Bramadoras",
+                        id = GearId("polainas_bramadoras"),
+                        names = LocalizedText(es = "Polainas Bramadoras"),
                         keywords = listOf("armadura", "conjunto", "pelaje"),
                         rules = "Al Llegar los pies te duelen. Ganas +3 a locura.",
                     ),
                     Gear(
-                        name = "Polvo de Velocidad",
+                        id = GearId("polvo_de_velocidad"),
+                        names = LocalizedText(es = "Polvo de Velocidad"),
                         keywords = listOf("objeto", "soluble"),
                         rules =
                             ": Sufres 2 de daño cerebral. Ganas 1 ficha de velocidad. Un solo uso por " +
                                 "enfrentamiento.",
                     ),
                     Gear(
-                        name = "Puño de Bestia",
+                        id = GearId("puno_de_bestia"),
+                        names = LocalizedText(es = "Puño de Bestia"),
                         keywords = listOf("arma", "melé", "katar", "hueso"),
                         rules =
                             "6 + 4 Duales Cuando hieres con este arma, el monstruo gana -1 a resistencia " +
                                 "hasta el final del ataque.",
                     ),
                     Gear(
-                        name = "Tambor de Piel",
+                        id = GearId("tambor_de_piel"),
+                        names = LocalizedText(es = "Tambor de Piel"),
                         keywords = listOf("objeto", "piel cruda", "instrumento", "ruidoso"),
                         rules =
                             "Al Llegar todos los supervivientes ganan +1 a locura. ¡Compás inspirador! Cuando " +
                                 "realices la acción animar todos los supervivientes no sordos se ven afectados.",
                     ),
                     Gear(
-                        name = "Tela",
+                        id = GearId("tela"),
+                        names = LocalizedText(es = "Tela"),
                         rules =
                             "armadura La Tela protege tu cintura. Ganas 1 punto de armadura en la " +
                                 "localización de impacto cintura.",
                     ),
                     Gear(
-                        name = "Tocado de León",
+                        id = GearId("tocado_de_leon"),
+                        names = LocalizedText(es = "Tocado de León"),
                         keywords = listOf("objeto", "inflamable"),
                         rules = "Accesorio: Puedes llevar este equipo además de 1 armadura en esta localización.",
                     ),
                     Gear(
-                        name = "Tomahawk Sónico",
+                        id = GearId("tomahawk_sonico"),
+                        names = LocalizedText(es = "Tomahawk Sónico"),
                         keywords = listOf("arma", "melé", "hacha", "metal"),
                         rules =
                             "5 + 2 Con un impacto Perfecto, haz 1 tirada de ataque adicional. Gana Salvaje y " +
                                 "Duales",
                     ),
                     Gear(
-                        name = "Trampa para Insectos",
+                        id = GearId("trampa_para_insectos"),
+                        names = LocalizedText(es = "Trampa para Insectos"),
                         keywords = listOf("objeto", "soluble"),
                         rules =
                             "Al inicio del enfrentamiento, tira 1d10. Con un 3+, añade una carta de terreno " +
                                 "Zona de Insectos al tablero de enfrentamiento.",
                     ),
                     Gear(
-                        name = "Ungüento Fecal",
+                        id = GearId("unguento_fecal"),
+                        names = LocalizedText(es = "Ungüento Fecal"),
                         keywords = listOf("objeto", "loción", "apestoso"),
                         rules =
                             "Cuando partes, ganas +1 a supervivencia. : No eres una amenaza hasta que " +
                                 "ataques. Si tienes la ficha de objetivo prioritario, quítatela.",
                     ),
                     Gear(
-                        name = "Vaina de Sangre",
+                        id = GearId("vaina_de_sangre"),
+                        names = LocalizedText(es = "Vaina de Sangre"),
                         keywords = listOf("objeto", "hueso", "otro"),
                         rules =
                             "Bloqueo 1 Si la Katana del Arcoíris está a la izquierda de la Vaina de Sangre, " +
@@ -814,54 +942,63 @@ object Core15Gear {
                                 "herir).",
                     ),
                     Gear(
-                        name = "Vendas",
+                        id = GearId("vendas"),
+                        names = LocalizedText(es = "Vendas"),
                         rules = "objeto : Quita hasta 2 fichas de sangrado de tu superviviente o de uno adyacente.",
                     ),
                     Gear(
-                        name = "Yelmo Linterna",
+                        id = GearId("yelmo_linterna"),
+                        names = LocalizedText(es = "Yelmo Linterna"),
                         keywords = listOf("armadura", "conjunto", "metal", "pesado"),
                         rules = "Oídos Taponados. Estás sordo. -1 a precisión.",
                     ),
                     Gear(
-                        name = "Yelmo Linterna Oxidado",
+                        id = GearId("yelmo_linterna_oxidado"),
+                        names = LocalizedText(es = "Yelmo Linterna Oxidado"),
                         keywords = listOf("armadura", "conjunto", "metal"),
                         rules =
                             "Complemento Si no estás sordo, puedes ignorar los efectos cuyo objetivo sean los " +
                                 "supervivientes no sordos.",
                     ),
                     Gear(
-                        name = "Yelmo Real",
+                        id = GearId("yelmo_real"),
+                        names = LocalizedText(es = "Yelmo Real"),
                         keywords = listOf("armadura", "hueso", "metal"),
                         rules = "Maldito La Maldición del Rey. En el Resultado,",
                     ),
                     Gear(
-                        name = "Yelmo de Calavera",
+                        id = GearId("yelmo_de_calavera"),
+                        names = LocalizedText(es = "Yelmo de Calavera"),
                         keywords = listOf("armadura", "hueso", "frágil"),
                         rules =
                             "Si sufres una lesión grave en la cabeza, el Yelmo de Calavera es destruido. " +
                                 "Retira esta carta.",
                     ),
                     Gear(
-                        name = "Yelmo de Fénix",
+                        id = GearId("yelmo_de_fenix"),
+                        names = LocalizedText(es = "Yelmo de Fénix"),
                         keywords = listOf("armadura", "conjunto", "pluma", "metal", "inflamable"),
                         rules = "Al comienzo del enfrentamiento, si estás loco, ganas una ficha de +1 a evasión.",
                     ),
                     Gear(
-                        name = "Yelmo de León Blanco",
+                        id = GearId("yelmo_de_leon_blanco"),
+                        names = LocalizedText(es = "Yelmo de León Blanco"),
                         keywords = listOf("armadura", "conjunto", "pelaje", "pesado"),
                         rules =
                             "y 1 de supervivencia: Rugido: Los super- vivientes locos no sordos ganan +2 a " +
                                 "fuerza hasta el final del turno. Los demás supervivientes ganan +1 a locura.",
                     ),
                     Gear(
-                        name = "Zanbato",
+                        id = GearId("zanbato"),
+                        names = LocalizedText(es = "Zanbato"),
                         keywords = listOf("arma", "melé", "arma grande", "a dos manos", "hueso"),
                         rules =
                             "6 + 6 Lento, Débil, Letal Gana Devastador 1: Cada vez que consigas herir, " +
                                 "inflige 1 herida adicional.",
                     ),
                     Gear(
-                        name = "Última Linterna",
+                        id = GearId("ultima_linterna"),
+                        names = LocalizedText(es = "Última Linterna"),
                         keywords = listOf("objeto", "linterna", "otro"),
                         rules =
                             "Vital Al Llegar, todos los supervivientes ganan la carta de Horripilación (ver " +
@@ -871,200 +1008,273 @@ object Core15Gear {
             locations =
                 listOf(
                     SettlementLocation(
-                        name = "Armería",
+                        id = LocationId("weapon_crafter"),
+                        names = LocalizedText(es = "Armería", en = "Weapon Crafter"),
                         recipes =
                             listOf(
                                 GearRecipe(
-                                    gearName = "Hacha de Contrapeso",
+                                    gearId = GearId("hacha_de_contrapeso"),
                                     resourceCost =
                                         mapOf(
-                                            "Hueso de Monstruo" to 2,
-                                            "Piel de Monstruo" to 1,
-                                            "Órgano de Monstruo" to 1,
+                                            ResourceId("bone.monster") to 2,
+                                            ResourceId("hide.monster") to 1,
+                                            ResourceId("organ.monster") to 1,
                                         ),
                                 ),
                                 GearRecipe(
-                                    gearName = "Maza Silbadora",
-                                    resourceCost = mapOf("Hueso de Monstruo" to 2, "Órgano de Monstruo" to 1),
-                                    requiresText = "Calor",
-                                ),
-                                GearRecipe(
-                                    gearName = "Zanbato",
-                                    resourceCost = mapOf("Grandes Huesos de Felino" to 1, "Piel de Monstruo" to 2),
-                                    requiresText = "Calor",
-                                ),
-                                GearRecipe(
-                                    gearName = "Vaina de Sangre",
+                                    gearId = GearId("maza_silbadora"),
                                     resourceCost =
                                         mapOf(
-                                            "Excrementos Mucosos" to 1,
-                                            "Huesos Huecos de Ala" to 1,
-                                            "Órgano de Monstruo" to 5,
-                                        ),
-                                ),
-                                GearRecipe(
-                                    gearName = "Dedo de Dios",
-                                    resourceCost = mapOf("Dedo de Fénix" to 1, "Hueso de Monstruo" to 4),
-                                ),
-                                GearRecipe(
-                                    gearName = "Katana del Arcoíris",
-                                    resourceCost =
-                                        mapOf(
-                                            "Excremento Arcoiris" to 1,
-                                            "Hierro" to 1,
-                                            "Hueso de Monstruo" to 6,
-                                            "Pico de Ave" to 1,
+                                            ResourceId("bone.monster") to 2,
+                                            ResourceId("organ.monster") to 1,
                                         ),
                                     requiresText = "Calor",
                                 ),
-                            ),
-                    ),
-                    SettlementLocation(
-                        name = "Cirujano Barbero",
-                        recipes =
-                            listOf(
                                 GearRecipe(
-                                    gearName = "Botiquín de Primeros Auxilios",
-                                    resourceCost = mapOf("Cuero" to 1, "Hueso de Monstruo" to 2),
-                                ),
-                                GearRecipe(
-                                    gearName = "Trampa para Insectos",
-                                    resourceCost = mapOf("Encías Musculosas" to 1, "Hueso de Monstruo" to 2),
-                                ),
-                                GearRecipe(
-                                    gearName = "Menta de Cerebro",
-                                    resourceCost = mapOf("Cerebro Bramador" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Polvo de Velocidad",
-                                    resourceCost = mapOf("Segundo Corazón" to 1, "Órgano de Monstruo" to 2),
-                                ),
-                                GearRecipe(
-                                    gearName = "Almanaque",
-                                    resourceCost = mapOf("Cuero" to 2),
-                                    requires = listOf("Pictografía"),
-                                ),
-                            ),
-                    ),
-                    SettlementLocation(
-                        name = "Círculo de Piedra",
-                        recipes =
-                            listOf(
-                                GearRecipe(
-                                    gearName = "Mehndi de Líder",
-                                    resourceCost = mapOf("Bigotes Dorados" to 1, "Hueso de Monstruo" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Pendientes de Hueso",
-                                    resourceCost = mapOf("Hueso de Monstruo" to 1, "Hueso de la Pata" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Puño de Bestia",
-                                    resourceCost = mapOf("Gran Diente Plano" to 1, "Pellejo" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Amuleto Verde",
-                                    resourceCost = mapOf("Órgano de Monstruo" to 3),
-                                ),
-                                GearRecipe(
-                                    gearName = "Amuleto Rojo",
-                                    resourceCost = mapOf("Órgano de Monstruo" to 3),
-                                ),
-                                GearRecipe(
-                                    gearName = "Amuleto Azul",
-                                    resourceCost = mapOf("Órgano de Monstruo" to 3),
-                                ),
-                                GearRecipe(
-                                    gearName = "Lanza de Longinos",
-                                    resourceCost = mapOf("Cuernos Legendarios" to 1, "Órgano de Monstruo" to 6),
-                                ),
-                                GearRecipe(
-                                    gearName = "Pinturas de Guerra",
-                                    resourceCost = mapOf("Vejiga" to 1, "Órgano de Monstruo" to 1),
-                                    requires = listOf("Pintura"),
-                                ),
-                            ),
-                    ),
-                    SettlementLocation(
-                        name = "Felinarium",
-                        recipes =
-                            listOf(
-                                GearRecipe(
-                                    gearName = "Katar de León Salvaje",
-                                    resourceCost = mapOf("Garra de León" to 1, "Piel de Monstruo" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Diadema de Ojo Felino",
-                                    resourceCost = mapOf("Ojo de Felino" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Arpa de Bigotes",
-                                    resourceCost = mapOf("Bigotes Dorados" to 1, "Hueso de Monstruo" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Flecha de Punta de Zarpa",
-                                    resourceCost = mapOf("Garra de León" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Tocado de León",
-                                    resourceCost = mapOf("Melena Brillante" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Arco de Tripa de Felino",
-                                    resourceCost = mapOf("Hueso de Monstruo" to 1, "Tendón" to 1),
-                                ),
-                                GearRecipe(
-                                    gearName = "Capa de Piel de León",
-                                    resourceCost = mapOf("Pelaje Blanco" to 2),
-                                ),
-                                GearRecipe(
-                                    gearName = "Bebida de Frenesí",
-                                    resourceCost = mapOf("Testículos de León" to 1),
-                                ),
-                            ),
-                    ),
-                    SettlementLocation(
-                        name = "Herrería",
-                        recipes =
-                            listOf(
-                                GearRecipe(
-                                    gearName = "Espada Linterna",
+                                    gearId = GearId("zanbato"),
                                     resourceCost =
                                         mapOf(
-                                            "Hierro" to 1,
-                                            "Hueso de Monstruo" to 5,
-                                            "Piel de Monstruo" to 3,
+                                            ResourceId("bone.feline_large") to 1,
+                                            ResourceId("hide.monster") to 2,
+                                        ),
+                                    requiresText = "Calor",
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("vaina_de_sangre"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("droppings.mucous") to 1,
+                                            ResourceId("bone.hollow_wing") to 1,
+                                            ResourceId("organ.monster") to 5,
                                         ),
                                 ),
                                 GearRecipe(
-                                    gearName = "Daga Linterna",
-                                    resourceCost = mapOf("Cuero" to 4, "Hierro" to 1, "Hueso de Monstruo" to 2),
+                                    gearId = GearId("dedo_de_dios"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("finger.phoenix") to 1,
+                                            ResourceId("bone.monster") to 4,
+                                        ),
                                 ),
                                 GearRecipe(
-                                    gearName = "Escudo Luminoso",
-                                    resourceCost = mapOf("Cuero" to 3, "Hierro" to 2, "Hueso de Monstruo" to 4),
-                                ),
-                                GearRecipe(
-                                    gearName = "Guja Linterna",
-                                    resourceCost = mapOf("Cuero" to 2, "Hierro" to 2, "Hueso de Monstruo" to 4),
+                                    gearId = GearId("katana_del_arcoiris"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("droppings.rainbow") to 1,
+                                            ResourceId("iron") to 1,
+                                            ResourceId("bone.monster") to 6,
+                                            ResourceId("beak.bird") to 1,
+                                        ),
+                                    requiresText = "Calor",
                                 ),
                             ),
                     ),
                     SettlementLocation(
-                        name = "Plumería",
+                        id = LocationId("barber_surgeon"),
+                        names = LocalizedText(es = "Cirujano Barbero", en = "Barber Surgeon"),
                         recipes =
                             listOf(
                                 GearRecipe(
-                                    gearName = "Pan de Ave",
-                                    resourceCost = mapOf("Piel de Monstruo" to 3, "Pústulas" to 1),
+                                    gearId = GearId("botiquin_de_primeros_auxilios"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("hide.leather") to 1,
+                                            ResourceId("bone.monster") to 2,
+                                        ),
                                 ),
                                 GearRecipe(
-                                    gearName = "Anillo del Tiempo",
-                                    resourceCost = mapOf("Aureola Brillante" to 1, "Órgano de Monstruo" to 5),
+                                    gearId = GearId("trampa_para_insectos"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("gums.muscular") to 1,
+                                            ResourceId("bone.monster") to 2,
+                                        ),
                                 ),
                                 GearRecipe(
-                                    gearName = "Cresta Coronada",
-                                    resourceCost = mapOf("Cresta de Fénix" to 1, "Órgano de Monstruo" to 6),
+                                    gearId = GearId("menta_de_cerebro"),
+                                    resourceCost = mapOf(ResourceId("brain.antelope") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("polvo_de_velocidad"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("heart.second") to 1,
+                                            ResourceId("organ.monster") to 2,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("almanaque"),
+                                    resourceCost = mapOf(ResourceId("hide.leather") to 2),
+                                    requires = listOf(InnovationId("pictografia")),
+                                ),
+                            ),
+                    ),
+                    SettlementLocation(
+                        id = LocationId("stone_circle"),
+                        names = LocalizedText(es = "Círculo de Piedra", en = "Stone Circle"),
+                        recipes =
+                            listOf(
+                                GearRecipe(
+                                    gearId = GearId("mehndi_de_lider"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("whisker.golden") to 1,
+                                            ResourceId("bone.monster") to 1,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("pendientes_de_hueso"),
+                                    resourceCost = mapOf(ResourceId("bone.monster") to 1, ResourceId("bone.paw") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("puno_de_bestia"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("tooth.flat_large") to 1,
+                                            ResourceId("hide.pelt") to 1,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("amuleto_verde"),
+                                    resourceCost = mapOf(ResourceId("organ.monster") to 3),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("amuleto_rojo"),
+                                    resourceCost = mapOf(ResourceId("organ.monster") to 3),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("amuleto_azul"),
+                                    resourceCost = mapOf(ResourceId("organ.monster") to 3),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("lanza_de_longinos"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("horn.legendary") to 1,
+                                            ResourceId("organ.monster") to 6,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("pinturas_de_guerra"),
+                                    resourceCost = mapOf(ResourceId("bladder") to 1, ResourceId("organ.monster") to 1),
+                                    requires = listOf(InnovationId("pintura")),
+                                ),
+                            ),
+                    ),
+                    SettlementLocation(
+                        id = LocationId("catarium"),
+                        names = LocalizedText(es = "Felinarium", en = "Catarium"),
+                        recipes =
+                            listOf(
+                                GearRecipe(
+                                    gearId = GearId("katar_de_leon_salvaje"),
+                                    resourceCost = mapOf(ResourceId("claw.lion") to 1, ResourceId("hide.monster") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("diadema_de_ojo_felino"),
+                                    resourceCost = mapOf(ResourceId("eye.feline") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("arpa_de_bigotes"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("whisker.golden") to 1,
+                                            ResourceId("bone.monster") to 1,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("flecha_de_punta_de_zarpa"),
+                                    resourceCost = mapOf(ResourceId("claw.lion") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("tocado_de_leon"),
+                                    resourceCost = mapOf(ResourceId("mane.shimmering") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("arco_de_tripa_de_felino"),
+                                    resourceCost = mapOf(ResourceId("bone.monster") to 1, ResourceId("sinew") to 1),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("capa_de_piel_de_leon"),
+                                    resourceCost = mapOf(ResourceId("hide.white_lion") to 2),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("bebida_de_frenesi"),
+                                    resourceCost = mapOf(ResourceId("testes.lion") to 1),
+                                ),
+                            ),
+                    ),
+                    SettlementLocation(
+                        id = LocationId("blacksmith"),
+                        names = LocalizedText(es = "Herrería", en = "Blacksmith"),
+                        recipes =
+                            listOf(
+                                GearRecipe(
+                                    gearId = GearId("espada_linterna"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("iron") to 1,
+                                            ResourceId("bone.monster") to 5,
+                                            ResourceId("hide.monster") to 3,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("daga_linterna"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("hide.leather") to 4,
+                                            ResourceId("iron") to 1,
+                                            ResourceId("bone.monster") to 2,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("escudo_luminoso"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("hide.leather") to 3,
+                                            ResourceId("iron") to 2,
+                                            ResourceId("bone.monster") to 4,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("guja_linterna"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("hide.leather") to 2,
+                                            ResourceId("iron") to 2,
+                                            ResourceId("bone.monster") to 4,
+                                        ),
+                                ),
+                            ),
+                    ),
+                    SettlementLocation(
+                        id = LocationId("plumery"),
+                        names = LocalizedText(es = "Plumería", en = "Plumery"),
+                        recipes =
+                            listOf(
+                                GearRecipe(
+                                    gearId = GearId("pan_de_ave"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("hide.monster") to 3,
+                                            ResourceId("pustule.butcher") to 1,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("anillo_del_tiempo"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("phoenix.halo") to 1,
+                                            ResourceId("organ.monster") to 5,
+                                        ),
+                                ),
+                                GearRecipe(
+                                    gearId = GearId("cresta_coronada"),
+                                    resourceCost =
+                                        mapOf(
+                                            ResourceId("crest.phoenix") to 1,
+                                            ResourceId("organ.monster") to 6,
+                                        ),
                                 ),
                             ),
                     ),

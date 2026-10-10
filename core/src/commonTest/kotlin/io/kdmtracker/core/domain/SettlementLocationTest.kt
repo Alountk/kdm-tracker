@@ -6,15 +6,20 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SettlementLocationTest {
-    private val lanternHoard = SettlementLocation(name = "Lantern Hoard")
-    private val boneSmith = SettlementLocation(name = "Bone Smith", requires = listOf("Lantern Hoard"))
+    private val lanternHoard = SettlementLocation(LocationId("lantern_hoard"), LocalizedText(es = "Lantern Hoard"))
+    private val boneSmith =
+        SettlementLocation(
+            LocationId("bone_smith"),
+            LocalizedText(es = "Bone Smith"),
+            requires = listOf(LocationId("lantern_hoard")),
+        )
 
     @Test
     fun locationWithoutPrerequisitesCanBeBuilt() {
         val set = LocationSet()
 
         assertTrue(set.canBuild(lanternHoard))
-        assertEquals(listOf("Lantern Hoard"), set.with(lanternHoard).built)
+        assertEquals(listOf(LocationId("lantern_hoard")), set.with(lanternHoard).built)
     }
 
     @Test
@@ -30,7 +35,7 @@ class SettlementLocationTest {
         val set = LocationSet().with(lanternHoard)
 
         assertTrue(set.canBuild(boneSmith))
-        assertEquals(listOf("Lantern Hoard", "Bone Smith"), set.with(boneSmith).built)
+        assertEquals(listOf(LocationId("lantern_hoard"), LocationId("bone_smith")), set.with(boneSmith).built)
     }
 
     @Test
@@ -43,7 +48,12 @@ class SettlementLocationTest {
 
     @Test
     fun allPrerequisitesAreRequired() {
-        val smithy = SettlementLocation(name = "Smithy", requires = listOf("Bone Smith", "Organ Grinder"))
+        val smithy =
+            SettlementLocation(
+                LocationId("smithy"),
+                LocalizedText(es = "Smithy"),
+                requires = listOf(LocationId("bone_smith"), LocationId("organ_grinder")),
+            )
         val partial = LocationSet().with(lanternHoard).with(boneSmith)
 
         assertFalse(partial.canBuild(smithy))

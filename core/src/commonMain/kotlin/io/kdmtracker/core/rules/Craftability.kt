@@ -2,6 +2,7 @@ package io.kdmtracker.core.rules
 
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.usecase.Craft
 
@@ -22,11 +23,11 @@ data class CraftCheck(
 object Craftability {
     fun check(
         record: SettlementRecord,
-        locationName: String,
+        locationId: LocationId,
         recipe: GearRecipe,
         catalog: ContentCatalog,
     ): CraftCheck =
-        when (val result = Craft.run(record, locationName, recipe.gearName, catalog)) {
+        when (val result = Craft.run(record, locationId, recipe.gearId, catalog)) {
             is StepResult.Ok -> CraftCheck(craftable = true)
             is StepResult.Blocked -> CraftCheck(craftable = false, missing = result.reason)
         }

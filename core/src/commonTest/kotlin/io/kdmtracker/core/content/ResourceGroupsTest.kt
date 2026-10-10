@@ -36,8 +36,8 @@ class ResourceGroupsTest {
                             ContentBundle(
                                 resources =
                                     listOf(
-                                        ResourceDefinition("Garra de León", ResourceCategory.MONSTER),
-                                        ResourceDefinition("Nombre Desconocido", ResourceCategory.SPECIAL),
+                                        resourceDefinition("Garra de León", ResourceCategory.MONSTER),
+                                        resourceDefinition("Nombre Desconocido", ResourceCategory.SPECIAL),
                                     ),
                             ),
                     ),
@@ -52,9 +52,13 @@ class ResourceGroupsTest {
     }
 
     @Test
-    fun legacyResourceDefinitionJsonWithoutSourceDecodesEmpty() {
-        val definition = json.decodeFromString<ResourceDefinition>("""{"name":"X","category":"BASIC"}""")
+    fun resourceDefinitionJsonDefaultsSourceAndMaterialsToEmpty() {
+        val definition =
+            json.decodeFromString<ResourceDefinition>(
+                """{"id":"x","names":{"es":"X"},"category":"BASIC"}""",
+            )
 
         assertEquals("", definition.source)
+        assertEquals(emptySet(), definition.materials)
     }
 }

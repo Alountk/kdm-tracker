@@ -21,13 +21,9 @@ object AddResourceEntry {
         record: SettlementRecord,
         entry: ResourceEntry,
     ): StepResult<SettlementRecord> {
-        val projected =
-            Storage
-                .project(record.state.resourceEntries)
-                .filter { it.name == entry.name }
-                .sumOf { it.quantity }
+        val projected = Storage.quantityOf(record.state.resourceEntries, entry.id)
         if (entry.delta < 0 && projected + entry.delta < 0) {
-            return StepResult.Blocked("insufficient ${entry.name}")
+            return StepResult.Blocked("insufficient ${entry.id.value}")
         }
         return StepResult.Ok(
             record.copy(

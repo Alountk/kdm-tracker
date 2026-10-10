@@ -5,10 +5,13 @@ import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.PrincipleCategory
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -66,24 +69,26 @@ class SettlementStateTransferTest {
                     innovations =
                         listOf(
                             Innovation(
-                                name = "Lantern Oven",
+                                id = InnovationId("lantern_oven"),
+                                names = LocalizedText(es = "Lantern Oven"),
                                 description = "Cook at the lantern oven",
                                 consequences = listOf("Cooking", "Storytelling"),
                                 survivalLimitBonus = 1,
                             ),
                             Innovation(
-                                name = "Paint",
+                                id = InnovationId("paint"),
+                                names = LocalizedText(es = "Paint"),
                                 description = "Paint the settlement",
                                 consequences = listOf("Face Painting"),
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Oven", "Organ Grinder")),
+            locations = LocationSet(built = listOf(LocationId("lantern_oven"), LocationId("organ_grinder"))),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, 3),
-                    ResourceEntry("Bone", ResourceCategory.BASIC, -1),
-                    ResourceEntry("Skull", ResourceCategory.MONSTER, 2),
+                    ResourceEntry(ResourceId("Bone"), 3),
+                    ResourceEntry(ResourceId("Bone"), -1),
+                    ResourceEntry(ResourceId("Skull"), 2),
                 ),
             deaths = 4,
             births = 2,
@@ -156,10 +161,10 @@ class SettlementStateTransferTest {
     }
 
     @Test
-    fun newDocumentDefaultsToSchemaVersionTen() {
+    fun newDocumentDefaultsToSchemaVersionTwelve() {
         val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
 
-        assertEquals(10, document.schemaVersion)
+        assertEquals(12, document.schemaVersion)
     }
 
     @Test

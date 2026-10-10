@@ -4,6 +4,9 @@ import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.Ulid
@@ -54,8 +57,18 @@ class SetUpStepControllerTest {
                         innovations =
                             InnovationCollection(
                                 listOf(
-                                    Innovation("Language", "speech", consequences = listOf("Storytelling")),
-                                    Innovation("Symposium", "debate", consequences = listOf("Storytelling", "Paint")),
+                                    Innovation(
+                                        InnovationId("language"),
+                                        LocalizedText(es = "Language"),
+                                        "speech",
+                                        consequences = listOf("Storytelling"),
+                                    ),
+                                    Innovation(
+                                        InnovationId("symposium"),
+                                        LocalizedText(es = "Symposium"),
+                                        "debate",
+                                        consequences = listOf("Storytelling", "Paint"),
+                                    ),
                                 ),
                             ),
                     ),
@@ -74,14 +87,14 @@ class SetUpStepControllerTest {
             repository.record.copy(
                 state =
                     repository.record.state.copy(
-                        locations = LocationSet(built = listOf("Lantern Hoard", "Bone Smith")),
+                        locations = LocationSet(built = listOf(LocationId("lantern_hoard"), LocationId("bone_smith"))),
                     ),
             ),
         )
 
         val built = LanternYearController(repository).state.value.builtLocations
 
-        assertEquals(listOf("Lantern Hoard", "Bone Smith"), built)
+        assertEquals(listOf("Cúmulo de Linternas", "Taller de Huesos"), built)
     }
 
     @Test
@@ -90,6 +103,25 @@ class SetUpStepControllerTest {
 
         assertTrue(state.principles.isNotEmpty(), "the core ruleset exposes principle choices")
         assertTrue(state.yearEvents.isNotEmpty(), "lantern year 1 has a timeline entry")
+    }
+
+    @Test
+    fun thePrincipleListShowsTheChoiceLabelsNotTheCategoryPrefix() {
+        // The controller used to hand-build "DEATH: The First Harvest → Cannibalize"; the label
+        // is domain content and the section shows it bare.
+        val state = LanternYearController(repository()).state.value
+
+        assertEquals(
+            listOf(
+                "The First Harvest → Cannibalize",
+                "The First Grave → Graves",
+                "Without Mercy → Survival of the Fittest",
+                "With Affection → Protect the Young",
+                "Collective Toil",
+                "Accept Darkness",
+            ),
+            state.principles,
+        )
     }
 
     @Test

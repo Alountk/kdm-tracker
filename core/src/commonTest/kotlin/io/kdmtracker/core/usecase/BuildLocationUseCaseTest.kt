@@ -3,11 +3,14 @@ package io.kdmtracker.core.usecase
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
@@ -24,13 +27,14 @@ import kotlin.test.assertTrue
 class BuildLocationUseCaseTest {
     private val blacksmith =
         SettlementLocation(
-            name = "Blacksmith",
-            requires = listOf("Stone Circle"),
+            id = LocationId("blacksmith"),
+            names = LocalizedText(es = "Blacksmith"),
+            requires = listOf(LocationId("stone_circle")),
             buildEndeavors = 2,
-            buildCost = mapOf("Bone" to 1, "Hide" to 1),
+            buildCost = mapOf(ResourceId("Bone") to 1, ResourceId("Hide") to 1),
         )
 
-    private val stoneCircle = SettlementLocation(name = "Stone Circle")
+    private val stoneCircle = SettlementLocation(LocationId("stone_circle"), LocalizedText(es = "Stone Circle"))
 
     private val catalog =
         ContentCatalog(
@@ -44,8 +48,8 @@ class BuildLocationUseCaseTest {
                             locations = listOf(blacksmith, stoneCircle),
                             resources =
                                 listOf(
-                                    ResourceDefinition("Bone", ResourceCategory.BASIC),
-                                    ResourceDefinition("Hide", ResourceCategory.BASIC),
+                                    resourceDefinition("Bone", ResourceCategory.BASIC),
+                                    resourceDefinition("Hide", ResourceCategory.BASIC),
                                 ),
                         ),
                 ),
@@ -75,24 +79,24 @@ class BuildLocationUseCaseTest {
 
     private fun ready(): SettlementState =
         SettlementState(
-            locations = LocationSet(built = listOf("Stone Circle")),
+            locations = LocationSet(built = listOf(LocationId("stone_circle"))),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Hide", ResourceCategory.BASIC, 2),
+                    ResourceEntry(ResourceId("Bone"), 2),
+                    ResourceEntry(ResourceId("Hide"), 2),
                 ),
         )
 
     @Test
     fun aSatisfiedBuildSpendsTheCostAndEndeavorsAndAddsTheLocation() {
-        val result = BuildLocation.run(record(state = ready()), "Blacksmith", catalog)
+        val result = BuildLocation.run(record(state = ready()), LocationId("blacksmith"), catalog)
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(1, ok.value.settlement.endeavors)
-        assertTrue("Blacksmith" in ok.value.state.locations.built)
-        assertTrue("Stone Circle" in ok.value.state.locations.built)
+        assertTrue(LocationId("blacksmith") in ok.value.state.locations.built)
+        assertTrue(LocationId("stone_circle") in ok.value.state.locations.built)
         for (name in listOf("Bone", "Hide")) {
-            val line = ok.value.storage().single { it.name == name }
+            val line = ok.value.storage().single { it.id.value == name }
             assertEquals(1, line.quantity)
         }
     }
@@ -101,7 +105,7 @@ class BuildLocationUseCaseTest {
     fun unmetRequiresIsBlocked() {
         val state = ready().copy(locations = LocationSet())
 
-        val result = BuildLocation.run(record(state = state), "Blacksmith", catalog)
+        val result = BuildLocation.run(record(state = state), LocationId("blacksmith"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -112,37 +116,40 @@ class BuildLocationUseCaseTest {
             record(
                 state =
                     ready().copy(
-                        resourceEntries = listOf(ResourceEntry("Bone", ResourceCategory.BASIC, 1)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Bone"), 1)),
                     ),
             )
 
-        val result = BuildLocation.run(before, "Blacksmith", catalog)
+        val result = BuildLocation.run(before, LocationId("blacksmith"), catalog)
 
         assertIs<StepResult.Blocked>(result)
-        assertEquals(1, before.storage().single { it.name == "Bone" }.quantity)
+        assertEquals(1, before.storage().single { it.id.value == "Bone" }.quantity)
         assertEquals(3, before.settlement.endeavors)
-        assertTrue("Blacksmith" !in before.state.locations.built)
+        assertTrue(LocationId("blacksmith") !in before.state.locations.built)
     }
 
     @Test
     fun insufficientEndeavorsIsBlocked() {
-        val result = BuildLocation.run(record(endeavors = 1, state = ready()), "Blacksmith", catalog)
+        val result = BuildLocation.run(record(endeavors = 1, state = ready()), LocationId("blacksmith"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
 
     @Test
     fun anAlreadyBuiltLocationIsBlocked() {
-        val state = ready().copy(locations = LocationSet(built = listOf("Stone Circle", "Blacksmith")))
+        val state =
+            ready().copy(
+                locations = LocationSet(built = listOf(LocationId("stone_circle"), LocationId("blacksmith"))),
+            )
 
-        val result = BuildLocation.run(record(state = state), "Blacksmith", catalog)
+        val result = BuildLocation.run(record(state = state), LocationId("blacksmith"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
 
     @Test
     fun anUnknownLocationIsBlocked() {
-        val result = BuildLocation.run(record(state = ready()), "Nowhere", catalog)
+        val result = BuildLocation.run(record(state = ready()), LocationId("nowhere"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }

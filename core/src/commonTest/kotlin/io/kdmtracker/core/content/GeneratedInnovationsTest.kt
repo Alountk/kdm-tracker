@@ -20,35 +20,35 @@ class GeneratedInnovationsTest {
 
     @Test
     fun lenguajeExistsWithSurvivalLimitBonusOne() {
-        val lenguaje = innovations.first { it.name == "Lenguaje" }
+        val lenguaje = innovations.first { it.names.es == "Lenguaje" }
 
         assertEquals(1, lenguaje.survivalLimitBonus)
     }
 
     @Test
     fun lenguajeListsLinternaInteriorAsConsequence() {
-        val lenguaje = innovations.first { it.name == "Lenguaje" }
+        val lenguaje = innovations.first { it.names.es == "Lenguaje" }
 
         assertTrue("Linterna Interior" in lenguaje.consequences, "was ${lenguaje.consequences}")
     }
 
     @Test
     fun simposioListsItsConsequences() {
-        val simposio = innovations.first { it.name == "Simposio" }
+        val simposio = innovations.first { it.names.es == "Simposio" }
 
         assertEquals(listOf("Entrenamiento de Pesadilla", "Narración"), simposio.consequences)
     }
 
     @Test
     fun knownDescriptionIsNonBlank() {
-        val lenguaje = innovations.first { it.name == "Lenguaje" }
+        val lenguaje = innovations.first { it.names.es == "Lenguaje" }
 
         assertTrue(lenguaje.description.isNotBlank())
     }
 
     @Test
     fun namesAreSorted() {
-        val names = innovations.map { it.name }
+        val names = innovations.map { it.names.es }
 
         assertEquals(names.sorted(), names)
     }

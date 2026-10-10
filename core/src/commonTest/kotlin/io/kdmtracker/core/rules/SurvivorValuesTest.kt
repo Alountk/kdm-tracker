@@ -5,7 +5,9 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.domain.Attributes
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ModifierScope
 import io.kdmtracker.core.domain.ModifierTarget
@@ -33,7 +35,8 @@ class SurvivorValuesTest {
                             gear =
                                 listOf(
                                     Gear(
-                                        name = "Hacha",
+                                        id = GearId("hacha"),
+                                        names = LocalizedText(es = "Hacha"),
                                         modifiers =
                                             listOf(
                                                 Modifier(ModifierTarget.STRENGTH, 1, ModifierScope.SURVIVOR),

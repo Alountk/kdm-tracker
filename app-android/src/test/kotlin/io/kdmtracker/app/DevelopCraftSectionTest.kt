@@ -3,12 +3,16 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -31,21 +35,25 @@ class DevelopCraftSectionTest {
                             locations =
                                 listOf(
                                     SettlementLocation(
-                                        "Armería",
+                                        LocationId("weapon_crafter"),
+                                        LocalizedText(es = "Armería"),
                                         recipes =
                                             listOf(
                                                 GearRecipe(
-                                                    "Hacha de Contrapeso",
+                                                    GearId("hacha_de_contrapeso"),
                                                     resourceCost =
                                                         mapOf(
-                                                            "Hueso de Monstruo" to 2,
+                                                            ResourceId("Hueso de Monstruo") to 2,
                                                         ),
                                                 ),
                                             ),
                                     ),
                                 ),
-                            resources = listOf(ResourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
-                            gear = listOf(Gear("Hacha de Contrapeso")),
+                            resources = listOf(resourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
+                            gear =
+                                listOf(
+                                    Gear(GearId("hacha_de_contrapeso"), LocalizedText(es = "Hacha de Contrapeso")),
+                                ),
                         ),
                 ),
             ),
@@ -58,8 +66,8 @@ class DevelopCraftSectionTest {
             repository.record.copy(
                 state =
                     repository.record.state.copy(
-                        locations = LocationSet(built = listOf("Armería")),
-                        resourceEntries = listOf(ResourceEntry("Hueso de Monstruo", ResourceCategory.MONSTER, 2)),
+                        locations = LocationSet(built = listOf(LocationId("weapon_crafter"))),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Hueso de Monstruo"), 2)),
                     ),
             ),
         )
@@ -73,9 +81,9 @@ class DevelopCraftSectionTest {
         assertTrue("Armería" in state.builtLocations)
         assertTrue(
             state.catalogLocations
-                .single { it.name == "Armería" }
+                .single { it.names.es == "Armería" }
                 .recipes
-                .any { it.gearName == "Hacha de Contrapeso" },
+                .any { it.gearId == GearId("hacha_de_contrapeso") },
         )
     }
 

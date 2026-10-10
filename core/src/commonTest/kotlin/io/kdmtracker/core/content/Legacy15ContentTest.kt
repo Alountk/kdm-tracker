@@ -35,8 +35,8 @@ class Legacy15ContentTest {
     fun packCarriesTheGeneratedResources() {
         assertTrue(resources.isNotEmpty(), "expected generated resources")
         assertEquals(
-            Core15Resources.bundle.resources.map { it.name to it.category },
-            resources.map { it.name to it.category },
+            Core15Resources.bundle.resources.map { it.id to it.category },
+            resources.map { it.id to it.category },
         )
         assertTrue(resources.all { it.source.isNotBlank() }, "every resource carries a source")
     }
@@ -49,7 +49,7 @@ class Legacy15ContentTest {
     @Test
     fun monsterBoneIsABasicResource() {
         // "Hueso de Monstruo" (Monster Bone) is a card of the "Recursos Básicos" deck, so BASIC.
-        val hueso = resources.first { it.name == "Hueso de Monstruo" }
+        val hueso = resources.first { it.names.es == "Hueso de Monstruo" }
 
         assertEquals(ResourceCategory.BASIC, hueso.category)
     }
@@ -57,7 +57,7 @@ class Legacy15ContentTest {
     @Test
     fun whiteLionPeltIsAMonsterResource() {
         // "Pelaje Blanco" (White Lion Pelt) is a card of the "León Blanco" quarry deck, so MONSTER.
-        val pelaje = resources.first { it.name == "Pelaje Blanco" }
+        val pelaje = resources.first { it.names.es == "Pelaje Blanco" }
 
         assertEquals(ResourceCategory.MONSTER, pelaje.category)
     }
@@ -65,7 +65,7 @@ class Legacy15ContentTest {
     @Test
     fun strangeIronIsASpecialResource() {
         // "Hierro" (Iron) is a card of the "Recursos Extraños" (Strange Resources) deck, so SPECIAL.
-        val hierro = resources.first { it.name == "Hierro" }
+        val hierro = resources.first { it.names.es == "Hierro" }
 
         assertEquals(ResourceCategory.SPECIAL, hierro.category)
     }
@@ -74,14 +74,14 @@ class Legacy15ContentTest {
     fun alimanaVerminDeckIsDeliberatelySpecial() {
         // Alimañas (vermin) have no VERMIN enum member; their deck ships the "strange"
         // consumables, so SPECIAL is the deliberate choice. Pinned so it stays deliberate.
-        val cucaracha = resources.first { it.name == "Cucaracha Silbante" }
+        val cucaracha = resources.first { it.names.es == "Cucaracha Silbante" }
 
         assertEquals(ResourceCategory.SPECIAL, cucaracha.category)
     }
 
     @Test
     fun resourceNamesAreSorted() {
-        val names = resources.map { it.name }
+        val names = resources.map { it.names.es }
 
         assertEquals(names.sorted(), names)
     }

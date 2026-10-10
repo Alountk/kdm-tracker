@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bbox import Block  # noqa: E402
+import ingest_gear  # noqa: E402
 from ingest_gear import _make_resolver, parse_cost, parse_gear_cards, parse_location  # noqa: E402
 
 
@@ -77,6 +78,109 @@ class GearParserTest(unittest.TestCase):
         self.assertEqual(["Horno Linterna"], by_name["Hacha de Contrapeso"].requires)
         self.assertIsNone(by_name["Hacha de Contrapeso"].requires_text)
 
+    def test_innovation_names_reads_the_generated_pack(self) -> None:
+        # The recipe filter resolves `Requiere` prerequisites against the shipped innovation
+        # pack; if the regex stops matching the pack's emission shape, every recipe silently
+        # loses its innovation gating.
+        names = ingest_gear._innovation_names()
+
+        self.assertIn("Lenguaje", names)
+
+    def test_resource_names_reads_the_generated_pack(self) -> None:
+        # The recipe filter resolves cost names against the shipped resource pack; if the regex
+        # stops matching the pack's emission shape, every location silently loses its recipes.
+        names = ingest_gear._resource_names()
+
+        self.assertIn("Hueso de Monstruo", names)
+        self.assertGreaterEqual(len(names), 56)
+
+
+def _identities():
+    from identity import load_identity
+
+    base = Path(__file__).resolve().parents[1] / "identity"
+    return (
+        load_identity(base / "gear.csv"),
+        load_identity(base / "locations.csv"),
+        load_identity(base / "resources.csv"),
+        load_identity(base / "innovations.csv"),
+    )
+
+
+# The fixture resources the location page costs, in the pack's canonical card names. Recipes
+# costing anything else are dropped here exactly as `main()` drops them (the "[gap]" filter).
+FIXTURE_RESOURCES = {"Hueso de Monstruo", "Piel de Monstruo", "Órgano de Monstruo"}
+
+
+def _parsed_location(innovation_names=frozenset(), extras=()):
+    resolve = ingest_gear._make_resolver(set(FIXTURE_RESOURCES))
+    location = parse_location(
+        LOCATION_PAGE + list(extras),
+        innovation_names=set(innovation_names),
+        resolve=resolve,
+    )
+    location.recipes = [
+        recipe
+        for recipe in location.recipes
+        if recipe.resource_cost and all(name in FIXTURE_RESOURCES for name in recipe.resource_cost)
+    ]
+    return location
+
+
+class GearEmitIdentityTests(unittest.TestCase):
+    """The gear emitter's location contribution carries ids and both language names."""
+
+    def test_emission_carries_location_ids_and_localized_names(self) -> None:
+        location = _parsed_location()
+
+        out = ingest_gear.emit_kotlin([], [location], *_identities())
+
+        self.assertIn('id = LocationId("weapon_crafter")', out)
+        self.assertIn('names = LocalizedText(es = "Armería", en = "Weapon Crafter")', out)
+        self.assertIn("GearRecipe(", out)
+        self.assertNotIn('SettlementLocation("', out)
+
+    def test_a_location_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        location = ingest_gear.Location(name="Sitio Fantasma", recipes=[])
+
+        with self.assertRaises(SystemExit) as ctx:
+            ingest_gear.emit_kotlin([], [location], *_identities())
+
+        self.assertIn("Sitio Fantasma", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GearEmitIdentityTestsT1c(unittest.TestCase):
+    """The gear emitter re-keys gear, recipes and their costs through the identity CSVs."""
+
+    def test_gear_emission_carries_ids_and_localized_names(self) -> None:
+        gear = ingest_gear.Gear(name="Yelmo de Calavera", keywords=["armadura"])
+
+        out = ingest_gear.emit_kotlin([gear], [], *_identities())
+
+        self.assertIn('id = GearId("yelmo_de_calavera")', out)
+        self.assertIn('names = LocalizedText(es = "Yelmo de Calavera")', out)
+        self.assertNotIn('Gear("', out)
+
+    def test_recipe_emission_rekeys_gear_costs_and_prerequisites(self) -> None:
+        location = _parsed_location(
+            innovation_names={"Horno Linterna"},
+            extras=[block(286.5, 259.0, 320.0, 272.0, "Requiere Horno Linterna")],
+        )
+
+        out = ingest_gear.emit_kotlin([], [location], *_identities())
+
+        self.assertIn('gearId = GearId("hacha_de_contrapeso")', out)
+        self.assertIn('ResourceId("bone.monster") to 2', out)
+        self.assertIn("requires =", out)
+        self.assertNotIn('gearName = "', out)
+        self.assertNotIn('requires = listOf("Horno Linterna")', out)
+
+    def test_a_gear_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        with self.assertRaises(SystemExit) as ctx:
+            ingest_gear.emit_kotlin([ingest_gear.Gear(name="Equipo Fantasma")], [], *_identities())
+
+        self.assertIn("Equipo Fantasma", str(ctx.exception))

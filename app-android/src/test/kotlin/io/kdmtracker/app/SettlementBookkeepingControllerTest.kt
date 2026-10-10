@@ -147,9 +147,9 @@ class SettlementBookkeepingControllerTest {
         val (controller, _) = controllerAt(10)
         val definition =
             controller.state.value.resourceDefinitions
-                .single { it.name == "Hueso de Monstruo" }
+                .single { it.names.es == "Hueso de Monstruo" }
 
-        controller.addResource(ResourceEntry(definition.name, definition.category, 3))
+        controller.addResource(ResourceEntry(definition.id, 3))
 
         assertTrue(
             controller.state.value.storageLines

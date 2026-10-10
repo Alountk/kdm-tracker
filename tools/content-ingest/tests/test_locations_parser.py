@@ -234,12 +234,92 @@ class ParseLocationsTests(unittest.TestCase):
         text = deck(TALLER_DEFAULT, PELE_DEFAULT, MOLINO_DEFAULT, LANTERN_DEFAULT)
         raw = deck(TALLER_RAW, PELE_RAW, MOLINO_RAW, LANTERN_RAW)
 
-        first = locations.emit_kotlin(locations.parse_locations(text, raw))
-        second = locations.emit_kotlin(locations.parse_locations(text, raw))
+        first = locations.emit_kotlin(locations.parse_locations(text, raw), *_identities())
+        second = locations.emit_kotlin(locations.parse_locations(text, raw), *_identities())
 
         self.assertEqual(first, second)
         self.assertIn("object Core15Locations {", first)
         self.assertIn("ActionKind.INNOVATE", first)
+
+
+def _identity(name: str):
+    from identity import load_identity
+
+    return load_identity(Path(__file__).resolve().parents[1] / "identity" / name)
+
+
+def _identities():
+    return (_identity("locations.csv"), _identity("resources.csv"))
+
+
+class EmitIdentityTests(unittest.TestCase):
+    """The emitter resolves every name through the identity CSVs before writing Kotlin."""
+
+    def test_emission_carries_ids_and_localized_names(self) -> None:
+        text = deck(TALLER_DEFAULT, PELE_DEFAULT, MOLINO_DEFAULT, LANTERN_DEFAULT)
+        raw = deck(TALLER_RAW, PELE_RAW, MOLINO_RAW, LANTERN_RAW)
+
+        out = locations.emit_kotlin(locations.parse_locations(text, raw), *_identities())
+
+        # Each location carries its stable id and both language names.
+        self.assertIn('id = LocationId("bone_smith")', out)
+        self.assertIn('names = LocalizedText(es = "Taller de Huesos", en = "Bone Smith")', out)
+        self.assertIn('id = LocationId("lantern_hoard")', out)
+        self.assertIn('names = LocalizedText(es = "Cúmulo de Linternas", en = "Lantern Hoard")', out)
+
+        # Prerequisites reference locations by id, never by display name.
+        self.assertIn(
+            'requires = listOf(LocationId("bone_smith"))',
+            out,
+        )
+        self.assertIn(
+            'requires = listOf(LocationId("skinnery"))',
+            out,
+        )
+
+        # Build costs and the action's resource cost reference resources by id.
+        self.assertIn(
+            'buildCost = mapOf(ResourceId("bone.monster") to 3, ResourceId("hide.monster") to 1)',
+            out,
+        )
+        self.assertIn(
+            'buildCost = mapOf(ResourceId("organ.monster") to 3, ResourceId("hide.monster") to 1)',
+            out,
+        )
+        self.assertIn('ResourceId("bone.monster") to 1', out)
+        self.assertNotIn('buildCost = mapOf("', out)
+
+        # The action carries both language names so the panel stops rendering one language only.
+        self.assertIn('names = LocalizedText(es = "Innovar", en = "Innovate")', out)
+        self.assertNotIn('name = "Innovar"', out)
+        self.assertNotIn('SettlementLocation("', out)
+
+    def test_a_location_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        parsed = locations.parse_locations("Sitio Fantasma\n", "Sitio Fantasma\n")
+
+        with self.assertRaises(SystemExit) as ctx:
+            locations.emit_kotlin(parsed, *_identities())
+
+        self.assertIn("Sitio Fantasma", str(ctx.exception))
+
+    def test_a_cost_resource_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        default = "\n".join(
+            [
+                "Taller de Huesos",
+                "Construir",
+                "Armería",
+                "Localización de Asentamiento",
+                "1 x restos",
+            ]
+        )
+        # A raw order with no ``Construir <target>`` adjacency, so the parser falls back to the
+        # default reading order and reads the cost box below the caption.
+        parsed = locations.parse_locations(default, "Armería\n")
+
+        with self.assertRaises(SystemExit) as ctx:
+            locations.emit_kotlin(parsed, *_identities())
+
+        self.assertIn("restos", str(ctx.exception))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 /**
  * Top-level, versioned container for an exported campaign database.
  *
- * [schemaVersion] defaults to the current schema (10). Older v1/v2/v3/v4/v5/v6/v7 documents omit the
+ * [schemaVersion] defaults to the current schema (12). Older documents omit the
  * newer fields and still decode, because every added field carries a default. v4
  * replaced the v3 `MilestoneDefinitionDto.key` enum with a stable string [MilestoneDefinitionDto.id]
  * plus a typed [MilestoneConditionSpec] and a prose `description`; a v3 document that
@@ -23,17 +23,22 @@ import kotlinx.serialization.Serializable
  * decodes to an empty [io.kdmtracker.core.domain.HuntState]. v9 adds the settlement's showdown
  * state; a pre-v9 state that omits `showdown` decodes to an empty
  * [io.kdmtracker.core.domain.ShowdownState]. v10 adds the settlement's `specialShowdown` flag; a
- * pre-v10 state that omits it decodes to `false`.
+ * pre-v10 state that omits it decodes to `false`. v11 (S1) re-keyed the resource ledger to
+ * stable ids; a v11 document still decodes here, because every id-keyed field carries the
+ * two-shape serializers that map a legacy display name through the identity tables. v12 re-keys
+ * the built locations, the crafted gear and the unlocked innovations the same way — a v11
+ * document's name-keyed entries map to ids on import, and an unknown name survives under a
+ * synthesized `unknown.…` id.
  */
 @Serializable
 data class TransferDocument(
-    val schemaVersion: Int = 10,
+    val schemaVersion: Int = 12,
     val exportedAt: String,
     val campaigns: List<CampaignDto>,
 ) {
     companion object {
         /** Schema versions this build can read. */
-        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        val SUPPORTED_VERSIONS: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
     }
 }
 

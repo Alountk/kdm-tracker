@@ -1,9 +1,12 @@
 package io.kdmtracker.core.rules
 
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.content.ContentIdentity
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementState
 
 /** Where an innovation sits in the settlement's unlock tree. */
@@ -16,7 +19,7 @@ enum class InnovationStatus { UNLOCKED, AVAILABLE, NO_ACCESS }
  *   [InnovationStatus.NO_ACCESS]; `null` otherwise.
  * @property endeavorCost the cost of the Innovate action that unlocks it (content, not a UI
  *   literal); the same for every innovation.
- * @property resourceCost the resources the Innovate action needs, keyed by resource name.
+ * @property resourceCost the resources the Innovate action needs, keyed by resource id.
  * @property used whether that action has already been used this Settlement Phase.
  */
 data class InnovationView(
@@ -24,7 +27,7 @@ data class InnovationView(
     val status: InnovationStatus,
     val missingParent: String? = null,
     val endeavorCost: Int = 0,
-    val resourceCost: Map<String, Int> = emptyMap(),
+    val resourceCost: Map<ResourceId, Int> = emptyMap(),
     val used: Boolean = false,
 )
 
@@ -44,13 +47,20 @@ object InnovationAccess {
     ): List<InnovationView> {
         val unlocked =
             state.innovations.innovations
-                .map { it.name }
-                .toSet()
-        val deck = InnovationDeck.of(state.innovations).cards.toSet()
-        val parentByChild = mutableMapOf<String, String>()
+                .mapTo(mutableSetOf()) { it.id }
+        // The deck holds consequence *names* (what the cards print); the identity table turns
+        // each into an id so a Spanish deck string and an English innovation still match.
+        val deck =
+            InnovationDeck
+                .of(state.innovations)
+                .cards
+                .mapNotNullTo(mutableSetOf()) { ContentIdentity.innovationIdFor(it) }
+        val parentByChild = mutableMapOf<InnovationId, Innovation>()
         catalog.innovationDefinitions.forEach { innovation ->
             innovation.consequences.forEach { child ->
-                if (child !in parentByChild) parentByChild[child] = innovation.name
+                ContentIdentity.innovationIdFor(child)?.let { childId ->
+                    if (childId !in parentByChild) parentByChild[childId] = innovation
+                }
             }
         }
         val hoard =
@@ -58,20 +68,21 @@ object InnovationAccess {
                 location.actions.any { it.kind == ActionKind.INNOVATE }
             }
         val innovate = hoard?.actions?.firstOrNull { it.kind == ActionKind.INNOVATE }
-        val used = hoard != null && state.usedInPhase(hoard.name)
+        val used = hoard != null && state.usedInPhase(hoard.id.value)
         return catalog.innovationDefinitions
-            .sortedBy { it.name }
+            .sortedBy { it.names.es }
             .map { innovation ->
                 val status =
                     when {
-                        innovation.name in unlocked -> InnovationStatus.UNLOCKED
-                        innovation.name in deck -> InnovationStatus.AVAILABLE
+                        innovation.id in unlocked -> InnovationStatus.UNLOCKED
+                        innovation.id in deck -> InnovationStatus.AVAILABLE
                         else -> InnovationStatus.NO_ACCESS
                     }
                 InnovationView(
                     innovation = innovation,
                     status = status,
-                    missingParent = if (status == InnovationStatus.NO_ACCESS) parentByChild[innovation.name] else null,
+                    missingParent =
+                        if (status == InnovationStatus.NO_ACCESS) parentByChild[innovation.id]?.names?.es else null,
                     endeavorCost = innovate?.endeavorCost ?: 0,
                     resourceCost = innovate?.resourceCost ?: emptyMap(),
                     used = used,

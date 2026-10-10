@@ -5,7 +5,12 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.Language
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceCategory
+import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Timeline
 import io.kdmtracker.core.domain.Ulid
@@ -33,48 +38,56 @@ class Core16ContentTest {
 
     @Test
     fun packProvidesTheSeedLocations() {
-        val locations = catalog().locations
+        val ids = catalog().locationDefinitions.map { it.id.value }
         val expected =
             listOf(
-                "Lantern Hoard",
-                "Bone Smith",
-                "Skinnery",
-                "Organ Grinder",
-                "Weapon Crafter",
-                "Leather Worker",
-                "Stone Circle",
-                "Exhausted Lantern Hoard",
-                "Barber Surgeon",
-                "Blacksmith",
-                "Catarium",
-                "Dragon Armory",
-                "Gormchymist",
-                "Gormery",
-                "Mask Maker",
-                "Plumery",
-                "Silk Mill",
-                "Skyreef Sanctuary",
-                "Wet Resin Crafter",
+                "lantern_hoard",
+                "bone_smith",
+                "skinnery",
+                "organ_grinder",
+                "weapon_crafter",
+                "leather_worker",
+                "stone_circle",
+                "exhausted_lantern_hoard",
+                "barber_surgeon",
+                "blacksmith",
+                "catarium",
+                "dragon_armory",
+                "gormchymist",
+                "gormery",
+                "mask_maker",
+                "plumery",
+                "silk_mill",
+                "skyreef_sanctuary",
+                "wet_resin_crafter",
             )
 
-        assertTrue(locations.containsAll(expected), "missing: ${expected - locations}")
+        assertTrue(ids.containsAll(expected), "missing: ${expected - ids}")
     }
 
     @Test
     fun boneSmithRequiresLanternHoardFromContent() {
-        val boneSmith = catalog().locationDefinitions.first { it.name == "Bone Smith" }
+        val boneSmith = catalog().locationDefinitions.first { it.id == LocationId("bone_smith") }
 
-        assertEquals(listOf("Lantern Hoard"), boneSmith.requires)
+        assertEquals(listOf(LocationId("lantern_hoard")), boneSmith.requires)
     }
 
     @Test
     fun lanternHoardOffersTheInnovateAction() {
-        val hoard = catalog().locationDefinitions.first { it.name == "Lantern Hoard" }
+        val hoard = catalog().locationDefinitions.first { it.id == LocationId("lantern_hoard") }
         val innovate = hoard.actions.single { it.kind == ActionKind.INNOVATE }
 
-        assertEquals("Innovate", innovate.name)
+        assertEquals("Innovar", innovate.names.es)
+        assertEquals("Innovate", innovate.names.en)
         assertEquals(1, innovate.endeavorCost)
-        assertEquals(mapOf("Bone" to 1, "Organ" to 1, "Hide" to 1), innovate.resourceCost)
+        assertEquals(
+            mapOf(
+                ResourceId("bone.monster") to 1,
+                ResourceId("organ.monster") to 1,
+                ResourceId("hide.monster") to 1,
+            ),
+            innovate.resourceCost,
+        )
         assertTrue(innovate.oncePerPhase)
         assertEquals(2, innovate.draw)
         assertEquals(1, innovate.keep)
@@ -83,7 +96,7 @@ class Core16ContentTest {
 
     @Test
     fun languageConsequencesDriveTheInnovationDeck() {
-        val language = catalog().innovationDefinitions.first { it.name == "Language" }
+        val language = catalog().innovationDefinitions.first { it.id == InnovationId("language") }
         val deck = InnovationDeck.of(InnovationCollection().with(language))
 
         assertEquals(language.consequences.sorted(), deck.cards)
@@ -94,10 +107,15 @@ class Core16ContentTest {
         val catalog = catalog()
 
         assertTrue(
-            catalog.resources.containsAll(listOf("Bone", "Hide", "Organ", "Scrap")),
-            "was ${catalog.resources}",
+            catalog.resourceDefinitions.map { it.id.value }.containsAll(
+                listOf("bone.monster", "hide.monster", "organ.monster", "scrap"),
+            ),
+            "was ${catalog.resourceDefinitions.map { it.id.value }}",
         )
-        assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.name == "Bone" }.category)
+        val bone = catalog.resourceDefinitions.first { it.id.value == "bone.monster" }
+        assertEquals(ResourceCategory.BASIC, bone.category)
+        assertEquals("Bone", bone.names.inLanguage(Language.EN))
+        assertEquals(setOf(ResourceMaterial.BONE), bone.materials)
     }
 
     @Test

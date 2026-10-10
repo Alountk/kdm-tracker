@@ -23,10 +23,13 @@ enum class ActionKind {
  * per-phase limit. The [effect] is rules text shown to the player and resolved
  * by the group; this model never interprets it.
  *
- * @property name the action's unique, human-readable name.
+ * The [kind] is the action's identity: a location offers at most one action of
+ * each kind, and packs contributing the same action merge on it.
+ *
+ * @property names the action's localized display names.
  * @property kind the kind of action, selecting the owning use-case.
  * @property endeavorCost the number of endeavors the action costs.
- * @property resourceCost the resources the action consumes, as name → count.
+ * @property resourceCost the resources the action consumes, as id → count.
  * @property oncePerPhase whether the action may be used only once per Settlement Phase.
  * @property draw the number of innovation cards the action draws, when [kind] is [ActionKind.INNOVATE].
  * @property keep the number of drawn cards the action keeps, when [kind] is [ActionKind.INNOVATE].
@@ -34,10 +37,10 @@ enum class ActionKind {
  */
 @Serializable
 data class SettlementAction(
-    val name: String,
+    val names: LocalizedText,
     val kind: ActionKind = ActionKind.ENDEAVOR,
     val endeavorCost: Int = 1,
-    val resourceCost: Map<String, Int> = emptyMap(),
+    val resourceCost: Map<ResourceId, Int> = emptyMap(),
     val oncePerPhase: Boolean = false,
     val draw: Int = 0,
     val keep: Int = 0,

@@ -2,6 +2,8 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.content.generated.Core15Gear
 import io.kdmtracker.core.content.generated.Core15Locations
+import io.kdmtracker.core.domain.GearId
+import io.kdmtracker.core.domain.ResourceId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -10,12 +12,12 @@ class Core15GearTest {
     @Test
     fun theGeneratedPackHasGear() {
         assertTrue(Core15Gear.bundle.gear.size > 50)
-        assertTrue(Core15Gear.bundle.gear.any { it.name == "Yelmo de Calavera" })
+        assertTrue(Core15Gear.bundle.gear.any { it.names.es == "Yelmo de Calavera" })
     }
 
     @Test
     fun aGearCarriesItsKeywords() {
-        val yelmo = Core15Gear.bundle.gear.single { it.name == "Yelmo de Calavera" }
+        val yelmo = Core15Gear.bundle.gear.single { it.names.es == "Yelmo de Calavera" }
 
         assertTrue("armadura" in yelmo.keywords, "keywords: ${yelmo.keywords}")
     }
@@ -25,10 +27,14 @@ class Core15GearTest {
         val hacha =
             Core15Gear.bundle.locations
                 .flatMap { it.recipes }
-                .single { it.gearName == "Hacha de Contrapeso" }
+                .single { it.gearId == GearId("hacha_de_contrapeso") }
 
         assertEquals(
-            mapOf("Hueso de Monstruo" to 2, "Piel de Monstruo" to 1, "Órgano de Monstruo" to 1),
+            mapOf(
+                ResourceId("bone.monster") to 2,
+                ResourceId("hide.monster") to 1,
+                ResourceId("organ.monster") to 1,
+            ),
             hacha.resourceCost,
         )
     }
@@ -45,7 +51,7 @@ class Core15GearTest {
         val gearPack = ContentPack(id = "gear", version = "1.5", name = "gear", bundle = Core15Gear.bundle)
 
         val armeria =
-            ContentCatalog(listOf(locationsPack, gearPack)).locationDefinitions.single { it.name == "Armería" }
+            ContentCatalog(listOf(locationsPack, gearPack)).locationDefinitions.single { it.names.es == "Armería" }
 
         assertTrue(armeria.buildCost.isNotEmpty())
         assertTrue(armeria.recipes.isNotEmpty())

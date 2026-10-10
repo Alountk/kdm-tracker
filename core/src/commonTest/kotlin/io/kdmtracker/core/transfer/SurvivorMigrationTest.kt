@@ -147,7 +147,7 @@ class SurvivorMigrationTest {
         val decoded = json.decodeFromString<TransferDocument>(json.encodeToString(document))
         val (_, domainRecords) = TransferMapper.toDomain(decoded.campaigns.single())
 
-        assertEquals(10, decoded.schemaVersion)
+        assertEquals(12, decoded.schemaVersion)
         assertEquals(records, domainRecords)
     }
 }

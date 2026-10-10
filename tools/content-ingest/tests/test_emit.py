@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from identity import IdentityRow  # noqa: E402
 import ingest_innovations as innovations  # noqa: E402
 import kotlin_emit  # noqa: E402
 
@@ -56,15 +57,23 @@ class StableEmitTests(unittest.TestCase):
         )
         return innovations.resolve_consequences(innovations.parse_cards(text))
 
+    @staticmethod
+    def _identity():
+        return {
+            "Alfa": IdentityRow(resource_id="alfa", spanish_name="Alfa", english_name=""),
+            "Zeta": IdentityRow(resource_id="zeta", spanish_name="Zeta", english_name=""),
+        }
+
     def test_emit_is_stable_and_entries_are_sorted(self) -> None:
         cards = self._cards()
+        identity = self._identity()
 
-        first = innovations.emit_kotlin(cards)
-        second = innovations.emit_kotlin(cards)
+        first = innovations.emit_kotlin(cards, identity)
+        second = innovations.emit_kotlin(cards, identity)
 
         self.assertEqual(first, second)
         self.assertTrue(first.startswith(innovations.GENERATED_HEADER))
-        self.assertLess(first.index('name = "Alfa"'), first.index('name = "Zeta"'))
+        self.assertLess(first.index('InnovationId("alfa")'), first.index('InnovationId("zeta")'))
         self.assertNotIn("timestamp", first.lower())
 
 
