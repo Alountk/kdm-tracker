@@ -1,18 +1,22 @@
 package io.kdmtracker.app.ui.settlement
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.ui.theme.KdmSymbols
@@ -23,11 +27,7 @@ import io.kdmtracker.app.ui.theme.KdmType
  * and restore actions. `Restaurar Esfuerzos` is drawn but disabled — the action is not modelled.
  */
 @Composable
-fun StepFrame(
-    model: StepFrameModel,
-    onAdvance: () -> Unit,
-    onRestore: () -> Unit,
-) {
+fun StepFrameHeader(model: StepFrameModel) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Symbol(model.icon, MaterialTheme.colorScheme.secondary, 18.sp)
         Spacer(Modifier.width(6.dp))
@@ -42,24 +42,62 @@ fun StepFrame(
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Row(
+}
+
+/**
+ * The step's flow actions, at the end of its content: the advance in the design's `secondary`, and
+ * the (inert) restore below it. Both are full width and stacked, and only the labels change from
+ * step to step — this is the component every settlement step reuses.
+ */
+@Composable
+fun StepFrameFooter(
+    model: StepFrameModel,
+    endeavors: Int,
+    onAdvance: () -> Unit,
+    onRestore: () -> Unit,
+) {
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Button(
             onClick = onAdvance,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth().shadow(elevation = 4.dp, shape = MaterialTheme.shapes.small),
+            shape = MaterialTheme.shapes.small,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                ),
         ) {
-            Text(model.advanceLabel)
-            Spacer(Modifier.width(4.dp))
-            Symbol("arrow_forward", MaterialTheme.colorScheme.onPrimary, 16.sp)
-        }
-        OutlinedButton(onClick = onRestore, enabled = false) {
-            Symbol("restart_alt", MaterialTheme.colorScheme.onSurfaceVariant, 16.sp)
-            Spacer(Modifier.width(4.dp))
             Text(
-                text = "Restaurar Esfuerzos",
+                text = model.advanceLabel.uppercase(),
+                style = KdmType.labelCaps,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(6.dp))
+            Symbol("arrow_forward", MaterialTheme.colorScheme.onSecondary, 18.sp)
+        }
+        Button(
+            onClick = onRestore,
+            // Not modelled: the design draws it, the action does not exist yet.
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+        ) {
+            Symbol("restart_alt", MaterialTheme.colorScheme.onSurfaceVariant, 16.sp)
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = "Restaurar Esfuerzos ($endeavors)".uppercase(),
                 style = KdmType.labelCaps,
             )
         }

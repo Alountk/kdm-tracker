@@ -601,6 +601,8 @@ class LanternYearController(
                     ),
             huntXpTrackMax = ruleset.huntXpTrackMax,
             insanityThreshold = ruleset.insanityThreshold,
+            innovationDraw = ruleset.innovationDraw,
+            innovationKeep = ruleset.innovationKeep,
             resourceGroups = content.resourceGroups(),
             innovationViews = InnovationAccess.view(record.state, content),
             craftRecipes =

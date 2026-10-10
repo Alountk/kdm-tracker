@@ -1,20 +1,27 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.app.ui.settlement.InnovationsModel
+import io.kdmtracker.app.ui.settlement.InnovationsPanel
+import io.kdmtracker.app.ui.settlement.LocationsModel
+import io.kdmtracker.app.ui.settlement.LocationsPanel
+import io.kdmtracker.app.ui.settlement.SettlementSummary
+import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
+import io.kdmtracker.app.ui.settlement.StepFrameFooter
+import io.kdmtracker.app.ui.settlement.StepFrameHeader
+import io.kdmtracker.app.ui.settlement.StepFrameModel
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -93,14 +100,30 @@ fun SettlementScreen(
                     onResolveMilestone = onResolveMilestone,
                 )
             7 ->
-                DevelopStepScreen(
-                    state = state,
-                    onInnovate = onInnovate,
-                    onBuild = onBuild,
-                    onSpendEndeavor = onSpendEndeavor,
-                    onAddResource = onAddResource,
-                    onCraft = onCraft,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    InnovationsPanel(
+                        model =
+                            InnovationsModel.of(
+                                deck = state.innovationDeck,
+                                principles = state.principles,
+                                draw = state.innovationDraw,
+                                keep = state.innovationKeep,
+                            ),
+                    )
+                    LocationsPanel(
+                        model = LocationsModel.of(built = state.builtLocations, catalog = state.catalogLocations),
+                        onBuild = onBuild,
+                        onAction = {},
+                    )
+                    DevelopStepScreen(
+                        state = state,
+                        onInnovate = onInnovate,
+                        onBuild = onBuild,
+                        onSpendEndeavor = onSpendEndeavor,
+                        onAddResource = onAddResource,
+                        onCraft = onCraft,
+                    )
+                }
             8 ->
                 PrepareDepartingStepScreen(
                     state = state,
@@ -135,49 +158,56 @@ private fun SettlementCockpit(
     onSelectStep: (Int) -> Unit,
     body: @Composable () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        SettlementHeader(state)
+    val frame = state.steps.firstOrNull { it.number == state.currentStep }?.let { StepFrameModel.of(it, state.steps) }
 
-        Text(
-            text = "Step ${state.currentStep} · ${state.stepTitle}",
-            style = MaterialTheme.typography.titleMedium,
-        )
-
-        Box(modifier = Modifier.weight(1f)) { body() }
-
-        state.lastTransition?.let { transition ->
-            Text(
-                text = transition,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            SettlementSummary(
+                model =
+                    SettlementSummaryModel.of(
+                        survivalLimit = state.survivalLimit,
+                        endeavors = state.endeavors,
+                        maxEndeavors = state.endeavorBreakdown.total,
+                        resources =
+                            SettlementSummaryModel.basicResources(
+                                // The design's grid is exactly these four, in this order: the catalog
+                                // carries more basic resources (and, from the legacy pack, English
+                                // duplicates of them), which would otherwise flood the row.
+                                definitions =
+                                    SettlementSummaryModel.DESIGN_ORDER.mapNotNull { name ->
+                                        state.resourceDefinitions.firstOrNull { it.name == name }
+                                    },
+                                storage = state.storageLines,
+                            ),
+                    ),
+                year = state.lanternYear,
+                phaseLabel = "Fase Activa",
             )
-        }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = onPrevious, modifier = Modifier.weight(1f)) {
-                Text("Previous")
+            frame?.let { StepFrameHeader(model = it) }
+
+            body()
+
+            state.lastTransition?.let { transition ->
+                Text(
+                    text = transition,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Button(onClick = onAdvance, modifier = Modifier.weight(1f)) {
-                Text("Next")
+
+            // The design puts the actions at the END of the step's content, not in a pinned bar.
+            frame?.let {
+                StepFrameFooter(
+                    model = it,
+                    endeavors = state.endeavors,
+                    onAdvance = onAdvance,
+                    onRestore = {},
+                )
             }
         }
     }
-}
-
-@Composable
-private fun SettlementHeader(state: UiState) {
-    // The settlement name lives in the AppTopBar; only the derived stats are rendered here.
-    Text(
-        text =
-            "Lantern Year ${state.lanternYear} · Population ${state.population} · " +
-                "Endeavors ${state.endeavors} · Survival Limit ${state.survivalLimit}",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 }

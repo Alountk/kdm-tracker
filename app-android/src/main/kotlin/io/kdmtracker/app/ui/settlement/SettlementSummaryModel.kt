@@ -35,6 +35,10 @@ data class SettlementSummaryModel(
     val resources: List<SummaryResource>,
 ) {
     companion object {
+        /** The four resources the design's grid shows, in its order. */
+        val DESIGN_ORDER: List<String> =
+            listOf("Hueso de Monstruo", "Órgano de Monstruo", "Piel de Monstruo", "Scrap")
+
         /** The design's short label and colour per catalog resource name. */
         private val DESIGN =
             mapOf(

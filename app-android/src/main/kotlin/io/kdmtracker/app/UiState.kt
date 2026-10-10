@@ -96,6 +96,8 @@ data class UiState(
     val survivalLimit: Int = 0,
     val huntXpTrackMax: Int = Core16Ruleset.huntXpTrackMax,
     val insanityThreshold: Int = Core16Ruleset.insanityThreshold,
+    val innovationDraw: Int = Core16Ruleset.innovationDraw,
+    val innovationKeep: Int = Core16Ruleset.innovationKeep,
     val resourceGroups: Map<String, List<ResourceDefinition>> = emptyMap(),
     val innovationViews: List<InnovationView> = emptyList(),
     val craftRecipes: List<CraftRecipeView> = emptyList(),

@@ -20,12 +20,13 @@ import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.app.ui.theme.KdmType
 
-/** The Develop step's Innovations panel. */
+/**
+ * The Develop step's Innovations panel. `Innovar` is drawn and disabled: the design's flow draws
+ * several cards and keeps one, and that flow is not modelled — the Develop body below is where an
+ * innovation is actually unlocked.
+ */
 @Composable
-fun InnovationsPanel(
-    model: InnovationsModel,
-    onInnovate: () -> Unit,
-) {
+fun InnovationsPanel(model: InnovationsModel) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         PanelTitle(icon = "auto_stories", title = "Innovaciones", trailing = "Mazo: ${model.deckSize} cartas")
         model.principleSlots.forEach { principle ->
@@ -55,7 +56,7 @@ fun InnovationsPanel(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            OutlinedButton(onClick = onInnovate) {
+            OutlinedButton(onClick = {}, enabled = false) {
                 Text(text = "Innovar", style = KdmType.labelCaps)
             }
         }
@@ -76,10 +77,22 @@ fun LocationsPanel(
             trailing = "${model.built.size + model.buildable.size} Opciones",
         )
         model.built.forEach { location ->
-            LocationRow(entry = location, heading = "Fundacional", state = "Construido", onAction = onAction)
+            LocationRow(
+                entry = location,
+                heading = "Fundacional",
+                state = "Construido",
+                onAction = onAction,
+                actionEnabled = false,
+            )
         }
         model.buildable.forEach { location ->
-            LocationRow(entry = location, heading = "Por Erigir", state = "No construido", onAction = onBuild)
+            LocationRow(
+                entry = location,
+                heading = "Por Erigir",
+                state = "No construido",
+                onAction = onBuild,
+                actionEnabled = true,
+            )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Symbol("warning", MaterialTheme.colorScheme.secondary, 16.sp)
@@ -154,6 +167,7 @@ private fun LocationRow(
     heading: String,
     state: String,
     onAction: (String) -> Unit,
+    actionEnabled: Boolean,
 ) {
     Column(
         modifier =
@@ -188,7 +202,7 @@ private fun LocationRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            OutlinedButton(onClick = { onAction(entry.name) }) {
+            OutlinedButton(onClick = { onAction(entry.name) }, enabled = actionEnabled) {
                 Text(text = entry.actionLabel ?: "Construir", style = KdmType.labelCaps)
             }
         }
