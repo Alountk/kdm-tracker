@@ -15,9 +15,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,14 +80,21 @@ private val ChipGap = 8.dp
 @Composable
 fun PhaseCarousel(
     currentStep: Int,
+    reachableSteps: Set<Int>,
     onSelectStep: (Int) -> Unit,
 ) {
     val active = PhaseCarouselModel.active(currentStep)
     val scrollState = rememberScrollState()
-    val pitch = with(LocalDensity.current) { (ChipWidth + ChipGap).toPx() }
+    val density = LocalDensity.current
+    val pitch = with(density) { (ChipWidth + ChipGap).toPx() }
+    val chipWidth = with(density) { ChipWidth.toPx() }
+    var viewport by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(active) {
-        scrollState.animateScrollTo(((active - 1) * pitch).toInt())
+    // Centre the active chip: its left edge minus half the slack around a chip.
+    LaunchedEffect(active, viewport) {
+        if (viewport == 0) return@LaunchedEffect
+        val centred = ((active - 1) * pitch - (viewport - chipWidth) / 2f).toInt()
+        scrollState.animateScrollTo(centred.coerceIn(0, scrollState.maxValue))
     }
 
     Column(
@@ -110,13 +122,18 @@ fun PhaseCarousel(
             )
         }
         Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { viewport = it.width }
+                    .horizontalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(ChipGap),
         ) {
             PhaseCarouselModel.steps.forEach { step ->
                 Chip(
                     step = step,
                     selected = step.number == active,
+                    enabled = step.number in reachableSteps,
                     onClick = { onSelectStep(step.number) },
                 )
             }
@@ -128,6 +145,7 @@ fun PhaseCarousel(
 private fun Chip(
     step: CarouselStep,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val background =
@@ -140,6 +158,7 @@ private fun Chip(
         when {
             selected -> MaterialTheme.colorScheme.onPrimary
             step.isSpecial -> MaterialTheme.colorScheme.primary
+            !enabled -> MaterialTheme.colorScheme.outlineVariant
             else -> MaterialTheme.colorScheme.onSurfaceVariant
         }
 
@@ -148,7 +167,7 @@ private fun Chip(
             Modifier
                 .width(ChipWidth)
                 .background(background, MaterialTheme.shapes.small)
-                .clickable(onClick = onClick)
+                .clickable(enabled = enabled, onClick = onClick)
                 .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),

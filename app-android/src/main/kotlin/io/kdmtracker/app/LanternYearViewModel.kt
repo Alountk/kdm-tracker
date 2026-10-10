@@ -226,6 +226,7 @@ class LanternYearViewModel(
      */
     fun goHome() {
         onHome = true
+        shellTab = null
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
             _state.value =
@@ -273,8 +274,11 @@ class LanternYearViewModel(
                 _homeCards.value = loaded.controller.cards()
                 _createSucceeded.value += 1
                 onHome = false
+                shellTab = ShellTab.initialFor(loaded.controller.state.value.phase)
                 loaded.syncCoordinator?.rebind(card.campaignId)
-                _state.value = loaded.controller.state.value
+                _state.value =
+                    loaded.controller.state.value
+                        .forDisplay()
                 loaded.syncCoordinator?.syncNow()
             } catch (cancelled: CancellationException) {
                 throw cancelled

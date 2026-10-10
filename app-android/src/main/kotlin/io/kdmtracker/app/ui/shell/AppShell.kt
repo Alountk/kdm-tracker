@@ -42,7 +42,11 @@ fun AppShell(
         )
         Column(modifier = Modifier.weight(1f)) {
             if (tab == ShellTab.SETTLEMENT) {
-                PhaseCarousel(currentStep = state.currentStep, onSelectStep = onSelectStep)
+                PhaseCarousel(
+                    currentStep = state.currentStep,
+                    reachableSteps = state.reachableSteps,
+                    onSelectStep = onSelectStep,
+                )
             }
             content()
         }
