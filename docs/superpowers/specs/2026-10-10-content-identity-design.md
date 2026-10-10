@@ -116,7 +116,7 @@ The ledger stores `material` denormalized, exactly as it stores `category` today
 
 The PDFs are Spanish and carry no ids. Responsibilities split:
 
-- **The PDFs remain the content authority** — which cards exist and their category, exactly as today.
+- **The PDFs remain the content authority** — which cards exist, their category, and **their material tags**. The parser already extracts each card's type line as a validated tuple of tags (`ingest_resources.py:93,147`; vocabulary in `KNOWN_TAGS:69`) and its own docstring records that `hueso`/`órgano`/`piel`/`restos` appear on both BASIC and MONSTER cards — which is exactly why the *deck* had to decide the category while the *tags* can decide the material.
 - **A versioned CSV becomes the identity-and-naming authority** — `tools/content-ingest/identity/resources.csv`:
 
 ```csv
@@ -125,7 +125,8 @@ bone.monster,Hueso de Monstruo,,BONE
 hide.white_lion,Pelaje Blanco,White Lion Fur,HIDE
 ```
 
-- The CSV deliberately **does not carry `category`**. The source already determines it — the PDF deck a card ships in decides its category (`ingest_resources.py:57–64`) — so duplicating it in the CSV would create two authorities for one field. `material` is different: nothing in the PDF implies it, so the CSV owns it.
+- `material` is **derived from the card's tags**, not hand-authored: the material is the card's tag among the four primaries (`hueso`→`BONE`, `órgano`→`ORGAN`, `piel`→`HIDE`, `restos`→`SCRAP`), needing exactly one such tag to be unambiguous. The CSV's `material` column is the **fallback** for a card whose tags carry none or several, and the generator **fails loudly when neither resolves** — a card can never reach the catalog with no material.
+- The CSV deliberately **does not carry `category`**. The deck a card ships in decides its category (`ingest_resources.py:57–64`), so duplicating it in the CSV would create two authorities for one field.
 - `ingest_resources.py` reads the PDF, looks each card up in the CSV and **fails loudly on an unmapped card**, so no id can drift into existence by accident and the generator stays deterministic (the same `git diff --exit-code` gate).
 - The `englishName` column may be **empty** and grows incrementally — decision 2.
 - Sibling CSVs cover `locations.csv`, `gear.csv` and `innovations.csv` when S2/S3 reach them.
@@ -181,7 +182,7 @@ The plan cuts the program into four; each is reviewable on its own.
 
 - **`:core`**: `LocalizedText` falls back `EN → ES`; the identity table covers every catalog name (the completeness assertion); `Storage.project` aggregates two variants of the same material into one line; `AddResourceEntry` refuses by id; the two-shape `ResourceEntry` serializer round-trips both a legacy `{name,category,delta}` and a new `{id,material,delta}`; `TransferDocument` v11 is accepted and v10 still decodes.
 - **`:data`**: a settlement persisted with the legacy JSON shape decodes into id-keyed entries with no data loss; unknown keys are still ignored.
-- **`tools/content-ingest`**: the resource ingest fails on an unmapped card, and re-running over unchanged inputs is byte-identical.
+- **`tools/content-ingest`**: a card's material is derived from its tags; a card whose tags resolve to none and that the CSV does not cover **fails the ingest**; an unmapped card fails it too; and re-running over unchanged inputs is byte-identical.
 - **`:app-android`**: the summary grid renders four cells keyed by material with the localized label; the Recursos tab shows the localized name; switching the language changes the label without touching the record.
 - **Gate**: the full suite plus `spotlessCheck`.
 
