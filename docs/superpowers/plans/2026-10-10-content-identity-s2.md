@@ -196,3 +196,43 @@ git commit -m "refactor(core): key the settlement state by id and carry the old 
 
 - Whole-branch review after T4 is approved, then PR per task (or the chained set) under the agreed delivery strategy.
 - **S3** (the full resource catalog and English names) and **S4** (the language selector) follow. After S2 the two transitional bridges shrink to the decode path, and the panel's `32 Opciones` is gone.
+
+---
+
+## Appendix — the reconnaissance this plan was written from
+
+Recorded here rather than only in the (git-ignored) ledger, so a fresh session does not have to re-derive it.
+
+### The per-family split (a ruling, not the original draft)
+
+The three families split into three commits, one per family, each green: a family takes ids while its cross-family references stay name-keyed through `ContentIdentity` until their own commit — the same bridge pattern S1 used. Order chosen to minimise coupling: **locations → innovations → gear**. Locations first because nothing outside gear references them; gear last because `SettlementLocation.recipes` holds its type.
+
+### The location emitter
+
+`tools/content-ingest/ingest_locations.py` parses `external-assets/Juego Completo/Formato XXL 102x204 mm/AF Asentamientos Loc.pdf`, one location per card, and produces **exactly 13** names (a probe run, not a guess):
+
+`Armería · Artesano de Máscaras · Cirujano Barbero · Curtiduría · Círculo de Piedra · Cúmulo de Linternas · Cúmulo de Linternas Extinto · Felinarium · Herrería · Molino de Órganos · Peletería · Plumería · Taller de Huesos`
+
+plus the action name `Innovar`. It emits `buildCost` as resource **names** (`mapOf("Hueso de Monstruo" to 3, …)`) and `requires` as location **names**; both must become ids.
+
+### The identity CSV, resolved with the user
+
+`identity/locations.csv` holds **19 locations**: the 13 Spanish cards, each also carrying its English name, plus 6 sites only the 1.6 seed declares. The user resolved the three that could not be inferred — **`Armería` = Weapon Crafter, `Felinarium` = Catarium, `Herrería` = Blacksmith** — and the other ten were obvious (`Taller de Huesos`=Bone Smith, `Peletería`=Skinnery, `Molino de Órganos`=Organ Grinder, `Círculo de Piedra`=Stone Circle, `Curtiduría`=Leather Worker, `Artesano de Máscaras`=Mask Maker, `Cirujano Barbero`=Barber Surgeon, `Plumería`=Plumery, `Cúmulo de Linternas`=Lantern Hoard, `Cúmulo de Linternas Extinto`=Exhausted Lantern Hoard). Verified: 32 names index to 19 ids and no card is unmapped.
+
+### Two shape facts worth knowing before starting
+
+- **`SettlementAction` needs `names: LocalizedText`.** The 1.5 pack calls the Lantern Hoard's action `Innovar` and the 1.6 seed calls it `Innovate` — which is exactly the panel rendering `Innovate` on a Spanish screen. Give the seed action `es = "Innovar", en = "Innovate"`.
+- **`SettlementLocation` is declared in two generated packs.** `Legacy15Content` concatenates `Core15Locations.bundle.locations + Core15Gear.bundle.locations` (the gear emitter contributes the locations that carry recipes), and `ContentCatalog` merges them by name today. With ids they merge by id, and both packs must take the same id from the same CSV.
+
+### Files that stop compiling when the family lands
+
+`:core` — `ContentCatalog`, `Core16Content`, `Legacy15Content`, the three generated packs, `Craft`, `BuildLocation`, `Innovate`, and the tests `ContentCatalogTest`, `ContentCatalogMergeTest`, `Core16ContentTest`, `Legacy15ContentTest`, `Core15GearTest`, `Core15GearContentTest`, `Core15LocationsTest`, `GeneratedInnovationsTest`, `GearCatalogTest`, `GearModelTest`, `InnovationTest`, `SettlementActionTest`, `SettlementLocationTest`, `SettlementStateSerializationTest`, `BuildLocationUseCaseTest`, `CraftUseCaseTest`, `InnovateUseCaseTest`, `CraftabilityTest`.
+
+`:app-android` — `LanternYearController`, `LanternYearViewModel`, `SettlementRepository`, `SurvivorComponents`, and the tests `CraftControllerTest`, `DevelopCraftSectionTest`, `DevelopStepControllerTest`, `SettlementRecordRepositoryTest`, `SetUpStepControllerTest`, `SurvivorRosterControllerTest`.
+
+`:data` — `SettlementStateStoreTest`.
+
+### The shared identity layer already exists
+
+`tools/content-ingest/identity.py` (committed) owns `IdentityRow`, `load_identity` — keyed by **every** name a row carries, which is what collapses two languages into one entity — `require_row`, `unmapped_cards`, `unused_rows`, and the tag vocabulary and material derivation. `ingest_resources.py` is already folded onto it; the other three emitters import it the same way.
+
