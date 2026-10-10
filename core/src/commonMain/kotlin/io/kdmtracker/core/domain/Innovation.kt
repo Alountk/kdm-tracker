@@ -1,6 +1,24 @@
 package io.kdmtracker.core.domain
 
+import io.kdmtracker.core.content.ContentIdentity
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.serializer
 
 /**
  * An innovation the settlement can unlock.
@@ -11,7 +29,7 @@ import kotlinx.serialization.Serializable
  * @property consequences the names of the cards the innovation adds to the deck.
  * @property survivalLimitBonus the survival limit increase the innovation grants.
  */
-@Serializable
+@Serializable(with = InnovationSerializer::class)
 data class Innovation(
     val id: InnovationId,
     val names: LocalizedText,
@@ -77,5 +95,65 @@ data class InnovationDeck(
                     .distinct()
                     .sorted(),
             )
+    }
+}
+
+/**
+ * Reads both shapes an [Innovation] has ever been written in.
+ *
+ * The new shape carries the stable [InnovationId] and localized [Innovation.names]. The old one
+ * carried only a display name, because that *was* the identity — so it is mapped through
+ * [ContentIdentity] and keeps its description and consequences verbatim. An old name the table
+ * does not know survives under a synthesized `unknown.…` id rather than being dropped.
+ */
+object InnovationSerializer : KSerializer<Innovation> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("io.kdmtracker.core.domain.Innovation") {
+            element<String>("id")
+            element("names", LocalizedText.serializer().descriptor)
+            element<String>("description")
+            element("consequences", ListSerializer(serializer<String>()).descriptor)
+            element<Int>("survivalLimitBonus")
+        }
+
+    override fun serialize(
+        encoder: Encoder,
+        value: Innovation,
+    ) {
+        val json = encoder as? JsonEncoder ?: error("Innovation is persisted as JSON")
+        json.encodeJsonElement(
+            JsonObject(
+                mapOf(
+                    "id" to JsonPrimitive(value.id.value),
+                    "names" to Json.encodeToJsonElement(LocalizedText.serializer(), value.names),
+                    "description" to JsonPrimitive(value.description),
+                    "consequences" to JsonArray(value.consequences.map { JsonPrimitive(it) }),
+                    "survivalLimitBonus" to JsonPrimitive(value.survivalLimitBonus),
+                ),
+            ),
+        )
+    }
+
+    override fun deserialize(decoder: Decoder): Innovation {
+        val json = decoder as? JsonDecoder ?: error("Innovation is persisted as JSON")
+        val fields = json.decodeJsonElement().jsonObject
+        val legacyName = fields["name"]?.jsonPrimitive?.content
+        val id =
+            fields["id"]?.jsonPrimitive?.content
+                ?: legacyName?.let { name ->
+                    ContentIdentity.innovationIdFor(name)?.value ?: ContentIdentity.synthesizedId(name)
+                }
+                ?: error("an innovation needs an id, or a legacy name to resolve one")
+        val names =
+            fields["names"]?.let { Json.decodeFromJsonElement(LocalizedText.serializer(), it) }
+                ?: legacyName?.let { LocalizedText(es = it) }
+                ?: error("an innovation needs names, or a legacy name to derive them from")
+        return Innovation(
+            id = InnovationId(id),
+            names = names,
+            description = fields["description"]?.jsonPrimitive?.content ?: "",
+            consequences = fields["consequences"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
+            survivalLimitBonus = fields["survivalLimitBonus"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0,
+        )
     }
 }

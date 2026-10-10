@@ -119,6 +119,94 @@ class SettlementStateSerializationTest {
     }
 
     @Test
+    fun aLegacyBuiltLocationDecodesThroughTheIdentityTable() {
+        val legacy = """{"built":["Lantern Hoard"]}"""
+
+        val decoded = json.decodeFromString(LocationSet.serializer(), legacy)
+
+        assertEquals(listOf(LocationId("lantern_hoard")), decoded.built)
+    }
+
+    @Test
+    fun anUnmappedLegacyLocationSurvivesUnderASynthesizedId() {
+        val legacy = """{"built":["Sitio Que No Existe"]}"""
+
+        val decoded = json.decodeFromString(LocationSet.serializer(), legacy)
+
+        assertTrue(
+            decoded.built
+                .single()
+                .value
+                .startsWith("unknown."),
+        )
+    }
+
+    @Test
+    fun theNewShapeEncodesBuiltLocationsAsIdObjects() {
+        val set = LocationSet(built = listOf(LocationId("lantern_hoard")))
+
+        assertEquals("""{"built":[{"id":"lantern_hoard"}]}""", json.encodeToString(set))
+    }
+
+    @Test
+    fun aLegacyGearListDecodesThroughTheIdentityTable() {
+        val legacy = """{"gear":["Daga de Hueso"]}"""
+
+        val decoded = json.decodeFromString<SettlementState>(legacy)
+
+        assertEquals(listOf(GearId("daga_de_hueso")), decoded.gear)
+    }
+
+    @Test
+    fun anUnmappedLegacyGearSurvivesUnderASynthesizedId() {
+        val legacy = """{"gear":["Equipo Fantasma"]}"""
+
+        val decoded = json.decodeFromString<SettlementState>(legacy)
+
+        assertTrue(
+            decoded.gear
+                .single()
+                .value
+                .startsWith("unknown."),
+        )
+    }
+
+    @Test
+    fun aLegacyInnovationDecodesWithItsNames() {
+        val legacy =
+            """
+            {"innovations":{"innovations":[
+              {"name":"Lenguaje","description":"Se pueden hablar.","consequences":["Narración"],
+               "survivalLimitBonus":1}
+            ]}}
+            """.trimIndent()
+
+        val decoded = json.decodeFromString<SettlementState>(legacy)
+        val innovation = decoded.innovations.innovations.single()
+
+        assertEquals(InnovationId("language"), innovation.id)
+        assertEquals(LocalizedText(es = "Lenguaje"), innovation.names)
+        assertEquals("Se pueden hablar.", innovation.description)
+        assertEquals(listOf("Narración"), innovation.consequences)
+        assertEquals(1, innovation.survivalLimitBonus)
+    }
+
+    @Test
+    fun anUnmappedLegacyInnovationSurvivesUnderASynthesizedId() {
+        val legacy =
+            """{"innovations":{"innovations":[{"name":"Invención Extraña","description":"…"}]}}"""
+
+        val decoded = json.decodeFromString<SettlementState>(legacy)
+
+        assertTrue(
+            decoded.innovations.innovations
+                .single()
+                .id.value
+                .startsWith("unknown."),
+        )
+    }
+
+    @Test
     fun jsonMissingNewFieldsDecodesWithDefaults() {
         val decoded = json.decodeFromString<SettlementState>("""{ "deaths": 1 }""")
 

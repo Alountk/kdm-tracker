@@ -637,11 +637,17 @@ class LanternYearController(
                         ?.names
                         ?.es ?: locationId.value
                 },
-            gear = record.state.gear,
+            gear =
+                record.state.gear.map { gearId ->
+                    content.gearDefinitions
+                        .firstOrNull { it.id == gearId }
+                        ?.names
+                        ?.es ?: gearId.value
+                },
             survivalLimit =
                 record.survivalLimit(ruleset) +
                     DerivedValues.modifierTotal(
-                        content.gearModifiersFor(record.state.gear),
+                        content.gearModifiersFor(record.state.gear.map { it.value }),
                         ModifierTarget.SURVIVAL_LIMIT,
                         ModifierScope.SETTLEMENT,
                     ),

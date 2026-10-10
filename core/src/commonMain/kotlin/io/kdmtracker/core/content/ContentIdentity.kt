@@ -87,6 +87,15 @@ object ContentIdentity {
             "Organ" to ResourceId("organ.monster"),
         )
 
+    /**
+     * The id a legacy display name gets when no identity row covers it.
+     *
+     * A persisted name the tables do not know is data the user already has, so it survives under
+     * a readable `unknown.…` id rather than being dropped — same rule S1 gave `ResourceEntry`.
+     */
+    fun synthesizedId(name: String): String =
+        "unknown." + name.lowercase().map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")
+
     /** The id for a resource's pre-id display name, or `null` when no content produces that name. */
     fun resourceIdFor(name: String): ResourceId? = byName[name]
 

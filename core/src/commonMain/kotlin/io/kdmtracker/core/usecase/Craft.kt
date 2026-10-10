@@ -16,9 +16,7 @@ import io.kdmtracker.core.rules.StepResult
  * and leaves the record unchanged; success spends the resources (via the ledger guard) and
  * adds the gear to the settlement.
  *
- * The settlement's crafted-gear list still holds display names (the state re-keys them to
- * ids in the serializer slice); a successful craft records the catalog's Spanish name so the
- * list holds one canonical name per gear regardless of which language the player clicked.
+ * A successful craft records the gear's stable id in the settlement's crafted-gear list.
  */
 object Craft {
     fun run(
@@ -64,6 +62,6 @@ object Craft {
                 is StepResult.Blocked -> return result
             }
         }
-        return StepResult.Ok(spent.copy(state = spent.state.withGear(gearName)))
+        return StepResult.Ok(spent.copy(state = spent.state.withGear(gearId)))
     }
 }

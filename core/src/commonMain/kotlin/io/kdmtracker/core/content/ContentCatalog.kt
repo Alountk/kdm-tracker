@@ -86,13 +86,16 @@ data class ContentCatalog(
         resourceDefinitions.firstOrNull { it.names.es == name || it.names.en == name }
 
     /**
-     * The modifiers of every gear named in [gearNames]; unknown names are ignored. A name
-     * resolves in either language — the crafted-gear lists still hold display names until the
-     * state re-keys them to [GearId].
+     * The modifiers of every gear keyed by [gearKeys]; unknown keys are ignored. A key is either
+     * a stable [GearId] value (the settlement's crafted-gear list) or a display name in either
+     * language (a survivor's equipment list), resolved against the definitions either way.
      */
-    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> =
-        gearNames.flatMap { name ->
-            gearDefinitions.firstOrNull { it.names.es == name || it.names.en == name }?.modifiers ?: emptyList()
+    fun gearModifiersFor(gearKeys: Collection<String>): List<Modifier> =
+        gearKeys.flatMap { key ->
+            gearDefinitions
+                .firstOrNull { it.id.value == key || it.names.es == key || it.names.en == key }
+                ?.modifiers
+                ?: emptyList()
         }
 
     /**

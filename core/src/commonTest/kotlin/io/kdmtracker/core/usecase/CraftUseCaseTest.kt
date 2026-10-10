@@ -103,7 +103,7 @@ class CraftUseCaseTest {
                 .single { it.id.value == "Hueso" }
                 .quantity,
         )
-        assertEquals(listOf("Daga de Hueso"), ok.value.state.gear)
+        assertEquals(listOf(GearId("daga_de_hueso")), ok.value.state.gear)
     }
 
     @Test
@@ -170,6 +170,6 @@ class CraftUseCaseTest {
                 Craft.run(first, LocationId("bone_smith"), GearId("daga_de_hueso"), catalog),
             ).value
 
-        assertEquals(listOf("Daga de Hueso"), second.state.gear)
+        assertEquals(listOf(GearId("daga_de_hueso")), second.state.gear)
     }
 }

@@ -91,7 +91,7 @@ class CraftControllerTest {
         assertNull(controller.state.value.actionError)
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
         val fresh = SettlementRepository(store).record
-        assertTrue("Hacha de Contrapeso" in fresh.state.gear)
+        assertTrue(GearId("hacha_de_contrapeso") in fresh.state.gear)
         assertEquals(1, fresh.storage().single { it.id.value == "Hueso de Monstruo" }.quantity)
     }
 
