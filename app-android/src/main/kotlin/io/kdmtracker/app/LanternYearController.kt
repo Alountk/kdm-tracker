@@ -715,7 +715,7 @@ class LanternYearController(
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }
-                    .flatMap { (category, choices) -> choices.map { "${category.name}: ${it.label}" } },
+                    .flatMap { (_, choices) -> choices.map { it.label } },
             yearEvents =
                 content.timeline
                     .filter { it.lanternYear == settlement.lanternYear }

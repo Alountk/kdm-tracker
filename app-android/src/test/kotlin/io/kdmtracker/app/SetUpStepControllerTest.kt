@@ -106,6 +106,25 @@ class SetUpStepControllerTest {
     }
 
     @Test
+    fun thePrincipleListShowsTheChoiceLabelsNotTheCategoryPrefix() {
+        // The controller used to hand-build "DEATH: The First Harvest → Cannibalize"; the label
+        // is domain content and the section shows it bare.
+        val state = LanternYearController(repository()).state.value
+
+        assertEquals(
+            listOf(
+                "The First Harvest → Cannibalize",
+                "The First Grave → Graves",
+                "Without Mercy → Survival of the Fittest",
+                "With Affection → Protect the Young",
+                "Collective Toil",
+                "Accept Darkness",
+            ),
+            state.principles,
+        )
+    }
+
+    @Test
     fun advancingStillBehavesAsBefore() {
         val controller = controllerAt(SettlementPhase.SETTLEMENT, 11)
 
