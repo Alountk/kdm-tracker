@@ -3,10 +3,10 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
@@ -66,9 +66,9 @@ class DevelopStepControllerTest {
                                 ),
                             resources =
                                 listOf(
-                                    ResourceDefinition("Bone", ResourceCategory.BASIC),
-                                    ResourceDefinition("Organ", ResourceCategory.BASIC),
-                                    ResourceDefinition("Hide", ResourceCategory.BASIC),
+                                    resourceDefinition("Bone", ResourceCategory.BASIC),
+                                    resourceDefinition("Organ", ResourceCategory.BASIC),
+                                    resourceDefinition("Hide", ResourceCategory.BASIC),
                                 ),
                         ),
                 ),

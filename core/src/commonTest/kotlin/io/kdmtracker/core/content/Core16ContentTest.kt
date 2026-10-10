@@ -5,7 +5,9 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.Language
 import io.kdmtracker.core.domain.ResourceCategory
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Timeline
 import io.kdmtracker.core.domain.Ulid
@@ -94,10 +96,15 @@ class Core16ContentTest {
         val catalog = catalog()
 
         assertTrue(
-            catalog.resources.containsAll(listOf("Bone", "Hide", "Organ", "Scrap")),
-            "was ${catalog.resources}",
+            catalog.resourceDefinitions.map { it.id.value }.containsAll(
+                listOf("bone.monster", "hide.monster", "organ.monster", "scrap"),
+            ),
+            "was ${catalog.resourceDefinitions.map { it.id.value }}",
         )
-        assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.name == "Bone" }.category)
+        val bone = catalog.resourceDefinitions.first { it.id.value == "bone.monster" }
+        assertEquals(ResourceCategory.BASIC, bone.category)
+        assertEquals("Bone", bone.names.inLanguage(Language.EN))
+        assertEquals(ResourceMaterial.BONE, bone.material)
     }
 
     @Test

@@ -37,11 +37,12 @@ object Craft {
             return StepResult.Blocked("$gearName requires $missing")
         }
 
-        val categoryByName = catalog.resourceDefinitions.associate { it.name to it.category }
         var spent = record
         for ((resource, count) in recipe.resourceCost) {
-            val category = categoryByName[resource] ?: return StepResult.Blocked("unknown resource: $resource")
-            when (val result = AddResourceEntry.run(spent, ResourceEntry(resource, category, -count))) {
+            val definition =
+                catalog.resourceDefinitionFor(resource)
+                    ?: return StepResult.Blocked("unknown resource: $resource")
+            when (val result = AddResourceEntry.run(spent, ResourceEntry(resource, definition.category, -count))) {
                 is StepResult.Ok -> spent = result.value
                 is StepResult.Blocked -> return result
             }

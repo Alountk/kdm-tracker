@@ -17,18 +17,27 @@ data class ResourceEntry(
 )
 
 /**
- * A resource the settlement can store, with the sheet [category] it belongs to.
+ * A resource the settlement can store.
  *
- * Content packs carry these definitions, so a resource's category is content, never
- * inferred from its name.
+ * Content packs carry these definitions, so a resource's [category] and [material] are content,
+ * never inferred from its name. The [id] is the stable key: the ledger, the recipes and the UI all
+ * refer to a resource by it, so a re-translated name can never orphan the data.
  *
+ * @property id the stable, language-neutral identity, chosen once and never derived from a name.
+ * @property names the display name per language (Spanish always present, English growing).
+ * @property category the rules dimension — which sheet section the resource belongs to.
+ * @property material the aggregate dimension — which of the summary's four buckets the resource
+ *   feeds. `null` when it feeds none of them (a herb, a bar of iron, a skull): the resource is
+ *   still real and still craftable, it simply does not appear in the four-cell grid.
  * @property source the monster/deck the resource comes from, for grouping in the UI. Empty when
- *   unknown; it never affects the ledger, which keys resources by name.
+ *   unknown; it never affects the ledger.
  */
 @Serializable
 data class ResourceDefinition(
-    val name: String,
+    val id: ResourceId,
+    val names: LocalizedText,
     val category: ResourceCategory,
+    val material: ResourceMaterial? = null,
     val source: String = "",
 )
 

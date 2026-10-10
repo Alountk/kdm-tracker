@@ -18,7 +18,7 @@ class DevelopTabsTest {
         fun record(name: String) {
             val definition =
                 controller.state.value.resourceDefinitions
-                    .single { it.name == name }
+                    .single { it.names.es == name }
             controller.addResource(ResourceEntry(name, definition.category, 1))
         }
 

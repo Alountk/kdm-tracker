@@ -33,7 +33,7 @@ object Legacy15Content {
                     resources =
                         Core15Resources.bundle.resources.map {
                             it.copy(
-                                source = ResourceSources.sourceOf(it.name),
+                                source = ResourceSources.sourceOf(it.names.es),
                             )
                         },
                     fightingArts = Core15FightingArts.bundle.fightingArts,

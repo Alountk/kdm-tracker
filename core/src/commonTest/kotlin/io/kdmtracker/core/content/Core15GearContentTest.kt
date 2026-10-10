@@ -14,7 +14,7 @@ class Core15GearContentTest {
     fun everyRecipeResolvesAgainstTheShippedPack() {
         val resources =
             Legacy15Content.pack.bundle.resources
-                .map { it.name }
+                .map { it.names.es }
                 .toSet()
         val innovations =
             Legacy15Content.pack.bundle.innovations

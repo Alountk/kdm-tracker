@@ -63,11 +63,11 @@ object Innovate {
 
         var spent = record
         for ((name, count) in action.resourceCost) {
-            val category =
-                catalog.resourceDefinitions.firstOrNull { it.name == name }?.category
+            val definition =
+                catalog.resourceDefinitionFor(name)
                     ?: return StepResult.Blocked("unknown resource $name")
             spent =
-                when (val result = AddResourceEntry.run(spent, ResourceEntry(name, category, -count))) {
+                when (val result = AddResourceEntry.run(spent, ResourceEntry(name, definition.category, -count))) {
                     is StepResult.Ok -> result.value
                     is StepResult.Blocked -> return result
                 }

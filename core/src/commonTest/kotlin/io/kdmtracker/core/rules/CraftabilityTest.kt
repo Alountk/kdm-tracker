@@ -3,12 +3,12 @@ package io.kdmtracker.core.rules
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementLocation
@@ -45,7 +45,7 @@ class CraftabilityTest {
                     bundle =
                         ContentBundle(
                             locations = listOf(taller),
-                            resources = listOf(ResourceDefinition("Hueso", ResourceCategory.BASIC)),
+                            resources = listOf(resourceDefinition("Hueso", ResourceCategory.BASIC)),
                             gear = listOf(Gear("Daga"), Gear("Espada")),
                         ),
                 ),

@@ -3,11 +3,11 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
@@ -44,7 +44,7 @@ class DevelopCraftSectionTest {
                                             ),
                                     ),
                                 ),
-                            resources = listOf(ResourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
+                            resources = listOf(resourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
                             gear = listOf(Gear("Hacha de Contrapeso")),
                         ),
                 ),
