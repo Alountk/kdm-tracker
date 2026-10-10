@@ -94,7 +94,7 @@ internal fun FabricarTab(
             .sortedBy { (group, _) -> group }
             .forEach { (group, recipes) ->
                 Text(text = group, style = MaterialTheme.typography.titleSmall)
-                recipes.forEach { view -> CraftRow(view = view, onCraft = onCraft) }
+                recipes.forEach { view -> CraftRow(view = view, state = state, onCraft = onCraft) }
             }
 
         Button(onClick = onSpendEndeavor) { Text("Gastar endeavor (−1)") }
@@ -104,6 +104,7 @@ internal fun FabricarTab(
 @Composable
 private fun CraftRow(
     view: CraftRecipeView,
+    state: UiState,
     onCraft: (String, String) -> Unit,
 ) {
     Row(
@@ -113,28 +114,38 @@ private fun CraftRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = view.recipe.gearName,
+                text = view.gearName,
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (view.check.craftable) Craftable else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text =
-                    costText(view.recipe) +
+                    costText(view.recipe, state) +
                         (view.check.missing?.let { " · $it" } ?: ""),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Button(onClick = { onCraft(view.locationName, view.recipe.gearName) }, enabled = view.check.craftable) {
+        Button(onClick = { onCraft(view.locationName, view.gearName) }, enabled = view.check.craftable) {
             Text("Crear")
         }
     }
 }
 
-private fun costText(recipe: GearRecipe): String =
+private fun costText(
+    recipe: GearRecipe,
+    state: UiState,
+): String =
     recipe.resourceCost.entries
-        .sortedBy { it.key }
-        .joinToString(", ") { (name, count) -> "$count $name" }
+        .sortedBy { it.key.value }
+        .joinToString(", ") { (id, count) ->
+            val name =
+                state.resourceDefinitions
+                    .firstOrNull { it.id == id }
+                    ?.names
+                    ?.es ?: id.value
+            "$count $name"
+        }
 
 /** The location's prerequisites as displayed names, resolved through the catalog. */
 private fun requiresText(

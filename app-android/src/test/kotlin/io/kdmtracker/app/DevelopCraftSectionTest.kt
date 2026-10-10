@@ -5,6 +5,7 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
@@ -39,17 +40,20 @@ class DevelopCraftSectionTest {
                                         recipes =
                                             listOf(
                                                 GearRecipe(
-                                                    "Hacha de Contrapeso",
+                                                    GearId("hacha_de_contrapeso"),
                                                     resourceCost =
                                                         mapOf(
-                                                            "Hueso de Monstruo" to 2,
+                                                            ResourceId("Hueso de Monstruo") to 2,
                                                         ),
                                                 ),
                                             ),
                                     ),
                                 ),
                             resources = listOf(resourceDefinition("Hueso de Monstruo", ResourceCategory.MONSTER)),
-                            gear = listOf(Gear("Hacha de Contrapeso")),
+                            gear =
+                                listOf(
+                                    Gear(GearId("hacha_de_contrapeso"), LocalizedText(es = "Hacha de Contrapeso")),
+                                ),
                         ),
                 ),
             ),
@@ -79,7 +83,7 @@ class DevelopCraftSectionTest {
             state.catalogLocations
                 .single { it.names.es == "Armería" }
                 .recipes
-                .any { it.gearName == "Hacha de Contrapeso" },
+                .any { it.gearId == GearId("hacha_de_contrapeso") },
         )
     }
 

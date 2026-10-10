@@ -3,6 +3,7 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Core16Milestones
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.InnovationDeck
@@ -323,8 +324,17 @@ class LanternYearController(
             publishBlocked("unknown location $locationName")
             return
         }
-        applyResult(Craft.run(repository.record, locationId, gearName, content))
+        val gearId = gearIdFor(gearName)
+        if (gearId == null) {
+            publishBlocked("unknown gear $gearName")
+            return
+        }
+        applyResult(Craft.run(repository.record, locationId, gearId, content))
     }
+
+    /** The id of the gear the screens display as [gearName]; see [locationIdFor]. */
+    private fun gearIdFor(gearName: String): GearId? =
+        content.gearDefinitions.firstOrNull { it.names.es == gearName || it.names.en == gearName }?.id
 
     /**
      * Records [count] deaths (Step 5): `:core`'s [RecordDeaths] raises the counter and lowers the
@@ -652,10 +662,16 @@ class LanternYearController(
                                 Craftability.check(record, locationId, recipe, content),
                                 gearType(
                                     content.gearDefinitions
-                                        .firstOrNull { it.name == recipe.gearName }
+                                        .firstOrNull { it.id == recipe.gearId }
                                         ?.keywords
                                         .orEmpty(),
                                 ),
+                                gearName =
+                                    content.gearDefinitions
+                                        .firstOrNull { it.id == recipe.gearId }
+                                        ?.names
+                                        ?.es
+                                        ?: recipe.gearId.value,
                             )
                         }
                 },

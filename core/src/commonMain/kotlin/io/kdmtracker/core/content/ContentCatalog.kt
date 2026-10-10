@@ -2,6 +2,7 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ContentEntry
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.Innovation
@@ -52,7 +53,7 @@ data class ContentCatalog(
     val monsterCardDefinitions: List<MonsterCard> =
         mergeDefinition(packs.flatMap { it.bundle.monsterCards }) { "${it.monster}|${it.kind}|${it.name}" }
     val gearDefinitions: List<Gear> =
-        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
+        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.id.value }
     val timeline: List<TimelineEntry> =
         packs
             .flatMap { it.bundle.timeline }
@@ -84,11 +85,15 @@ data class ContentCatalog(
     fun resourceDefinitionFor(name: String): ResourceDefinition? =
         resourceDefinitions.firstOrNull { it.names.es == name || it.names.en == name }
 
-    /** The modifiers of every gear named in [gearNames]; unknown names are ignored. */
-    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> {
-        val byName = gearDefinitions.associateBy { it.name }
-        return gearNames.flatMap { byName[it]?.modifiers ?: emptyList() }
-    }
+    /**
+     * The modifiers of every gear named in [gearNames]; unknown names are ignored. A name
+     * resolves in either language — the crafted-gear lists still hold display names until the
+     * state re-keys them to [GearId].
+     */
+    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> =
+        gearNames.flatMap { name ->
+            gearDefinitions.firstOrNull { it.names.es == name || it.names.en == name }?.modifiers ?: emptyList()
+        }
 
     /**
      * The resource definitions grouped by their [ResourceDefinition.source] (falling back to
@@ -138,7 +143,7 @@ private fun combineLocations(
         buildEndeavors = if (current.buildEndeavors != 0) current.buildEndeavors else candidate.buildEndeavors,
         buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
         actions = (current.actions + candidate.actions).distinctBy { it.kind },
-        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
+        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearId },
     )
 
 /**

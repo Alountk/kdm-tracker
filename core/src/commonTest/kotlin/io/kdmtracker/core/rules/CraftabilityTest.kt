@@ -5,8 +5,11 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
@@ -27,7 +30,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CraftabilityTest {
-    private val daga = GearRecipe("Daga", resourceCost = mapOf("Hueso" to 1))
+    private val daga = GearRecipe(GearId("daga"), resourceCost = mapOf(ResourceId("Hueso") to 1))
     private val taller =
         SettlementLocation(
             id = LocationId("taller"),
@@ -35,7 +38,11 @@ class CraftabilityTest {
             recipes =
                 listOf(
                     daga,
-                    GearRecipe("Espada", resourceCost = mapOf("Hueso" to 1), requires = listOf("Calor")),
+                    GearRecipe(
+                        GearId("espada"),
+                        resourceCost = mapOf(ResourceId("Hueso") to 1),
+                        requires = listOf(InnovationId("calor")),
+                    ),
                 ),
         )
 
@@ -48,9 +55,17 @@ class CraftabilityTest {
                     name = "p",
                     bundle =
                         ContentBundle(
+                            innovations =
+                                listOf(
+                                    Innovation(InnovationId("calor"), LocalizedText(es = "Calor"), "Calor state."),
+                                ),
                             locations = listOf(taller),
                             resources = listOf(resourceDefinition("Hueso", ResourceCategory.BASIC)),
-                            gear = listOf(Gear("Daga"), Gear("Espada")),
+                            gear =
+                                listOf(
+                                    Gear(GearId("daga"), LocalizedText(es = "Daga")),
+                                    Gear(GearId("espada"), LocalizedText(es = "Espada")),
+                                ),
                         ),
                 ),
             ),
@@ -120,7 +135,7 @@ class CraftabilityTest {
 
     @Test
     fun aMissingPrerequisiteIsNotCraftableAndNamesIt() {
-        val espada = taller.recipes.single { it.gearName == "Espada" }
+        val espada = taller.recipes.single { it.gearId == GearId("espada") }
 
         val check =
             Craftability.check(

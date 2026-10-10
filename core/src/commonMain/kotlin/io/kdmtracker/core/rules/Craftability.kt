@@ -27,7 +27,7 @@ object Craftability {
         recipe: GearRecipe,
         catalog: ContentCatalog,
     ): CraftCheck =
-        when (val result = Craft.run(record, locationId, recipe.gearName, catalog)) {
+        when (val result = Craft.run(record, locationId, recipe.gearId, catalog)) {
             is StepResult.Ok -> CraftCheck(craftable = true)
             is StepResult.Blocked -> CraftCheck(craftable = false, missing = result.reason)
         }

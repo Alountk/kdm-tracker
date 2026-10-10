@@ -7,6 +7,7 @@ import io.kdmtracker.core.domain.ResourceId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class ContentIdentityTest {
     private val catalog = ContentCatalog(listOf(Core16Content.pack, Legacy15Content.pack))
@@ -135,5 +136,39 @@ class ContentIdentityTest {
             Legacy15Content.pack.bundle.innovations
                 .first { it.id == InnovationId("language") }
         assertEquals((seed.consequences + legacy.consequences).distinct(), language.consequences)
+    }
+
+    @Test
+    fun everyCatalogGearNameResolvesToAnId() {
+        catalog.gearDefinitions.forEach { gear ->
+            assertNotNull(
+                ContentIdentity.gearIdFor(gear.names.es),
+                "no content id for '${gear.names.es}'",
+            )
+        }
+    }
+
+    @Test
+    fun everyPackGearCarriesTheIdTheIdentityTableGivesIt() {
+        assertEquals(132, catalog.gearDefinitions.size)
+        catalog.gearDefinitions.forEach { gear ->
+            assertEquals(ContentIdentity.gearIdFor(gear.names.es), gear.id, gear.names.es)
+        }
+    }
+
+    @Test
+    fun everyRecipeResolvesItsGearAndPrerequisitesAgainstTheCatalog() {
+        catalog.locationDefinitions.flatMap { it.recipes }.forEach { recipe ->
+            assertTrue(
+                catalog.gearDefinitions.any { it.id == recipe.gearId },
+                "recipe ${recipe.gearId.value} has no gear definition",
+            )
+            recipe.requires.forEach { innovationId ->
+                assertTrue(
+                    catalog.innovationDefinitions.any { it.id == innovationId },
+                    "recipe requires ${innovationId.value}, which the catalog does not carry",
+                )
+            }
+        }
     }
 }

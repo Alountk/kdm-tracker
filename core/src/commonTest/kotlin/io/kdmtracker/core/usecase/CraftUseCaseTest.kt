@@ -5,6 +5,7 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
@@ -36,8 +37,12 @@ class CraftUseCaseTest {
             names = LocalizedText(es = "Taller de Huesos"),
             recipes =
                 listOf(
-                    GearRecipe("Daga de Hueso", resourceCost = mapOf("Hueso" to 1)),
-                    GearRecipe("Espada Caliente", resourceCost = mapOf("Hueso" to 1), requires = listOf("Calor")),
+                    GearRecipe(GearId("daga_de_hueso"), resourceCost = mapOf(ResourceId("Hueso") to 1)),
+                    GearRecipe(
+                        GearId("espada_caliente"),
+                        resourceCost = mapOf(ResourceId("Hueso") to 1),
+                        requires = listOf(InnovationId("calor")),
+                    ),
                 ),
         )
 
@@ -52,7 +57,11 @@ class CraftUseCaseTest {
                         ContentBundle(
                             locations = listOf(taller),
                             resources = listOf(resourceDefinition("Hueso", ResourceCategory.BASIC)),
-                            gear = listOf(Gear("Daga de Hueso"), Gear("Espada Caliente")),
+                            gear =
+                                listOf(
+                                    Gear(GearId("daga_de_hueso"), LocalizedText(es = "Daga de Hueso")),
+                                    Gear(GearId("espada_caliente"), LocalizedText(es = "Espada Caliente")),
+                                ),
                         ),
                 ),
             ),
@@ -84,7 +93,7 @@ class CraftUseCaseTest {
 
     @Test
     fun aValidCraftSpendsTheCostAndAddsTheGear() {
-        val result = Craft.run(record(state = ready()), LocationId("bone_smith"), "Daga de Hueso", catalog)
+        val result = Craft.run(record(state = ready()), LocationId("bone_smith"), GearId("daga_de_hueso"), catalog)
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(
@@ -101,7 +110,7 @@ class CraftUseCaseTest {
     fun anUnbuiltLocationIsBlocked() {
         val state = ready().copy(locations = LocationSet())
 
-        val result = Craft.run(record(state = state), LocationId("bone_smith"), "Daga de Hueso", catalog)
+        val result = Craft.run(record(state = state), LocationId("bone_smith"), GearId("daga_de_hueso"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -109,16 +118,16 @@ class CraftUseCaseTest {
     @Test
     fun anUnknownLocationOrGearIsBlocked() {
         assertIs<StepResult.Blocked>(
-            Craft.run(record(state = ready()), LocationId("nowhere"), "Daga de Hueso", catalog),
+            Craft.run(record(state = ready()), LocationId("nowhere"), GearId("daga_de_hueso"), catalog),
         )
         assertIs<StepResult.Blocked>(
-            Craft.run(record(state = ready()), LocationId("bone_smith"), "Nowhere", catalog),
+            Craft.run(record(state = ready()), LocationId("bone_smith"), GearId("nowhere"), catalog),
         )
     }
 
     @Test
     fun aMissingPrerequisiteIsBlocked() {
-        val result = Craft.run(record(state = ready()), LocationId("bone_smith"), "Espada Caliente", catalog)
+        val result = Craft.run(record(state = ready()), LocationId("bone_smith"), GearId("espada_caliente"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -133,7 +142,7 @@ class CraftUseCaseTest {
                     ),
             )
 
-        val result = Craft.run(record(state = state), LocationId("bone_smith"), "Espada Caliente", catalog)
+        val result = Craft.run(record(state = state), LocationId("bone_smith"), GearId("espada_caliente"), catalog)
 
         assertIs<StepResult.Ok<SettlementRecord>>(result)
     }
@@ -142,7 +151,7 @@ class CraftUseCaseTest {
     fun insufficientStorageIsBlockedAndLeavesTheRecordUnchanged() {
         val before = record(state = ready(bones = 0))
 
-        val result = Craft.run(before, LocationId("bone_smith"), "Daga de Hueso", catalog)
+        val result = Craft.run(before, LocationId("bone_smith"), GearId("daga_de_hueso"), catalog)
 
         assertIs<StepResult.Blocked>(result)
         assertEquals(0, before.storage().count { it.id.value == "Hueso" })
@@ -153,12 +162,12 @@ class CraftUseCaseTest {
     fun reCraftingTheSameGearDoesNotDuplicateIt() {
         val first =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                Craft.run(record(state = ready()), LocationId("bone_smith"), "Daga de Hueso", catalog),
+                Craft.run(record(state = ready()), LocationId("bone_smith"), GearId("daga_de_hueso"), catalog),
             ).value
 
         val second =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                Craft.run(first, LocationId("bone_smith"), "Daga de Hueso", catalog),
+                Craft.run(first, LocationId("bone_smith"), GearId("daga_de_hueso"), catalog),
             ).value
 
         assertEquals(listOf("Daga de Hueso"), second.state.gear)
