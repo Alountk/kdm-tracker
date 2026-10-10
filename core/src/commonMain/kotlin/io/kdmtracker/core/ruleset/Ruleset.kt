@@ -78,6 +78,10 @@ fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
         overrides.specialShowdownStep == null &&
         overrides.deathCountStep == null &&
         overrides.endeavorsPerReturnee == null &&
+        overrides.huntXpTrackMax == null &&
+        overrides.insanityThreshold == null &&
+        overrides.innovationDraw == null &&
+        overrides.innovationKeep == null &&
         overrides.extraMilestones.isEmpty() &&
         overrides.principleOverrides.isEmpty()
     ) {
