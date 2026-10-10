@@ -15,6 +15,7 @@ out/
 # Untracked copyrighted source assets (card PDFs, art, rules reference material).
 # Consumed by tools/content-ingest; never committed.
 external-assets/
+external-assets
 
 # Python bytecode from the tools/ scripts.
 __pycache__/

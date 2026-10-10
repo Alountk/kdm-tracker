@@ -27,8 +27,11 @@ import io.kdmtracker.app.ui.AppTopBar
 import io.kdmtracker.app.ui.ChipAction
 import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
+import io.kdmtracker.app.ui.PendientePlaceholder
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
+import io.kdmtracker.app.ui.shell.AppShell
+import io.kdmtracker.app.ui.shell.ShellTab
 import io.kdmtracker.app.ui.theme.KdmTheme
 
 @Composable
@@ -55,6 +58,9 @@ fun KdmTrackerApp(
         Scaffold(
             topBar = {
                 state?.let { current ->
+                    // Inside a campaign the design's own top bar lives in the shell, so the
+                    // app chrome would be a second bar stacked above it.
+                    if (AppShell.inShell(current.screen)) return@let
                     AppTopBar(
                         chrome = AppChrome.of(current.screen, current.settlementName, syncState),
                         onChipAction = { action ->
@@ -78,6 +84,7 @@ fun KdmTrackerApp(
                 BackHandler(
                     enabled =
                         current?.screen == Screen.Settlement ||
+                            current?.screen == Screen.Survivors ||
                             current?.screen == Screen.Hunt ||
                             current?.screen == Screen.Showdown,
                 ) { viewModel.goHome() }
@@ -96,55 +103,6 @@ fun KdmTrackerApp(
                                     onNewSettlementName = { newSettlementName = it },
                                     error = actionError,
                                 )
-                            Screen.Settlement ->
-                                SettlementScreen(
-                                    state = current,
-                                    onAdvance = viewModel::advance,
-                                    onPrevious = viewModel::previous,
-                                    onSelectStep = viewModel::selectStep,
-                                    onInnovate = viewModel::innovate,
-                                    onBuild = viewModel::build,
-                                    onSpendEndeavor = viewModel::spendEndeavor,
-                                    onAddResource = viewModel::addResource,
-                                    onCraft = viewModel::craft,
-                                    onRecordEvent = viewModel::recordSettlementEvent,
-                                    onDrawEvent = viewModel::drawSettlementEvent,
-                                    onRecordDeaths = viewModel::recordDeaths,
-                                    onRecordBirths = viewModel::recordBirths,
-                                    onChoosePrinciple = viewModel::choosePrinciple,
-                                    onResolveMilestone = viewModel::resolveMilestone,
-                                    onHealSurvivors = viewModel::healSurvivors,
-                                    onDepartingChange = viewModel::markDeparting,
-                                    onAssignGear = viewModel::assignGear,
-                                    onUnassignGear = viewModel::unassignGear,
-                                    onSaveSurvivor = viewModel::updateSurvivor,
-                                    onDeclareSpecialShowdown = viewModel::declareSpecialShowdown,
-                                    onSetUpShowdown = viewModel::setUpShowdown,
-                                    onDrawShowdownCard = viewModel::drawShowdownCard,
-                                    onWoundMonster = viewModel::woundMonster,
-                                    onGrantHuntXp = viewModel::grantHuntXp,
-                                )
-                            Screen.Hunt ->
-                                HuntScreen(
-                                    state = current,
-                                    onSetUpHunt = viewModel::setUpHunt,
-                                    onAssignPlayer = viewModel::assignPlayer,
-                                    onMarkSpaceKind = viewModel::markSpaceKind,
-                                    onAssignHuntEvent = viewModel::assignHuntEvent,
-                                    onResolveHuntEvent = viewModel::resolveHuntEvent,
-                                    onAdvanceHunt = viewModel::advanceHunt,
-                                    onFinishHunt = viewModel::finishHunt,
-                                )
-                            Screen.Showdown ->
-                                ShowdownScreen(
-                                    state = current,
-                                    onSetUpShowdown = viewModel::setUpShowdown,
-                                    onDrawShowdownCard = viewModel::drawShowdownCard,
-                                    onWoundMonster = viewModel::woundMonster,
-                                    onGrantHuntXp = viewModel::grantHuntXp,
-                                    onRecordDeaths = viewModel::recordDeaths,
-                                    onFinishShowdown = viewModel::finishShowdown,
-                                )
                             Screen.Account -> {
                                 BackHandler { viewModel.closeAccount() }
                                 AccountScreen(
@@ -156,9 +114,85 @@ fun KdmTrackerApp(
                                     error = signInError,
                                 )
                             }
+                            else -> InCampaignScreen(state = current, viewModel = viewModel)
                         }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The design's shell around the four in-campaign views. The tab navigates freely; the record's phase
+ * only decided which tab [LanternYearViewModel.select] opened the campaign on.
+ */
+@Composable
+private fun InCampaignScreen(
+    state: UiState,
+    viewModel: LanternYearViewModel,
+) {
+    val tab = ShellTab.of(state.screen) ?: return
+    AppShell(
+        state = state,
+        tab = tab,
+        onSelectTab = { viewModel.show(it.screen) },
+        onAccount = viewModel::goAccount,
+        onSelectStep = viewModel::selectStep,
+    ) {
+        when (state.screen) {
+            Screen.Settlement ->
+                SettlementScreen(
+                    state = state,
+                    onAdvance = viewModel::advance,
+                    onPrevious = viewModel::previous,
+                    onSelectStep = viewModel::selectStep,
+                    onInnovate = viewModel::innovate,
+                    onBuild = viewModel::build,
+                    onSpendEndeavor = viewModel::spendEndeavor,
+                    onAddResource = viewModel::addResource,
+                    onCraft = viewModel::craft,
+                    onRecordEvent = viewModel::recordSettlementEvent,
+                    onDrawEvent = viewModel::drawSettlementEvent,
+                    onRecordDeaths = viewModel::recordDeaths,
+                    onRecordBirths = viewModel::recordBirths,
+                    onChoosePrinciple = viewModel::choosePrinciple,
+                    onResolveMilestone = viewModel::resolveMilestone,
+                    onHealSurvivors = viewModel::healSurvivors,
+                    onDepartingChange = viewModel::markDeparting,
+                    onAssignGear = viewModel::assignGear,
+                    onUnassignGear = viewModel::unassignGear,
+                    onSaveSurvivor = viewModel::updateSurvivor,
+                    onDeclareSpecialShowdown = viewModel::declareSpecialShowdown,
+                    onSetUpShowdown = viewModel::setUpShowdown,
+                    onDrawShowdownCard = viewModel::drawShowdownCard,
+                    onWoundMonster = viewModel::woundMonster,
+                    onGrantHuntXp = viewModel::grantHuntXp,
+                )
+            // The design's Supervivientes tab is the paged survivor sheet; that view is its own
+            // slice, so the tab is deliberately empty rather than a sheet with a dead button.
+            Screen.Survivors -> PendientePlaceholder()
+            Screen.Hunt ->
+                HuntScreen(
+                    state = state,
+                    onSetUpHunt = viewModel::setUpHunt,
+                    onAssignPlayer = viewModel::assignPlayer,
+                    onMarkSpaceKind = viewModel::markSpaceKind,
+                    onAssignHuntEvent = viewModel::assignHuntEvent,
+                    onResolveHuntEvent = viewModel::resolveHuntEvent,
+                    onAdvanceHunt = viewModel::advanceHunt,
+                    onFinishHunt = viewModel::finishHunt,
+                )
+            Screen.Showdown ->
+                ShowdownScreen(
+                    state = state,
+                    onSetUpShowdown = viewModel::setUpShowdown,
+                    onDrawShowdownCard = viewModel::drawShowdownCard,
+                    onWoundMonster = viewModel::woundMonster,
+                    onGrantHuntXp = viewModel::grantHuntXp,
+                    onRecordDeaths = viewModel::recordDeaths,
+                    onFinishShowdown = viewModel::finishShowdown,
+                )
+            else -> Unit
         }
     }
 }
