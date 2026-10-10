@@ -43,6 +43,10 @@ class CraftUseCaseTest {
                         resourceCost = mapOf(ResourceId("Hueso") to 1),
                         requires = listOf(InnovationId("calor")),
                     ),
+                    GearRecipe(
+                        GearId("equipo_raro"),
+                        resourceCost = mapOf(ResourceId("Hueso") to 1, ResourceId("no_such_resource") to 1),
+                    ),
                 ),
         )
 
@@ -171,5 +175,22 @@ class CraftUseCaseTest {
             ).value
 
         assertEquals(listOf(GearId("daga_de_hueso")), second.state.gear)
+    }
+
+    @Test
+    fun aRecipeCostingAResourceTheCatalogDoesNotCarryIsBlockedWithoutSpending() {
+        // Review Focus 3: the name bridge is gone, so an unknown cost id must surface as a
+        // Blocked reason — never a throw, and never a partial spend. The first cost in this
+        // recipe resolves and would spend; the second does not, and Craft returns Blocked
+        // without committing anything (records are immutable, so Blocked is the only
+        // spend-free outcome a regression could produce here).
+        val before = record(state = ready(bones = 2))
+
+        val result = Craft.run(before, LocationId("bone_smith"), GearId("equipo_raro"), catalog)
+
+        val blocked = assertIs<StepResult.Blocked>(result)
+        assertTrue(blocked.reason.contains("no_such_resource"), blocked.reason)
+        assertEquals(2, before.storage().single { it.id.value == "Hueso" }.quantity)
+        assertTrue(before.state.gear.isEmpty())
     }
 }
