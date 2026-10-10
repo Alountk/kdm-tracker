@@ -71,13 +71,14 @@ data class ResourceDefinition(
     val id: ResourceId,
     val names: LocalizedText,
     val category: ResourceCategory,
-    val material: ResourceMaterial,   // ← new
+    val material: ResourceMaterial? = null,   // ← new; null when the card feeds none of the four
     val source: String = "",
 )
 ```
 
 - The **summary aggregates by `material`** (four cells, four fixed buckets).
 - **Recipes reference the exact `id`** (`hide.white_lion`, not `hide`).
+- **`material` is nullable, and that is not a fallback.** The card vocabulary is wider than the four buckets: `KNOWN_TAGS` also carries `hierba`, `hierro`, `calavera`, `consumible`, `otro` and `alimaña`, so a herb, a bar of iron or a skull feeds **none** of the summary's four cells. A null material means exactly that — the resource is real, is craftable, and simply does not appear in the four-cell grid. Forcing it into a bucket would be a lie the design already contradicts (its grid has four cells, not ten).
 - **Variants need no extra field.** `hide.white_lion` and `hide.antelope` are two ids that share `material = HIDE`; that is enough to aggregate them and to reference them exactly. An explicit `variantOf` is deferred (§Out) until substitution between variants is a real requirement — YAGNI now.
 
 ### 4 · Where the identity flows
@@ -125,7 +126,7 @@ bone.monster,Hueso de Monstruo,,BONE
 hide.white_lion,Pelaje Blanco,White Lion Fur,HIDE
 ```
 
-- `material` is **derived from the card's tags**, not hand-authored: the material is the card's tag among the four primaries (`hueso`→`BONE`, `órgano`→`ORGAN`, `piel`→`HIDE`, `restos`→`SCRAP`), needing exactly one such tag to be unambiguous. The CSV's `material` column is the **fallback** for a card whose tags carry none or several, and the generator **fails loudly when neither resolves** — a card can never reach the catalog with no material.
+- `material` is **derived from the card's tags**, not hand-authored: it is the card's tag among the four primaries (`hueso`→`BONE`, `órgano`→`ORGAN`, `piel`→`HIDE`, `restos`→`SCRAP`). The rules are exact and all three are needed: **exactly one** primary tag yields that material; **none** yields `null` (a legitimate "feeds no bucket", and no CSV entry is required); **several** is ambiguous, so the CSV's `material` column must decide, and the generator **fails loudly when it is empty**.
 - The CSV deliberately **does not carry `category`**. The deck a card ships in decides its category (`ingest_resources.py:57–64`), so duplicating it in the CSV would create two authorities for one field.
 - `ingest_resources.py` reads the PDF, looks each card up in the CSV and **fails loudly on an unmapped card**, so no id can drift into existence by accident and the generator stays deterministic (the same `git diff --exit-code` gate).
 - The `englishName` column may be **empty** and grows incrementally — decision 2.
