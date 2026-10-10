@@ -13,6 +13,7 @@ import io.kdmtracker.app.sync.HttpSyncAuthApi
 import io.kdmtracker.app.sync.SyncCoordinator
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
+import io.kdmtracker.app.ui.shell.ShellTab
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.MilestoneId
@@ -122,6 +123,13 @@ class LanternYearViewModel(
     private var accountOpen = false
 
     /**
+     * The shell tab the user last picked, overriding the phase-derived screen (the design's free
+     * tabs). `null` means "follow the record's phase". Volatile for the same reason as [onHome].
+     */
+    @Volatile
+    private var shellTab: ShellTab? = null
+
+    /**
      * The loaded bundle, published from the IO load coroutine and read by mutations, [syncNow] and
      * [onCleared] on other threads. Held behind an [AtomicReference] so a reader never observes a
      * half-published trio (a stale `null` controller would silently drop a mutation).
@@ -168,12 +176,27 @@ class LanternYearViewModel(
     }
 
     /** Overrides the phase-derived screen with [Screen.Home] or [Screen.Account] while set. */
-    private fun UiState.forDisplay(): UiState =
-        when {
+    private fun UiState.forDisplay(): UiState {
+        val tab = shellTab
+        return when {
             accountOpen -> copy(screen = Screen.Account)
             onHome -> copy(screen = Screen.Home)
+            tab != null -> copy(screen = tab.screen)
             else -> this
         }
+    }
+
+    /** Selects a shell tab — the design's free navigation. Clears any stale action error. */
+    fun show(screen: Screen) {
+        val tab = ShellTab.of(screen) ?: return
+        shellTab = tab
+        _actionError.value = null
+        components.get()?.let {
+            _state.value =
+                it.controller.state.value
+                    .forDisplay()
+        }
+    }
 
     /**
      * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
@@ -186,8 +209,11 @@ class LanternYearViewModel(
             val loaded = components.get() ?: return@launch
             if (!loaded.controller.selectCampaign(campaignId)) return@launch
             onHome = false
+            shellTab = ShellTab.initialFor(loaded.controller.state.value.phase)
             loaded.syncCoordinator?.rebind(campaignId)
-            _state.value = loaded.controller.state.value
+            _state.value =
+                loaded.controller.state.value
+                    .forDisplay()
             loaded.syncCoordinator?.syncNow()
         }
     }

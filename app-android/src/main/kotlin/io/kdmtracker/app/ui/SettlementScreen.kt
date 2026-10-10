@@ -1,6 +1,5 @@
 package io.kdmtracker.app.ui
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,17 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.domain.MilestoneId
@@ -26,10 +20,6 @@ import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
-import io.kdmtracker.core.rules.SettlementStep
-
-/** Standard Material disabled alpha, so an unreachable step reads as non-interactive. */
-private const val DISABLED_ALPHA = 0.38f
 
 /**
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
@@ -154,13 +144,6 @@ private fun SettlementCockpit(
     ) {
         SettlementHeader(state)
 
-        SettlementStepBar(
-            steps = state.steps,
-            currentStep = state.currentStep,
-            reachableSteps = state.reachableSteps,
-            onSelectStep = onSelectStep,
-        )
-
         Text(
             text = "Step ${state.currentStep} · ${state.stepTitle}",
             style = MaterialTheme.typography.titleMedium,
@@ -197,70 +180,4 @@ private fun SettlementHeader(state: UiState) {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-@Composable
-private fun SettlementStepBar(
-    steps: List<SettlementStep>,
-    currentStep: Int,
-    reachableSteps: Set<Int>,
-    onSelectStep: (Int) -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        steps.forEach { step ->
-            SettlementStepItem(
-                step = step,
-                selected = step.number == currentStep,
-                enabled = step.number in reachableSteps,
-                onClick = { onSelectStep(step.number) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettlementStepItem(
-    step: SettlementStep,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val containerColor =
-        if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        }
-    val contentColor =
-        if (selected) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    Surface(
-        modifier =
-            Modifier
-                .alpha(if (enabled) 1f else DISABLED_ALPHA)
-                .selectable(
-                    selected = selected,
-                    enabled = enabled,
-                    role = Role.Tab,
-                    onClick = onClick,
-                ),
-        color = containerColor,
-        contentColor = contentColor,
-        shape = MaterialTheme.shapes.small,
-    ) {
-        Text(
-            text = "${step.number}",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-        )
-    }
 }
