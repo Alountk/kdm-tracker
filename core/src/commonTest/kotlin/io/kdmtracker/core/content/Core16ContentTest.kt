@@ -104,7 +104,7 @@ class Core16ContentTest {
         val bone = catalog.resourceDefinitions.first { it.id.value == "bone.monster" }
         assertEquals(ResourceCategory.BASIC, bone.category)
         assertEquals("Bone", bone.names.inLanguage(Language.EN))
-        assertEquals(ResourceMaterial.BONE, bone.material)
+        assertEquals(setOf(ResourceMaterial.BONE), bone.materials)
     }
 
     @Test

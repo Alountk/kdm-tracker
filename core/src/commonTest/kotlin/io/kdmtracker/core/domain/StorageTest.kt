@@ -88,6 +88,28 @@ class StorageTest {
     }
 
     @Test
+    fun byMaterialDoesNotCountAWildcardInAnyBucket() {
+        // The `???` card pays a bone, a hide or an organ. While it sits in storage it is committed
+        // to none of them, so counting it in all three would make the four cells add up to more
+        // stock than the settlement actually holds.
+        val entries = listOf(ResourceEntry(id = ResourceId("unknown.monster_part"), delta = 2))
+        val wildcard =
+            ResourceDefinition(
+                id = ResourceId("unknown.monster_part"),
+                names = LocalizedText(es = "???"),
+                category = ResourceCategory.BASIC,
+                materials =
+                    setOf(
+                        ResourceMaterial.BONE,
+                        ResourceMaterial.HIDE,
+                        ResourceMaterial.ORGAN,
+                    ),
+            )
+
+        assertEquals(emptyMap(), Storage.byMaterial(entries, listOf(wildcard)))
+    }
+
+    @Test
     fun quantityOfReturnsTheNetForOneId() {
         val entries =
             listOf(

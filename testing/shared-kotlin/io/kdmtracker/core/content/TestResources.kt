@@ -12,7 +12,8 @@ import io.kdmtracker.core.domain.ResourceMaterial
  *
  * Fixtures care about identity, grouping and merge behaviour, not about a card's real slug — so
  * the name is the shortest thing that keeps an assertion like `catalog.resources contains "bone"`
- * meaningful. Real ids come from the identity CSV, never from here.
+ * meaningful. Real ids come from the identity CSV, never from here. A fixture that needs a
+ * wildcard passes [materials] as a set of several.
  */
 fun resourceDefinition(
     name: String,
@@ -23,5 +24,5 @@ fun resourceDefinition(
         id = ResourceId(name),
         names = LocalizedText(es = name),
         category = category,
-        material = material,
+        materials = material?.let { setOf(it) } ?: emptySet(),
     )

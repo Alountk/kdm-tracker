@@ -52,13 +52,13 @@ class ResourceGroupsTest {
     }
 
     @Test
-    fun resourceDefinitionJsonDefaultsSourceAndMaterialToEmpty() {
+    fun resourceDefinitionJsonDefaultsSourceAndMaterialsToEmpty() {
         val definition =
             json.decodeFromString<ResourceDefinition>(
                 """{"id":"x","names":{"es":"X"},"category":"BASIC"}""",
             )
 
         assertEquals("", definition.source)
-        assertEquals(null, definition.material)
+        assertEquals(emptySet(), definition.materials)
     }
 }

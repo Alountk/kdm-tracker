@@ -84,9 +84,10 @@ object ResourceEntrySerializer : KSerializer<ResourceEntry> {
  * @property id the stable, language-neutral identity, chosen once and never derived from a name.
  * @property names the display name per language (Spanish always present, English growing).
  * @property category the rules dimension — which sheet section the resource belongs to.
- * @property material the aggregate dimension — which of the summary's four buckets the resource
- *   feeds. `null` when it feeds none of them (a herb, a bar of iron, a skull): the resource is
- *   still real and still craftable, it simply does not appear in the four-cell grid.
+ * @property materials the aggregate dimension — which of the summary's four buckets the resource
+ *   can pay. Empty for a herb, a bar of iron or a skull, which feed none of them. **Several for a
+ *   wildcard**, like the `???` card that pays a bone, a hide or an organ; while it sits in storage
+ *   it is committed to no single bucket, so the summary counts only a one-element set.
  * @property source the monster/deck the resource comes from, for grouping in the UI. Empty when
  *   unknown; it never affects the ledger.
  */
@@ -95,7 +96,7 @@ data class ResourceDefinition(
     val id: ResourceId,
     val names: LocalizedText,
     val category: ResourceCategory,
-    val material: ResourceMaterial? = null,
+    val materials: Set<ResourceMaterial> = emptySet(),
     val source: String = "",
 )
 
@@ -149,19 +150,22 @@ object Storage {
      * Every variant of a material adds into one bucket, which is the whole point: a monster's fur
      * and the generic hide are both [ResourceMaterial.HIDE] and must not split across two cells.
      *
-     * A resource whose definition carries no material feeds no bucket, and neither does an id the
-     * catalog does not know — both are absent from the result rather than an error.
+     * A resource counts only when it commits to **exactly one** material. A wildcard — the `???`
+     * card, which can pay a bone, a hide or an organ — commits to none of them while it is held,
+     * and neither does a herb or a bar of iron, whose set is empty. Counting a wildcard in each of
+     * its buckets would make the four cells add up to more stock than the settlement holds.
      */
     fun byMaterial(
         entries: List<ResourceEntry>,
         definitions: List<ResourceDefinition>,
     ): Map<ResourceMaterial, Int> {
-        val materialById = definitions.associate { it.id to it.material }
-        val totals = mutableMapOf<ResourceMaterial, Int>()
-        project(entries).forEach { line ->
-            val material = materialById[line.id] ?: return@forEach
-            totals[material] = (totals[material] ?: 0) + line.quantity
-        }
-        return totals
+        val bucketsById =
+            definitions
+                .filter { it.materials.size == 1 }
+                .associate { it.id to it.materials.single() }
+        return project(entries)
+            .mapNotNull { line -> bucketsById[line.id]?.let { it to line.quantity } }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, quantities) -> quantities.sum() }
     }
 }

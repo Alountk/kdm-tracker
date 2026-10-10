@@ -71,14 +71,16 @@ data class ResourceDefinition(
     val id: ResourceId,
     val names: LocalizedText,
     val category: ResourceCategory,
-    val material: ResourceMaterial? = null,   // ← new; null when the card feeds none of the four
+    val materials: Set<ResourceMaterial> = emptySet(),   // ← new
     val source: String = "",
 )
 ```
 
-- The **summary aggregates by `material`** (four cells, four fixed buckets).
+- The **summary aggregates by material** (four cells, four fixed buckets), counting a resource only when it commits to **exactly one**.
 - **Recipes reference the exact `id`** (`hide.white_lion`, not `hide`).
-- **`material` is nullable, and that is not a fallback.** The card vocabulary is wider than the four buckets: `KNOWN_TAGS` also carries `hierba`, `hierro`, `calavera`, `consumible`, `otro` and `alimaña`, so a herb, a bar of iron or a skull feeds **none** of the summary's four cells. A null material means exactly that — the resource is real, is craftable, and simply does not appear in the four-cell grid. Forcing it into a bucket would be a lie the design already contradicts (its grid has four cells, not ten).
+- **`materials` is a set, and that is not a flourish — it is the card.** The `???` card in the Básicos deck is a **wildcard**: it can pay a bone, a hide *or* an organ, so it carries all three. A set with one element is the ordinary resource; an empty set is a herb, a bar of iron or a skull, which feeds none of the four cells; a set with several is a wildcard, and while it sits in storage it is **not committed to any bucket**, so the grid does not count it. Counting it in three cells at once would make the four totals add up to more stock than the settlement holds.
+- The CSV's material cell therefore reads: empty = not decided yet, `none` = deliberately no bucket, `BONE|HIDE|ORGAN` = that set. Only a card whose tags leave it ambiguous must be decided by hand.
+
 - **Variants need no extra field.** `hide.white_lion` and `hide.antelope` are two ids that share `material = HIDE`; that is enough to aggregate them and to reference them exactly. An explicit `variantOf` is deferred (§Out) until substitution between variants is a real requirement — YAGNI now.
 
 ### 4 · Where the identity flows
