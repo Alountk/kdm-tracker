@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.content.ContentIdentity
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HuntSpaceKind
@@ -243,23 +244,29 @@ class LanternYearController(
         val location =
             content.locationDefinitions.firstOrNull { location ->
                 location.actions.any { it.kind == ActionKind.INNOVATE } &&
-                    location.name in repository.record.state.locations.built
+                    location.id in repository.record.state.locations.built
             }
         if (location == null) {
             publishBlocked("no built settlement location offers Innovate")
             return
         }
-        applyResult(Innovate.run(repository.record, location.name, innovationName, content))
+        applyResult(Innovate.run(repository.record, location.id, innovationName, content))
     }
 
     /**
      * Builds the settlement location named [locationName].
      *
      * Prerequisites, cost and storage are enforced entirely by `:core`'s [BuildLocation]; the
-     * controller passes the held record and [content] and mirrors the outcome.
+     * controller resolves the displayed name to its stable id through [ContentIdentity], passes
+     * the held record and [content], and mirrors the outcome.
      */
     fun build(locationName: String) {
-        applyResult(BuildLocation.run(repository.record, locationName, content))
+        val locationId = ContentIdentity.locationIdFor(locationName)
+        if (locationId == null) {
+            publishBlocked("unknown location $locationName")
+            return
+        }
+        applyResult(BuildLocation.run(repository.record, locationId, content))
     }
 
     /**
@@ -293,7 +300,12 @@ class LanternYearController(
         locationName: String,
         gearName: String,
     ) {
-        applyResult(Craft.run(repository.record, locationName, gearName, content))
+        val locationId = ContentIdentity.locationIdFor(locationName)
+        if (locationId == null) {
+            publishBlocked("unknown location $locationName")
+            return
+        }
+        applyResult(Craft.run(repository.record, locationId, gearName, content))
     }
 
     /**
@@ -590,7 +602,13 @@ class LanternYearController(
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
             catalogError = repository.catalogError,
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
-            builtLocations = record.state.locations.built,
+            builtLocations =
+                record.state.locations.built.map { locationId ->
+                    content.locationDefinitions
+                        .firstOrNull { it.id == locationId }
+                        ?.names
+                        ?.es ?: locationId.value
+                },
             gear = record.state.gear,
             survivalLimit =
                 record.survivalLimit(ruleset) +
@@ -604,16 +622,16 @@ class LanternYearController(
             resourceGroups = content.resourceGroups(),
             innovationViews = InnovationAccess.view(record.state, content),
             craftRecipes =
-                record.state.locations.built.flatMap { locationName ->
-                    content.locationDefinitions
-                        .firstOrNull { it.name == locationName }
+                record.state.locations.built.flatMap { locationId ->
+                    val location = content.locationDefinitions.firstOrNull { it.id == locationId }
+                    location
                         ?.recipes
                         .orEmpty()
                         .map { recipe ->
                             CraftRecipeView(
-                                locationName,
+                                location?.names?.es ?: locationId.value,
                                 recipe,
-                                Craftability.check(record, locationName, recipe, content),
+                                Craftability.check(record, locationId, recipe, content),
                                 gearType(
                                     content.gearDefinitions
                                         .firstOrNull { it.name == recipe.gearName }

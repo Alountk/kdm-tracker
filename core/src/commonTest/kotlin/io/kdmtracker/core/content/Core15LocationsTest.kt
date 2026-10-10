@@ -2,6 +2,8 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.content.generated.Core15Locations
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,14 +12,14 @@ import kotlin.test.assertTrue
 /**
  * Pins the committed `core-1.5` settlement-location bundle against the source cards.
  *
- * The costs are keyed by a specific resource **card** name as an approximation of the
- * card's material *type* (see the content-ingest README); this test locks the extraction
- * so the approximation cannot drift silently.
+ * The costs are keyed by a specific resource **card** id, resolved from the card name through
+ * the identity CSV (see the content-ingest README); this test locks the extraction so it
+ * cannot drift silently.
  */
 class Core15LocationsTest {
     private val locations = Core15Locations.bundle.locations
 
-    private fun byName(name: String): SettlementLocation = locations.first { it.name == name }
+    private fun byName(name: String): SettlementLocation = locations.first { it.names.es == name }
 
     @Test
     fun packCarriesTheThirteenBaseLocations() {
@@ -38,7 +40,7 @@ class Core15LocationsTest {
                 "Plumería",
                 "Taller de Huesos",
             ),
-            locations.map { it.name },
+            locations.map { it.names.es },
         )
     }
 
@@ -46,28 +48,40 @@ class Core15LocationsTest {
     fun armeriaRequiresTheBoneSmithAndCostsThreeBoneOneHide() {
         val armeria = byName("Armería")
 
-        assertEquals(listOf("Taller de Huesos"), armeria.requires)
+        assertEquals(LocationId("weapon_crafter"), armeria.id)
+        assertEquals(listOf(LocationId("bone_smith")), armeria.requires)
         assertEquals(1, armeria.buildEndeavors)
-        assertEquals(mapOf("Hueso de Monstruo" to 3, "Piel de Monstruo" to 1), armeria.buildCost)
+        assertEquals(
+            mapOf(ResourceId("bone.monster") to 3, ResourceId("hide.monster") to 1),
+            armeria.buildCost,
+        )
     }
 
     @Test
     fun circuloDePiedraCostsThreeOrganOneHide() {
         val circulo = byName("Círculo de Piedra")
 
-        assertEquals(listOf("Molino de Órganos"), circulo.requires)
-        assertEquals(mapOf("Órgano de Monstruo" to 3, "Piel de Monstruo" to 1), circulo.buildCost)
+        assertEquals(listOf(LocationId("organ_grinder")), circulo.requires)
+        assertEquals(
+            mapOf(ResourceId("organ.monster") to 3, ResourceId("hide.monster") to 1),
+            circulo.buildCost,
+        )
     }
 
     @Test
     fun lanternHoardInnovatesOncePerPhaseForBoneOrganHide() {
         val action = byName("Cúmulo de Linternas").actions.single()
 
-        assertEquals("Innovar", action.name)
+        assertEquals("Innovar", action.names.es)
+        assertEquals("Innovate", action.names.en)
         assertEquals(ActionKind.INNOVATE, action.kind)
         assertEquals(1, action.endeavorCost)
         assertEquals(
-            mapOf("Hueso de Monstruo" to 1, "Órgano de Monstruo" to 1, "Piel de Monstruo" to 1),
+            mapOf(
+                ResourceId("bone.monster") to 1,
+                ResourceId("organ.monster") to 1,
+                ResourceId("hide.monster") to 1,
+            ),
             action.resourceCost,
         )
         assertTrue(action.oncePerPhase, "Innovate is once per Settlement Phase")
@@ -77,7 +91,7 @@ class Core15LocationsTest {
 
     @Test
     fun locationsAreSortedByName() {
-        assertEquals(locations.map { it.name }.sorted(), locations.map { it.name })
+        assertEquals(locations.map { it.names.es }.sorted(), locations.map { it.names.es })
     }
 
     @Test

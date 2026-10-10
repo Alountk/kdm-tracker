@@ -1,5 +1,7 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -43,5 +45,42 @@ class ContentIdentityTest {
         assertEquals(ResourceId("hide.monster"), ContentIdentity.resourceIdFor("Piel de Monstruo"))
         assertEquals(ResourceId("organ.monster"), ContentIdentity.resourceIdFor("Órgano de Monstruo"))
         assertEquals(ResourceId("scrap"), ContentIdentity.resourceIdFor("Scrap"))
+    }
+
+    @Test
+    fun everyCatalogLocationNameResolvesToAnId() {
+        catalog.locationDefinitions.forEach { location ->
+            assertNotNull(
+                ContentIdentity.locationIdFor(location.names.es),
+                "no content id for '${location.names.es}'",
+            )
+            location.names.en?.let { en ->
+                assertNotNull(ContentIdentity.locationIdFor(en), "no content id for '$en'")
+            }
+        }
+    }
+
+    @Test
+    fun everyPackLocationCarriesTheIdTheIdentityTableGivesIt() {
+        catalog.locationDefinitions.forEach { location ->
+            assertEquals(
+                ContentIdentity.locationIdFor(location.names.es),
+                location.id,
+                location.names.es,
+            )
+        }
+    }
+
+    @Test
+    fun theSameEntityUnderTwoLanguagesMergesIntoOne() {
+        // "Lantern Hoard" (seed) and "Cúmulo de Linternas" (1.5) are one location, so the merged
+        // catalog carries it once and the panel's option count collapses.
+        assertEquals(1, catalog.locationDefinitions.count { it.id == LocationId("lantern_hoard") })
+    }
+
+    @Test
+    fun theMergedLanternHoardCarriesBothLanguages() {
+        val hoard = catalog.locationDefinitions.single { it.id == LocationId("lantern_hoard") }
+        assertEquals(LocalizedText(es = "Cúmulo de Linternas", en = "Lantern Hoard"), hoard.names)
     }
 }

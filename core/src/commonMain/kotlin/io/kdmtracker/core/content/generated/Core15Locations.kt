@@ -3,6 +3,9 @@ package io.kdmtracker.core.content.generated
 
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
 
@@ -12,42 +15,48 @@ object Core15Locations {
             locations =
                 listOf(
                     SettlementLocation(
-                        name = "Armería",
-                        requires = listOf("Taller de Huesos"),
+                        id = LocationId("weapon_crafter"),
+                        names = LocalizedText(es = "Armería", en = "Weapon Crafter"),
+                        requires = listOf(LocationId("bone_smith")),
                         buildEndeavors = 1,
-                        buildCost = mapOf("Hueso de Monstruo" to 3, "Piel de Monstruo" to 1),
+                        buildCost = mapOf(ResourceId("bone.monster") to 3, ResourceId("hide.monster") to 1),
                     ),
                     SettlementLocation(
-                        name = "Artesano de Máscaras",
+                        id = LocationId("mask_maker"),
+                        names = LocalizedText(es = "Artesano de Máscaras", en = "Mask Maker"),
                     ),
                     SettlementLocation(
-                        name = "Cirujano Barbero",
+                        id = LocationId("barber_surgeon"),
+                        names = LocalizedText(es = "Cirujano Barbero", en = "Barber Surgeon"),
                     ),
                     SettlementLocation(
-                        name = "Curtiduría",
-                        requires = listOf("Peletería"),
+                        id = LocationId("leather_worker"),
+                        names = LocalizedText(es = "Curtiduría", en = "Leather Worker"),
+                        requires = listOf(LocationId("skinnery")),
                         buildEndeavors = 1,
-                        buildCost = mapOf("Piel de Monstruo" to 3, "Órgano de Monstruo" to 1),
+                        buildCost = mapOf(ResourceId("hide.monster") to 3, ResourceId("organ.monster") to 1),
                     ),
                     SettlementLocation(
-                        name = "Círculo de Piedra",
-                        requires = listOf("Molino de Órganos"),
+                        id = LocationId("stone_circle"),
+                        names = LocalizedText(es = "Círculo de Piedra", en = "Stone Circle"),
+                        requires = listOf(LocationId("organ_grinder")),
                         buildEndeavors = 1,
-                        buildCost = mapOf("Órgano de Monstruo" to 3, "Piel de Monstruo" to 1),
+                        buildCost = mapOf(ResourceId("organ.monster") to 3, ResourceId("hide.monster") to 1),
                     ),
                     SettlementLocation(
-                        name = "Cúmulo de Linternas",
+                        id = LocationId("lantern_hoard"),
+                        names = LocalizedText(es = "Cúmulo de Linternas", en = "Lantern Hoard"),
                         actions =
                             listOf(
                                 SettlementAction(
-                                    name = "Innovar",
+                                    names = LocalizedText(es = "Innovar", en = "Innovate"),
                                     kind = ActionKind.INNOVATE,
                                     endeavorCost = 1,
                                     resourceCost =
                                         mapOf(
-                                            "Hueso de Monstruo" to 1,
-                                            "Órgano de Monstruo" to 1,
-                                            "Piel de Monstruo" to 1,
+                                            ResourceId("bone.monster") to 1,
+                                            ResourceId("organ.monster") to 1,
+                                            ResourceId("hide.monster") to 1,
                                         ),
                                     oncePerPhase = true,
                                     draw = 2,
@@ -60,30 +69,37 @@ object Core15Locations {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Cúmulo de Linternas Extinto",
+                        id = LocationId("exhausted_lantern_hoard"),
+                        names = LocalizedText(es = "Cúmulo de Linternas Extinto", en = "Exhausted Lantern Hoard"),
                     ),
                     SettlementLocation(
-                        name = "Felinarium",
+                        id = LocationId("catarium"),
+                        names = LocalizedText(es = "Felinarium", en = "Catarium"),
                     ),
                     SettlementLocation(
-                        name = "Herrería",
+                        id = LocationId("blacksmith"),
+                        names = LocalizedText(es = "Herrería", en = "Blacksmith"),
                     ),
                     SettlementLocation(
-                        name = "Molino de Órganos",
-                        requires = listOf("Cúmulo de Linternas"),
+                        id = LocationId("organ_grinder"),
+                        names = LocalizedText(es = "Molino de Órganos", en = "Organ Grinder"),
+                        requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
                     SettlementLocation(
-                        name = "Peletería",
-                        requires = listOf("Cúmulo de Linternas"),
+                        id = LocationId("skinnery"),
+                        names = LocalizedText(es = "Peletería", en = "Skinnery"),
+                        requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
                     SettlementLocation(
-                        name = "Plumería",
+                        id = LocationId("plumery"),
+                        names = LocalizedText(es = "Plumería", en = "Plumery"),
                     ),
                     SettlementLocation(
-                        name = "Taller de Huesos",
-                        requires = listOf("Cúmulo de Linternas"),
+                        id = LocationId("bone_smith"),
+                        names = LocalizedText(es = "Taller de Huesos", en = "Bone Smith"),
+                        requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
                 ),

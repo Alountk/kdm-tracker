@@ -1,6 +1,7 @@
 package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
@@ -20,37 +21,38 @@ object BuildLocation {
      * Returns [StepResult.Ok] with the advanced record, or [StepResult.Blocked] with the
      * reason the location could not be built.
      *
-     * Blocks, without changing anything, when: [locationName] is unknown, the location is
+     * Blocks, without changing anything, when: [locationId] is unknown, the location is
      * already built, one of its `requires` is unmet, the endeavor pool cannot fund its
      * `buildEndeavors`, a cost resource has no catalog definition, or the ledger cannot
      * cover a spend. On success it spends the cost, subtracts the endeavors, and adds the
      * location to [io.kdmtracker.core.domain.SettlementState.locations].
      *
-     * @param locationName the name of the location to build.
+     * @param locationId the id of the location to build.
      */
     fun run(
         record: SettlementRecord,
-        locationName: String,
+        locationId: LocationId,
         catalog: ContentCatalog,
     ): StepResult<SettlementRecord> {
         val location =
-            catalog.locationDefinitions.firstOrNull { it.name == locationName }
-                ?: return StepResult.Blocked("unknown location $locationName")
-        if (locationName in record.state.locations.built) {
-            return StepResult.Blocked("$locationName already built")
+            catalog.locationDefinitions.firstOrNull { it.id == locationId }
+                ?: return StepResult.Blocked("unknown location ${locationId.value}")
+        val displayName = location.names.es
+        if (locationId in record.state.locations.built) {
+            return StepResult.Blocked("$displayName already built")
         }
         if (!record.state.locations.canBuild(location)) {
-            return StepResult.Blocked("$locationName requires an unbuilt location")
+            return StepResult.Blocked("$displayName requires an unbuilt location")
         }
         if (record.settlement.endeavors < location.buildEndeavors) {
             return StepResult.Blocked("insufficient endeavors")
         }
 
         var spent = record
-        for ((name, count) in location.buildCost) {
+        for ((resourceId, count) in location.buildCost) {
             val definition =
-                catalog.resourceDefinitionFor(name)
-                    ?: return StepResult.Blocked("unknown resource $name")
+                catalog.resourceDefinitions.firstOrNull { it.id == resourceId }
+                    ?: return StepResult.Blocked("unknown resource ${resourceId.value}")
             spent =
                 when (val result = AddResourceEntry.run(spent, ResourceEntry(definition.id, -count))) {
                     is StepResult.Ok -> result.value

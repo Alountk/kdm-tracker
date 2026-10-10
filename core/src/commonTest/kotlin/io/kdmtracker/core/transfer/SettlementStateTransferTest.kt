@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Core16Milestones
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -78,7 +79,7 @@ class SettlementStateTransferTest {
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Oven", "Organ Grinder")),
+            locations = LocationSet(built = listOf(LocationId("lantern_oven"), LocationId("organ_grinder"))),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Bone"), 3),

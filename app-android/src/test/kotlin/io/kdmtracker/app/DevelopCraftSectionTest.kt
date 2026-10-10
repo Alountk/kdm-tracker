@@ -6,6 +6,8 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -32,7 +34,8 @@ class DevelopCraftSectionTest {
                             locations =
                                 listOf(
                                     SettlementLocation(
-                                        "Armería",
+                                        LocationId("weapon_crafter"),
+                                        LocalizedText(es = "Armería"),
                                         recipes =
                                             listOf(
                                                 GearRecipe(
@@ -59,7 +62,7 @@ class DevelopCraftSectionTest {
             repository.record.copy(
                 state =
                     repository.record.state.copy(
-                        locations = LocationSet(built = listOf("Armería")),
+                        locations = LocationSet(built = listOf(LocationId("weapon_crafter"))),
                         resourceEntries = listOf(ResourceEntry(ResourceId("Hueso de Monstruo"), 2)),
                     ),
             ),
@@ -74,7 +77,7 @@ class DevelopCraftSectionTest {
         assertTrue("Armería" in state.builtLocations)
         assertTrue(
             state.catalogLocations
-                .single { it.name == "Armería" }
+                .single { it.names.es == "Armería" }
                 .recipes
                 .any { it.gearName == "Hacha de Contrapeso" },
         )

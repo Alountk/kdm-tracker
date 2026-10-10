@@ -4,6 +4,7 @@ import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.Ulid
@@ -74,14 +75,14 @@ class SetUpStepControllerTest {
             repository.record.copy(
                 state =
                     repository.record.state.copy(
-                        locations = LocationSet(built = listOf("Lantern Hoard", "Bone Smith")),
+                        locations = LocationSet(built = listOf(LocationId("lantern_hoard"), LocationId("bone_smith"))),
                     ),
             ),
         )
 
         val built = LanternYearController(repository).state.value.builtLocations
 
-        assertEquals(listOf("Lantern Hoard", "Bone Smith"), built)
+        assertEquals(listOf("Cúmulo de Linternas", "Taller de Huesos"), built)
     }
 
     @Test

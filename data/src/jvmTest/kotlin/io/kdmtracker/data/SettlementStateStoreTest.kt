@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.ResourceId
@@ -81,7 +82,7 @@ class SettlementStateStoreTest {
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Hoard", "Organ Grinder")),
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"), LocationId("organ_grinder"))),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Broken Lantern"), 2),

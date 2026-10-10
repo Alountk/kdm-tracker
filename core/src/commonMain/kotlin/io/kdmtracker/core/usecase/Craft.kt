@@ -1,6 +1,7 @@
 package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
@@ -17,18 +18,19 @@ import io.kdmtracker.core.rules.StepResult
 object Craft {
     fun run(
         record: SettlementRecord,
-        locationName: String,
+        locationId: LocationId,
         gearName: String,
         catalog: ContentCatalog,
     ): StepResult<SettlementRecord> {
         val location =
-            catalog.locationDefinitions.firstOrNull { it.name == locationName }
-                ?: return StepResult.Blocked("unknown location: $locationName")
+            catalog.locationDefinitions.firstOrNull { it.id == locationId }
+                ?: return StepResult.Blocked("unknown location: ${locationId.value}")
+        val displayName = location.names.es
         val recipe =
             location.recipes.firstOrNull { it.gearName == gearName }
-                ?: return StepResult.Blocked("$locationName cannot craft $gearName")
-        if (locationName !in record.state.locations.built) {
-            return StepResult.Blocked("$locationName is not built")
+                ?: return StepResult.Blocked("$displayName cannot craft $gearName")
+        if (locationId !in record.state.locations.built) {
+            return StepResult.Blocked("$displayName is not built")
         }
         val unlocked =
             record.state.innovations.innovations

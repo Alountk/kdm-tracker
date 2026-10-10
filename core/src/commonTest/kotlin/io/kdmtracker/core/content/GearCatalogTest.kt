@@ -29,8 +29,8 @@ class GearCatalogTest {
     }
 
     @Test
-    fun legacySettlementLocationJsonWithoutRecipesDecodesEmpty() {
-        val location = json.decodeFromString<SettlementLocation>("""{"name":"X"}""")
+    fun settlementLocationJsonWithoutRecipesDecodesEmpty() {
+        val location = json.decodeFromString<SettlementLocation>("""{"id":"x","names":{"es":"X"}}""")
 
         assertTrue(location.recipes.isEmpty())
     }

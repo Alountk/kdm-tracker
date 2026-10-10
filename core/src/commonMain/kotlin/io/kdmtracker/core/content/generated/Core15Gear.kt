@@ -4,6 +4,8 @@ package io.kdmtracker.core.content.generated
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.GearRecipe
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.SettlementLocation
 
 object Core15Gear {
@@ -871,7 +873,8 @@ object Core15Gear {
             locations =
                 listOf(
                     SettlementLocation(
-                        name = "Armería",
+                        id = LocationId("weapon_crafter"),
+                        names = LocalizedText(es = "Armería", en = "Weapon Crafter"),
                         recipes =
                             listOf(
                                 GearRecipe(
@@ -920,7 +923,8 @@ object Core15Gear {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Cirujano Barbero",
+                        id = LocationId("barber_surgeon"),
+                        names = LocalizedText(es = "Cirujano Barbero", en = "Barber Surgeon"),
                         recipes =
                             listOf(
                                 GearRecipe(
@@ -947,7 +951,8 @@ object Core15Gear {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Círculo de Piedra",
+                        id = LocationId("stone_circle"),
+                        names = LocalizedText(es = "Círculo de Piedra", en = "Stone Circle"),
                         recipes =
                             listOf(
                                 GearRecipe(
@@ -986,7 +991,8 @@ object Core15Gear {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Felinarium",
+                        id = LocationId("catarium"),
+                        names = LocalizedText(es = "Felinarium", en = "Catarium"),
                         recipes =
                             listOf(
                                 GearRecipe(
@@ -1024,7 +1030,8 @@ object Core15Gear {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Herrería",
+                        id = LocationId("blacksmith"),
+                        names = LocalizedText(es = "Herrería", en = "Blacksmith"),
                         recipes =
                             listOf(
                                 GearRecipe(
@@ -1051,7 +1058,8 @@ object Core15Gear {
                             ),
                     ),
                     SettlementLocation(
-                        name = "Plumería",
+                        id = LocationId("plumery"),
+                        names = LocalizedText(es = "Plumería", en = "Plumery"),
                         recipes =
                             listOf(
                                 GearRecipe(

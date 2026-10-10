@@ -1,6 +1,8 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.TimelineEntry
@@ -22,7 +24,10 @@ class ContentCatalogTest {
                             Innovation(name = "ammonia", description = "…"),
                             Innovation(name = "pictographs", description = "duplicate name"),
                         ),
-                    locations = listOf(SettlementLocation("lantern-hoard")),
+                    locations =
+                        listOf(
+                            SettlementLocation(LocationId("lantern-hoard"), LocalizedText(es = "lantern-hoard")),
+                        ),
                     resources =
                         listOf(
                             resourceDefinition("hide", ResourceCategory.BASIC),
@@ -79,7 +84,12 @@ class ContentCatalogTest {
         val catalog = ok(ContentCatalogComposer.compose(listOf(core, expansion)))
 
         assertEquals(3, catalog.innovationDefinitions.size)
-        assertEquals("lantern-hoard", catalog.locationDefinitions.single().name)
+        assertEquals(
+            "lantern-hoard",
+            catalog.locationDefinitions
+                .single()
+                .names.es,
+        )
         assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.id.value == "bone" }.category)
         assertEquals(
             ResourceCategory.SPECIAL,

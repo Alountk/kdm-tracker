@@ -45,7 +45,7 @@ class Core15GearTest {
         val gearPack = ContentPack(id = "gear", version = "1.5", name = "gear", bundle = Core15Gear.bundle)
 
         val armeria =
-            ContentCatalog(listOf(locationsPack, gearPack)).locationDefinitions.single { it.name == "Armería" }
+            ContentCatalog(listOf(locationsPack, gearPack)).locationDefinitions.single { it.names.es == "Armería" }
 
         assertTrue(armeria.buildCost.isNotEmpty())
         assertTrue(armeria.recipes.isNotEmpty())

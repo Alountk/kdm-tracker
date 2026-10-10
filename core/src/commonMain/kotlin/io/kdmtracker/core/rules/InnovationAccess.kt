@@ -4,6 +4,7 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementState
 
 /** Where an innovation sits in the settlement's unlock tree. */
@@ -16,7 +17,7 @@ enum class InnovationStatus { UNLOCKED, AVAILABLE, NO_ACCESS }
  *   [InnovationStatus.NO_ACCESS]; `null` otherwise.
  * @property endeavorCost the cost of the Innovate action that unlocks it (content, not a UI
  *   literal); the same for every innovation.
- * @property resourceCost the resources the Innovate action needs, keyed by resource name.
+ * @property resourceCost the resources the Innovate action needs, keyed by resource id.
  * @property used whether that action has already been used this Settlement Phase.
  */
 data class InnovationView(
@@ -24,7 +25,7 @@ data class InnovationView(
     val status: InnovationStatus,
     val missingParent: String? = null,
     val endeavorCost: Int = 0,
-    val resourceCost: Map<String, Int> = emptyMap(),
+    val resourceCost: Map<ResourceId, Int> = emptyMap(),
     val used: Boolean = false,
 )
 
@@ -58,7 +59,7 @@ object InnovationAccess {
                 location.actions.any { it.kind == ActionKind.INNOVATE }
             }
         val innovate = hoard?.actions?.firstOrNull { it.kind == ActionKind.INNOVATE }
-        val used = hoard != null && state.usedInPhase(hoard.name)
+        val used = hoard != null && state.usedInPhase(hoard.id.value)
         return catalog.innovationDefinitions
             .sortedBy { it.name }
             .map { innovation ->

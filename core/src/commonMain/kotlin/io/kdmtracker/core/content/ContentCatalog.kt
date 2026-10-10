@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.MonsterCard
 import io.kdmtracker.core.domain.ResourceDefinition
@@ -59,7 +60,7 @@ data class ContentCatalog(
             .sortedWith(compareBy({ it.lanternYear }, { it.label }))
 
     val innovations: List<String> = innovationDefinitions.map { it.name }.sorted()
-    val locations: List<String> = locationDefinitions.map { it.name }.sorted()
+    val locations: List<String> = locationDefinitions.map { it.names.es }.sorted()
     val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
     val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
@@ -113,27 +114,30 @@ data class ContentCatalog(
 }
 
 /**
- * Merges [locations] by name, combining the fields of same-name definitions so separate
- * packs can contribute different aspects (one the build data, another the recipes). The
- * result is deterministic: fields keep the first non-empty value in pack order, and lists
- * are de-duplicated.
+ * Merges [locations] by id, combining the fields of same-id definitions so separate
+ * packs can contribute different aspects (one the build data, another the recipes). Two
+ * packs naming the same location in different languages — `Lantern Hoard` and
+ * `Cúmulo de Linternas` — therefore collapse into one definition. The result is
+ * deterministic: fields keep the first non-empty value in pack order, names fall back to
+ * the other pack's translation, and lists are de-duplicated.
  */
 private fun mergeLocationDefinitions(locations: List<SettlementLocation>): List<SettlementLocation> =
     locations
-        .groupBy { it.name }
-        .map { (_, sameName) -> sameName.reduce(::combineLocations) }
-        .sortedBy { it.name }
+        .groupBy { it.id }
+        .map { (_, sameId) -> sameId.reduce(::combineLocations) }
+        .sortedBy { it.names.es }
 
 private fun combineLocations(
     current: SettlementLocation,
     candidate: SettlementLocation,
 ): SettlementLocation =
     SettlementLocation(
-        name = current.name,
+        id = current.id,
+        names = LocalizedText(es = current.names.es, en = current.names.en ?: candidate.names.en),
         requires = (current.requires + candidate.requires).distinct(),
         buildEndeavors = if (current.buildEndeavors != 0) current.buildEndeavors else candidate.buildEndeavors,
         buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
-        actions = (current.actions + candidate.actions).distinctBy { it.name },
+        actions = (current.actions + candidate.actions).distinctBy { it.kind },
         recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
     )
 

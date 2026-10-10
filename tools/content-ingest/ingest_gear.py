@@ -22,7 +22,8 @@ from typing import Callable, Dict, List, Optional, Sequence, Set
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from bbox import Block, parse_blocks  # noqa: E402
-from ingest_locations import resolve_resource  # noqa: E402
+from identity import load_identity, require_row  # noqa: E402
+from ingest_locations import DEFAULT_LOCATIONS_IDENTITY, _localized_lines, resolve_resource  # noqa: E402
 from kotlin_emit import indent, kotlin_escape, normalize_ws  # noqa: E402
 from pdf_text import bbox_text  # noqa: E402
 
@@ -301,22 +302,24 @@ def _recipe_lines(recipe: Recipe) -> List[str]:
     return lines
 
 
-def _location_lines(location: Location) -> List[str]:
-    if not location.recipes:
-        return [f'                    SettlementLocation("{kotlin_escape(location.name)}"),']
+def _location_lines(location: Location, location_identity: Dict[str, object]) -> List[str]:
+    row = require_row(location_identity, location.name, source="ingest_gear")
     lines = [
         "                    SettlementLocation(",
-        f'                        name = "{kotlin_escape(location.name)}",',
-        "                        recipes =",
-        "                            listOf(",
+        f'                        id = LocationId("{kotlin_escape(row.resource_id)}"),',
     ]
+    lines.extend(_localized_lines("names", 24, row.spanish_name or row.english_name, row.english_name))
+    if not location.recipes:
+        lines.append("                    ),")
+        return lines
+    lines += ["                        recipes =", "                            listOf("]
     for recipe in location.recipes:
         lines.extend(_recipe_lines(recipe))
     lines += ["                            ),", "                    ),"]
     return lines
 
 
-def emit_kotlin(gears: Sequence[Gear], locations: Sequence[Location]) -> str:
+def emit_kotlin(gears: Sequence[Gear], locations: Sequence[Location], location_identity: Dict[str, object]) -> str:
     lines = [
         GENERATED_HEADER,
         "package io.kdmtracker.core.content.generated",
@@ -324,6 +327,8 @@ def emit_kotlin(gears: Sequence[Gear], locations: Sequence[Location]) -> str:
         "import io.kdmtracker.core.content.ContentBundle",
         "import io.kdmtracker.core.domain.Gear",
         "import io.kdmtracker.core.domain.GearRecipe",
+        "import io.kdmtracker.core.domain.LocalizedText",
+        "import io.kdmtracker.core.domain.LocationId",
         "import io.kdmtracker.core.domain.SettlementLocation",
         "",
         "object Core15Gear {",
@@ -336,7 +341,7 @@ def emit_kotlin(gears: Sequence[Gear], locations: Sequence[Location]) -> str:
         lines.extend(_gear_lines(gear))
     lines += ["                ),", "            locations =", "                listOf("]
     for location in locations:
-        lines.extend(_location_lines(location))
+        lines.extend(_location_lines(location, location_identity))
     lines += ["                ),", "        )", "}", ""]
     return "\n".join(lines)
 
@@ -359,7 +364,9 @@ def _resource_names() -> Set[str]:
     path = _repo_root() / "core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15Resources.kt"
     if not path.exists():
         return set()
-    return set(re.findall(r'name = "([^"]+)"', path.read_text(encoding="utf-8")))
+    # S1 re-keyed the pack: each resource emits ``names = LocalizedText(es = "…")`` rather than
+    # ``name = "…"``; matching the old shape silently resolved every recipe filter to nothing.
+    return set(re.findall(r'names = LocalizedText\(es = "([^"]+)"', path.read_text(encoding="utf-8")))
 
 
 def _normalize(token: str) -> str:
@@ -429,7 +436,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     out = _relative(Path(args.out))
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(emit_kotlin(gears, locations), encoding="utf-8")
+    location_identity = load_identity(_relative(DEFAULT_LOCATIONS_IDENTITY))
+    out.write_text(emit_kotlin(gears, locations, location_identity), encoding="utf-8")
     print(f"wrote {out}: {len(gears)} gear, {len(locations)} locations")
     return 0
 

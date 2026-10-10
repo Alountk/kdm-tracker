@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.rules.InnovationStatus
 import io.kdmtracker.core.rules.InnovationView
 
@@ -61,7 +62,7 @@ internal fun InnovarTab(
         }
 
         state.innovationViews.filter { it.matches(filter) }.forEach { view ->
-            InnovarRow(view = view, onInnovate = onInnovate)
+            InnovarRow(view = view, resourceDefinitions = state.resourceDefinitions, onInnovate = onInnovate)
         }
     }
 }
@@ -77,6 +78,7 @@ private fun InnovationView.matches(filter: InnovarFilter): Boolean =
 @Composable
 private fun InnovarRow(
     view: InnovationView,
+    resourceDefinitions: List<ResourceDefinition>,
     onInnovate: (String) -> Unit,
 ) {
     val color =
@@ -88,7 +90,7 @@ private fun InnovarRow(
     val subtitle =
         when (view.status) {
             InnovationStatus.UNLOCKED -> "desbloqueada"
-            InnovationStatus.AVAILABLE -> "disponible · ${actionCost(view)}"
+            InnovationStatus.AVAILABLE -> "disponible · ${actionCost(view, resourceDefinitions)}"
             InnovationStatus.NO_ACCESS -> "sin acceso — requiere ${view.missingParent ?: "?"}"
         }
     Row(
@@ -123,10 +125,16 @@ private fun InnovarRow(
     }
 }
 
-private fun actionCost(view: InnovationView): String {
+private fun actionCost(
+    view: InnovationView,
+    resourceDefinitions: List<ResourceDefinition>,
+): String {
     val parts = mutableListOf("${view.endeavorCost} esfuerzo")
     view.resourceCost.entries
-        .sortedBy { it.key }
-        .forEach { (name, count) -> parts += "$count $name" }
+        .sortedBy { it.key.value }
+        .forEach { (id, count) ->
+            val name = resourceDefinitions.firstOrNull { it.id == id }?.names?.es ?: id.value
+            parts += "$count $name"
+        }
     return parts.joinToString(" + ")
 }

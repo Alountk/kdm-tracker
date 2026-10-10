@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -85,7 +86,7 @@ abstract class CampaignStoreContract {
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Hoard")),
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"))),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Broken Lantern"), 2),

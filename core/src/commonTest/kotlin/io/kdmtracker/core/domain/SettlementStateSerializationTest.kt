@@ -39,7 +39,7 @@ class SettlementStateSerializationTest {
                         ),
                     ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Hoard", "Bone Smith")),
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"), LocationId("bone_smith"))),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Bone"), delta = 3),

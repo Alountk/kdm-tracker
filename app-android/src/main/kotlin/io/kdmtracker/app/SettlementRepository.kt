@@ -9,6 +9,7 @@ import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
@@ -361,10 +362,10 @@ private val STARTING_INNOVATIONS: List<Innovation> =
     )
 
 /** The location every settlement opens with, so Innovate is offered at a built location. */
-private const val STARTING_LOCATION = "Lantern Hoard"
+private val STARTING_LOCATION = LocationId("lantern_hoard")
 
 /** The location the curated 1.5 crafting recipes live on, built so Craft is reachable. */
-private const val CRAFT_LOCATION = "Armería"
+private val CRAFT_LOCATION = LocationId("weapon_crafter")
 
 /** The founding survivors a new settlement opens with. */
 private const val FOUNDING_SURVIVORS = 4

@@ -41,7 +41,7 @@ class Core15GearContentTest {
 
     @Test
     fun theArmeriaLocationKeepsItsRecipes() {
-        val armeria = Core15Gear.bundle.locations.single { it.name == "Armería" }
+        val armeria = Core15Gear.bundle.locations.single { it.names.es == "Armería" }
 
         assertTrue(armeria.recipes.size >= 6, "Armería recipes: ${armeria.recipes.map { it.gearName }}")
         assertTrue(armeria.recipes.any { it.gearName == "Katana del Arcoíris" })

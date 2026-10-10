@@ -1,18 +1,20 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
 
 /**
- * The bridge from a resource's **pre-id display name** to its stable id.
+ * The bridge from a content entity's **pre-id display name** to its stable id.
  *
  * Before this change the display name *was* the identity, so every persisted ledger, every gear
- * recipe and every location build cost refers to a resource by name. Those references still
+ * recipe and every location build cost refers to an entity by name. Those references still
  * resolve here, and — more importantly — a settlement persisted by an older build decodes through
- * this table instead of losing its resource entries.
+ * this table instead of losing its entries.
  *
- * The table is the `spanishName` column of `tools/content-ingest/identity/resources.csv` plus the
- * three English aliases the 1.6 seed uses for the basic four. It is a **transitional** bridge:
- * S2 re-keys recipes and locations to ids, and after that only the legacy decode path reads it.
+ * The tables are the `spanishName`/`englishName` columns of the CSVs under
+ * `tools/content-ingest/identity/`, plus the three English aliases the 1.6 seed uses for the
+ * basic resources. They are **transitional** bridges: as each family re-keys to ids, only the
+ * legacy decode path reads its table.
  *
  * A name that is missing here is a content defect, not a user error: `ContentIdentityTest` asserts
  * every name the catalog can produce resolves, so the gap fails the build rather than the user.
@@ -93,4 +95,46 @@ object ContentIdentity {
      * turn the failure into a `StepResult.Blocked` rather than letting the throw escape.
      */
     fun requireResourceId(name: String): ResourceId = byName[name] ?: error("no content id for '$name'")
+
+    private val locationByName: Map<String, LocationId> =
+        mapOf(
+            // The Spanish names the 1.5 location cards carry.
+            "Armería" to LocationId("weapon_crafter"),
+            "Artesano de Máscaras" to LocationId("mask_maker"),
+            "Cirujano Barbero" to LocationId("barber_surgeon"),
+            "Círculo de Piedra" to LocationId("stone_circle"),
+            "Curtiduría" to LocationId("leather_worker"),
+            "Cúmulo de Linternas" to LocationId("lantern_hoard"),
+            "Cúmulo de Linternas Extinto" to LocationId("exhausted_lantern_hoard"),
+            "Felinarium" to LocationId("catarium"),
+            "Herrería" to LocationId("blacksmith"),
+            "Molino de Órganos" to LocationId("organ_grinder"),
+            "Peletería" to LocationId("skinnery"),
+            "Plumería" to LocationId("plumery"),
+            "Taller de Huesos" to LocationId("bone_smith"),
+            // The same locations named in English — by the 1.6 seed and by the CSV's englishName
+            // column — plus the six sites only the seed declares.
+            "Barber Surgeon" to LocationId("barber_surgeon"),
+            "Blacksmith" to LocationId("blacksmith"),
+            "Bone Smith" to LocationId("bone_smith"),
+            "Catarium" to LocationId("catarium"),
+            "Dragon Armory" to LocationId("dragon_armory"),
+            "Exhausted Lantern Hoard" to LocationId("exhausted_lantern_hoard"),
+            "Gormchymist" to LocationId("gormchymist"),
+            "Gormery" to LocationId("gormery"),
+            "Lantern Hoard" to LocationId("lantern_hoard"),
+            "Leather Worker" to LocationId("leather_worker"),
+            "Mask Maker" to LocationId("mask_maker"),
+            "Organ Grinder" to LocationId("organ_grinder"),
+            "Plumery" to LocationId("plumery"),
+            "Silk Mill" to LocationId("silk_mill"),
+            "Skinnery" to LocationId("skinnery"),
+            "Skyreef Sanctuary" to LocationId("skyreef_sanctuary"),
+            "Stone Circle" to LocationId("stone_circle"),
+            "Wet Resin Crafter" to LocationId("wet_resin_crafter"),
+            "Weapon Crafter" to LocationId("weapon_crafter"),
+        )
+
+    /** The id for a location's pre-id display name, or `null` when no content produces that name. */
+    fun locationIdFor(name: String): LocationId? = locationByName[name]
 }

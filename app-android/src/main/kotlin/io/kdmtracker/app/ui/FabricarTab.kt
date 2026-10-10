@@ -46,7 +46,7 @@ internal fun FabricarTab(
                 .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val buildable = state.catalogLocations.filter { it.name !in state.builtLocations }
+        val buildable = state.catalogLocations.filter { it.names.es !in state.builtLocations }
         if (buildable.isNotEmpty()) {
             Text(text = "Construir", style = MaterialTheme.typography.titleSmall)
             buildable.forEach { location ->
@@ -56,19 +56,22 @@ internal fun FabricarTab(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = location.name, style = MaterialTheme.typography.bodyMedium)
+                        Text(text = location.names.es, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            text = "Cost: ${buildCostText(location)}",
+                            text = "Cost: ${buildCostText(location, state)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = "Requires: ${location.requires.ifEmpty { listOf("None") }.joinToString(", ")}",
+                            text = "Requires: ${requiresText(
+                                location,
+                                state,
+                            ).ifEmpty { listOf("None") }.joinToString(", ")}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Button(onClick = { onBuild(location.name) }) { Text("Build") }
+                    Button(onClick = { onBuild(location.names.es) }) { Text("Build") }
                 }
             }
         }
@@ -133,11 +136,34 @@ private fun costText(recipe: GearRecipe): String =
         .sortedBy { it.key }
         .joinToString(", ") { (name, count) -> "$count $name" }
 
-private fun buildCostText(location: io.kdmtracker.core.domain.SettlementLocation): String {
+/** The location's prerequisites as displayed names, resolved through the catalog. */
+private fun requiresText(
+    location: io.kdmtracker.core.domain.SettlementLocation,
+    state: UiState,
+): List<String> =
+    location.requires.map { id ->
+        state.catalogLocations
+            .firstOrNull { it.id == id }
+            ?.names
+            ?.es
+            ?: id.value
+    }
+
+private fun buildCostText(
+    location: io.kdmtracker.core.domain.SettlementLocation,
+    state: UiState,
+): String {
     val parts = mutableListOf<String>()
     if (location.buildEndeavors > 0) parts += "${location.buildEndeavors} endeavors"
     location.buildCost.entries
-        .sortedBy { it.key }
-        .forEach { (name, count) -> parts += "$count $name" }
+        .sortedBy { it.key.value }
+        .forEach { (id, count) ->
+            val name =
+                state.resourceDefinitions
+                    .firstOrNull { it.id == id }
+                    ?.names
+                    ?.es ?: id.value
+            parts += "$count $name"
+        }
     return if (parts.isEmpty()) "free" else parts.joinToString(", ")
 }
