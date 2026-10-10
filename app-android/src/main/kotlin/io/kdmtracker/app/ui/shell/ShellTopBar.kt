@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,54 +53,57 @@ fun ShellTopBar(
     deaths: Int,
     onAccount: () -> Unit,
 ) {
-    Row(
+    Column(
+        // Size, then decoration, then the inset: the background covers the status-bar strip too, so
+        // the chrome reaches the top edge of the screen instead of floating inside the safe area.
         modifier =
             Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
                 .shadow(elevation = 8.dp)
-                .height(BarHeight)
-                // The bar's contents must never escape its box: the avatar and the stat cluster are
-                // fixed-size, and an expanded touch target would otherwise draw outside the bar.
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .clipToBounds()
-                .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+                .windowInsetsPadding(WindowInsets.statusBars),
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth().height(BarHeight).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Symbol("light_mode", MaterialTheme.colorScheme.secondary, 16.sp)
-                Spacer(Modifier.width(6.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Symbol("light_mode", MaterialTheme.colorScheme.secondary, 16.sp)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Año Linterna $lanternYear".uppercase(),
+                        style = KdmType.labelCaps,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
                 Text(
-                    text = "Año Linterna $lanternYear".uppercase(),
-                    style = KdmType.labelCaps,
-                    color = MaterialTheme.colorScheme.secondary,
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = settlementName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = settlementName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            StatCluster(population = population, deaths = deaths)
-            Avatar(onClick = onAccount)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                StatCluster(population = population, deaths = deaths)
+                Avatar(onClick = onAccount)
+            }
         }
     }
 }

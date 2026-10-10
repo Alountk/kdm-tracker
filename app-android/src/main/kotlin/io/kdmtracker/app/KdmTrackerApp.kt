@@ -2,11 +2,13 @@ package io.kdmtracker.app
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +57,11 @@ fun KdmTrackerApp(
     }
 
     KdmTheme {
+        val inShell = state?.screen?.let { AppShell.inShell(it) } == true
         Scaffold(
+            // The shell's bars paint edge to edge and add the system insets themselves; every other
+            // screen keeps the scaffold's default safe-area handling.
+            contentWindowInsets = if (inShell) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
             topBar = {
                 state?.let { current ->
                     // Inside a campaign the design's own top bar lives in the shell, so the

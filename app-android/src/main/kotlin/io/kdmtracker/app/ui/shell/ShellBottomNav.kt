@@ -5,10 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,27 +45,29 @@ fun ShellBottomNav(
     selected: ShellTab,
     onSelect: (ShellTab) -> Unit,
 ) {
-    Row(
+    Column(
+        // Size, then decoration, then the inset: the background covers the navigation-bar strip, so
+        // the chrome reaches the bottom edge of the screen instead of floating inside the safe area.
         modifier =
             Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.97f))
                 .shadow(elevation = 8.dp)
-                .height(NavHeight)
-                // The design's `justify-around` with `px-gutter`; a long label can still never
-                // widen the row past the bar, because the strip is clipped and each label is
-                // single-line and ellipsised.
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .clipToBounds()
-                .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround,
+                .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
-        ShellTab.entries.forEach { tab ->
-            Tab(
-                tab = tab,
-                selected = tab == selected,
-                onClick = { onSelect(tab) },
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth().height(NavHeight).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround,
+        ) {
+            ShellTab.entries.forEach { tab ->
+                Tab(
+                    tab = tab,
+                    selected = tab == selected,
+                    onClick = { onSelect(tab) },
+                )
+            }
         }
     }
 }
