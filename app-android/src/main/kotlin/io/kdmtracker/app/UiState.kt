@@ -28,6 +28,9 @@ sealed interface Screen {
 
     data object Settlement : Screen
 
+    /** The survivor roster and its paged sheet (the design's "Supervivientes" tab). */
+    data object Survivors : Screen
+
     data object Hunt : Screen
 
     data object Showdown : Screen

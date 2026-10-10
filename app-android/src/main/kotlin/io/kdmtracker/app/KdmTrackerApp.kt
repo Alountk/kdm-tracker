@@ -27,6 +27,7 @@ import io.kdmtracker.app.ui.AppTopBar
 import io.kdmtracker.app.ui.ChipAction
 import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
+import io.kdmtracker.app.ui.PendientePlaceholder
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
 import io.kdmtracker.app.ui.theme.KdmTheme
@@ -96,6 +97,9 @@ fun KdmTrackerApp(
                                     onNewSettlementName = { newSettlementName = it },
                                     error = actionError,
                                 )
+                            // Replaced by the shell's Supervivientes tab in the
+                            // AppShell task; nothing routes here until then.
+                            Screen.Survivors -> PendientePlaceholder()
                             Screen.Settlement ->
                                 SettlementScreen(
                                     state = current,
