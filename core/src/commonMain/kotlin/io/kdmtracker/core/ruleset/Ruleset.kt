@@ -53,6 +53,12 @@ interface Ruleset {
     /** Insanity at which a survivor is insane (rulebook 1.6: 3 or more). */
     val insanityThreshold: Int
 
+    /** Innovation cards drawn when innovating, from which [innovationKeep] are kept (1.6: 2). */
+    val innovationDraw: Int
+
+    /** Innovation cards kept from the draw (rulebook 1.6: 1). */
+    val innovationKeep: Int
+
     val milestones: List<MilestoneDefinition>
     val principles: Map<PrincipleCategory, List<PrincipleChoice>>
 }
@@ -86,8 +92,10 @@ fun Ruleset.applyOverrides(overrides: RulesetOverrides): Ruleset {
         endeavorsPerReturnee = overrides.endeavorsPerReturnee ?: endeavorsPerReturnee,
         survivalLimit = overrides.survivalLimit ?: survivalLimit,
         departingLimit = departingLimit,
-        huntXpTrackMax = huntXpTrackMax,
-        insanityThreshold = insanityThreshold,
+        huntXpTrackMax = overrides.huntXpTrackMax ?: huntXpTrackMax,
+        insanityThreshold = overrides.insanityThreshold ?: insanityThreshold,
+        innovationDraw = overrides.innovationDraw ?: innovationDraw,
+        innovationKeep = overrides.innovationKeep ?: innovationKeep,
         milestones = mergeMilestones(milestones, overrides.extraMilestones),
         principles = principles + overrides.principleOverrides,
     )
@@ -119,6 +127,8 @@ private data class OverrideRuleset(
     override val departingLimit: Int,
     override val huntXpTrackMax: Int,
     override val insanityThreshold: Int,
+    override val innovationDraw: Int,
+    override val innovationKeep: Int,
     override val milestones: List<MilestoneDefinition>,
     override val principles: Map<PrincipleCategory, List<PrincipleChoice>>,
 ) : Ruleset

@@ -35,4 +35,36 @@ class DisplayRulesTest {
         assertEquals(16, overridden.huntXpTrackMax)
         assertEquals(3, overridden.insanityThreshold)
     }
+
+    @Test
+    fun coreRulesetPinsTheInnovationDraw() {
+        assertEquals(2, Core16Ruleset.innovationDraw)
+        assertEquals(1, Core16Ruleset.innovationKeep)
+    }
+
+    @Test
+    fun everyHouseRuleKnobSurvivesAnOverride() {
+        val overridden =
+            Core16Ruleset.applyOverrides(
+                RulesetOverrides(
+                    innovationDraw = 4,
+                    innovationKeep = 1,
+                    huntXpTrackMax = 20,
+                    insanityThreshold = 5,
+                ),
+            )
+
+        assertEquals(4, overridden.innovationDraw)
+        assertEquals(1, overridden.innovationKeep)
+        assertEquals(20, overridden.huntXpTrackMax)
+        assertEquals(5, overridden.insanityThreshold)
+    }
+
+    @Test
+    fun anUntouchedKnobKeepsTheOfficialValue() {
+        val overridden = Core16Ruleset.applyOverrides(RulesetOverrides(survivalLimit = 9))
+
+        assertEquals(2, overridden.innovationDraw)
+        assertEquals(16, overridden.huntXpTrackMax)
+    }
 }
