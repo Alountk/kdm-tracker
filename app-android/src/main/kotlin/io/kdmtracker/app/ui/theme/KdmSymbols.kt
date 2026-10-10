@@ -19,6 +19,9 @@ object KdmSymbols {
     /** The icon font. Registered at its default instance (FILL 0, weight 400). */
     val family: FontFamily = FontFamily(Font(R.font.material_symbols_outlined, weight = FontWeight.Normal))
 
+    /** How many glyphs the bundle maps — the designs' whole icon vocabulary. */
+    val glyphCount: Int get() = CODEPOINTS.size
+
     /** The single-glyph string for [name], or an [IllegalArgumentException] when unmapped. */
     fun glyph(name: String): String =
         CODEPOINTS[name]?.toChar()?.toString()
@@ -54,11 +57,13 @@ object KdmSymbols {
             "face" to 0xF008,
             "favorite" to 0xE87E,
             "fitness_center" to 0xEB43,
+            "format_h4" to 0xF860,
             "flare" to 0xE3E4,
             "fort" to 0xEAAD,
             "front_hand" to 0xE769,
             "grass" to 0xF205,
             "grid_view" to 0xE9B0,
+            "grid_4x4" to 0xF016,
             "group" to 0xEA21,
             "group_add" to 0xE7F0,
             "groups" to 0xF233,
