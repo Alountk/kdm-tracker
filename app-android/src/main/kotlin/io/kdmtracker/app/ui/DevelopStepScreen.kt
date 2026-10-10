@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.StorageLine
 
@@ -56,7 +57,7 @@ fun DevelopStepScreen(
         }
 
         Text(
-            text = "Endeavors ${state.endeavors} · ${storageText(state.storageLines)}",
+            text = "Endeavors ${state.endeavors} · ${storageText(state.storageLines, state.resourceDefinitions)}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -106,5 +107,11 @@ internal fun ChoiceChip(
     }
 }
 
-private fun storageText(lines: List<StorageLine>): String =
-    if (lines.isEmpty()) "Storage: empty" else "Storage: " + lines.joinToString(" · ") { "${it.name} ${it.quantity}" }
+private fun storageText(
+    lines: List<StorageLine>,
+    definitions: List<ResourceDefinition>,
+): String {
+    if (lines.isEmpty()) return "Storage: empty"
+    val byId = definitions.associateBy { it.id }
+    return "Storage: " + lines.joinToString(" · ") { "${byId[it.id]?.names?.es ?: it.id.value} ${it.quantity}" }
+}

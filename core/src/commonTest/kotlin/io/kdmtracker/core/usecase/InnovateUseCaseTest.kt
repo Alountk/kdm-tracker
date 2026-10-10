@@ -10,6 +10,7 @@ import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
@@ -90,9 +91,9 @@ class InnovateUseCaseTest {
             locations = LocationSet(built = listOf("Lantern Hoard")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Organ", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Hide", ResourceCategory.BASIC, 2),
+                    ResourceEntry(ResourceId("Bone"), 2),
+                    ResourceEntry(ResourceId("Organ"), 2),
+                    ResourceEntry(ResourceId("Hide"), 2),
                 ),
         )
 
@@ -111,7 +112,7 @@ class InnovateUseCaseTest {
         )
         assertTrue(ok.value.state.usedInPhase("Lantern Hoard"))
         for (name in listOf("Bone", "Organ", "Hide")) {
-            val line = ok.value.storage().single { it.name == name }
+            val line = ok.value.storage().single { it.id.value == name }
             assertEquals(1, line.quantity)
         }
     }

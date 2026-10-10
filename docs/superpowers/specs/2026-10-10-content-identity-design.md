@@ -83,19 +83,21 @@ data class ResourceDefinition(
 
 ### 4 · Where the identity flows
 
-The ledger keeps the **aggregate dimension denormalized**, mirroring how it carries `category` today, so `Storage.project` stays catalog-free:
+The ledger keys resources by id and **stores nothing but the id and the delta**:
 
 | Today | New |
 | --- | --- |
-| `ResourceEntry(name, category, delta)` | `ResourceEntry(id, material, delta)` |
-| `StorageLine(name, category, quantity)` | `StorageLine(id, material, quantity)` |
+| `ResourceEntry(name, category, delta)` | `ResourceEntry(id, delta)` |
+| `StorageLine(name, category, quantity)` | `StorageLine(id, quantity)` |
 | `Storage.project` groups by `(name, category)` | groups by `id` |
 | `AddResourceEntry` compares `it.name == entry.name` | compares `id` |
-| `Craft` resolves `category` by name | resolves `material` by `id` |
+| `Craft` resolves `category` by name | resolves the definition (and so the id) by name, for now |
 
-`ResourceCategory` leaves the ledger — it is a rules concern, resolved from the catalog when needed. **Names are never stored in the ledger**; the UI resolves `id → names` from `resourceDefinitions`, which removes the last reason the ledger and the catalog had to agree on a string. `Storage.forCategory` becomes `Storage.forMaterial`; nothing else in the projection changes shape.
+**Names and material are both content and both leave the ledger.** The UI resolves `id → names` from `resourceDefinitions`, and the summary resolves `id → material` through `Storage.byMaterial(entries, definitions)`. The projection itself stays catalog-free, so `SettlementState.storage()` keeps working without one; only the aggregation by bucket needs the catalog, and only the UI and the model that renders the grid ever call it.
 
-The ledger stores `material` denormalized, exactly as it stores `category` today: a later re-classification of a definition does not rewrite history, and the projection stays catalog-free so `SettlementState.storage()` keeps working without a catalog.
+This is deliberately **not** the denormalization the ledger used to do with `category`, and the reason is the migration: an entry persisted before ids existed carries only a display name, and while [ContentIdentity] can map that name to an id, *nothing* can recover which of the four buckets the resource belonged to. Denormalizing the material would have made every legacy entry's bucket permanently `null` — silently dropping it from the grid. Storing only the id keeps the legacy decode lossless and lets the catalog answer the material question on every read.
+
+`Storage.forCategory` had no production consumer and is gone; `Storage.forMaterial` is replaced by the catalog-aware `byMaterial`.
 
 **S1 changes `resourceEntries` only.** `LocationSet.built`, `SettlementState.gear` and `InnovationCollection` keep their current shape until S2, so the diff — and the review — stay small.
 

@@ -7,6 +7,7 @@ import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
@@ -87,8 +88,8 @@ abstract class CampaignStoreContract {
             locations = LocationSet(built = listOf("Lantern Hoard")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, -1),
+                    ResourceEntry(ResourceId("Broken Lantern"), 2),
+                    ResourceEntry(ResourceId("Broken Lantern"), -1),
                 ),
             deaths = 3,
             births = 5,

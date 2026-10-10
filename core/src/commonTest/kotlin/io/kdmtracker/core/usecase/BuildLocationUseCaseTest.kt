@@ -8,6 +8,7 @@ import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
@@ -78,8 +79,8 @@ class BuildLocationUseCaseTest {
             locations = LocationSet(built = listOf("Stone Circle")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Hide", ResourceCategory.BASIC, 2),
+                    ResourceEntry(ResourceId("Bone"), 2),
+                    ResourceEntry(ResourceId("Hide"), 2),
                 ),
         )
 
@@ -92,7 +93,7 @@ class BuildLocationUseCaseTest {
         assertTrue("Blacksmith" in ok.value.state.locations.built)
         assertTrue("Stone Circle" in ok.value.state.locations.built)
         for (name in listOf("Bone", "Hide")) {
-            val line = ok.value.storage().single { it.name == name }
+            val line = ok.value.storage().single { it.id.value == name }
             assertEquals(1, line.quantity)
         }
     }
@@ -112,14 +113,14 @@ class BuildLocationUseCaseTest {
             record(
                 state =
                     ready().copy(
-                        resourceEntries = listOf(ResourceEntry("Bone", ResourceCategory.BASIC, 1)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Bone"), 1)),
                     ),
             )
 
         val result = BuildLocation.run(before, "Blacksmith", catalog)
 
         assertIs<StepResult.Blocked>(result)
-        assertEquals(1, before.storage().single { it.name == "Bone" }.quantity)
+        assertEquals(1, before.storage().single { it.id.value == "Bone" }.quantity)
         assertEquals(3, before.settlement.endeavors)
         assertTrue("Blacksmith" !in before.state.locations.built)
     }

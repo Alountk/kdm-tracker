@@ -3,8 +3,8 @@ package io.kdmtracker.app
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementState
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Timeline
@@ -124,7 +124,7 @@ class SettlementRecordRepositoryTest {
                             ),
                         ),
                 ),
-            resourceEntries = listOf(ResourceEntry(name = "Bone", category = ResourceCategory.BASIC, delta = 3)),
+            resourceEntries = listOf(ResourceEntry(id = ResourceId("Bone"), delta = 3)),
             deaths = 5,
             births = 2,
             // Matches the seeded settlement's population, so loading does not seed a roster.

@@ -149,7 +149,7 @@ class SettlementBookkeepingControllerTest {
             controller.state.value.resourceDefinitions
                 .single { it.names.es == "Hueso de Monstruo" }
 
-        controller.addResource(ResourceEntry(definition.names.es, definition.category, 3))
+        controller.addResource(ResourceEntry(definition.id, 3))
 
         assertTrue(
             controller.state.value.storageLines

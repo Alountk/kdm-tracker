@@ -9,6 +9,7 @@ import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -59,7 +60,7 @@ class DevelopCraftSectionTest {
                 state =
                     repository.record.state.copy(
                         locations = LocationSet(built = listOf("Armería")),
-                        resourceEntries = listOf(ResourceEntry("Hueso de Monstruo", ResourceCategory.MONSTER, 2)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Hueso de Monstruo"), 2)),
                     ),
             ),
         )

@@ -42,7 +42,7 @@ object Craft {
             val definition =
                 catalog.resourceDefinitionFor(resource)
                     ?: return StepResult.Blocked("unknown resource: $resource")
-            when (val result = AddResourceEntry.run(spent, ResourceEntry(resource, definition.category, -count))) {
+            when (val result = AddResourceEntry.run(spent, ResourceEntry(definition.id, -count))) {
                 is StepResult.Ok -> spent = result.value
                 is StepResult.Blocked -> return result
             }

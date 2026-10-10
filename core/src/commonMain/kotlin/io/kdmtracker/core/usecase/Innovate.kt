@@ -67,7 +67,7 @@ object Innovate {
                 catalog.resourceDefinitionFor(name)
                     ?: return StepResult.Blocked("unknown resource $name")
             spent =
-                when (val result = AddResourceEntry.run(spent, ResourceEntry(name, definition.category, -count))) {
+                when (val result = AddResourceEntry.run(spent, ResourceEntry(definition.id, -count))) {
                     is StepResult.Ok -> result.value
                     is StepResult.Blocked -> return result
                 }

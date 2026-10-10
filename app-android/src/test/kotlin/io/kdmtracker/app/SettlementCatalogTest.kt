@@ -3,8 +3,8 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
@@ -87,7 +87,7 @@ class SettlementCatalogTest {
             repository.record.copy(
                 state =
                     repository.record.state.copy(
-                        resourceEntries = listOf(ResourceEntry("Bone", ResourceCategory.BASIC, 3)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Bone"), 3)),
                     ),
             ),
         )
@@ -97,7 +97,7 @@ class SettlementCatalogTest {
                 .state.value.storageLines
                 .single()
 
-        assertEquals("Bone", line.name)
+        assertEquals("Bone", line.id.value)
         assertEquals(3, line.quantity)
     }
 

@@ -42,10 +42,10 @@ class SettlementStateSerializationTest {
             locations = LocationSet(built = listOf("Lantern Hoard", "Bone Smith")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, delta = 3),
-                    ResourceEntry("Bone", ResourceCategory.BASIC, delta = -1),
-                    ResourceEntry("Hide", ResourceCategory.BASIC, delta = 2),
-                    ResourceEntry("Skull", ResourceCategory.MONSTER, delta = -2),
+                    ResourceEntry(ResourceId("Bone"), delta = 3),
+                    ResourceEntry(ResourceId("Bone"), delta = -1),
+                    ResourceEntry(ResourceId("Hide"), delta = 2),
+                    ResourceEntry(ResourceId("Skull"), delta = -2),
                 ),
             deaths = 2,
             births = 3,

@@ -9,6 +9,7 @@ import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -63,7 +64,7 @@ class CraftControllerTest {
                 state =
                     repository.record.state.copy(
                         locations = LocationSet(built = built),
-                        resourceEntries = listOf(ResourceEntry("Hueso de Monstruo", ResourceCategory.MONSTER, bones)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Hueso de Monstruo"), bones)),
                     ),
             ),
         )
@@ -84,7 +85,7 @@ class CraftControllerTest {
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
         val fresh = SettlementRepository(store).record
         assertTrue("Hacha de Contrapeso" in fresh.state.gear)
-        assertEquals(1, fresh.storage().single { it.name == "Hueso de Monstruo" }.quantity)
+        assertEquals(1, fresh.storage().single { it.id.value == "Hueso de Monstruo" }.quantity)
     }
 
     @Test
@@ -117,7 +118,7 @@ class CraftControllerTest {
             val definition =
                 controller.state.value.resourceDefinitions
                     .single { it.names.es == name }
-            controller.addResource(ResourceEntry(name, definition.category, count))
+            controller.addResource(ResourceEntry(definition.id, count))
         }
         record("Hueso de Monstruo", 2)
         record("Piel de Monstruo", 1)

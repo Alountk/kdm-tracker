@@ -147,7 +147,16 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV10() {
-        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV11() {
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), TransferDocument.SUPPORTED_VERSIONS)
+    }
+
+    @Test
+    fun aVersionTenDocumentStillDecodes() {
+        // v11 re-keyed the resource ledger to ids; v10 named resources by display string, and
+        // those documents must keep importing rather than resetting to an empty settlement.
+        val document = """{"schemaVersion":10,"exportedAt":"x","campaigns":[]}"""
+
+        assertEquals(10, Json.decodeFromString(TransferDocument.serializer(), document).schemaVersion)
     }
 }

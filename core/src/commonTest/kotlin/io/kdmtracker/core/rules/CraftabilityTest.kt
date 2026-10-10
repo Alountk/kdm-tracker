@@ -10,6 +10,7 @@ import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
@@ -73,7 +74,7 @@ class CraftabilityTest {
             state =
                 SettlementState(
                     locations = LocationSet(built = built),
-                    resourceEntries = listOf(ResourceEntry("Hueso", ResourceCategory.BASIC, bones)),
+                    resourceEntries = listOf(ResourceEntry(ResourceId("Hueso"), bones)),
                 ),
         )
 

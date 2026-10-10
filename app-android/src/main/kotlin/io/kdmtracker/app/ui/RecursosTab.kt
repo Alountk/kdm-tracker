@@ -65,7 +65,7 @@ internal fun RecursosTab(
                     ) {
                         Text(text = definition.names.es, style = MaterialTheme.typography.bodyMedium)
                         Button(
-                            onClick = { onAddResource(ResourceEntry(definition.names.es, definition.category, 1)) },
+                            onClick = { onAddResource(ResourceEntry(definition.id, 1)) },
                         ) {
                             Text("+1")
                         }
