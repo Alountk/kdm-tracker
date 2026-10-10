@@ -2,9 +2,11 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ContentEntry
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HuntEvent
 import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.MonsterCard
 import io.kdmtracker.core.domain.ResourceDefinition
@@ -35,7 +37,7 @@ data class ContentCatalog(
     val packs: List<ContentPack>,
 ) {
     val innovationDefinitions: List<Innovation> =
-        mergeDefinition(packs.flatMap { it.bundle.innovations }) { it.name }
+        mergeInnovationDefinitions(packs.flatMap { it.bundle.innovations })
     val locationDefinitions: List<SettlementLocation> =
         mergeLocationDefinitions(packs.flatMap { it.bundle.locations })
     val resourceDefinitions: List<ResourceDefinition> =
@@ -51,15 +53,15 @@ data class ContentCatalog(
     val monsterCardDefinitions: List<MonsterCard> =
         mergeDefinition(packs.flatMap { it.bundle.monsterCards }) { "${it.monster}|${it.kind}|${it.name}" }
     val gearDefinitions: List<Gear> =
-        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.name }
+        mergeDefinition(packs.flatMap { it.bundle.gear }) { it.id.value }
     val timeline: List<TimelineEntry> =
         packs
             .flatMap { it.bundle.timeline }
             .distinct()
             .sortedWith(compareBy({ it.lanternYear }, { it.label }))
 
-    val innovations: List<String> = innovationDefinitions.map { it.name }.sorted()
-    val locations: List<String> = locationDefinitions.map { it.name }.sorted()
+    val innovations: List<String> = innovationDefinitions.map { it.names.es }.sorted()
+    val locations: List<String> = locationDefinitions.map { it.names.es }.sorted()
     val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
     val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
@@ -83,11 +85,18 @@ data class ContentCatalog(
     fun resourceDefinitionFor(name: String): ResourceDefinition? =
         resourceDefinitions.firstOrNull { it.names.es == name || it.names.en == name }
 
-    /** The modifiers of every gear named in [gearNames]; unknown names are ignored. */
-    fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> {
-        val byName = gearDefinitions.associateBy { it.name }
-        return gearNames.flatMap { byName[it]?.modifiers ?: emptyList() }
-    }
+    /**
+     * The modifiers of every gear keyed by [gearKeys]; unknown keys are ignored. A key is either
+     * a stable [GearId] value (the settlement's crafted-gear list) or a display name in either
+     * language (a survivor's equipment list), resolved against the definitions either way.
+     */
+    fun gearModifiersFor(gearKeys: Collection<String>): List<Modifier> =
+        gearKeys.flatMap { key ->
+            gearDefinitions
+                .firstOrNull { it.id.value == key || it.names.es == key || it.names.en == key }
+                ?.modifiers
+                ?: emptyList()
+        }
 
     /**
      * The resource definitions grouped by their [ResourceDefinition.source] (falling back to
@@ -113,28 +122,57 @@ data class ContentCatalog(
 }
 
 /**
- * Merges [locations] by name, combining the fields of same-name definitions so separate
- * packs can contribute different aspects (one the build data, another the recipes). The
- * result is deterministic: fields keep the first non-empty value in pack order, and lists
- * are de-duplicated.
+ * Merges [locations] by id, combining the fields of same-id definitions so separate
+ * packs can contribute different aspects (one the build data, another the recipes). Two
+ * packs naming the same location in different languages — `Lantern Hoard` and
+ * `Cúmulo de Linternas` — therefore collapse into one definition. The result is
+ * deterministic: fields keep the first non-empty value in pack order, names fall back to
+ * the other pack's translation, and lists are de-duplicated.
  */
 private fun mergeLocationDefinitions(locations: List<SettlementLocation>): List<SettlementLocation> =
     locations
-        .groupBy { it.name }
-        .map { (_, sameName) -> sameName.reduce(::combineLocations) }
-        .sortedBy { it.name }
+        .groupBy { it.id }
+        .map { (_, sameId) -> sameId.reduce(::combineLocations) }
+        .sortedBy { it.names.es }
 
 private fun combineLocations(
     current: SettlementLocation,
     candidate: SettlementLocation,
 ): SettlementLocation =
     SettlementLocation(
-        name = current.name,
+        id = current.id,
+        names = LocalizedText(es = current.names.es, en = current.names.en ?: candidate.names.en),
         requires = (current.requires + candidate.requires).distinct(),
         buildEndeavors = if (current.buildEndeavors != 0) current.buildEndeavors else candidate.buildEndeavors,
         buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
-        actions = (current.actions + candidate.actions).distinctBy { it.name },
-        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
+        actions = (current.actions + candidate.actions).distinctBy { it.kind },
+        recipes = (current.recipes + candidate.recipes).distinctBy { it.gearId },
+    )
+
+/**
+ * Merges [innovations] by id, combining the fields of same-id definitions so separate
+ * packs can contribute different aspects — the unlock **tree** is the union of both packs'
+ * consequences, so `Language` (1.6 seed) and `Lenguaje` (1.5) unlock the same branches.
+ * The result is deterministic: fields keep the first non-empty value in pack order, names
+ * fall back to the other pack's translation, and consequence lists are de-duplicated.
+ */
+private fun mergeInnovationDefinitions(innovations: List<Innovation>): List<Innovation> =
+    innovations
+        .groupBy { it.id }
+        .map { (_, sameId) -> sameId.reduce(::combineInnovations) }
+        .sortedBy { it.names.es }
+
+private fun combineInnovations(
+    current: Innovation,
+    candidate: Innovation,
+): Innovation =
+    Innovation(
+        id = current.id,
+        names = LocalizedText(es = current.names.es, en = current.names.en ?: candidate.names.en),
+        description = current.description.ifBlank { candidate.description },
+        consequences = (current.consequences + candidate.consequences).distinct(),
+        survivalLimitBonus =
+            if (current.survivalLimitBonus != 0) current.survivalLimitBonus else candidate.survivalLimitBonus,
     )
 
 object ContentCatalogComposer {

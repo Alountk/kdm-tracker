@@ -1,6 +1,8 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.Modifier
 import io.kdmtracker.core.domain.ModifierScope
 import io.kdmtracker.core.domain.ModifierTarget
@@ -29,8 +31,8 @@ class GearCatalogTest {
     }
 
     @Test
-    fun legacySettlementLocationJsonWithoutRecipesDecodesEmpty() {
-        val location = json.decodeFromString<SettlementLocation>("""{"name":"X"}""")
+    fun settlementLocationJsonWithoutRecipesDecodesEmpty() {
+        val location = json.decodeFromString<SettlementLocation>("""{"id":"x","names":{"es":"X"}}""")
 
         assertTrue(location.recipes.isEmpty())
     }
@@ -40,8 +42,8 @@ class GearCatalogTest {
         val catalog =
             ContentCatalog(
                 listOf(
-                    pack("a", listOf(Gear("X", rules = "first"))),
-                    pack("b", listOf(Gear("X", rules = "second"))),
+                    pack("a", listOf(Gear(GearId("x"), LocalizedText(es = "X"), rules = "first"))),
+                    pack("b", listOf(Gear(GearId("x"), LocalizedText(es = "X"), rules = "second"))),
                 ),
             )
 
@@ -51,7 +53,7 @@ class GearCatalogTest {
 
     @Test
     fun gearModifiersForResolvesKnownNamesAndIgnoresUnknown() {
-        val gear = Gear("A", modifiers = listOf(Modifier(ModifierTarget.STRENGTH, 1)))
+        val gear = Gear(GearId("a"), LocalizedText(es = "A"), modifiers = listOf(Modifier(ModifierTarget.STRENGTH, 1)))
         val catalog = ContentCatalog(listOf(pack("a", listOf(gear))))
 
         val modifiers = catalog.gearModifiersFor(listOf("A", "Unknown"))

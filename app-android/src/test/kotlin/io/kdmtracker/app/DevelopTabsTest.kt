@@ -1,5 +1,6 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -24,7 +25,7 @@ class DevelopTabsTest {
 
         fun hacha() =
             controller.state.value.craftRecipes
-                .single { it.recipe.gearName == "Hacha de Contrapeso" }
+                .single { it.recipe.gearId == GearId("hacha_de_contrapeso") }
 
         assertFalse(hacha().check.craftable)
 

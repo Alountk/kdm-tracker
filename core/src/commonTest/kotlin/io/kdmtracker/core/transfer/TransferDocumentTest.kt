@@ -2,7 +2,11 @@ package io.kdmtracker.core.transfer
 
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Core16Milestones
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
@@ -147,8 +151,60 @@ class TransferDocumentTest {
     }
 
     @Test
-    fun supportedVersionsCoverV1ThroughV11() {
-        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), TransferDocument.SUPPORTED_VERSIONS)
+    fun supportedVersionsCoverV1ThroughV12() {
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), TransferDocument.SUPPORTED_VERSIONS)
+    }
+
+    @Test
+    fun aV11DocumentStillDecodesWithLocationsGearAndInnovationsMappedToIds() {
+        // v11 (S1) exported the state with name-keyed locations and gear and name-only
+        // innovations; importing it into this build must map every one of them to its id.
+        val v11 =
+            """
+            {
+              "schemaVersion": 11,
+              "exportedAt": "2026-10-10T00:00:00Z",
+              "campaigns": [
+                {
+                  "id": "campaign-1",
+                  "name": "Grey Havens",
+                  "rulesetId": "core-1.6",
+                  "settlements": [
+                    {
+                      "id": "settlement-1",
+                      "campaignId": "campaign-1",
+                      "name": "First Cradle",
+                      "state": {
+                        "locations": {"built": ["Lantern Hoard"]},
+                        "gear": ["Daga de Hueso"],
+                        "innovations": {
+                          "innovations": [
+                            {"name": "Lenguaje", "description": "Se pueden hablar.", "consequences": ["Narración"]}
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val document = json.decodeFromString<TransferDocument>(v11)
+        val state =
+            document.campaigns
+                .single()
+                .settlements
+                .single()
+                .state
+
+        assertEquals(11, document.schemaVersion)
+        assertEquals(listOf(LocationId("lantern_hoard")), state.locations.built)
+        assertEquals(listOf(GearId("daga_de_hueso")), state.gear)
+        val innovation = state.innovations.innovations.single()
+        assertEquals(InnovationId("language"), innovation.id)
+        assertEquals(LocalizedText(es = "Lenguaje"), innovation.names)
+        assertEquals(listOf("Narración"), innovation.consequences)
     }
 
     @Test

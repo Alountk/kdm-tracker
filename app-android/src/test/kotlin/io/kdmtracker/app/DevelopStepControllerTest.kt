@@ -6,6 +6,10 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.ResourceId
@@ -32,17 +36,22 @@ import kotlin.test.assertTrue
 class DevelopStepControllerTest {
     private val innovateAction =
         SettlementAction(
-            name = "Innovate",
+            names = LocalizedText(es = "Innovar", en = "Innovate"),
             kind = ActionKind.INNOVATE,
             endeavorCost = 1,
-            resourceCost = mapOf("Bone" to 1, "Organ" to 1, "Hide" to 1),
+            resourceCost = mapOf(ResourceId("Bone") to 1, ResourceId("Organ") to 1, ResourceId("Hide") to 1),
             oncePerPhase = true,
             draw = 2,
             keep = 1,
             effect = "Draw 2 innovation cards, keep 1.",
         )
 
-    private val ammonia = Innovation(name = "Ammonia", description = "Acids for tanning.")
+    private val ammonia =
+        Innovation(
+            id = InnovationId("ammonia"),
+            names = LocalizedText(es = "Ammonia"),
+            description = "Acids for tanning.",
+        )
 
     private val catalog =
         ContentCatalog(
@@ -56,13 +65,26 @@ class DevelopStepControllerTest {
                             innovations = listOf(ammonia),
                             locations =
                                 listOf(
-                                    SettlementLocation("Lantern Hoard", actions = listOf(innovateAction)),
-                                    SettlementLocation("Bone Smith", requires = listOf("Lantern Hoard")),
-                                    SettlementLocation("Weapon Crafter", requires = listOf("Bone Smith")),
                                     SettlementLocation(
-                                        "Skinnery",
+                                        LocationId("lantern_hoard"),
+                                        LocalizedText(es = "Lantern Hoard"),
+                                        actions = listOf(innovateAction),
+                                    ),
+                                    SettlementLocation(
+                                        LocationId("bone_smith"),
+                                        LocalizedText(es = "Bone Smith"),
+                                        requires = listOf(LocationId("lantern_hoard")),
+                                    ),
+                                    SettlementLocation(
+                                        LocationId("weapon_crafter"),
+                                        LocalizedText(es = "Weapon Crafter"),
+                                        requires = listOf(LocationId("bone_smith")),
+                                    ),
+                                    SettlementLocation(
+                                        LocationId("skinnery"),
+                                        LocalizedText(es = "Skinnery"),
                                         buildEndeavors = 1,
-                                        buildCost = mapOf("Bone" to 1),
+                                        buildCost = mapOf(ResourceId("Bone") to 1),
                                     ),
                                 ),
                             resources =
@@ -113,10 +135,10 @@ class DevelopStepControllerTest {
         val record = controller.state.value.record
         assertNotNull(record)
         assertEquals(1, record.settlement.endeavors)
-        assertTrue(record.state.usedInPhase("Lantern Hoard"))
+        assertTrue(record.state.usedInPhase("lantern_hoard"))
         assertTrue(
             record.state.innovations.innovations
-                .any { it.name == "Ammonia" },
+                .any { it.names.es == "Ammonia" },
         )
         assertEquals(1, record.storage().single { it.id.value == "Bone" }.quantity)
         assertNull(controller.state.value.actionError)
@@ -139,6 +161,13 @@ class DevelopStepControllerTest {
     @Test
     fun buildBlocksWhenPrerequisitesAreUnmetAndChangesNothing() {
         val store = storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2)
+        // The seed builds Lantern Hoard and Armería (= Weapon Crafter); with the two names now
+        // one id, the unmet-prerequisite scenario needs the built set cleared first.
+        SettlementRepository(store).update(
+            SettlementRepository(store).record.let { record ->
+                record.copy(state = record.state.copy(locations = LocationSet()))
+            },
+        )
         val controller = controller(store)
 
         controller.build("Weapon Crafter")
@@ -146,9 +175,9 @@ class DevelopStepControllerTest {
         assertNotNull(controller.state.value.actionError)
         val record = controller.state.value.record
         assertNotNull(record)
-        assertFalse("Weapon Crafter" in record.state.locations.built)
+        assertFalse(LocationId("weapon_crafter") in record.state.locations.built)
         assertFalse(
-            "Weapon Crafter" in
+            LocationId("weapon_crafter") in
                 SettlementRepository(store)
                     .record.state.locations.built,
         )
@@ -164,11 +193,11 @@ class DevelopStepControllerTest {
         assertNull(controller.state.value.actionError)
         val built = controller.state.value.record
         assertNotNull(built)
-        assertTrue("Skinnery" in built.state.locations.built)
+        assertTrue(LocationId("skinnery") in built.state.locations.built)
         assertEquals(1, built.settlement.endeavors)
 
         val fresh = SettlementRepository(store).record
-        assertTrue("Skinnery" in fresh.state.locations.built)
+        assertTrue(LocationId("skinnery") in fresh.state.locations.built)
         assertEquals(1, fresh.settlement.endeavors)
         assertEquals(1, fresh.storage().single { it.id.value == "Bone" }.quantity)
     }

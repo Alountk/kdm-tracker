@@ -134,4 +134,6 @@ data class CraftRecipeView(
     val recipe: GearRecipe,
     val check: CraftCheck,
     val type: String = "",
+    /** The gear's display name, resolved from the catalog when the view was built. */
+    val gearName: String = "",
 )

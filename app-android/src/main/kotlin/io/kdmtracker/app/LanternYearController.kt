@@ -3,9 +3,12 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Core16Milestones
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.ModifierScope
 import io.kdmtracker.core.domain.ModifierTarget
@@ -240,27 +243,50 @@ class LanternYearController(
      * surfaced rather than silently doing nothing.
      */
     fun innovate(innovationName: String) {
+        val innovationId = innovationIdFor(innovationName)
+        if (innovationId == null) {
+            publishBlocked("unknown innovation $innovationName")
+            return
+        }
         val location =
             content.locationDefinitions.firstOrNull { location ->
                 location.actions.any { it.kind == ActionKind.INNOVATE } &&
-                    location.name in repository.record.state.locations.built
+                    location.id in repository.record.state.locations.built
             }
         if (location == null) {
             publishBlocked("no built settlement location offers Innovate")
             return
         }
-        applyResult(Innovate.run(repository.record, location.name, innovationName, content))
+        applyResult(Innovate.run(repository.record, location.id, innovationId, content))
     }
 
     /**
      * Builds the settlement location named [locationName].
      *
      * Prerequisites, cost and storage are enforced entirely by `:core`'s [BuildLocation]; the
-     * controller passes the held record and [content] and mirrors the outcome.
+     * controller resolves the displayed name to its stable id through the held [content], passes
+     * the held record and [content], and mirrors the outcome.
      */
     fun build(locationName: String) {
-        applyResult(BuildLocation.run(repository.record, locationName, content))
+        val locationId = locationIdFor(locationName)
+        if (locationId == null) {
+            publishBlocked("unknown location $locationName")
+            return
+        }
+        applyResult(BuildLocation.run(repository.record, locationId, content))
     }
+
+    /**
+     * The id of the location the screens display as [locationName], resolved against the held
+     * [content] in either language — the catalog is the authority that carries both the id and
+     * the names, and it is what the campaign actually enables.
+     */
+    private fun locationIdFor(locationName: String): LocationId? =
+        content.locationDefinitions.firstOrNull { it.names.es == locationName || it.names.en == locationName }?.id
+
+    /** The id of the innovation the screens display as [innovationName]; see [locationIdFor]. */
+    private fun innovationIdFor(innovationName: String): InnovationId? =
+        content.innovationDefinitions.firstOrNull { it.names.es == innovationName || it.names.en == innovationName }?.id
 
     /**
      * Spends one endeavor for a generic Settlement Phase action.
@@ -293,8 +319,22 @@ class LanternYearController(
         locationName: String,
         gearName: String,
     ) {
-        applyResult(Craft.run(repository.record, locationName, gearName, content))
+        val locationId = locationIdFor(locationName)
+        if (locationId == null) {
+            publishBlocked("unknown location $locationName")
+            return
+        }
+        val gearId = gearIdFor(gearName)
+        if (gearId == null) {
+            publishBlocked("unknown gear $gearName")
+            return
+        }
+        applyResult(Craft.run(repository.record, locationId, gearId, content))
     }
+
+    /** The id of the gear the screens display as [gearName]; see [locationIdFor]. */
+    private fun gearIdFor(gearName: String): GearId? =
+        content.gearDefinitions.firstOrNull { it.names.es == gearName || it.names.en == gearName }?.id
 
     /**
      * Records [count] deaths (Step 5): `:core`'s [RecordDeaths] raises the counter and lowers the
@@ -590,12 +630,24 @@ class LanternYearController(
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
             catalogError = repository.catalogError,
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
-            builtLocations = record.state.locations.built,
-            gear = record.state.gear,
+            builtLocations =
+                record.state.locations.built.map { locationId ->
+                    content.locationDefinitions
+                        .firstOrNull { it.id == locationId }
+                        ?.names
+                        ?.es ?: locationId.value
+                },
+            gear =
+                record.state.gear.map { gearId ->
+                    content.gearDefinitions
+                        .firstOrNull { it.id == gearId }
+                        ?.names
+                        ?.es ?: gearId.value
+                },
             survivalLimit =
                 record.survivalLimit(ruleset) +
                     DerivedValues.modifierTotal(
-                        content.gearModifiersFor(record.state.gear),
+                        content.gearModifiersFor(record.state.gear.map { it.value }),
                         ModifierTarget.SURVIVAL_LIMIT,
                         ModifierScope.SETTLEMENT,
                     ),
@@ -604,22 +656,28 @@ class LanternYearController(
             resourceGroups = content.resourceGroups(),
             innovationViews = InnovationAccess.view(record.state, content),
             craftRecipes =
-                record.state.locations.built.flatMap { locationName ->
-                    content.locationDefinitions
-                        .firstOrNull { it.name == locationName }
+                record.state.locations.built.flatMap { locationId ->
+                    val location = content.locationDefinitions.firstOrNull { it.id == locationId }
+                    location
                         ?.recipes
                         .orEmpty()
                         .map { recipe ->
                             CraftRecipeView(
-                                locationName,
+                                location?.names?.es ?: locationId.value,
                                 recipe,
-                                Craftability.check(record, locationName, recipe, content),
+                                Craftability.check(record, locationId, recipe, content),
                                 gearType(
                                     content.gearDefinitions
-                                        .firstOrNull { it.name == recipe.gearName }
+                                        .firstOrNull { it.id == recipe.gearId }
                                         ?.keywords
                                         .orEmpty(),
                                 ),
+                                gearName =
+                                    content.gearDefinitions
+                                        .firstOrNull { it.id == recipe.gearId }
+                                        ?.names
+                                        ?.es
+                                        ?: recipe.gearId.value,
                             )
                         }
                 },
@@ -657,7 +715,7 @@ class LanternYearController(
             principles =
                 ruleset.principles.entries
                     .sortedBy { it.key.name }
-                    .flatMap { (category, choices) -> choices.map { "${category.name}: ${it.label}" } },
+                    .flatMap { (_, choices) -> choices.map { it.label } },
             yearEvents =
                 content.timeline
                     .filter { it.lanternYear == settlement.lanternYear }

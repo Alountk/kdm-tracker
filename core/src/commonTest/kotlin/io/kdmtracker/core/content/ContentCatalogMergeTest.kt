@@ -1,5 +1,8 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementEvent
 import io.kdmtracker.core.domain.SettlementLocation
@@ -47,25 +50,48 @@ class ContentCatalogMergeTest {
 
     @Test
     fun modeledLocationWinsOverBareRegardlessOfPackOrder() {
-        val bare = SettlementLocation("Armería")
-        val modeled = SettlementLocation("Armería", buildCost = mapOf("Bone" to 3))
+        val bare = SettlementLocation(LocationId("weapon_crafter"), LocalizedText(es = "Armería"))
+        val modeled =
+            SettlementLocation(
+                LocationId("weapon_crafter"),
+                LocalizedText(es = "Armería"),
+                buildCost =
+                    mapOf(
+                        ResourceId("bone.monster") to 3,
+                    ),
+            )
 
         val forward =
             ok(ContentCatalogComposer.compose(listOf(pack("bare", listOf(bare)), pack("modeled", listOf(modeled)))))
         val reversed =
             ok(ContentCatalogComposer.compose(listOf(pack("modeled", listOf(modeled)), pack("bare", listOf(bare)))))
 
-        assertEquals(mapOf("Bone" to 3), forward.locationDefinitions.single { it.name == "Armería" }.buildCost)
-        assertEquals(mapOf("Bone" to 3), reversed.locationDefinitions.single { it.name == "Armería" }.buildCost)
+        assertEquals(
+            mapOf(ResourceId("bone.monster") to 3),
+            forward.locationDefinitions
+                .single {
+                    it.names.es ==
+                        "Armería"
+                }.buildCost,
+        )
+        assertEquals(
+            mapOf(ResourceId("bone.monster") to 3),
+            reversed.locationDefinitions
+                .single {
+                    it.names.es ==
+                        "Armería"
+                }.buildCost,
+        )
     }
 
     @Test
     fun modeledActionsAlsoWinOverBare() {
-        val bare = SettlementLocation("Armería")
+        val bare = SettlementLocation(LocationId("weapon_crafter"), LocalizedText(es = "Armería"))
         val modeled =
             SettlementLocation(
-                "Armería",
-                actions = listOf(SettlementAction(name = "Build")),
+                LocationId("weapon_crafter"),
+                LocalizedText(es = "Armería"),
+                actions = listOf(SettlementAction(names = LocalizedText(es = "Build"))),
             )
 
         val catalog =
@@ -73,7 +99,7 @@ class ContentCatalogMergeTest {
 
         assertTrue(
             catalog.locationDefinitions
-                .single { it.name == "Armería" }
+                .single { it.names.es == "Armería" }
                 .actions
                 .isNotEmpty(),
         )
@@ -81,13 +107,13 @@ class ContentCatalogMergeTest {
 
     @Test
     fun bareOverlapKeepsFirstOccurrenceByPackOrder() {
-        val first = SettlementLocation("Armería", buildEndeavors = 1)
-        val second = SettlementLocation("Armería", buildEndeavors = 2)
+        val first = SettlementLocation(LocationId("weapon_crafter"), LocalizedText(es = "Armería"), buildEndeavors = 1)
+        val second = SettlementLocation(LocationId("weapon_crafter"), LocalizedText(es = "Armería"), buildEndeavors = 2)
 
         val forward = ok(ContentCatalogComposer.compose(listOf(pack("a", listOf(first)), pack("b", listOf(second)))))
         val reversed = ok(ContentCatalogComposer.compose(listOf(pack("b", listOf(second)), pack("a", listOf(first)))))
 
-        assertEquals(1, forward.locationDefinitions.single { it.name == "Armería" }.buildEndeavors)
-        assertEquals(2, reversed.locationDefinitions.single { it.name == "Armería" }.buildEndeavors)
+        assertEquals(1, forward.locationDefinitions.single { it.names.es == "Armería" }.buildEndeavors)
+        assertEquals(2, reversed.locationDefinitions.single { it.names.es == "Armería" }.buildEndeavors)
     }
 }

@@ -68,8 +68,18 @@ class SettlementStateTest {
                 innovations =
                     InnovationCollection(
                         listOf(
-                            Innovation(name = "Language", description = "", survivalLimitBonus = 1),
-                            Innovation(name = "Paint", description = "", survivalLimitBonus = 1),
+                            Innovation(
+                                id = InnovationId("language"),
+                                names = LocalizedText(es = "Language"),
+                                description = "",
+                                survivalLimitBonus = 1,
+                            ),
+                            Innovation(
+                                id = InnovationId("paint"),
+                                names = LocalizedText(es = "Paint"),
+                                description = "",
+                                survivalLimitBonus = 1,
+                            ),
                         ),
                     ),
             )
@@ -86,8 +96,12 @@ class SettlementStateTest {
                 births = 3,
                 innovations =
                     listOf(
-                        Innovation(name = "Language", description = ""),
-                        Innovation(name = "Paint", description = ""),
+                        Innovation(
+                            id = InnovationId("language"),
+                            names = LocalizedText(es = "Language"),
+                            description = "",
+                        ),
+                        Innovation(id = InnovationId("paint"), names = LocalizedText(es = "Paint"), description = ""),
                     ),
             )
 
@@ -127,7 +141,14 @@ class SettlementStateTest {
 
     @Test
     fun fiveInnovationsReachTheHoodedKnight() {
-        val innovations = List(5) { Innovation(name = "Innovation $it", description = "") }
+        val innovations =
+            List(5) {
+                Innovation(
+                    id = InnovationId("innovation_it"),
+                    names = LocalizedText(es = "Innovation $it"),
+                    description = "",
+                )
+            }
 
         assertTrue(Core16Milestones.HOODED_KNIGHT in record(innovations = innovations).reachedMilestones(Core16Ruleset))
     }
@@ -139,7 +160,14 @@ class SettlementStateTest {
                 population = 15,
                 deaths = 1,
                 births = 1,
-                innovations = List(5) { Innovation(name = "Innovation $it", description = "") },
+                innovations =
+                    List(5) {
+                        Innovation(
+                            id = InnovationId("innovation_it"),
+                            names = LocalizedText(es = "Innovation $it"),
+                            description = "",
+                        )
+                    },
             ).reachedMilestones(Core16Ruleset)
 
         assertEquals(

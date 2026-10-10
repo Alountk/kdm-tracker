@@ -1,18 +1,22 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.GearId
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
 
 /**
- * The bridge from a resource's **pre-id display name** to its stable id.
+ * The bridge from a content entity's **pre-id display name** to its stable id.
  *
  * Before this change the display name *was* the identity, so every persisted ledger, every gear
- * recipe and every location build cost refers to a resource by name. Those references still
+ * recipe and every location build cost refers to an entity by name. Those references still
  * resolve here, and — more importantly — a settlement persisted by an older build decodes through
- * this table instead of losing its resource entries.
+ * this table instead of losing its entries.
  *
- * The table is the `spanishName` column of `tools/content-ingest/identity/resources.csv` plus the
- * three English aliases the 1.6 seed uses for the basic four. It is a **transitional** bridge:
- * S2 re-keys recipes and locations to ids, and after that only the legacy decode path reads it.
+ * The tables are the `spanishName`/`englishName` columns of the CSVs under
+ * `tools/content-ingest/identity/`, plus the three English aliases the 1.6 seed uses for the
+ * basic resources. They are **transitional** bridges: as each family re-keys to ids, only the
+ * legacy decode path reads its table.
  *
  * A name that is missing here is a content defect, not a user error: `ContentIdentityTest` asserts
  * every name the catalog can produce resolves, so the gap fails the build rather than the user.
@@ -83,6 +87,15 @@ object ContentIdentity {
             "Organ" to ResourceId("organ.monster"),
         )
 
+    /**
+     * The id a legacy display name gets when no identity row covers it.
+     *
+     * A persisted name the tables do not know is data the user already has, so it survives under
+     * a readable `unknown.…` id rather than being dropped — same rule S1 gave `ResourceEntry`.
+     */
+    fun synthesizedId(name: String): String =
+        "unknown." + name.lowercase().map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")
+
     /** The id for a resource's pre-id display name, or `null` when no content produces that name. */
     fun resourceIdFor(name: String): ResourceId? = byName[name]
 
@@ -93,4 +106,237 @@ object ContentIdentity {
      * turn the failure into a `StepResult.Blocked` rather than letting the throw escape.
      */
     fun requireResourceId(name: String): ResourceId = byName[name] ?: error("no content id for '$name'")
+
+    private val locationByName: Map<String, LocationId> =
+        mapOf(
+            // The Spanish names the 1.5 location cards carry.
+            "Armería" to LocationId("weapon_crafter"),
+            "Artesano de Máscaras" to LocationId("mask_maker"),
+            "Cirujano Barbero" to LocationId("barber_surgeon"),
+            "Círculo de Piedra" to LocationId("stone_circle"),
+            "Curtiduría" to LocationId("leather_worker"),
+            "Cúmulo de Linternas" to LocationId("lantern_hoard"),
+            "Cúmulo de Linternas Extinto" to LocationId("exhausted_lantern_hoard"),
+            "Felinarium" to LocationId("catarium"),
+            "Herrería" to LocationId("blacksmith"),
+            "Molino de Órganos" to LocationId("organ_grinder"),
+            "Peletería" to LocationId("skinnery"),
+            "Plumería" to LocationId("plumery"),
+            "Taller de Huesos" to LocationId("bone_smith"),
+            // The same locations named in English — by the 1.6 seed and by the CSV's englishName
+            // column — plus the six sites only the seed declares.
+            "Barber Surgeon" to LocationId("barber_surgeon"),
+            "Blacksmith" to LocationId("blacksmith"),
+            "Bone Smith" to LocationId("bone_smith"),
+            "Catarium" to LocationId("catarium"),
+            "Dragon Armory" to LocationId("dragon_armory"),
+            "Exhausted Lantern Hoard" to LocationId("exhausted_lantern_hoard"),
+            "Gormchymist" to LocationId("gormchymist"),
+            "Gormery" to LocationId("gormery"),
+            "Lantern Hoard" to LocationId("lantern_hoard"),
+            "Leather Worker" to LocationId("leather_worker"),
+            "Mask Maker" to LocationId("mask_maker"),
+            "Organ Grinder" to LocationId("organ_grinder"),
+            "Plumery" to LocationId("plumery"),
+            "Silk Mill" to LocationId("silk_mill"),
+            "Skinnery" to LocationId("skinnery"),
+            "Skyreef Sanctuary" to LocationId("skyreef_sanctuary"),
+            "Stone Circle" to LocationId("stone_circle"),
+            "Wet Resin Crafter" to LocationId("wet_resin_crafter"),
+            "Weapon Crafter" to LocationId("weapon_crafter"),
+        )
+
+    /** The id for a location's pre-id display name, or `null` when no content produces that name. */
+    fun locationIdFor(name: String): LocationId? = locationByName[name]
+
+    private val innovationByName: Map<String, InnovationId> =
+        mapOf(
+            "Aceptar la Oscuridad" to InnovationId("aceptar_la_oscuridad"),
+            "Amoníaco" to InnovationId("amoniaco"),
+            "Archivos" to InnovationId("archivos"),
+            "Arma Definitiva" to InnovationId("arma_definitiva"),
+            "Arte de Combate Final" to InnovationId("arte_de_combate_final"),
+            "Barbárico" to InnovationId("barbarico"),
+            "Cama" to InnovationId("cama"),
+            "Canibalismo" to InnovationId("canibalismo"),
+            "Canto de los Valientes" to InnovationId("canto_de_los_valientes"),
+            "Cerámica" to InnovationId("ceramica"),
+            "Choza" to InnovationId("choza"),
+            "Clan de la Muerte" to InnovationId("clan_de_la_muerte"),
+            "Cocinar" to InnovationId("cocinar"),
+            "Compañeros" to InnovationId("companeros"),
+            "Danza Prohibida" to InnovationId("danza_prohibida"),
+            "Destino" to InnovationId("destino"),
+            "Entrenamiento de Pesadilla" to InnovationId("entrenamiento_de_pesadilla"),
+            "Escarificación" to InnovationId("escarificacion"),
+            "Escultura" to InnovationId("escultura"),
+            "Esfuerzo Colectivo" to InnovationId("esfuerzo_colectivo"),
+            "Familia" to InnovationId("familia"),
+            "Flauta Corazón" to InnovationId("flauta_corazon"),
+            "Fundición de Restos" to InnovationId("fundicion_de_restos"),
+            "Guía del Rey" to InnovationId("guia_del_rey"),
+            "Horno Linterna" to InnovationId("horno_linterna"),
+            "Lenguaje" to InnovationId("language"),
+            "Linterna Interior" to InnovationId("linterna_interior"),
+            "Memento Mori" to InnovationId("memento_mori"),
+            "Narración" to InnovationId("narracion"),
+            "Pictografía" to InnovationId("pictografia"),
+            "Pintura Facial" to InnovationId("pintura_facial"),
+            "Pintura" to InnovationId("pintura"),
+            "Proteged a los Jóvenes" to InnovationId("proteged_a_los_jovenes"),
+            "Romántico" to InnovationId("romantico"),
+            "Sacrificio" to InnovationId("sacrificio"),
+            "Saga" to InnovationId("saga"),
+            "Sangría" to InnovationId("sangria"),
+            "Santuario" to InnovationId("santuario"),
+            "Sepulturas" to InnovationId("sepulturas"),
+            "Simposio" to InnovationId("simposio"),
+            "Supervivencia del más Apto" to InnovationId("supervivencia_del_mas_apto"),
+            "Tambores" to InnovationId("tambores"),
+            // The 1.6 seed names the same two cards in English; same innovations, same ids.
+            "Language" to InnovationId("language"),
+            "Storytelling" to InnovationId("narracion"),
+        )
+
+    /** The id for an innovation's pre-id display name, or `null` when no content produces that name. */
+    fun innovationIdFor(name: String): InnovationId? = innovationByName[name]
+
+    private val gearByName: Map<String, GearId> =
+        mapOf(
+            "Abrigo Bramador" to GearId("abrigo_bramador"),
+            "Abrigo de León Blanco" to GearId("abrigo_de_leon_blanco"),
+            "Acanto Desecado" to GearId("acanto_desecado"),
+            "Alabarda Linterna" to GearId("alabarda_linterna"),
+            "Almanaque" to GearId("almanaque"),
+            "Amuleto Azul" to GearId("amuleto_azul"),
+            "Amuleto de la Suerte" to GearId("amuleto_de_la_suerte"),
+            "Amuleto Rojo" to GearId("amuleto_rojo"),
+            "Amuleto Verde" to GearId("amuleto_verde"),
+            "Anillo del Tiempo" to GearId("anillo_del_tiempo"),
+            "Arco de Tripa de Felino" to GearId("arco_de_tripa_de_felino"),
+            "Arco Recurvado" to GearId("arco_recurvado"),
+            "Arpa de Bigotes" to GearId("arpa_de_bigotes"),
+            "Asesino Perfecto" to GearId("asesino_perfecto"),
+            "Bebida de Frenesí" to GearId("bebida_de_frenesi"),
+            "Bomba de Almizcle" to GearId("bomba_de_almizcle"),
+            "Botas de Cuero" to GearId("botas_de_cuero"),
+            "Botas de León Blanco" to GearId("botas_de_leon_blanco"),
+            "Botas de Piel" to GearId("botas_de_piel"),
+            "Botiquín de Primeros Auxilios" to GearId("botiquin_de_primeros_auxilios"),
+            "Brazales Bramadores" to GearId("brazales_bramadores"),
+            "Brazales de Cuero" to GearId("brazales_de_cuero"),
+            "Camisote de Piel" to GearId("camisote_de_piel"),
+            "Capa de Piel de León" to GearId("capa_de_piel_de_leon"),
+            "Cinta de Piel" to GearId("cinta_de_piel"),
+            "Collar de Dientes de Monstruo" to GearId("collar_de_dientes_de_monstruo"),
+            "Coraza de Cuero" to GearId("coraza_de_cuero"),
+            "Coraza de Fénix" to GearId("coraza_de_fenix"),
+            "Coraza Linterna" to GearId("coraza_linterna"),
+            "Coraza Real" to GearId("coraza_real"),
+            "Cresta Coronada" to GearId("cresta_coronada"),
+            "Cuchilla de Hueso" to GearId("cuchilla_de_hueso"),
+            "Cuchillo de Colmillo Felino" to GearId("cuchillo_de_colmillo_felino"),
+            "Cuernos Bramadores" to GearId("cuernos_bramadores"),
+            "Daga de Hueso" to GearId("daga_de_hueso"),
+            "Daga de Restos" to GearId("daga_de_restos"),
+            "Daga Linterna" to GearId("daga_linterna"),
+            "Daga Linterna Oxidada" to GearId("daga_linterna_oxidada"),
+            "Dardos de Hueso" to GearId("dardos_de_hueso"),
+            "Dedo de Dios" to GearId("dedo_de_dios"),
+            "Diadema de Ojo Felino" to GearId("diadema_de_ojo_felino"),
+            "Equipo de Saqueador" to GearId("equipo_de_saqueador"),
+            "Escudo de Acero" to GearId("escudo_de_acero"),
+            "Escudo de Plumas" to GearId("escudo_de_plumas"),
+            "Escudo de Restos" to GearId("escudo_de_restos"),
+            "Escudo Luminoso" to GearId("escudo_luminoso"),
+            "Escudo Luminoso Oxidado" to GearId("escudo_luminoso_oxidado"),
+            "Escudo Redondo de Cuero" to GearId("escudo_redondo_de_cuero"),
+            "Esfera Floral" to GearId("esfera_floral"),
+            "Espada Aventurera" to GearId("espada_aventurera"),
+            "Espada de Acero" to GearId("espada_de_acero"),
+            "Espada de Restos" to GearId("espada_de_restos"),
+            "Espada del Crepúsculo" to GearId("espada_del_crepusculo"),
+            "Espada Hueca" to GearId("espada_hueca"),
+            "Espada Linterna" to GearId("espada_linterna"),
+            "Espada Linterna Oxidada" to GearId("espada_linterna_oxidada"),
+            "Faldar de Fénix" to GearId("faldar_de_fenix"),
+            "Faldar Real" to GearId("faldar_real"),
+            "Faldón Bramador" to GearId("faldon_bramador"),
+            "Faldón de Cuero" to GearId("faldon_de_cuero"),
+            "Faldón de León Blanco" to GearId("faldon_de_leon_blanco"),
+            "Flecha de Punta de Zarpa" to GearId("flecha_de_punta_de_zarpa"),
+            "Flecha de Punta Hueca" to GearId("flecha_de_punta_hueca"),
+            "Garrote de Hueso" to GearId("garrote_de_hueso"),
+            "Grasa de Monstruo" to GearId("grasa_de_monstruo"),
+            "Grebas de Fénix" to GearId("grebas_de_fenix"),
+            "Grebas Linterna" to GearId("grebas_linterna"),
+            "Grebas Reales" to GearId("grebas_reales"),
+            "Guanteletes de Fénix" to GearId("guanteletes_de_fenix"),
+            "Guanteletes Linterna" to GearId("guanteletes_linterna"),
+            "Guanteletes Reales" to GearId("guanteletes_reales"),
+            "Guantes de León Blanco" to GearId("guantes_de_leon_blanco"),
+            "Guantes de Piel" to GearId("guantes_de_piel"),
+            "Guja Linterna" to GearId("guja_linterna"),
+            "Guja Linterna Oxidada" to GearId("guja_linterna_oxidada"),
+            "Hacha de Carnicero" to GearId("hacha_de_carnicero"),
+            "Hacha de Contrapeso" to GearId("hacha_de_contrapeso"),
+            "Hacha de Hueso" to GearId("hacha_de_hueso"),
+            "Hoz de Hueso" to GearId("hoz_de_hueso"),
+            "Katana del Arcoíris" to GearId("katana_del_arcoiris"),
+            "Katar de León Salvaje" to GearId("katar_de_leon_salvaje"),
+            "Lanza de Longinos" to GearId("lanza_de_longinos"),
+            "Lanza del Rey" to GearId("lanza_del_rey"),
+            "Látigo de Anillas" to GearId("latigo_de_anillas"),
+            "Látigo de Cazador" to GearId("latigo_de_cazador"),
+            "Látigo de Piel" to GearId("latigo_de_piel"),
+            "Látigo Linterna Oxidado" to GearId("latigo_linterna_oxidado"),
+            "Linterna de Superviviente" to GearId("linterna_de_superviviente"),
+            "Malla Linterna" to GearId("malla_linterna"),
+            "Manto de Plumas" to GearId("manto_de_plumas"),
+            "Martillo de Cráneo" to GearId("martillo_de_craneo"),
+            "Máscara de Antílope" to GearId("mascara_de_antilope"),
+            "Máscara de Cuero" to GearId("mascara_de_cuero"),
+            "Máscara de Dios" to GearId("mascara_de_dios"),
+            "Máscara de Fénix" to GearId("mascara_de_fenix"),
+            "Máscara de la Muerte" to GearId("mascara_de_la_muerte"),
+            "Máscara de León Blanco" to GearId("mascara_de_leon_blanco"),
+            "Máscara del Hombre" to GearId("mascara_del_hombre"),
+            "Máscara del Renegado" to GearId("mascara_del_renegado"),
+            "Matadragones" to GearId("matadragones"),
+            "Maza Silbadora" to GearId("maza_silbadora"),
+            "Mazo del Trueno" to GearId("mazo_del_trueno"),
+            "Mehndi de Líder" to GearId("mehndi_de_lider"),
+            "Menta de Cerebro" to GearId("menta_de_cerebro"),
+            "Muramasa" to GearId("muramasa"),
+            "Narices de Piedra" to GearId("narices_de_piedra"),
+            "Pan de Ave" to GearId("pan_de_ave"),
+            "Pantalones de Piel" to GearId("pantalones_de_piel"),
+            "Pendientes Antiguos" to GearId("pendientes_antiguos"),
+            "Pendientes de Hueso" to GearId("pendientes_de_hueso"),
+            "Pico de Hueso" to GearId("pico_de_hueso"),
+            "Piedra de Fundador" to GearId("piedra_de_fundador"),
+            "Pinturas de Guerra" to GearId("pinturas_de_guerra"),
+            "Polainas Bramadoras" to GearId("polainas_bramadoras"),
+            "Polvo de Velocidad" to GearId("polvo_de_velocidad"),
+            "Puño de Bestia" to GearId("puno_de_bestia"),
+            "Tambor de Piel" to GearId("tambor_de_piel"),
+            "Tela" to GearId("tela"),
+            "Tocado de León" to GearId("tocado_de_leon"),
+            "Tomahawk Sónico" to GearId("tomahawk_sonico"),
+            "Trampa para Insectos" to GearId("trampa_para_insectos"),
+            "Última Linterna" to GearId("ultima_linterna"),
+            "Ungüento Fecal" to GearId("unguento_fecal"),
+            "Vaina de Sangre" to GearId("vaina_de_sangre"),
+            "Vendas" to GearId("vendas"),
+            "Yelmo de Calavera" to GearId("yelmo_de_calavera"),
+            "Yelmo de Fénix" to GearId("yelmo_de_fenix"),
+            "Yelmo de León Blanco" to GearId("yelmo_de_leon_blanco"),
+            "Yelmo Linterna" to GearId("yelmo_linterna"),
+            "Yelmo Linterna Oxidado" to GearId("yelmo_linterna_oxidado"),
+            "Yelmo Real" to GearId("yelmo_real"),
+            "Zanbato" to GearId("zanbato"),
+        )
+
+    /** The id for a gear's pre-id display name, or `null` when no content produces that name. */
+    fun gearIdFor(name: String): GearId? = gearByName[name]
 }

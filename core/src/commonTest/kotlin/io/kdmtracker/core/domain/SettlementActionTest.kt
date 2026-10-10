@@ -12,7 +12,7 @@ class SettlementActionTest {
 
     @Test
     fun locationDefaultsToNoBuildCostOrActions() {
-        val location = SettlementLocation("X")
+        val location = SettlementLocation(LocationId("x"), LocalizedText(es = "X"))
 
         assertEquals(0, location.buildEndeavors)
         assertTrue(location.buildCost.isEmpty())
@@ -23,9 +23,9 @@ class SettlementActionTest {
     fun actionRoundTripsThroughJson() {
         val action =
             SettlementAction(
-                name = "Innovate",
+                names = LocalizedText(es = "Innovar", en = "Innovate"),
                 kind = ActionKind.INNOVATE,
-                resourceCost = mapOf("Bone" to 1),
+                resourceCost = mapOf(ResourceId("bone.monster") to 1),
                 oncePerPhase = true,
                 draw = 2,
                 keep = 1,
@@ -36,19 +36,20 @@ class SettlementActionTest {
 
         assertEquals(action, decoded)
         assertEquals(ActionKind.INNOVATE, decoded.kind)
-        assertEquals(mapOf("Bone" to 1), decoded.resourceCost)
+        assertEquals(mapOf(ResourceId("bone.monster") to 1), decoded.resourceCost)
         assertTrue(decoded.oncePerPhase)
         assertEquals(2, decoded.draw)
         assertEquals(1, decoded.keep)
     }
 
     @Test
-    fun legacyLocationJsonDecodesWithNewFieldsDefaulted() {
-        val legacy = """{"name":"Lantern Hoard","requires":[]}"""
+    fun locationJsonDecodesWithTheOtherFieldsDefaulted() {
+        val shaped = """{"id":"lantern_hoard","names":{"es":"Cúmulo de Linternas"}}"""
 
-        val decoded = json.decodeFromString<SettlementLocation>(legacy)
+        val decoded = json.decodeFromString<SettlementLocation>(shaped)
 
-        assertEquals("Lantern Hoard", decoded.name)
+        assertEquals(LocationId("lantern_hoard"), decoded.id)
+        assertEquals(LocalizedText(es = "Cúmulo de Linternas"), decoded.names)
         assertTrue(decoded.requires.isEmpty())
         assertEquals(0, decoded.buildEndeavors)
         assertTrue(decoded.buildCost.isEmpty())

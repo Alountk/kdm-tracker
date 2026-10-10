@@ -1,6 +1,7 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.content.generated.Core15Gear
+import io.kdmtracker.core.domain.GearId
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -14,36 +15,36 @@ class Core15GearContentTest {
     fun everyRecipeResolvesAgainstTheShippedPack() {
         val resources =
             Legacy15Content.pack.bundle.resources
-                .map { it.names.es }
+                .map { it.id }
                 .toSet()
         val innovations =
             Legacy15Content.pack.bundle.innovations
-                .map { it.name }
+                .map { it.id }
                 .toSet()
 
         Core15Gear.bundle.locations.flatMap { it.recipes }.forEach { recipe ->
-            assertTrue(recipe.resourceCost.isNotEmpty(), "${recipe.gearName} has no cost")
+            assertTrue(recipe.resourceCost.isNotEmpty(), "${recipe.gearId.value} has no cost")
             assertTrue(
                 recipe.resourceCost.keys.all { it in resources },
-                "${recipe.gearName} costs ${recipe.resourceCost.keys}",
+                "${recipe.gearId.value} costs ${recipe.resourceCost.keys}",
             )
             assertTrue(
                 recipe.requires.all { it in innovations },
-                "${recipe.gearName} requires ${recipe.requires}",
+                "${recipe.gearId.value} requires ${recipe.requires}",
             )
         }
     }
 
     @Test
     fun everyGearNameIsNonBlank() {
-        assertTrue(Core15Gear.bundle.gear.all { it.name.isNotBlank() })
+        assertTrue(Core15Gear.bundle.gear.all { it.names.es.isNotBlank() })
     }
 
     @Test
     fun theArmeriaLocationKeepsItsRecipes() {
-        val armeria = Core15Gear.bundle.locations.single { it.name == "Armería" }
+        val armeria = Core15Gear.bundle.locations.single { it.names.es == "Armería" }
 
-        assertTrue(armeria.recipes.size >= 6, "Armería recipes: ${armeria.recipes.map { it.gearName }}")
-        assertTrue(armeria.recipes.any { it.gearName == "Katana del Arcoíris" })
+        assertTrue(armeria.recipes.size >= 6, "Armería recipes: ${armeria.recipes.map { it.gearId.value }}")
+        assertTrue(armeria.recipes.any { it.gearId == GearId("katana_del_arcoiris") })
     }
 }

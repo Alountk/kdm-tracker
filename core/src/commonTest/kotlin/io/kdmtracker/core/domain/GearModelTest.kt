@@ -15,7 +15,8 @@ class GearModelTest {
     fun gearRoundTripsThroughJson() {
         val gear =
             Gear(
-                name = "Daga de Hueso",
+                id = GearId("daga_de_hueso"),
+                names = LocalizedText(es = "Daga de Hueso"),
                 keywords = listOf("arma", "melé"),
                 rules = "Lento, Débil.",
                 modifiers = listOf(Modifier(ModifierTarget.STRENGTH, 1, ModifierScope.SURVIVOR)),
@@ -28,7 +29,7 @@ class GearModelTest {
 
     @Test
     fun defaultsAreEmptyAndSurvivorScoped() {
-        val gear = Gear("Daga")
+        val gear = Gear(GearId("daga"), LocalizedText(es = "Daga"))
 
         assertTrue(gear.keywords.isEmpty())
         assertTrue(gear.modifiers.isEmpty())
@@ -41,24 +42,24 @@ class GearModelTest {
 
     @Test
     fun recipeDefaultsAreEmpty() {
-        val recipe = GearRecipe(gearName = "Daga")
+        val recipe = GearRecipe(gearId = GearId("daga"))
 
         assertTrue(recipe.resourceCost.isEmpty())
         assertTrue(recipe.requires.isEmpty())
     }
 
     @Test
-    fun legacyGearJsonWithoutModifiersDecodesEmpty() {
-        val legacy = """{"name":"Daga","keywords":[],"rules":""}"""
+    fun gearJsonWithoutModifiersDecodesEmpty() {
+        val shaped = """{"id":"daga","names":{"es":"Daga"},"keywords":[],"rules":""}"""
 
-        val gear = json.decodeFromString<Gear>(legacy)
+        val gear = json.decodeFromString<Gear>(shaped)
 
         assertTrue(gear.modifiers.isEmpty())
     }
 
     @Test
     fun recipeRequiresTextRoundTrips() {
-        val recipe = GearRecipe("Katana del Arcoíris", requiresText = "Calor")
+        val recipe = GearRecipe(GearId("katana_del_arcoiris"), requiresText = "Calor")
 
         val decoded = json.decodeFromString<GearRecipe>(json.encodeToString(recipe))
 
@@ -66,8 +67,8 @@ class GearModelTest {
     }
 
     @Test
-    fun legacyRecipeJsonWithoutRequiresTextDecodesNull() {
-        val recipe = json.decodeFromString<GearRecipe>("""{"gearName":"X"}""")
+    fun recipeJsonWithoutRequiresTextDecodesNull() {
+        val recipe = json.decodeFromString<GearRecipe>("""{"gearId":"x"}""")
 
         assertNull(recipe.requiresText)
     }

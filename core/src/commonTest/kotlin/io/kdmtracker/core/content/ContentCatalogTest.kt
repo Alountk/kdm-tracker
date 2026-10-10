@@ -1,6 +1,9 @@
 package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.TimelineEntry
@@ -18,11 +21,26 @@ class ContentCatalogTest {
                 ContentBundle(
                     innovations =
                         listOf(
-                            Innovation(name = "pictographs", description = "…"),
-                            Innovation(name = "ammonia", description = "…"),
-                            Innovation(name = "pictographs", description = "duplicate name"),
+                            Innovation(
+                                id = InnovationId("pictographs"),
+                                names = LocalizedText(es = "pictographs"),
+                                description = "…",
+                            ),
+                            Innovation(
+                                id = InnovationId("ammonia"),
+                                names = LocalizedText(es = "ammonia"),
+                                description = "…",
+                            ),
+                            Innovation(
+                                id = InnovationId("pictographs"),
+                                names = LocalizedText(es = "pictographs"),
+                                description = "duplicate name",
+                            ),
                         ),
-                    locations = listOf(SettlementLocation("lantern-hoard")),
+                    locations =
+                        listOf(
+                            SettlementLocation(LocationId("lantern-hoard"), LocalizedText(es = "lantern-hoard")),
+                        ),
                     resources =
                         listOf(
                             resourceDefinition("hide", ResourceCategory.BASIC),
@@ -44,8 +62,16 @@ class ContentCatalogTest {
                 ContentBundle(
                     innovations =
                         listOf(
-                            Innovation(name = "forbidden-dance", description = "…"),
-                            Innovation(name = "ammonia", description = "…"),
+                            Innovation(
+                                id = InnovationId("forbidden_dance"),
+                                names = LocalizedText(es = "forbidden-dance"),
+                                description = "…",
+                            ),
+                            Innovation(
+                                id = InnovationId("ammonia"),
+                                names = LocalizedText(es = "ammonia"),
+                                description = "…",
+                            ),
                         ),
                     quarries = listOf("gorm", "white-lion"),
                     nemeses = listOf("the-hand"),
@@ -79,7 +105,12 @@ class ContentCatalogTest {
         val catalog = ok(ContentCatalogComposer.compose(listOf(core, expansion)))
 
         assertEquals(3, catalog.innovationDefinitions.size)
-        assertEquals("lantern-hoard", catalog.locationDefinitions.single().name)
+        assertEquals(
+            "lantern-hoard",
+            catalog.locationDefinitions
+                .single()
+                .names.es,
+        )
         assertEquals(ResourceCategory.BASIC, catalog.resourceDefinitions.first { it.id.value == "bone" }.category)
         assertEquals(
             ResourceCategory.SPECIAL,

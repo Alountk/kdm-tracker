@@ -147,6 +147,7 @@ class EmitTests(unittest.TestCase):
         return {
             name: resources.IdentityRow(
                 resource_id=resource_id,
+                spanish_name=name,
                 english_name=english,
             )
         }

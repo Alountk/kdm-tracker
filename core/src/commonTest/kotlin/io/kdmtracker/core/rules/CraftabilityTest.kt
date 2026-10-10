@@ -5,8 +5,13 @@ import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
+import io.kdmtracker.core.domain.GearId
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -25,14 +30,19 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CraftabilityTest {
-    private val daga = GearRecipe("Daga", resourceCost = mapOf("Hueso" to 1))
+    private val daga = GearRecipe(GearId("daga"), resourceCost = mapOf(ResourceId("Hueso") to 1))
     private val taller =
         SettlementLocation(
-            name = "Taller",
+            id = LocationId("taller"),
+            names = LocalizedText(es = "Taller"),
             recipes =
                 listOf(
                     daga,
-                    GearRecipe("Espada", resourceCost = mapOf("Hueso" to 1), requires = listOf("Calor")),
+                    GearRecipe(
+                        GearId("espada"),
+                        resourceCost = mapOf(ResourceId("Hueso") to 1),
+                        requires = listOf(InnovationId("calor")),
+                    ),
                 ),
         )
 
@@ -45,16 +55,24 @@ class CraftabilityTest {
                     name = "p",
                     bundle =
                         ContentBundle(
+                            innovations =
+                                listOf(
+                                    Innovation(InnovationId("calor"), LocalizedText(es = "Calor"), "Calor state."),
+                                ),
                             locations = listOf(taller),
                             resources = listOf(resourceDefinition("Hueso", ResourceCategory.BASIC)),
-                            gear = listOf(Gear("Daga"), Gear("Espada")),
+                            gear =
+                                listOf(
+                                    Gear(GearId("daga"), LocalizedText(es = "Daga")),
+                                    Gear(GearId("espada"), LocalizedText(es = "Espada")),
+                                ),
                         ),
                 ),
             ),
         )
 
     private fun record(
-        built: List<String>,
+        built: List<LocationId>,
         bones: Int,
     ): SettlementRecord =
         SettlementRecord(
@@ -80,7 +98,13 @@ class CraftabilityTest {
 
     @Test
     fun anAffordableRecipeIsCraftable() {
-        val check = Craftability.check(record(listOf("Taller"), bones = 2), "Taller", daga, catalog)
+        val check =
+            Craftability.check(
+                record(listOf(LocationId("taller")), bones = 2),
+                LocationId("taller"),
+                daga,
+                catalog,
+            )
 
         assertTrue(check.craftable)
         assertNull(check.missing)
@@ -88,7 +112,7 @@ class CraftabilityTest {
 
     @Test
     fun anUnbuiltLocationIsNotCraftableAndSaysSo() {
-        val check = Craftability.check(record(emptyList(), bones = 2), "Taller", daga, catalog)
+        val check = Craftability.check(record(emptyList(), bones = 2), LocationId("taller"), daga, catalog)
 
         assertFalse(check.craftable)
         assertNotNull(check.missing)
@@ -97,7 +121,13 @@ class CraftabilityTest {
 
     @Test
     fun insufficientStorageIsNotCraftableAndSaysSo() {
-        val check = Craftability.check(record(listOf("Taller"), bones = 0), "Taller", daga, catalog)
+        val check =
+            Craftability.check(
+                record(listOf(LocationId("taller")), bones = 0),
+                LocationId("taller"),
+                daga,
+                catalog,
+            )
 
         assertFalse(check.craftable)
         assertTrue(check.missing!!.contains("insufficient"), check.missing!!)
@@ -105,9 +135,15 @@ class CraftabilityTest {
 
     @Test
     fun aMissingPrerequisiteIsNotCraftableAndNamesIt() {
-        val espada = taller.recipes.single { it.gearName == "Espada" }
+        val espada = taller.recipes.single { it.gearId == GearId("espada") }
 
-        val check = Craftability.check(record(listOf("Taller"), bones = 2), "Taller", espada, catalog)
+        val check =
+            Craftability.check(
+                record(listOf(LocationId("taller")), bones = 2),
+                LocationId("taller"),
+                espada,
+                catalog,
+            )
 
         assertFalse(check.craftable)
         assertTrue(check.missing!!.contains("Calor"), check.missing!!)

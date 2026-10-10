@@ -168,3 +168,43 @@ class ParseCardsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _identity():
+    from identity import load_identity
+
+    return load_identity(Path(__file__).resolve().parents[1] / "identity" / "innovations.csv")
+
+
+class EmitIdentityTests(unittest.TestCase):
+    """The emitter resolves every card through the identity CSV before writing Kotlin."""
+
+    @staticmethod
+    def _card(name: str = "Lenguaje", consequences=None):
+        return innovations.Card(
+            name=name,
+            subline="innovación inicial",
+            parent=None,
+            description="Se pueden hablar y registrar lo aprendido.",
+            consequences=list(consequences or []),
+        )
+
+    def test_emission_carries_ids_and_localized_names(self) -> None:
+        out = innovations.emit_kotlin([self._card()], _identity())
+
+        self.assertIn('id = InnovationId("language")', out)
+        self.assertIn('names = LocalizedText(es = "Lenguaje", en = "Language")', out)
+        self.assertIn("import io.kdmtracker.core.domain.InnovationId", out)
+        self.assertNotIn('name = "', out)
+
+    def test_a_card_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        with self.assertRaises(SystemExit) as ctx:
+            innovations.emit_kotlin([self._card(name="Carta Fantasma")], _identity())
+
+        self.assertIn("Carta Fantasma", str(ctx.exception))
+
+    def test_a_consequence_the_identity_table_does_not_cover_aborts_the_emit(self) -> None:
+        with self.assertRaises(SystemExit) as ctx:
+            innovations.emit_kotlin([self._card(consequences=["Inexistente"])], _identity())
+
+        self.assertIn("Inexistente", str(ctx.exception))

@@ -1,9 +1,12 @@
 package io.kdmtracker.core.persistence
 
 import io.kdmtracker.core.domain.Campaign
+import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -77,15 +80,14 @@ abstract class CampaignStoreContract {
                 InnovationCollection(
                     innovations =
                         listOf(
-                            Innovation(
-                                name = "Lantern Oven",
+                            Innovation(id = InnovationId("lantern_oven"), names = LocalizedText(es = "Lantern Oven"),
                                 description = "Cook a resource to gain its benefit.",
                                 consequences = listOf("Lantern Oven", "Cooking"),
                                 survivalLimitBonus = 1,
                             ),
                         ),
                 ),
-            locations = LocationSet(built = listOf("Lantern Hoard")),
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"))),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Broken Lantern"), 2),
