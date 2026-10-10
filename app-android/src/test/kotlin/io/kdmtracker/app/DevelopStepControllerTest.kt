@@ -6,6 +6,7 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
@@ -45,7 +46,12 @@ class DevelopStepControllerTest {
             effect = "Draw 2 innovation cards, keep 1.",
         )
 
-    private val ammonia = Innovation(name = "Ammonia", description = "Acids for tanning.")
+    private val ammonia =
+        Innovation(
+            id = InnovationId("ammonia"),
+            names = LocalizedText(es = "Ammonia"),
+            description = "Acids for tanning.",
+        )
 
     private val catalog =
         ContentCatalog(
@@ -132,7 +138,7 @@ class DevelopStepControllerTest {
         assertTrue(record.state.usedInPhase("lantern_hoard"))
         assertTrue(
             record.state.innovations.innovations
-                .any { it.name == "Ammonia" },
+                .any { it.names.es == "Ammonia" },
         )
         assertEquals(1, record.storage().single { it.id.value == "Bone" }.quantity)
         assertNull(controller.state.value.actionError)

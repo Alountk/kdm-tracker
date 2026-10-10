@@ -357,7 +357,9 @@ def _innovation_names() -> Set[str]:
     path = _repo_root() / "core/src/commonMain/kotlin/io/kdmtracker/core/content/generated/Core15Innovations.kt"
     if not path.exists():
         return set()
-    return set(re.findall(r'name = "([^"]+)"', path.read_text(encoding="utf-8")))
+    # Same trap as `_resource_names`: the pack emits ``names = LocalizedText(es = "…")`` once
+    # innovations re-key to ids; matching the old shape drops every recipe's `requires` gate.
+    return set(re.findall(r'names = LocalizedText\(es = "([^"]+)"', path.read_text(encoding="utf-8")))
 
 
 def _resource_names() -> Set[str]:

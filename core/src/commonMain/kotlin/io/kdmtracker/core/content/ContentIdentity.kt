@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
 
@@ -137,4 +138,56 @@ object ContentIdentity {
 
     /** The id for a location's pre-id display name, or `null` when no content produces that name. */
     fun locationIdFor(name: String): LocationId? = locationByName[name]
+
+    private val innovationByName: Map<String, InnovationId> =
+        mapOf(
+            "Aceptar la Oscuridad" to InnovationId("aceptar_la_oscuridad"),
+            "Amoníaco" to InnovationId("amoniaco"),
+            "Archivos" to InnovationId("archivos"),
+            "Arma Definitiva" to InnovationId("arma_definitiva"),
+            "Arte de Combate Final" to InnovationId("arte_de_combate_final"),
+            "Barbárico" to InnovationId("barbarico"),
+            "Cama" to InnovationId("cama"),
+            "Canibalismo" to InnovationId("canibalismo"),
+            "Canto de los Valientes" to InnovationId("canto_de_los_valientes"),
+            "Cerámica" to InnovationId("ceramica"),
+            "Choza" to InnovationId("choza"),
+            "Clan de la Muerte" to InnovationId("clan_de_la_muerte"),
+            "Cocinar" to InnovationId("cocinar"),
+            "Compañeros" to InnovationId("companeros"),
+            "Danza Prohibida" to InnovationId("danza_prohibida"),
+            "Destino" to InnovationId("destino"),
+            "Entrenamiento de Pesadilla" to InnovationId("entrenamiento_de_pesadilla"),
+            "Escarificación" to InnovationId("escarificacion"),
+            "Escultura" to InnovationId("escultura"),
+            "Esfuerzo Colectivo" to InnovationId("esfuerzo_colectivo"),
+            "Familia" to InnovationId("familia"),
+            "Flauta Corazón" to InnovationId("flauta_corazon"),
+            "Fundición de Restos" to InnovationId("fundicion_de_restos"),
+            "Guía del Rey" to InnovationId("guia_del_rey"),
+            "Horno Linterna" to InnovationId("horno_linterna"),
+            "Lenguaje" to InnovationId("language"),
+            "Linterna Interior" to InnovationId("linterna_interior"),
+            "Memento Mori" to InnovationId("memento_mori"),
+            "Narración" to InnovationId("narracion"),
+            "Pictografía" to InnovationId("pictografia"),
+            "Pintura Facial" to InnovationId("pintura_facial"),
+            "Pintura" to InnovationId("pintura"),
+            "Proteged a los Jóvenes" to InnovationId("proteged_a_los_jovenes"),
+            "Romántico" to InnovationId("romantico"),
+            "Sacrificio" to InnovationId("sacrificio"),
+            "Saga" to InnovationId("saga"),
+            "Sangría" to InnovationId("sangria"),
+            "Santuario" to InnovationId("santuario"),
+            "Sepulturas" to InnovationId("sepulturas"),
+            "Simposio" to InnovationId("simposio"),
+            "Supervivencia del más Apto" to InnovationId("supervivencia_del_mas_apto"),
+            "Tambores" to InnovationId("tambores"),
+            // The 1.6 seed names the same two cards in English; same innovations, same ids.
+            "Language" to InnovationId("language"),
+            "Storytelling" to InnovationId("narracion"),
+        )
+
+    /** The id for an innovation's pre-id display name, or `null` when no content produces that name. */
+    fun innovationIdFor(name: String): InnovationId? = innovationByName[name]
 }

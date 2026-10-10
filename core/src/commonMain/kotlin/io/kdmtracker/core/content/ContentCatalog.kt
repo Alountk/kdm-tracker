@@ -36,7 +36,7 @@ data class ContentCatalog(
     val packs: List<ContentPack>,
 ) {
     val innovationDefinitions: List<Innovation> =
-        mergeDefinition(packs.flatMap { it.bundle.innovations }) { it.name }
+        mergeInnovationDefinitions(packs.flatMap { it.bundle.innovations })
     val locationDefinitions: List<SettlementLocation> =
         mergeLocationDefinitions(packs.flatMap { it.bundle.locations })
     val resourceDefinitions: List<ResourceDefinition> =
@@ -59,7 +59,7 @@ data class ContentCatalog(
             .distinct()
             .sortedWith(compareBy({ it.lanternYear }, { it.label }))
 
-    val innovations: List<String> = innovationDefinitions.map { it.name }.sorted()
+    val innovations: List<String> = innovationDefinitions.map { it.names.es }.sorted()
     val locations: List<String> = locationDefinitions.map { it.names.es }.sorted()
     val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
@@ -139,6 +139,32 @@ private fun combineLocations(
         buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
         actions = (current.actions + candidate.actions).distinctBy { it.kind },
         recipes = (current.recipes + candidate.recipes).distinctBy { it.gearName },
+    )
+
+/**
+ * Merges [innovations] by id, combining the fields of same-id definitions so separate
+ * packs can contribute different aspects — the unlock **tree** is the union of both packs'
+ * consequences, so `Language` (1.6 seed) and `Lenguaje` (1.5) unlock the same branches.
+ * The result is deterministic: fields keep the first non-empty value in pack order, names
+ * fall back to the other pack's translation, and consequence lists are de-duplicated.
+ */
+private fun mergeInnovationDefinitions(innovations: List<Innovation>): List<Innovation> =
+    innovations
+        .groupBy { it.id }
+        .map { (_, sameId) -> sameId.reduce(::combineInnovations) }
+        .sortedBy { it.names.es }
+
+private fun combineInnovations(
+    current: Innovation,
+    candidate: Innovation,
+): Innovation =
+    Innovation(
+        id = current.id,
+        names = LocalizedText(es = current.names.es, en = current.names.en ?: candidate.names.en),
+        description = current.description.ifBlank { candidate.description },
+        consequences = (current.consequences + candidate.consequences).distinct(),
+        survivalLimitBonus =
+            if (current.survivalLimitBonus != 0) current.survivalLimitBonus else candidate.survivalLimitBonus,
     )
 
 object ContentCatalogComposer {

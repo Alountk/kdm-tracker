@@ -3,6 +3,8 @@ package io.kdmtracker.core.content.generated
 
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
 
 object Core15Innovations {
     val bundle: ContentBundle =
@@ -10,7 +12,8 @@ object Core15Innovations {
             innovations =
                 listOf(
                     Innovation(
-                        name = "Aceptar la Oscuridad",
+                        id = InnovationId("aceptar_la_oscuridad"),
+                        names = LocalizedText(es = "Aceptar la Oscuridad"),
                         description =
                             "El asentamiento ya no teme a la oscuridad. Al liberaros del temor, vuestra " +
                                 "resolución no se verá mermada. Añadid +2 a todas las tiradas de Trauma Cerebral.",
@@ -18,7 +21,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Amoníaco",
+                        id = InnovationId("amoniaco"),
+                        names = LocalizedText(es = "Amoníaco"),
                         description =
                             "Una sustancia ácida y nauseabunda, ideal para trabajar el cuero y tratar las " +
                                 "heridas. Los supervivientes que parten ganan +1 a supervivencia.",
@@ -30,7 +34,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Archivos",
+                        id = InnovationId("archivos"),
+                        names = LocalizedText(es = "Archivos"),
                         description =
                             "Ganas el arte de combate secreta Erudito de la Muerte. Laboriosamente, creas una " +
                                 "obra acerca de un monstruo al que derrotaste durante tu vida. Añade “Nombre del " +
@@ -41,7 +46,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Arma Definitiva",
+                        id = InnovationId("arma_definitiva"),
+                        names = LocalizedText(es = "Arma Definitiva"),
                         description =
                             "Cuando derrotéis a un monstruo, ganáis 1 recurso de monstruo a vuestra elección " +
                                 "de su mazo de recursos.",
@@ -49,7 +55,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Arte de Combate Final",
+                        id = InnovationId("arte_de_combate_final"),
+                        names = LocalizedText(es = "Arte de Combate Final"),
                         description =
                             "Una vez por enfrentamiento, puedes elegir una carta de la pila de descartes, o " +
                                 "del mazo de heridas y colocarla en lo alto del mazo de IA.",
@@ -57,7 +64,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Barbárico",
+                        id = InnovationId("barbarico"),
+                        names = LocalizedText(es = "Barbárico"),
                         description =
                             "Creéis en el poder de la fuerza del ser humano para superar los obstáculos. " +
                                 "Todos los supervivientes actuales y los recién nacidos ganan +1 permanente a " +
@@ -66,7 +74,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Cama",
+                        id = InnovationId("cama"),
+                        names = LocalizedText(es = "Cama"),
                         description =
                             "Descansar - tira 1d10 1-3 Pesadillas. Ganas +1 a locura. 4+ No puedes volver a " +
                                 "gastar esfuerzo en esta fase de asentamiento. Sáltate la próxima caza. Puedes " +
@@ -77,7 +86,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Canibalismo",
+                        id = InnovationId("canibalismo"),
+                        names = LocalizedText(es = "Canibalismo"),
                         description =
                             "Cuando muere un superviviente, robad 1 recurso básico y añadidlo al almacén del " +
                                 "asentamiento. No ganáis el recurso si el superviviente se pierde, deja de " +
@@ -86,7 +96,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Canto de los Valientes",
+                        id = InnovationId("canto_de_los_valientes"),
+                        names = LocalizedText(es = "Canto de los Valientes"),
                         description =
                             "Los supervivientes elevan sus voces en la oscuridad. Al Llegar, cada " +
                                 "superviviente no sordo puede quitarse una ficha de atributo negativo. Durante el " +
@@ -99,7 +110,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Cerámica",
+                        id = InnovationId("ceramica"),
+                        names = LocalizedText(es = "Cerámica"),
                         description =
                             ": Fermentación. Gasta 1 recurso de órgano y gana un recurso básico Zumo del " +
                                 "Amor. Límite, una vez por año linterna. : Macerar. Gasta un recurso de hierba y " +
@@ -108,7 +120,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Choza",
+                        id = InnovationId("choza"),
+                        names = LocalizedText(es = "Choza"),
                         description =
                             "El asentamiento acepta este paisaje de pesadilla como su hogar. Los " +
                                 "supervivientes que parten ganan +1 a supervivencia.",
@@ -121,7 +134,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Clan de la Muerte",
+                        id = InnovationId("clan_de_la_muerte"),
+                        names = LocalizedText(es = "Clan de la Muerte"),
                         description =
                             "La duradera fortaleza de tu clan se hereda de generación en generación. Todos " +
                                 "los supervivientes recién nacidos ganan: Precisión Fuerza Evasión",
@@ -129,7 +143,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Cocinar",
+                        id = InnovationId("cocinar"),
+                        names = LocalizedText(es = "Cocinar"),
                         description =
                             "+1 (Al comienzo de la Fase de Asentamiento, ganáis +1 esfuerzo) Cocinar. Gasta 1 " +
                                 "órgano y 1 hueso para cocinar unas gachas de narices de piedra. En la próxima " +
@@ -138,7 +153,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Compañeros",
+                        id = InnovationId("companeros"),
+                        names = LocalizedText(es = "Compañeros"),
                         description =
                             ": Elige dos supervivientes. Ambos forman una pareja y ganan la habilidad " +
                                 "Emparejado. Un superviviente puede ser designado como compañero una vez en la " +
@@ -150,7 +166,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Danza Prohibida",
+                        id = InnovationId("danza_prohibida"),
+                        names = LocalizedText(es = "Danza Prohibida"),
                         description =
                             "Cuando un superviviente usa Golpe Sincronizado, puede relanzar una vez las " +
                                 "tiradas de ataque fallidas. Una vez en la vida - tira 1d10 1-5 Rotura. Sufres -1 " +
@@ -163,7 +180,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Destino",
+                        id = InnovationId("destino"),
+                        names = LocalizedText(es = "Destino"),
                         description =
                             "El futuro del asentamiento es inevitable. Todos los supervivientes ganan la " +
                                 "acción de supervivencia Aguantar. Aguantar: Puedes gastar 7 de supervivencia " +
@@ -172,7 +190,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Entrenamiento de Pesadilla",
+                        id = InnovationId("entrenamiento_de_pesadilla"),
+                        names = LocalizedText(es = "Entrenamiento de Pesadilla"),
                         description =
                             "Entrenar - pierde 3 de supervivencia y tira 1d10 1 Accidente. Gasta 1 de " +
                                 "supervivencia o muere. 2-7 Puedes gastar 1 de supervivencia y tirar de nuevo. " +
@@ -182,7 +201,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Escarificación",
+                        id = InnovationId("escarificacion"),
+                        names = LocalizedText(es = "Escarificación"),
                         description =
                             "Iniciación - Una vez en la vida, ganas +1 a valor y tira el dado de localización " +
                                 "de impacto Sufres la lesión grave en la cabeza ceguera. Ganas el arte de combate " +
@@ -193,7 +213,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Escultura",
+                        id = InnovationId("escultura"),
+                        names = LocalizedText(es = "Escultura"),
                         description =
                             ": Puedes crear una Estatua Inspiradora. Sáltate la próxima caza y pierde un arte " +
                                 "de combate. Anota ese arte de combate en la Hoja de Registro del Asentamiento. " +
@@ -207,7 +228,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Esfuerzo Colectivo",
+                        id = InnovationId("esfuerzo_colectivo"),
+                        names = LocalizedText(es = "Esfuerzo Colectivo"),
                         description =
                             "El asentamiento se adentra en la tormenta. Si os mantenéis unidos, triunfaréis. " +
                                 "Al comienzo de la fase de asentamiento, ganáis +1 por cada 10 de población.",
@@ -215,7 +237,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Familia",
+                        id = InnovationId("familia"),
+                        names = LocalizedText(es = "Familia"),
                         description =
                             "Los supervivientes que parten ganan +1 a supervivencia. Los supervivientes " +
                                 "elegidos para Intimar pueden darse un apellido a sí mismos, si no lo tienen ya. " +
@@ -228,7 +251,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Flauta Corazón",
+                        id = InnovationId("flauta_corazon"),
+                        names = LocalizedText(es = "Flauta Corazón"),
                         description =
                             "Cuando un superviviente usa el arte de combate Golpe Sincronizado, su asistente " +
                                 "de ataque puede gastar 1 punto de supervivencia para cambiar cualquier de " +
@@ -242,7 +266,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Fundición de Restos",
+                        id = InnovationId("fundicion_de_restos"),
+                        names = LocalizedText(es = "Fundición de Restos"),
                         description =
                             "Purificación - tira 1d10 1-2 No ocurre nada. 3-9 Gasta 3 de restos y añade 1 " +
                                 "Hierro al almacén. 10+ Gasta 3 de restos y añade 1 Hierro al almacén. Puedes " +
@@ -251,7 +276,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Guía del Rey",
+                        id = InnovationId("guia_del_rey"),
+                        names = LocalizedText(es = "Guía del Rey"),
                         description =
                             "El dulce resplandor de su luz llena a los supervivientes de una sensación de " +
                                 "seguridad. Los supervivientes que parten ganan +1 a supervivencia. : El " +
@@ -262,7 +288,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Horno Linterna",
+                        id = InnovationId("horno_linterna"),
+                        names = LocalizedText(es = "Horno Linterna"),
                         description =
                             "Calor Al agitar las linternas, el asentamiento consigue disponer de una fuente " +
                                 "de calor. Los supervivientes que parten ganan +1 a supervivencia.",
@@ -274,7 +301,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Lenguaje",
+                        id = InnovationId("language"),
+                        names = LocalizedText(es = "Lenguaje", en = "Language"),
                         description =
                             "Todos los supervivientes ganan la acción de supervivencia animar. Animar: Una " +
                                 "vez por ronda, si estás en pie, gasta 1 de supervivencia para gritar a un " +
@@ -292,7 +320,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Linterna Interior",
+                        id = InnovationId("linterna_interior"),
+                        names = LocalizedText(es = "Linterna Interior"),
                         description =
                             "El asentamiento encuentra la luz en su interior. Todos los supervivientes ganan " +
                                 "la acción de supervivencia Forzar. Forzar: Una vez por ronda, gasta 1 de " +
@@ -306,7 +335,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Memento Mori",
+                        id = InnovationId("memento_mori"),
+                        names = LocalizedText(es = "Memento Mori"),
                         description =
                             "Puede usarse una vez por fase de asentamiento. Elige a un superviviente que haya " +
                                 "muerto en el ultimo enfrentamiento y tira 1d10 1 No ocurre nada. 2-3 Ganas la " +
@@ -317,7 +347,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Narración",
+                        id = InnovationId("narracion"),
+                        names = LocalizedText(es = "Narración", en = "Storytelling"),
                         description =
                             "Hora de Contar Historias - tira 1d10 1-3 Ganas +1 a entendimiento. 4-7 Los " +
                                 "supervivientes que parten ganan +3 a locura. 8+ Oradora Blanca.",
@@ -328,7 +359,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Pictografía",
+                        id = InnovationId("pictografia"),
+                        names = LocalizedText(es = "Pictografía"),
                         description =
                             "Al comienzo del acto de un superviviente, este puede decidir saltarse su acto y " +
                                 "Huir. Después de resolver un evento de caza, un superviviente puede decidir que " +
@@ -340,7 +372,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Pintura",
+                        id = InnovationId("pintura"),
+                        names = LocalizedText(es = "Pintura"),
                         description =
                             "El asentamiento rebosa energía creativa. Todos los supervivientes ganan la " +
                                 "acción de supervivencia esprintar. Esprintar: Una vez por ronda, gasta 1 de " +
@@ -355,7 +388,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Pintura Facial",
+                        id = InnovationId("pintura_facial"),
+                        names = LocalizedText(es = "Pintura Facial"),
                         description =
                             "Pinturas de Guerra - tira 1d10 1-3 Hazmerreir. No sucede nada 4+ Ceremonia de " +
                                 "las Pinturas de la Muerte. Los supervivientes que parten ganan +2 a " +
@@ -366,7 +400,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Proteged a los Jóvenes",
+                        id = InnovationId("proteged_a_los_jovenes"),
+                        names = LocalizedText(es = "Proteged a los Jóvenes"),
                         description =
                             "Los niños son el futuro. Cuando tiréis en el evento de historia Intimar, tirad " +
                                 "dos veces y escoged 1 resultado.",
@@ -374,7 +409,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Romántico",
+                        id = InnovationId("romantico"),
+                        names = LocalizedText(es = "Romántico"),
                         description =
                             "Creéis en el potencial de la belleza, la decencia y la ingenuidad de los demás. " +
                                 "Cuando ganéis un arte de combate al azar, robad 3 cartas de artes de combate y " +
@@ -383,7 +419,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Sacrificio",
+                        id = InnovationId("sacrificio"),
+                        names = LocalizedText(es = "Sacrificio"),
                         description =
                             "Ritual de la Muerte - tira 1d10 1 Muertes sin sentido. -2 a población. 2-3 " +
                                 "Aullidos. -1 a población. Los supervivientes que parten ganan +1 a locura. 4-5 " +
@@ -395,7 +432,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Saga",
+                        id = InnovationId("saga"),
+                        names = LocalizedText(es = "Saga"),
                         description =
                             "Una historia sobre la supervivencia del asentamiento, acompañada por el sonido " +
                                 "rítmico y dulce de los tambores. Todos los supervivientes recién nacidos ganan: " +
@@ -404,7 +442,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Sangría",
+                        id = InnovationId("sangria"),
+                        names = LocalizedText(es = "Sangría"),
                         description =
                             "Abrir una Vena - gasta 1 recurso y tira 1d10 1-3 Ganas +1 a entendimiento. " +
                                 "Pierdes toda tu supervivencia. No puedes ganar supervivencia durante esta fase " +
@@ -416,7 +455,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Santuario",
+                        id = InnovationId("santuario"),
+                        names = LocalizedText(es = "Santuario"),
                         description =
                             "Puede usarse una vez por fase de asentamiento. Ritual de Armadura - tira 1d10 " +
                                 "1-3 Los supervivientes que parten ganan +1 a locura. 4+ Ajustes finales. Los " +
@@ -428,7 +468,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Sepulturas",
+                        id = InnovationId("sepulturas"),
+                        names = LocalizedText(es = "Sepulturas"),
                         description =
                             "Todos los recién nacidos ganan +1 a entendimiento. Cuando un superviviente muere " +
                                 "durante la fase de caza o de enfrentamiento, ganáis +2 . Cuando un superviviente " +
@@ -437,7 +478,8 @@ object Core15Innovations {
                         survivalLimitBonus = 0,
                     ),
                     Innovation(
-                        name = "Simposio",
+                        id = InnovationId("simposio"),
+                        names = LocalizedText(es = "Simposio"),
                         description =
                             "Cuando un superviviente innova, roba 2 cartas de innovación adicionales para " +
                                 "elegir una de ellas.",
@@ -449,7 +491,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Supervivencia del más Apto",
+                        id = InnovationId("supervivencia_del_mas_apto"),
+                        names = LocalizedText(es = "Supervivencia del más Apto"),
                         description =
                             "Cuando tiréis en el evento de historia Intimar, tirad dos veces y quedaos con el " +
                                 "resultado más bajo. Todos los supervivientes actuales y los recién nacidos ganan " +
@@ -459,7 +502,8 @@ object Core15Innovations {
                         survivalLimitBonus = 1,
                     ),
                     Innovation(
-                        name = "Tambores",
+                        id = InnovationId("tambores"),
+                        names = LocalizedText(es = "Tambores"),
                         description =
                             "Ritmo de Huesos - elige uno Tocas en solitario. Ganas +2 a locura. Trance " +
                                 "rítmico. Ganas +2 a supervivencia. Ganas el arte de combate Seguir el Ritmo o el " +

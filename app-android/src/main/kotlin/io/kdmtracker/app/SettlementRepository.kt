@@ -9,6 +9,7 @@ import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
@@ -352,13 +353,29 @@ class SettlementRepository(
         )
 }
 
-/** The game's initial innovation(s), seeded so the unlock tree has a root to grow from. */
+/**
+ * The game's initial innovation(s), seeded so the unlock tree has a root to grow from.
+ *
+ * `Language` (1.6 seed) and `Lenguaje` (1.5) are one innovation under their shared id, so a
+ * single merged definition is seeded — with the consequence union of both packs, which is what
+ * the catalog would have composed for it.
+ */
 private val STARTING_INNOVATIONS: List<Innovation> =
     listOfNotNull(
         Core16Content.pack.bundle.innovations
-            .firstOrNull { it.name == "Language" },
-        Legacy15Content.pack.bundle.innovations
-            .firstOrNull { it.name == "Lenguaje" },
+            .firstOrNull { it.id == InnovationId("language") }
+            ?.let { seed ->
+                val legacy =
+                    Legacy15Content.pack.bundle.innovations
+                        .firstOrNull { it.id == InnovationId("language") }
+                if (legacy ==
+                    null
+                ) {
+                    seed
+                } else {
+                    seed.copy(consequences = (seed.consequences + legacy.consequences).distinct())
+                }
+            },
     )
 
 /** The location every settlement opens with, so Innovate is offered at a built location. */

@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
@@ -82,5 +83,57 @@ class ContentIdentityTest {
     fun theMergedLanternHoardCarriesBothLanguages() {
         val hoard = catalog.locationDefinitions.single { it.id == LocationId("lantern_hoard") }
         assertEquals(LocalizedText(es = "Cúmulo de Linternas", en = "Lantern Hoard"), hoard.names)
+    }
+
+    @Test
+    fun everyCatalogInnovationNameResolvesToAnId() {
+        catalog.innovationDefinitions.forEach { innovation ->
+            assertNotNull(
+                ContentIdentity.innovationIdFor(innovation.names.es),
+                "no content id for '${innovation.names.es}'",
+            )
+            innovation.names.en?.let { en ->
+                assertNotNull(ContentIdentity.innovationIdFor(en), "no content id for '$en'")
+            }
+        }
+    }
+
+    @Test
+    fun everyPackInnovationCarriesTheIdTheIdentityTableGivesIt() {
+        catalog.innovationDefinitions.forEach { innovation ->
+            assertEquals(
+                ContentIdentity.innovationIdFor(innovation.names.es),
+                innovation.id,
+                innovation.names.es,
+            )
+        }
+    }
+
+    @Test
+    fun everyInnovationConsequenceResolvesToAnId() {
+        // Consequences name innovations; a string the identity table does not cover would make
+        // its card unreachable in the unlock tree.
+        catalog.innovationDefinitions.flatMap { innovation ->
+            innovation.consequences.map { consequence ->
+                assertNotNull(
+                    ContentIdentity.innovationIdFor(consequence),
+                    "no content id for consequence '$consequence'",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun languageAndLenguajeMergeIntoOneInnovationCarryingBothConsequences() {
+        val language = catalog.innovationDefinitions.single { it.id == InnovationId("language") }
+
+        assertEquals(LocalizedText(es = "Lenguaje", en = "Language"), language.names)
+        val seed =
+            Core16Content.pack.bundle.innovations
+                .first { it.id == InnovationId("language") }
+        val legacy =
+            Legacy15Content.pack.bundle.innovations
+                .first { it.id == InnovationId("language") }
+        assertEquals((seed.consequences + legacy.consequences).distinct(), language.consequences)
     }
 }

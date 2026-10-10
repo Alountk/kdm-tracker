@@ -4,6 +4,8 @@ import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.SettlementPhase
@@ -55,8 +57,18 @@ class SetUpStepControllerTest {
                         innovations =
                             InnovationCollection(
                                 listOf(
-                                    Innovation("Language", "speech", consequences = listOf("Storytelling")),
-                                    Innovation("Symposium", "debate", consequences = listOf("Storytelling", "Paint")),
+                                    Innovation(
+                                        InnovationId("language"),
+                                        LocalizedText(es = "Language"),
+                                        "speech",
+                                        consequences = listOf("Storytelling"),
+                                    ),
+                                    Innovation(
+                                        InnovationId("symposium"),
+                                        LocalizedText(es = "Symposium"),
+                                        "debate",
+                                        consequences = listOf("Storytelling", "Paint"),
+                                    ),
                                 ),
                             ),
                     ),

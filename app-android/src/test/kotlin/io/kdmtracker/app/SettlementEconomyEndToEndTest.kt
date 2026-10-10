@@ -1,5 +1,6 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
@@ -49,7 +50,7 @@ class SettlementEconomyEndToEndTest {
         assertTrue(
             afterInnovate!!
                 .state.innovations.innovations
-                .any { it.name == "Language" },
+                .any { it.id == InnovationId("language") },
             "Innovate unlocks the innovation at the seeded, built Lantern Hoard",
         )
         assertEquals(3, afterInnovate.settlement.endeavors)
@@ -78,7 +79,7 @@ class SettlementEconomyEndToEndTest {
         assertTrue(LocationId("skinnery") in persisted.state.locations.built)
         assertTrue(
             persisted.state.innovations.innovations
-                .any { it.name == "Language" },
+                .any { it.id == InnovationId("language") },
         )
     }
 }

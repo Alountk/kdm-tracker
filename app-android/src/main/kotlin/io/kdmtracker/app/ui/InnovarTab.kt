@@ -104,9 +104,9 @@ private fun InnovarRow(
                     if (view.status ==
                         InnovationStatus.UNLOCKED
                     ) {
-                        "${view.innovation.name} ✓"
+                        "${view.innovation.names.es} ✓"
                     } else {
-                        view.innovation.name
+                        view.innovation.names.es
                     },
                 style = MaterialTheme.typography.bodyLarge,
                 color = color,
@@ -118,7 +118,7 @@ private fun InnovarRow(
             )
         }
         if (view.status == InnovationStatus.AVAILABLE) {
-            Button(onClick = { onInnovate(view.innovation.name) }, enabled = !view.used) {
+            Button(onClick = { onInnovate(view.innovation.names.es) }, enabled = !view.used) {
                 Text(if (view.used) "Usada esta fase" else "Innovar")
             }
         }

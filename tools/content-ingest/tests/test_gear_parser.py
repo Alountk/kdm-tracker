@@ -78,6 +78,14 @@ class GearParserTest(unittest.TestCase):
         self.assertEqual(["Horno Linterna"], by_name["Hacha de Contrapeso"].requires)
         self.assertIsNone(by_name["Hacha de Contrapeso"].requires_text)
 
+    def test_innovation_names_reads_the_generated_pack(self) -> None:
+        # The recipe filter resolves `Requiere` prerequisites against the shipped innovation
+        # pack; if the regex stops matching the pack's emission shape, every recipe silently
+        # loses its innovation gating.
+        names = ingest_gear._innovation_names()
+
+        self.assertIn("Lenguaje", names)
+
     def test_resource_names_reads_the_generated_pack(self) -> None:
         # The recipe filter resolves cost names against the shipped resource pack; if the regex
         # stops matching the pack's emission shape, every location silently loses its recipes.

@@ -2,6 +2,7 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceCategory
@@ -34,7 +35,8 @@ object Core16Content {
                     innovations =
                         listOf(
                             Innovation(
-                                name = "Language",
+                                id = InnovationId("language"),
+                                names = LocalizedText(es = "Lenguaje", en = "Language"),
                                 description = "The survivors can speak and record what they learn.",
                                 consequences = listOf("Storytelling"),
                             ),

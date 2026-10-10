@@ -8,14 +8,16 @@ import kotlin.test.assertTrue
 class InnovationTest {
     private val iron =
         Innovation(
-            name = "Iron",
+            id = InnovationId("iron"),
+            names = LocalizedText(es = "Iron"),
             description = "Smelt iron ore into tools.",
             consequences = listOf("Blade Sharpen", "Iron Weapons"),
             survivalLimitBonus = 1,
         )
     private val ammonia =
         Innovation(
-            name = "Ammonia",
+            id = InnovationId("ammonia"),
+            names = LocalizedText(es = "Ammonia"),
             description = "Refine ammonia from soil.",
             consequences = listOf("Ointment"),
             survivalLimitBonus = 0,
@@ -88,7 +90,12 @@ class InnovationTest {
 
     @Test
     fun deckIgnoresAnInnovationWithNoConsequences() {
-        val plain = Innovation(name = "Hovel", description = "A place to sleep.")
+        val plain =
+            Innovation(
+                id = InnovationId("hovel"),
+                names = LocalizedText(es = "Hovel"),
+                description = "A place to sleep.",
+            )
 
         assertTrue(InnovationDeck.of(InnovationCollection().with(plain)).cards.isEmpty())
     }
@@ -97,7 +104,8 @@ class InnovationTest {
     fun deckIsDedupedAndSorted() {
         val other =
             Innovation(
-                name = "Soap",
+                id = InnovationId("soap"),
+                names = LocalizedText(es = "Soap"),
                 description = "Boil fat with ash.",
                 consequences = listOf("Iron Weapons"),
             )

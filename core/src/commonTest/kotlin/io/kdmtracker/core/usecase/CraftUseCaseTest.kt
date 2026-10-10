@@ -9,6 +9,7 @@ import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
@@ -124,7 +125,13 @@ class CraftUseCaseTest {
 
     @Test
     fun anUnlockedPrerequisiteAllowsTheCraft() {
-        val state = ready().copy(innovations = InnovationCollection(listOf(Innovation("Calor", "…"))))
+        val state =
+            ready().copy(
+                innovations =
+                    InnovationCollection(
+                        listOf(Innovation(InnovationId("calor"), LocalizedText(es = "Calor"), "…")),
+                    ),
+            )
 
         val result = Craft.run(record(state = state), LocationId("bone_smith"), "Espada Caliente", catalog)
 

@@ -32,9 +32,11 @@ object Craft {
         if (locationId !in record.state.locations.built) {
             return StepResult.Blocked("$displayName is not built")
         }
+        // Recipes still name their prerequisite innovations (the gear commit re-keys them to
+        // ids); match against either language so a Spanish recipe unlocks on a seed innovation.
         val unlocked =
             record.state.innovations.innovations
-                .mapTo(mutableSetOf()) { it.name }
+                .flatMapTo(mutableSetOf()) { innovation -> listOfNotNull(innovation.names.es, innovation.names.en) }
         recipe.requires.firstOrNull { it !in unlocked }?.let { missing ->
             return StepResult.Blocked("$gearName requires $missing")
         }

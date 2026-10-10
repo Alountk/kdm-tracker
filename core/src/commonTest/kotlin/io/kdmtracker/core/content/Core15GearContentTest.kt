@@ -18,7 +18,7 @@ class Core15GearContentTest {
                 .toSet()
         val innovations =
             Legacy15Content.pack.bundle.innovations
-                .map { it.name }
+                .map { it.names.es }
                 .toSet()
 
         Core15Gear.bundle.locations.flatMap { it.recipes }.forEach { recipe ->

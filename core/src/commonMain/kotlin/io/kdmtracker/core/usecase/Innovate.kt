@@ -2,6 +2,7 @@ package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.domain.ActionKind
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementRecord
@@ -29,18 +30,18 @@ object Innovate {
      *
      * Blocks, without changing anything, when: [locationId] is unknown, the location offers
      * no [ActionKind.INNOVATE] action, the location is not yet built, the location's action was
-     * already used this phase, [innovationName] is unknown, the endeavor pool cannot fund the
+     * already used this phase, [innovationId] is unknown, the endeavor pool cannot fund the
      * action, a cost resource has no catalog definition, or the ledger cannot cover a spend. On
      * success it spends the cost, unlocks the innovation, and marks the location's action used
      * for the phase.
      *
      * @param locationId the id of the settlement location whose Innovate action runs.
-     * @param innovationName the name of the innovation to unlock.
+     * @param innovationId the id of the innovation to unlock.
      */
     fun run(
         record: SettlementRecord,
         locationId: LocationId,
-        innovationName: String,
+        innovationId: InnovationId,
         catalog: ContentCatalog,
     ): StepResult<SettlementRecord> {
         val location =
@@ -57,8 +58,8 @@ object Innovate {
             return StepResult.Blocked("$displayName already used this phase")
         }
         val innovation =
-            catalog.innovationDefinitions.firstOrNull { it.name == innovationName }
-                ?: return StepResult.Blocked("unknown innovation $innovationName")
+            catalog.innovationDefinitions.firstOrNull { it.id == innovationId }
+                ?: return StepResult.Blocked("unknown innovation ${innovationId.value}")
         if (record.settlement.endeavors < action.endeavorCost) {
             return StepResult.Blocked("insufficient endeavors")
         }

@@ -7,6 +7,7 @@ import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.LocationSet
@@ -39,7 +40,12 @@ class InnovateUseCaseTest {
             keep = 1,
         )
 
-    private val ammonia = Innovation(name = "Ammonia", description = "Acids for tanning.")
+    private val ammonia =
+        Innovation(
+            id = InnovationId("ammonia"),
+            names = LocalizedText(es = "Ammonia"),
+            description = "Acids for tanning.",
+        )
 
     private val catalog =
         ContentCatalog(
@@ -108,13 +114,19 @@ class InnovateUseCaseTest {
 
     @Test
     fun aValidInnovateSpendsTheCostAddsTheInnovationAndMarksThePhase() {
-        val result = Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), "Ammonia", catalog)
+        val result =
+            Innovate.run(
+                record(state = stocked()),
+                LocationId("lantern_hoard"),
+                InnovationId("ammonia"),
+                catalog,
+            )
 
         val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
         assertEquals(0, ok.value.settlement.endeavors)
         assertTrue(
             ok.value.state.innovations.innovations
-                .any { it.name == "Ammonia" },
+                .any { it.names.es == "Ammonia" },
         )
         assertTrue(ok.value.state.usedInPhase("lantern_hoard"))
         for (name in listOf("Bone", "Organ", "Hide")) {
@@ -127,17 +139,23 @@ class InnovateUseCaseTest {
     fun aSecondInnovateInTheSamePhaseIsBlocked() {
         val first =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), "Ammonia", catalog),
+                Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), InnovationId("ammonia"), catalog),
             )
 
-        val second = Innovate.run(first.value, LocationId("lantern_hoard"), "Ammonia", catalog)
+        val second = Innovate.run(first.value, LocationId("lantern_hoard"), InnovationId("ammonia"), catalog)
 
         assertIs<StepResult.Blocked>(second)
     }
 
     @Test
     fun insufficientStorageIsBlocked() {
-        val result = Innovate.run(record(state = builtButUnstocked()), LocationId("lantern_hoard"), "Ammonia", catalog)
+        val result =
+            Innovate.run(
+                record(state = builtButUnstocked()),
+                LocationId("lantern_hoard"),
+                InnovationId("ammonia"),
+                catalog,
+            )
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -146,28 +164,46 @@ class InnovateUseCaseTest {
     fun anUnbuiltInnovateLocationIsBlocked() {
         val unbuilt = stocked().copy(locations = LocationSet())
 
-        val result = Innovate.run(record(state = unbuilt), LocationId("lantern_hoard"), "Ammonia", catalog)
+        val result =
+            Innovate.run(
+                record(state = unbuilt),
+                LocationId("lantern_hoard"),
+                InnovationId("ammonia"),
+                catalog,
+            )
 
         assertIs<StepResult.Blocked>(result)
     }
 
     @Test
     fun aLocationWithoutAnInnovateActionIsBlocked() {
-        val result = Innovate.run(record(state = stocked()), LocationId("stone_circle"), "Ammonia", catalog)
+        val result =
+            Innovate.run(
+                record(state = stocked()),
+                LocationId("stone_circle"),
+                InnovationId("ammonia"),
+                catalog,
+            )
 
         assertIs<StepResult.Blocked>(result)
     }
 
     @Test
     fun anUnknownLocationIsBlocked() {
-        val result = Innovate.run(record(state = stocked()), LocationId("nowhere"), "Ammonia", catalog)
+        val result = Innovate.run(record(state = stocked()), LocationId("nowhere"), InnovationId("ammonia"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
 
     @Test
     fun anUnknownInnovationIsBlocked() {
-        val result = Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), "Alchemy", catalog)
+        val result =
+            Innovate.run(
+                record(state = stocked()),
+                LocationId("lantern_hoard"),
+                InnovationId("alchemy"),
+                catalog,
+            )
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -178,7 +214,7 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(endeavors = 0, state = stocked()),
                 LocationId("lantern_hoard"),
-                "Ammonia",
+                InnovationId("ammonia"),
                 catalog,
             )
 

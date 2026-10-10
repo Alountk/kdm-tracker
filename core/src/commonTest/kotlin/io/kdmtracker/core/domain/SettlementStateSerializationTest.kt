@@ -26,13 +26,15 @@ class SettlementStateSerializationTest {
                 InnovationCollection(
                     listOf(
                         Innovation(
-                            name = "Language",
+                            id = InnovationId("language"),
+                            names = LocalizedText(es = "Language"),
                             description = "You can talk.",
                             consequences = listOf("Language"),
                             survivalLimitBonus = 1,
                         ),
                         Innovation(
-                            name = "Paint",
+                            id = InnovationId("paint"),
+                            names = LocalizedText(es = "Paint"),
                             description = "Face paint.",
                             consequences = listOf("Paint", "Ammonia"),
                             survivalLimitBonus = 1,

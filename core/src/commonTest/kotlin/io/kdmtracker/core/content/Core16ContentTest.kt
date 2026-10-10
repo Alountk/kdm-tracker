@@ -5,6 +5,7 @@ import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationDeck
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.Language
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceCategory
@@ -95,7 +96,7 @@ class Core16ContentTest {
 
     @Test
     fun languageConsequencesDriveTheInnovationDeck() {
-        val language = catalog().innovationDefinitions.first { it.name == "Language" }
+        val language = catalog().innovationDefinitions.first { it.id == InnovationId("language") }
         val deck = InnovationDeck.of(InnovationCollection().with(language))
 
         assertEquals(language.consequences.sorted(), deck.cards)
