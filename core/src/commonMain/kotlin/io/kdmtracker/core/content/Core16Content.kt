@@ -2,8 +2,11 @@ package io.kdmtracker.core.content
 
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.Timeline
@@ -74,10 +77,30 @@ object Core16Content {
                         ),
                     resources =
                         listOf(
-                            ResourceDefinition("Bone", ResourceCategory.BASIC),
-                            ResourceDefinition("Hide", ResourceCategory.BASIC),
-                            ResourceDefinition("Organ", ResourceCategory.BASIC),
-                            ResourceDefinition("Scrap", ResourceCategory.BASIC),
+                            ResourceDefinition(
+                                id = ResourceId("bone.monster"),
+                                names = LocalizedText(es = "Hueso de Monstruo", en = "Bone"),
+                                category = ResourceCategory.BASIC,
+                                materials = setOf(ResourceMaterial.BONE),
+                            ),
+                            ResourceDefinition(
+                                id = ResourceId("hide.monster"),
+                                names = LocalizedText(es = "Piel de Monstruo", en = "Hide"),
+                                category = ResourceCategory.BASIC,
+                                materials = setOf(ResourceMaterial.HIDE),
+                            ),
+                            ResourceDefinition(
+                                id = ResourceId("organ.monster"),
+                                names = LocalizedText(es = "Órgano de Monstruo", en = "Organ"),
+                                category = ResourceCategory.BASIC,
+                                materials = setOf(ResourceMaterial.ORGAN),
+                            ),
+                            ResourceDefinition(
+                                id = ResourceId("scrap"),
+                                names = LocalizedText(es = "Scrap", en = "Scrap"),
+                                category = ResourceCategory.BASIC,
+                                materials = setOf(ResourceMaterial.SCRAP),
+                            ),
                         ),
                     timeline = Timeline.core16().entries,
                     quarries = listOf("White Lion", "Screaming Antelope", "Phoenix"),

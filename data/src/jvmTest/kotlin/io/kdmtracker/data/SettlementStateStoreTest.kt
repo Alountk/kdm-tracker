@@ -6,8 +6,8 @@ import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -84,9 +84,9 @@ class SettlementStateStoreTest {
             locations = LocationSet(built = listOf("Lantern Hoard", "Organ Grinder")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, 2),
-                    ResourceEntry("Broken Lantern", ResourceCategory.BASIC, -1),
-                    ResourceEntry("White Lion Skull", ResourceCategory.MONSTER, 1),
+                    ResourceEntry(ResourceId("Broken Lantern"), 2),
+                    ResourceEntry(ResourceId("Broken Lantern"), -1),
+                    ResourceEntry(ResourceId("White Lion Skull"), 1),
                 ),
             deaths = 3,
             births = 5,

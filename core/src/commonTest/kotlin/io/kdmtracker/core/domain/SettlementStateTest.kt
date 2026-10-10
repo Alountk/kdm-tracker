@@ -46,16 +46,16 @@ class SettlementStateTest {
             SettlementState(
                 resourceEntries =
                     listOf(
-                        ResourceEntry("Bone", ResourceCategory.BASIC, delta = 3),
-                        ResourceEntry("Bone", ResourceCategory.BASIC, delta = -1),
-                        ResourceEntry("Hide", ResourceCategory.BASIC, delta = 2),
+                        ResourceEntry(ResourceId("Bone"), delta = 3),
+                        ResourceEntry(ResourceId("Bone"), delta = -1),
+                        ResourceEntry(ResourceId("Hide"), delta = 2),
                     ),
             )
 
         assertEquals(
             listOf(
-                StorageLine("Bone", ResourceCategory.BASIC, quantity = 2),
-                StorageLine("Hide", ResourceCategory.BASIC, quantity = 2),
+                StorageLine(ResourceId("Bone"), quantity = 2),
+                StorageLine(ResourceId("Hide"), quantity = 2),
             ),
             state.storage(),
         )

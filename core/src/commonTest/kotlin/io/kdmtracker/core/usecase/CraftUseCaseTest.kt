@@ -3,6 +3,7 @@ package io.kdmtracker.core.usecase
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.Gear
 import io.kdmtracker.core.domain.GearRecipe
 import io.kdmtracker.core.domain.HybridLogicalClock
@@ -10,8 +11,8 @@ import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
@@ -46,7 +47,7 @@ class CraftUseCaseTest {
                     bundle =
                         ContentBundle(
                             locations = listOf(taller),
-                            resources = listOf(ResourceDefinition("Hueso", ResourceCategory.BASIC)),
+                            resources = listOf(resourceDefinition("Hueso", ResourceCategory.BASIC)),
                             gear = listOf(Gear("Daga de Hueso"), Gear("Espada Caliente")),
                         ),
                 ),
@@ -74,7 +75,7 @@ class CraftUseCaseTest {
     private fun ready(bones: Int = 2): SettlementState =
         SettlementState(
             locations = LocationSet(built = listOf("Taller de Huesos")),
-            resourceEntries = listOf(ResourceEntry("Hueso", ResourceCategory.BASIC, bones)),
+            resourceEntries = listOf(ResourceEntry(ResourceId("Hueso"), bones)),
         )
 
     @Test
@@ -86,7 +87,7 @@ class CraftUseCaseTest {
             1,
             ok.value
                 .storage()
-                .single { it.name == "Hueso" }
+                .single { it.id.value == "Hueso" }
                 .quantity,
         )
         assertEquals(listOf("Daga de Hueso"), ok.value.state.gear)
@@ -134,7 +135,7 @@ class CraftUseCaseTest {
         val result = Craft.run(before, "Taller de Huesos", "Daga de Hueso", catalog)
 
         assertIs<StepResult.Blocked>(result)
-        assertEquals(0, before.storage().count { it.name == "Hueso" })
+        assertEquals(0, before.storage().count { it.id.value == "Hueso" })
         assertTrue(before.state.gear.isEmpty())
     }
 

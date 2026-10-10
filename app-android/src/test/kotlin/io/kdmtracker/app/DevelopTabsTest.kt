@@ -18,8 +18,8 @@ class DevelopTabsTest {
         fun record(name: String) {
             val definition =
                 controller.state.value.resourceDefinitions
-                    .single { it.name == name }
-            controller.addResource(ResourceEntry(name, definition.category, 1))
+                    .single { it.names.es == name }
+            controller.addResource(ResourceEntry(definition.id, 1))
         }
 
         fun hacha() =

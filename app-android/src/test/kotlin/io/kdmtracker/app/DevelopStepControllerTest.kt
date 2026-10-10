@@ -3,11 +3,12 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentPack
+import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.ResourceCategory
-import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementAction
 import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
@@ -66,9 +67,9 @@ class DevelopStepControllerTest {
                                 ),
                             resources =
                                 listOf(
-                                    ResourceDefinition("Bone", ResourceCategory.BASIC),
-                                    ResourceDefinition("Organ", ResourceCategory.BASIC),
-                                    ResourceDefinition("Hide", ResourceCategory.BASIC),
+                                    resourceDefinition("Bone", ResourceCategory.BASIC),
+                                    resourceDefinition("Organ", ResourceCategory.BASIC),
+                                    resourceDefinition("Hide", ResourceCategory.BASIC),
                                 ),
                         ),
                 ),
@@ -90,9 +91,9 @@ class DevelopStepControllerTest {
                     repository.record.state.copy(
                         resourceEntries =
                             listOf(
-                                ResourceEntry("Bone", ResourceCategory.BASIC, bone),
-                                ResourceEntry("Organ", ResourceCategory.BASIC, organ),
-                                ResourceEntry("Hide", ResourceCategory.BASIC, hide),
+                                ResourceEntry(ResourceId("Bone"), bone),
+                                ResourceEntry(ResourceId("Organ"), organ),
+                                ResourceEntry(ResourceId("Hide"), hide),
                             ),
                     ),
             ),
@@ -117,7 +118,7 @@ class DevelopStepControllerTest {
             record.state.innovations.innovations
                 .any { it.name == "Ammonia" },
         )
-        assertEquals(1, record.storage().single { it.name == "Bone" }.quantity)
+        assertEquals(1, record.storage().single { it.id.value == "Bone" }.quantity)
         assertNull(controller.state.value.actionError)
     }
 
@@ -169,7 +170,7 @@ class DevelopStepControllerTest {
         val fresh = SettlementRepository(store).record
         assertTrue("Skinnery" in fresh.state.locations.built)
         assertEquals(1, fresh.settlement.endeavors)
-        assertEquals(1, fresh.storage().single { it.name == "Bone" }.quantity)
+        assertEquals(1, fresh.storage().single { it.id.value == "Bone" }.quantity)
     }
 
     @Test
@@ -177,7 +178,7 @@ class DevelopStepControllerTest {
         val controller = controller(storeWith(endeavors = 2, bone = 1, organ = 0, hide = 0))
         val before = controller.state.value.record
 
-        controller.addResource(ResourceEntry("Bone", ResourceCategory.BASIC, -5))
+        controller.addResource(ResourceEntry(ResourceId("Bone"), -5))
 
         val reason = controller.state.value.actionError
         assertNotNull(reason)
@@ -210,7 +211,7 @@ class DevelopStepControllerTest {
         controller.innovate("Ammonia")
         controller.build("Skinnery")
         controller.spendEndeavor()
-        controller.addResource(ResourceEntry("Bone", ResourceCategory.BASIC, 2))
+        controller.addResource(ResourceEntry(ResourceId("Bone"), 2))
 
         assertNull(controller.state.value.actionError)
         assertEquals(controller.state.value.record, SettlementRepository(store).record)

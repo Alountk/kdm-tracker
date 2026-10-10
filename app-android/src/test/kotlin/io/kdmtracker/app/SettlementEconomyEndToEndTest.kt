@@ -1,6 +1,5 @@
 package io.kdmtracker.app
 
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -35,9 +34,12 @@ class SettlementEconomyEndToEndTest {
         controller.selectStep(3)
         assertEquals(4, controller.state.value.endeavors, "a Step 3 revisit must not double-fund")
 
-        controller.addResource(ResourceEntry("Bone", ResourceCategory.BASIC, 1))
-        controller.addResource(ResourceEntry("Organ", ResourceCategory.BASIC, 1))
-        controller.addResource(ResourceEntry("Hide", ResourceCategory.BASIC, 1))
+        listOf("Hueso de Monstruo", "Órgano de Monstruo", "Piel de Monstruo").forEach { spanish ->
+            val definition =
+                controller.state.value.resourceDefinitions
+                    .single { it.names.es == spanish }
+            controller.addResource(ResourceEntry(definition.id, 1))
+        }
         assertNull(controller.state.value.actionError, "the manual resource bridge records gains")
 
         controller.innovate("Language")

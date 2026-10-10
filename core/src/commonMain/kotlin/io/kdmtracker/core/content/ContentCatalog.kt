@@ -39,7 +39,7 @@ data class ContentCatalog(
     val locationDefinitions: List<SettlementLocation> =
         mergeLocationDefinitions(packs.flatMap { it.bundle.locations })
     val resourceDefinitions: List<ResourceDefinition> =
-        mergeDefinition(packs.flatMap { it.bundle.resources }) { it.name }
+        mergeDefinition(packs.flatMap { it.bundle.resources }) { it.id.value }
     val fightingArtDefinitions: List<ContentEntry> =
         mergeDefinition(packs.flatMap { it.bundle.fightingArts }) { it.name }
     val disorderDefinitions: List<ContentEntry> =
@@ -60,7 +60,7 @@ data class ContentCatalog(
 
     val innovations: List<String> = innovationDefinitions.map { it.name }.sorted()
     val locations: List<String> = locationDefinitions.map { it.name }.sorted()
-    val resources: List<String> = resourceDefinitions.map { it.name }.sorted()
+    val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
     val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
     val settlementEvents: List<String> = settlementEventDefinitions.map { it.name }.sorted()
@@ -71,6 +71,17 @@ data class ContentCatalog(
         definitions: List<T>,
         name: (T) -> String,
     ): List<T> = definitions.sortedBy(name).distinctBy(name)
+
+    /**
+     * The definition whose Spanish **or** English name is [name], or `null`.
+     *
+     * A transitional lookup, and deliberately language-tolerant: gear recipes, location build costs
+     * and settlement-action costs still name their resources, and the 1.6 seed names the basic four
+     * in English (`"Bone"`) while the 1.5 pack names them in Spanish (`"Hueso de Monstruo"`). Once
+     * those costs are re-keyed to [ResourceId] this goes away and nothing resolves names again.
+     */
+    fun resourceDefinitionFor(name: String): ResourceDefinition? =
+        resourceDefinitions.firstOrNull { it.names.es == name || it.names.en == name }
 
     /** The modifiers of every gear named in [gearNames]; unknown names are ignored. */
     fun gearModifiersFor(gearNames: Collection<String>): List<Modifier> {
@@ -85,10 +96,10 @@ data class ContentCatalog(
      */
     fun resourceGroups(): Map<String, List<ResourceDefinition>> =
         resourceDefinitions
-            .groupBy { it.source.ifBlank { ResourceSources.sourceOf(it.name) } }
+            .groupBy { it.source.ifBlank { ResourceSources.sourceOf(it.names.es) } }
             .toList()
             .sortedBy { (source, _) -> source }
-            .associate { (source, definitions) -> source to definitions.sortedBy { it.name } }
+            .associate { (source, definitions) -> source to definitions.sortedBy { it.names.es } }
 
     /**
      * The hunt events [quarry] draws on a hunt: every basic and special event plus the monster

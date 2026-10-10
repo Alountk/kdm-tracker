@@ -1,8 +1,8 @@
 package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.domain.HybridLogicalClock
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -49,7 +49,7 @@ class EndeavorAndLedgerUseCaseTest {
 
     @Test
     fun spendingMoreThanTheLedgerHoldsIsBlocked() {
-        val result = AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, -2))
+        val result = AddResourceEntry.run(record(), ResourceEntry(ResourceId("Bone"), -2))
 
         val blocked = assertIs<StepResult.Blocked>(result)
         assertEquals("insufficient Bone", blocked.reason)
@@ -59,14 +59,14 @@ class EndeavorAndLedgerUseCaseTest {
     fun spendingWithinTheLedgerAppendsAndProjectsTheRemainder() {
         val gained =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, 3)),
+                AddResourceEntry.run(record(), ResourceEntry(ResourceId("Bone"), 3)),
             )
         val spent =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(gained.value, ResourceEntry("Bone", ResourceCategory.BASIC, -2)),
+                AddResourceEntry.run(gained.value, ResourceEntry(ResourceId("Bone"), -2)),
             )
 
-        val line = spent.value.storage().single { it.name == "Bone" }
+        val line = spent.value.storage().single { it.id.value == "Bone" }
         assertEquals(1, line.quantity)
     }
 
@@ -74,32 +74,32 @@ class EndeavorAndLedgerUseCaseTest {
     fun spendingExactlyTheLedgerHoldsIsAllowed() {
         val gained =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, 2)),
+                AddResourceEntry.run(record(), ResourceEntry(ResourceId("Bone"), 2)),
             )
         val spent =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(gained.value, ResourceEntry("Bone", ResourceCategory.BASIC, -2)),
+                AddResourceEntry.run(gained.value, ResourceEntry(ResourceId("Bone"), -2)),
             )
 
-        assertTrue(spent.value.storage().none { it.name == "Bone" })
+        assertTrue(spent.value.storage().none { it.id.value == "Bone" })
     }
 
     @Test
     fun gainingOntoANonzeroPoolKeepsThePriorQuantity() {
         val gained =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(record(), ResourceEntry("Bone", ResourceCategory.BASIC, 3)),
+                AddResourceEntry.run(record(), ResourceEntry(ResourceId("Bone"), 3)),
             )
         val again =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                AddResourceEntry.run(gained.value, ResourceEntry("Bone", ResourceCategory.BASIC, 2)),
+                AddResourceEntry.run(gained.value, ResourceEntry(ResourceId("Bone"), 2)),
             )
 
         assertEquals(
             5,
             again.value
                 .storage()
-                .single { it.name == "Bone" }
+                .single { it.id.value == "Bone" }
                 .quantity,
         )
     }
@@ -111,11 +111,11 @@ class EndeavorAndLedgerUseCaseTest {
             overdrawn.copy(
                 state =
                     overdrawn.state.copy(
-                        resourceEntries = listOf(ResourceEntry("Bone", ResourceCategory.BASIC, -3)),
+                        resourceEntries = listOf(ResourceEntry(ResourceId("Bone"), -3)),
                     ),
             )
 
-        val result = AddResourceEntry.run(withDeficit, ResourceEntry("Bone", ResourceCategory.BASIC, 1))
+        val result = AddResourceEntry.run(withDeficit, ResourceEntry(ResourceId("Bone"), 1))
 
         assertIs<StepResult.Ok<SettlementRecord>>(result)
     }

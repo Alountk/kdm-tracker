@@ -7,8 +7,8 @@ import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.PrincipleCategory
-import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
@@ -81,9 +81,9 @@ class SettlementStateTransferTest {
             locations = LocationSet(built = listOf("Lantern Oven", "Organ Grinder")),
             resourceEntries =
                 listOf(
-                    ResourceEntry("Bone", ResourceCategory.BASIC, 3),
-                    ResourceEntry("Bone", ResourceCategory.BASIC, -1),
-                    ResourceEntry("Skull", ResourceCategory.MONSTER, 2),
+                    ResourceEntry(ResourceId("Bone"), 3),
+                    ResourceEntry(ResourceId("Bone"), -1),
+                    ResourceEntry(ResourceId("Skull"), 2),
                 ),
             deaths = 4,
             births = 2,
@@ -156,10 +156,10 @@ class SettlementStateTransferTest {
     }
 
     @Test
-    fun newDocumentDefaultsToSchemaVersionTen() {
+    fun newDocumentDefaultsToSchemaVersionEleven() {
         val document = TransferDocument(exportedAt = "2026-10-05T00:00:00Z", campaigns = emptyList())
 
-        assertEquals(10, document.schemaVersion)
+        assertEquals(11, document.schemaVersion)
     }
 
     @Test
