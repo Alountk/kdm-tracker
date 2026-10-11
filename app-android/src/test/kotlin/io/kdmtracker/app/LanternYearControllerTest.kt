@@ -21,7 +21,7 @@ class LanternYearControllerTest {
         assertEquals(SettlementPhase.SETTLEMENT, state.phase)
         assertEquals(1, state.currentStep)
         assertEquals(4, state.population)
-        assertEquals("Set Up the Settlement", state.stepTitle)
+        assertEquals("Preparación", state.stepTitle)
         assertNull(state.lastTransition)
     }
 

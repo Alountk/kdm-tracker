@@ -6,8 +6,9 @@ import io.kdmtracker.core.domain.StepType
  * The 11 official Settlement Phase steps in rulebook order.
  *
  * Content condensed from `static/prototypes/research/lantern-year-steps.md` (§2 step list,
- * §5 UX classification) and copied here as plain English constants — the markdown is a
- * research artifact and is never parsed at runtime.
+ * §5 UX classification) and copied here as plain Spanish constants — the markdown is a
+ * research artifact and is never parsed at runtime. The titles are the design's canonical
+ * Spanish names so the carousel, the step frame and the catalog all agree.
  */
 object SettlementStepCatalog {
     const val TOTAL = 11
@@ -16,76 +17,78 @@ object SettlementStepCatalog {
         listOf(
             SettlementStep(
                 1,
-                "Set Up the Settlement",
-                "Lay out the board, record sheets, decks, locations and principles; " +
-                    "the Innovation Deck must contain exactly the unlocked consequences.",
+                "Preparación",
+                "Preparar el tablero, las hojas de registro, los mazos, las localizaciones y los principios; " +
+                    "el mazo de innovaciones debe contener exactamente las consecuencias desbloqueadas.",
                 StepType.BOOKKEEPING,
             ),
             SettlementStep(
                 2,
-                "Survivors Return",
-                "Heal injuries and clear tokens from returnees (survival and insanity do not refill), " +
-                    "then apply principle and event return effects.",
+                "Supervivientes Regresan",
+                "Curar las heridas y limpiar los tokens de los que regresan (supervivencia y locura no se " +
+                    "rellenan); luego aplicar los efectos de regreso de los principios y los eventos.",
                 StepType.DECISION,
             ),
             SettlementStep(
                 3,
-                "Gain Endeavors",
-                "+1 endeavor per returning survivor, plus bonuses granted by innovations and principles.",
+                "Ganar Esfuerzos",
+                "+1 esfuerzo por cada superviviente que regresa, más los bonus que otorguen las " +
+                    "innovaciones y los principios.",
                 StepType.BOOKKEEPING,
             ),
             SettlementStep(
                 4,
-                "Update Timeline",
-                "Advance the lantern year, draw and resolve the settlement event, " +
-                    "then fire this year's story events (nemesis choice included).",
+                "Actualizar Línea de Tiempo",
+                "Avanzar el año linterna, robar y resolver el evento de asentamiento; luego disparar los " +
+                    "eventos de historia de este año (incluida la elección de némesis).",
                 StepType.BRANCHING,
             ),
             SettlementStep(
                 5,
-                "Update the Death Count",
-                "Record every death; the first death-count update ever triggers the " +
-                    "Principle: Death story event.",
+                "Actualizar Contador de Muertes",
+                "Registrar cada muerte; la primera actualización del contador dispara el evento de " +
+                    "historia Principio: Muerte.",
                 StepType.BRANCHING,
             ),
             SettlementStep(
                 6,
-                "Check Milestones",
-                "Tick reached milestones in any order and resolve their story events " +
-                    "(principles, Hooded Knight, Game Over).",
+                "Comprobar Hitos",
+                "Marcar los hitos alcanzados en cualquier orden y resolver sus eventos de historia " +
+                    "(principios, Caballero Encapuchado, Fin de la Partida).",
                 StepType.BRANCHING,
             ),
             SettlementStep(
                 7,
-                "Develop",
-                "Craft, endeavor, innovate and build — free-form and repeatable; " +
-                    "close the step before departure.",
+                "Desarrollo",
+                "Fabricar, gastar esfuerzos, innovar y construir — libre y repetible; " +
+                    "cerrar el paso antes de la partida.",
                 StepType.DECISION,
             ),
             SettlementStep(
                 8,
-                "Prepare Departing Survivors",
-                "End the session or pick the 4 departing survivors (fewer if population < 4) " +
-                    "and load their gear grids.",
+                "Preparar Supervivientes",
+                "Terminar la sesión o elegir los 4 supervivientes que parten (menos si la población es < 4) " +
+                    "y cargar sus cuadrículas de equipo.",
                 StepType.DECISION,
             ),
             SettlementStep(
                 9,
-                "Special Showdown",
-                "Only when the timeline lists one: fight it, then loop back to step 5 " +
-                    "to update the death count.",
+                "Enfrentamiento Especial",
+                "Solo cuando la línea de tiempo lo indique: enfrentarlo y volver al paso 5 " +
+                    "para actualizar el contador de muertes.",
                 StepType.BRANCHING,
             ),
             SettlementStep(
                 10,
-                "Record & Archive Resources",
-                "Write unspent resources into settlement storage and archive the physical cards.",
+                "Anotar y Almacenar",
+                "Escribir los recursos no gastados en el almacén del asentamiento y archivar las " +
+                    "cartas físicas.",
                 StepType.BOOKKEEPING,
             ),
             SettlementStep(
                 11,
-                "End Settlement Phase",
-                "Discard unspent endeavors and commit: the settlement proceeds to the Hunt Phase.",
+                "El Fin del Principio",
+                "Descartar los esfuerzos no gastados y confirmar: el asentamiento pasa a la Fase de Caza.",
                 StepType.BOOKKEEPING,
             ),
         )

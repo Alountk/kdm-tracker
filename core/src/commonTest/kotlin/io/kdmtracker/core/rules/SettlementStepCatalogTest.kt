@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.StepType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class SettlementStepCatalogTest {
     @Test
@@ -21,8 +22,8 @@ class SettlementStepCatalogTest {
     }
 
     @Test
-    fun byNumberReturnsStepSevenTitledDevelop() {
-        assertEquals("Develop", SettlementStepCatalog.byNumber(7).title)
+    fun byNumberReturnsStepSevenTitledDesarrollo() {
+        assertEquals("Desarrollo", SettlementStepCatalog.byNumber(7).title)
     }
 
     @Test
@@ -30,5 +31,31 @@ class SettlementStepCatalogTest {
         assertFailsWith<NoSuchElementException> {
             SettlementStepCatalog.byNumber(12)
         }
+    }
+
+    @Test
+    fun theStepsCarryTheDesignsSpanishNames() {
+        assertEquals(
+            listOf(
+                "Preparación",
+                "Supervivientes Regresan",
+                "Ganar Esfuerzos",
+                "Actualizar Línea de Tiempo",
+                "Actualizar Contador de Muertes",
+                "Comprobar Hitos",
+                "Desarrollo",
+                "Preparar Supervivientes",
+                "Enfrentamiento Especial",
+                "Anotar y Almacenar",
+                "El Fin del Principio",
+            ),
+            SettlementStepCatalog.ALL.map { it.title },
+        )
+    }
+
+    @Test
+    fun everyStepStillCarriesASummary() {
+        assertEquals(11, SettlementStepCatalog.ALL.size)
+        assertTrue(SettlementStepCatalog.ALL.all { it.summary.isNotBlank() })
     }
 }

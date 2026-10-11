@@ -3,7 +3,7 @@ package io.kdmtracker.core.usecase
 import io.kdmtracker.core.domain.SettlementRecord
 
 /**
- * Advances the settlement's lantern year by one (Settlement Phase step 4, Update Timeline).
+ * Advances the settlement's lantern year by one (Settlement Phase step 4, Actualizar Línea de Tiempo).
  *
  * The increment is idempotent per Settlement Phase: it is guarded by a phase marker carried
  * in [io.kdmtracker.core.domain.SettlementState.phaseActionsUsed], which resets at the year
@@ -12,7 +12,7 @@ import io.kdmtracker.core.domain.SettlementRecord
  * performs the increment and records the marker.
  */
 object AdvanceTimeline {
-    private const val MARKER = "Update Timeline"
+    private const val MARKER = "Actualizar Línea de Tiempo"
 
     /** Returns [record] with the lantern year incremented once, or unchanged if already done. */
     fun run(record: SettlementRecord): SettlementRecord {

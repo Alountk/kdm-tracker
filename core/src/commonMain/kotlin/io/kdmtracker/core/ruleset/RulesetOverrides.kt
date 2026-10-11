@@ -15,6 +15,10 @@ data class RulesetOverrides(
     val specialShowdownStep: Int? = null,
     val deathCountStep: Int? = null,
     val endeavorsPerReturnee: Int? = null,
+    val huntXpTrackMax: Int? = null,
+    val insanityThreshold: Int? = null,
+    val innovationDraw: Int? = null,
+    val innovationKeep: Int? = null,
     val extraMilestones: List<MilestoneDefinition> = emptyList(),
     val principleOverrides: Map<PrincipleCategory, List<PrincipleChoice>> = emptyMap(),
 )
