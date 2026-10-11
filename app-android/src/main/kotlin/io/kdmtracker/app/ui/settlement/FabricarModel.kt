@@ -6,6 +6,23 @@ import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementLocation
 
+/** The location a settlement starts with; nothing builds it. */
+private const val FOUNDING_LOCATION = "lantern_hoard"
+
+/**
+ * The card's category line, derived from the location's prerequisites rather than authored:
+ * the founding location, the ones that need nothing beyond it, and the ones built on another.
+ */
+private fun categoryOf(
+    id: LocationId,
+    requires: List<LocationId>,
+): String =
+    when {
+        id.value == FOUNDING_LOCATION -> "FUNDACIONAL"
+        requires.isEmpty() || requires.all { it.value == FOUNDING_LOCATION } -> "ARTESANÍA PRIMARIA"
+        else -> "DERIVADA"
+    }
+
 /** How a recipe row renders its button. */
 enum class RecipeStatus { CRAFTABLE, OUT_OF_STOCK, MISSING_INNOVATION }
 
@@ -28,6 +45,8 @@ data class UpgradeRow(
 /** A location that is not built and has no ready inline upgrade. */
 data class BuildableLocationCard(
     val name: String,
+    /** The design's one-line description; null when it draws none for this location. */
+    val description: String?,
     val requires: List<String>,
     val endeavors: Int,
     val costChips: List<String>,
@@ -36,6 +55,10 @@ data class BuildableLocationCard(
 /** One built location: its action, its crafting catalog and its ready build upgrades. */
 data class BuiltLocationCard(
     val name: String,
+    /** The category line above the title — `FUNDACIONAL`, `ARTESANÍA PRIMARIA`, `DERIVADA`. */
+    val category: String,
+    /** The design's one-line description under the title; null when it draws none. */
+    val description: String?,
     val actionLabel: String?,
     /** The action's endeavor cost, shown as "Costo: N Esfuerzo"; null when the card has no action. */
     val actionEndeavorCost: Int?,
@@ -128,6 +151,8 @@ data class FabricarModel(
                             }
                     BuiltLocationCard(
                         name = location.names.es,
+                        category = categoryOf(location.id, location.requires),
+                        description = location.description?.es,
                         actionLabel = action?.names?.es,
                         actionEndeavorCost = action?.endeavorCost,
                         catalogSize = rows.size,
@@ -152,6 +177,7 @@ data class FabricarModel(
                     .map { location ->
                         BuildableLocationCard(
                             name = location.names.es,
+                            description = location.description?.es,
                             requires = location.requires.map { locationName(it) },
                             endeavors = location.buildEndeavors,
                             costChips = chips(location.buildCost),

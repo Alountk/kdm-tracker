@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 /**
  * Cross-tab integration: recording resources (Recursos tab) flips a recipe's craftability
- * (Fabricar tab), which is the whole point of the derived views.
+ * (the fabricar section), which is the whole point of the derived views.
  */
 class DevelopTabsTest {
     @Test

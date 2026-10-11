@@ -30,6 +30,7 @@ import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.CraftCheck
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -53,6 +54,10 @@ class FabricarModelTest {
         buildEndeavors = buildEndeavors,
         buildCost = buildCost,
     )
+
+    /** The catalog the app actually ships: the 1.6 seed merged with the ingested 1.5 pack. */
+    private fun shippedLocations(): List<SettlementLocation> =
+        ContentCatalog(listOf(Core16Content.pack, Legacy15Content.pack)).locationDefinitions
 
     private fun record(unlocked: List<Innovation> = emptyList()) =
         SettlementRecord(
@@ -110,6 +115,13 @@ class FabricarModelTest {
             "leather_worker",
             "Curtiduría",
             requires = listOf(LocationId("bone_smith"), LocationId("stone_circle")),
+        )
+    private val organGrinder =
+        location(
+            "organ_grinder",
+            "Molino de Órganos",
+            requires = listOf(LocationId("lantern_hoard")),
+            buildEndeavors = 1,
         )
 
     private fun state(
@@ -366,5 +378,83 @@ class FabricarModelTest {
         assertEquals(1, model.builtCount)
         assertEquals(3, model.pendingCount)
         assertEquals(4, model.builtCount + model.pendingCount)
+    }
+
+    @Test
+    fun theFoundingLocationIsTheFoundationalCategory() {
+        val model =
+            FabricarModel.of(
+                state(catalog = listOf(cumulo), built = listOf("Cúmulo de Linternas")),
+            )
+
+        assertEquals("FUNDACIONAL", model.built.single().category)
+    }
+
+    @Test
+    fun aLocationNeedingNothingBeyondTheFoundingLocationIsPrimary() {
+        val primaryOnHoard =
+            location("organ_grinder", "Molino de Órganos", requires = listOf(LocationId("lantern_hoard")))
+        val model =
+            FabricarModel.of(
+                state(
+                    catalog = listOf(cumulo, taller, primaryOnHoard),
+                    built = listOf("Cúmulo de Linternas", "Taller de Huesos", "Molino de Órganos"),
+                ),
+            )
+
+        assertEquals("ARTESANÍA PRIMARIA", model.built.single { it.name == "Taller de Huesos" }.category)
+        assertEquals("ARTESANÍA PRIMARIA", model.built.single { it.name == "Molino de Órganos" }.category)
+    }
+
+    @Test
+    fun aLocationThatNeedsAnotherLocationIsDerived() {
+        val model =
+            FabricarModel.of(
+                state(
+                    catalog = listOf(taller, armeriaReady),
+                    built = listOf("Taller de Huesos", "Armería"),
+                ),
+            )
+
+        assertEquals("DERIVADA", model.built.single { it.name == "Armería" }.category)
+    }
+
+    @Test
+    fun theLocationsTheDesignDescribesCarryItsProse() {
+        val model =
+            FabricarModel.of(
+                state(catalog = shippedLocations(), built = listOf("Cúmulo de Linternas", "Taller de Huesos")),
+            )
+
+        val hoard = model.built.single { it.name == "Cúmulo de Linternas" }
+        assertNotNull(hoard.description)
+        assertTrue(hoard.description.startsWith("Un mar de linternas metálicas frías"))
+
+        val taller = model.built.single { it.name == "Taller de Huesos" }
+        assertNotNull(taller.description)
+        assertTrue(taller.description.startsWith("Permite tallar armas blancas"))
+    }
+
+    @Test
+    fun aLocationWithoutDesignProseRendersNoDescriptionLine() {
+        val model =
+            FabricarModel.of(
+                state(catalog = listOf(peleteria), built = listOf("Peletería")),
+            )
+
+        assertNull(model.built.single().description)
+    }
+
+    @Test
+    fun everyLocationTheSectionRendersCarriesItsProse() {
+        val model = FabricarModel.of(state(catalog = shippedLocations(), built = listOf("Cúmulo de Linternas")))
+
+        val silent =
+            (model.built.map { it.name to it.description } + model.buildable.map { it.name to it.description })
+                .filter { (_, description) -> description.isNullOrBlank() }
+                .map { (name, _) -> name }
+
+        assertEquals(emptyList(), silent, "every card in the section must draw its description line")
+        assertEquals(19, model.builtCount + model.pendingCount)
     }
 }
