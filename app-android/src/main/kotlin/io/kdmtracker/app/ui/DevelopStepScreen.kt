@@ -16,11 +16,11 @@ import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.StorageLine
 
-internal enum class DevelopTab { RECURSOS, INNOVAR, FABRICAR }
+internal enum class DevelopTab { RECURSOS, INNOVAR }
 
 /**
- * The Step 7 "Develop" body: a small tab switcher over [RecursosTab], [InnovarTab] and
- * [FabricarTab], inside the cockpit's chrome. The selected tab is hoisted to the caller
+ * The Step 7 "Develop" body: a small tab switcher over [RecursosTab] and [InnovarTab], inside
+ * the cockpit's chrome (the Fabricar flow lives in the settlement screen's locations section). The selected tab is hoisted to the caller
  * ([selectedTab]/[onTabSelected]) so the Settlement screen's panels can open a tab — the
  * locations panel's Innovar action jumps here; every action is reported through a callback and
  * every list comes from [state].
@@ -29,10 +29,7 @@ internal enum class DevelopTab { RECURSOS, INNOVAR, FABRICAR }
 internal fun DevelopStepScreen(
     state: UiState,
     onInnovate: (String) -> Unit,
-    onBuild: (String) -> Unit,
-    onSpendEndeavor: () -> Unit,
     onAddResource: (ResourceEntry) -> Unit,
-    onCraft: (String, String) -> Unit = { _, _ -> },
     selectedTab: DevelopTab = DevelopTab.RECURSOS,
     onTabSelected: (DevelopTab) -> Unit = {},
 ) {
@@ -51,7 +48,6 @@ internal fun DevelopStepScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             ChoiceChip("Recursos", selectedTab == DevelopTab.RECURSOS) { onTabSelected(DevelopTab.RECURSOS) }
             ChoiceChip("Innovar", selectedTab == DevelopTab.INNOVAR) { onTabSelected(DevelopTab.INNOVAR) }
-            ChoiceChip("Fabricar", selectedTab == DevelopTab.FABRICAR) { onTabSelected(DevelopTab.FABRICAR) }
         }
 
         Text(
@@ -63,13 +59,6 @@ internal fun DevelopStepScreen(
         when (selectedTab) {
             DevelopTab.RECURSOS -> RecursosTab(state = state, onAddResource = onAddResource)
             DevelopTab.INNOVAR -> InnovarTab(state = state, onInnovate = onInnovate)
-            DevelopTab.FABRICAR ->
-                FabricarTab(
-                    state = state,
-                    onBuild = onBuild,
-                    onCraft = onCraft,
-                    onSpendEndeavor = onSpendEndeavor,
-                )
         }
     }
 }

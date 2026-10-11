@@ -113,14 +113,32 @@ object Core16Content {
                             SettlementLocation(
                                 id = LocationId("dragon_armory"),
                                 names = LocalizedText(es = "Dragon Armory", en = "Dragon Armory"),
+                                description =
+                                    LocalizedText(
+                                        es =
+                                            "Taller de armamento pesado donde se ensamblan piezas a partir de " +
+                                                "los restos de dragón.",
+                                    ),
                             ),
                             SettlementLocation(
                                 id = LocationId("gormchymist"),
                                 names = LocalizedText(es = "Gormchymist", en = "Gormchymist"),
+                                description =
+                                    LocalizedText(
+                                        es =
+                                            "Alquimia del asentamiento: destila sustancias, ungüentos y venenos " +
+                                                "con los ingredientes recogidos.",
+                                    ),
                             ),
                             SettlementLocation(
                                 id = LocationId("gormery"),
                                 names = LocalizedText(es = "Gormery", en = "Gormery"),
+                                description =
+                                    LocalizedText(
+                                        es =
+                                            "Curtido y confección dedicados a las pieles más difíciles de " +
+                                                "trabajar.",
+                                    ),
                             ),
                             SettlementLocation(
                                 id = LocationId("mask_maker"),
@@ -133,14 +151,27 @@ object Core16Content {
                             SettlementLocation(
                                 id = LocationId("silk_mill"),
                                 names = LocalizedText(es = "Silk Mill", en = "Silk Mill"),
+                                description = LocalizedText(es = "Molino dedicado al hilado y al tejido de seda."),
                             ),
                             SettlementLocation(
                                 id = LocationId("skyreef_sanctuary"),
                                 names = LocalizedText(es = "Skyreef Sanctuary", en = "Skyreef Sanctuary"),
+                                description =
+                                    LocalizedText(
+                                        es =
+                                            "Santuario que sirve de refugio y lugar de retiro para los " +
+                                                "supervivientes.",
+                                    ),
                             ),
                             SettlementLocation(
                                 id = LocationId("wet_resin_crafter"),
                                 names = LocalizedText(es = "Wet Resin Crafter", en = "Wet Resin Crafter"),
+                                description =
+                                    LocalizedText(
+                                        es =
+                                            "Taller donde se trabaja la resina fresca para sellar y reforzar el " +
+                                                "equipo.",
+                                    ),
                             ),
                         ),
                     resources =

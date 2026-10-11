@@ -17,10 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.app.ui.settlement.FabricarModel
 import io.kdmtracker.app.ui.settlement.InnovationsModel
 import io.kdmtracker.app.ui.settlement.InnovationsPanel
-import io.kdmtracker.app.ui.settlement.LocationsModel
-import io.kdmtracker.app.ui.settlement.LocationsPanel
+import io.kdmtracker.app.ui.settlement.LocationsSection
 import io.kdmtracker.app.ui.settlement.SettlementSummary
 import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
 import io.kdmtracker.app.ui.settlement.StepFrameFooter
@@ -115,21 +115,20 @@ fun SettlementScreen(
                                 keep = state.innovationKeep,
                             ),
                     )
-                    LocationsPanel(
-                        model = LocationsModel.of(built = state.builtLocations, catalog = state.catalogLocations),
+                    LocationsSection(
+                        model = FabricarModel.of(state),
                         onBuild = onBuild,
+                        onCraft = onCraft,
                         // The location's action is Innovate; innovating means picking an
                         // innovation, which happens in the Develop body's Innovar tab — so the
                         // button opens that tab instead of firing onInnovate with no choice.
                         onAction = { developTab = DevelopTab.INNOVAR },
+                        onSpendEndeavor = onSpendEndeavor,
                     )
                     DevelopStepScreen(
                         state = state,
                         onInnovate = onInnovate,
-                        onBuild = onBuild,
-                        onSpendEndeavor = onSpendEndeavor,
                         onAddResource = onAddResource,
-                        onCraft = onCraft,
                         selectedTab = developTab,
                         onTabSelected = { developTab = it },
                     )

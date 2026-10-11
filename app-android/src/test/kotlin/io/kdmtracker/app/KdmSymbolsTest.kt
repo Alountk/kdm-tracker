@@ -59,12 +59,15 @@ class KdmSymbolsTest {
                 "info" to 0xE88E,
                 "landscape" to 0xE564,
                 "layers" to 0xE53B,
+                "lightbulb" to 0xE0F0,
                 "light_mode" to 0xE518,
                 "local_fire_department" to 0xEF55,
+                "lock" to 0xE897,
                 "person" to 0xF0D3,
                 "pets" to 0xE91D,
                 "psychology" to 0xEA4A,
                 "psychology_alt" to 0xF8EA,
+                "publish" to 0xE255,
                 "remove" to 0xE15B,
                 "replay" to 0xE042,
                 "restart_alt" to 0xF053,
@@ -84,7 +87,7 @@ class KdmSymbolsTest {
                 "warning" to 0xF083,
             )
 
-        assertEquals(68, expected.size)
+        assertEquals(71, expected.size)
         expected.forEach { (name, code) -> assertEquals(code.toChar().toString(), KdmSymbols.glyph(name), name) }
     }
 
@@ -101,6 +104,6 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(68, KdmSymbols.glyphCount)
+        assertEquals(71, KdmSymbols.glyphCount)
     }
 }

@@ -85,6 +85,28 @@ class ContentCatalogMergeTest {
     }
 
     @Test
+    fun aLocationsAuthoredDescriptionSurvivesTheMergeInEitherPackOrder() {
+        val bare = SettlementLocation(LocationId("bone_smith"), LocalizedText(es = "Taller de Huesos"))
+        val withProse =
+            SettlementLocation(
+                LocationId("bone_smith"),
+                LocalizedText(es = "Taller de Huesos"),
+                description = LocalizedText(es = "Talla armas de hueso."),
+            )
+
+        val seedFirst =
+            ok(ContentCatalogComposer.compose(listOf(pack("seed", listOf(bare)), pack("pipeline", listOf(withProse)))))
+        val pipelineFirst =
+            ok(ContentCatalogComposer.compose(listOf(pack("pipeline", listOf(withProse)), pack("seed", listOf(bare)))))
+
+        assertEquals(LocalizedText(es = "Talla armas de hueso."), seedFirst.locationDefinitions.single().description)
+        assertEquals(
+            LocalizedText(es = "Talla armas de hueso."),
+            pipelineFirst.locationDefinitions.single().description,
+        )
+    }
+
+    @Test
     fun modeledActionsAlsoWinOverBare() {
         val bare = SettlementLocation(LocationId("weapon_crafter"), LocalizedText(es = "Armería"))
         val modeled =

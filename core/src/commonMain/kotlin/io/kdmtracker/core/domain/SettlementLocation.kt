@@ -32,6 +32,10 @@ import kotlinx.serialization.json.jsonPrimitive
  * @property buildCost the resources required to build the location, as id → count.
  * @property actions the actions the location offers once built.
  * @property recipes the gear this location can craft once built.
+ * @property description the one-line prose the settlement screen draws under the location's
+ *   title. Not rules text — no card prints it; it is authored content living beside the identity
+ *   it belongs to (see `tools/content-ingest/identity/locations.csv`, and the 1.6 seed for the
+ *   locations no pipeline ingests). `null` means the screen draws no line at all.
  */
 @Serializable
 data class SettlementLocation(
@@ -42,6 +46,7 @@ data class SettlementLocation(
     val buildCost: Map<ResourceId, Int> = emptyMap(),
     val actions: List<SettlementAction> = emptyList(),
     val recipes: List<GearRecipe> = emptyList(),
+    val description: LocalizedText? = null,
 )
 
 /**
