@@ -272,6 +272,17 @@ class FabricarModelTest {
     }
 
     @Test
+    fun aBuiltLocationCarriesItsActionsEndeavorCost() {
+        // The approved design shows "Costo: 1 Esfuerzo" next to the built card's action; the
+        // model must carry the action's endeavor cost (null when the card has no action).
+        val withAction = FabricarModel.of(state(catalog = listOf(cumulo), built = listOf("Cúmulo de Linternas")))
+        val withoutAction = FabricarModel.of(state(catalog = listOf(taller), built = listOf("Taller de Huesos")))
+
+        assertEquals(1, withAction.built.single().actionEndeavorCost)
+        assertNull(withoutAction.built.single().actionEndeavorCost)
+    }
+
+    @Test
     fun aBuiltLocationsActionLabelIsItsOwnAction() {
         val model =
             FabricarModel.of(state(catalog = listOf(cumulo), built = listOf("Cúmulo de Linternas")))

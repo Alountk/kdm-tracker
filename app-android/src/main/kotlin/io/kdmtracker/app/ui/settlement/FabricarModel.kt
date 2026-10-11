@@ -37,6 +37,8 @@ data class BuildableLocationCard(
 data class BuiltLocationCard(
     val name: String,
     val actionLabel: String?,
+    /** The action's endeavor cost, shown as "Costo: N Esfuerzo"; null when the card has no action. */
+    val actionEndeavorCost: Int?,
     val catalogSize: Int,
     val recipes: List<RecipeRow>,
     val upgrades: List<UpgradeRow>,
@@ -104,6 +106,7 @@ data class FabricarModel(
 
             val built =
                 builtLocations.map { location ->
+                    val action = location.actions.firstOrNull()
                     val rows =
                         state.craftRecipes
                             .filter { it.locationName == location.names.es }
@@ -125,11 +128,8 @@ data class FabricarModel(
                             }
                     BuiltLocationCard(
                         name = location.names.es,
-                        actionLabel =
-                            location.actions
-                                .firstOrNull()
-                                ?.names
-                                ?.es,
+                        actionLabel = action?.names?.es,
+                        actionEndeavorCost = action?.endeavorCost,
                         catalogSize = rows.size,
                         recipes = rows,
                         upgrades =
