@@ -25,7 +25,7 @@ data class SummaryResource(
  * The settlement summary's display values.
  *
  * Pure: the caller supplies the scalars, so tests build one directly. The resource grid is keyed by
- * the catalog's resource name and takes the design's short label and colour; a resource the design
+ * the catalog's Spanish display name and takes the design's short label and colour; a resource the design
  * does not name keeps its catalog name and the dim role rather than disappearing.
  */
 data class SettlementSummaryModel(
@@ -67,11 +67,11 @@ data class SettlementSummaryModel(
             storage: List<StorageLine>,
         ): List<SummaryResource> =
             definitions.map { definition ->
-                val design = DESIGN[definition.name]
+                val design = DESIGN[definition.names.es]
                 SummaryResource(
-                    name = definition.name,
-                    label = design?.first ?: definition.name,
-                    quantity = storage.firstOrNull { it.name == definition.name }?.quantity ?: 0,
+                    name = definition.names.es,
+                    label = design?.first ?: definition.names.es,
+                    quantity = storage.firstOrNull { it.id == definition.id }?.quantity ?: 0,
                     colour = design?.second ?: ResourceColour.DIM,
                 )
             }

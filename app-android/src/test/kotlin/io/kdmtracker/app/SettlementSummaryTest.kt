@@ -3,8 +3,10 @@ package io.kdmtracker.app
 import io.kdmtracker.app.ui.settlement.ResourceColour
 import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
 import io.kdmtracker.app.ui.settlement.SummaryResource
+import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.StorageLine
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,18 +51,30 @@ class SettlementSummaryTest {
     }
 
     @Test
-    fun theBasicResourcesTakeTheDesignsLabelAndColourByCatalogName() {
+    fun theBasicResourcesTakeTheDesignsLabelAndColourByDisplayName() {
         val definitions =
             listOf(
-                ResourceDefinition("Hueso de Monstruo", ResourceCategory.BASIC),
-                ResourceDefinition("Piel de Monstruo", ResourceCategory.BASIC),
-                ResourceDefinition("Órgano de Monstruo", ResourceCategory.BASIC),
-                ResourceDefinition("Scrap", ResourceCategory.BASIC),
+                ResourceDefinition(
+                    ResourceId("bone.monster"),
+                    LocalizedText(es = "Hueso de Monstruo"),
+                    ResourceCategory.BASIC,
+                ),
+                ResourceDefinition(
+                    ResourceId("hide.monster"),
+                    LocalizedText(es = "Piel de Monstruo"),
+                    ResourceCategory.BASIC,
+                ),
+                ResourceDefinition(
+                    ResourceId("organ.monster"),
+                    LocalizedText(es = "Órgano de Monstruo"),
+                    ResourceCategory.BASIC,
+                ),
+                ResourceDefinition(ResourceId("scrap"), LocalizedText(es = "Scrap"), ResourceCategory.BASIC),
             )
         val storage =
             listOf(
-                StorageLine("Hueso de Monstruo", ResourceCategory.BASIC, 1),
-                StorageLine("Scrap", ResourceCategory.BASIC, 2),
+                StorageLine(ResourceId("bone.monster"), 1),
+                StorageLine(ResourceId("scrap"), 2),
             )
 
         val resources = SettlementSummaryModel.basicResources(definitions, storage)
@@ -73,8 +87,15 @@ class SettlementSummaryTest {
     fun aResourceTheDesignDoesNotNameFallsBackToItsCatalogName() {
         val resources =
             SettlementSummaryModel.basicResources(
-                definitions = listOf(ResourceDefinition("Reliquia", ResourceCategory.SPECIAL)),
-                storage = listOf(StorageLine("Reliquia", ResourceCategory.SPECIAL, 3)),
+                definitions =
+                    listOf(
+                        ResourceDefinition(
+                            ResourceId("reliquia"),
+                            LocalizedText(es = "Reliquia"),
+                            ResourceCategory.SPECIAL,
+                        ),
+                    ),
+                storage = listOf(StorageLine(ResourceId("reliquia"), 3)),
             )
 
         assertEquals(listOf("Reliquia"), resources.map { it.label })

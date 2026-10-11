@@ -105,7 +105,7 @@ fun SettlementScreen(
                         model =
                             InnovationsModel.of(
                                 deck = state.innovationDeck,
-                                principles = state.principles,
+                                principles = state.chosenPrinciples.values.toList(),
                                 draw = state.innovationDraw,
                                 keep = state.innovationKeep,
                             ),
@@ -178,7 +178,7 @@ private fun SettlementCockpit(
                                 // duplicates of them), which would otherwise flood the row.
                                 definitions =
                                     SettlementSummaryModel.DESIGN_ORDER.mapNotNull { name ->
-                                        state.resourceDefinitions.firstOrNull { it.name == name }
+                                        state.resourceDefinitions.firstOrNull { it.names.es == name }
                                     },
                                 storage = state.storageLines,
                             ),

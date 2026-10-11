@@ -202,8 +202,10 @@ private fun LocationRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            OutlinedButton(onClick = { onAction(entry.name) }, enabled = actionEnabled) {
-                Text(text = entry.actionLabel ?: "Construir", style = KdmType.labelCaps)
+            entry.buttonLabel?.let { label ->
+                OutlinedButton(onClick = { onAction(entry.name) }, enabled = actionEnabled) {
+                    Text(text = label, style = KdmType.labelCaps)
+                }
             }
         }
     }
