@@ -82,7 +82,7 @@ fun LocationsPanel(
                 heading = "Fundacional",
                 state = "Construido",
                 onAction = onAction,
-                actionEnabled = false,
+                actionEnabled = true,
             )
         }
         model.buildable.forEach { location ->

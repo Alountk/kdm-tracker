@@ -10,6 +10,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
@@ -99,7 +103,8 @@ fun SettlementScreen(
                     onChoosePrinciple = onChoosePrinciple,
                     onResolveMilestone = onResolveMilestone,
                 )
-            7 ->
+            7 -> {
+                var developTab by remember { mutableStateOf(DevelopTab.RECURSOS) }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     InnovationsPanel(
                         model =
@@ -113,7 +118,10 @@ fun SettlementScreen(
                     LocationsPanel(
                         model = LocationsModel.of(built = state.builtLocations, catalog = state.catalogLocations),
                         onBuild = onBuild,
-                        onAction = {},
+                        // The location's action is Innovate; innovating means picking an
+                        // innovation, which happens in the Develop body's Innovar tab — so the
+                        // button opens that tab instead of firing onInnovate with no choice.
+                        onAction = { developTab = DevelopTab.INNOVAR },
                     )
                     DevelopStepScreen(
                         state = state,
@@ -122,8 +130,11 @@ fun SettlementScreen(
                         onSpendEndeavor = onSpendEndeavor,
                         onAddResource = onAddResource,
                         onCraft = onCraft,
+                        selectedTab = developTab,
+                        onTabSelected = { developTab = it },
                     )
                 }
+            }
             8 ->
                 PrepareDepartingStepScreen(
                     state = state,
