@@ -1,20 +1,20 @@
-id,spanishName,englishName
-lantern_hoard,Cúmulo de Linternas,Lantern Hoard
-exhausted_lantern_hoard,Cúmulo de Linternas Extinto,Exhausted Lantern Hoard
-bone_smith,Taller de Huesos,Bone Smith
-skinnery,Peletería,Skinnery
-organ_grinder,Molino de Órganos,Organ Grinder
-stone_circle,Círculo de Piedra,Stone Circle
-leather_worker,Curtiduría,Leather Worker
-mask_maker,Artesano de Máscaras,Mask Maker
-barber_surgeon,Cirujano Barbero,Barber Surgeon
-plumery,Plumería,Plumery
-catarium,Felinarium,Catarium
-blacksmith,Herrería,Blacksmith
-weapon_crafter,Armería,Weapon Crafter
-dragon_armory,,Dragon Armory
-gormchymist,,Gormchymist
-gormery,,Gormery
-silk_mill,,Silk Mill
-skyreef_sanctuary,,Skyreef Sanctuary
-wet_resin_crafter,,Wet Resin Crafter
+id,spanishName,englishName,description
+lantern_hoard,Cúmulo de Linternas,Lantern Hoard,Un mar de linternas metálicas frías. Permite guiar a los supervivientes mediante el Augurio.
+exhausted_lantern_hoard,Cúmulo de Linternas Extinto,Exhausted Lantern Hoard,"El Cúmulo original, apagado tras la primera noche: de él sólo quedan cenizas y viejos recuerdos."
+bone_smith,Taller de Huesos,Bone Smith,"Permite tallar armas blancas, dagas de hueso y lanzas primitivas con los restos de las presas de caza."
+skinnery,Peletería,Skinnery,Permite curtir pieles crudas y confeccionar las primeras armaduras ligeras con los restos de las presas.
+organ_grinder,Molino de Órganos,Organ Grinder,"Especializado en medicina primitiva, desecado de carne y ungüentos que restauran la cordura."
+stone_circle,Círculo de Piedra,Stone Circle,"Permite pinturas de guerra, amuletos y rituales que purgan la locura y forjan la voluntad del asentamiento."
+leather_worker,Curtiduría,Leather Worker,Permite trabajar el cuero ya curtido y fabricar armaduras ligeras resistentes a los golpes.
+mask_maker,Artesano de Máscaras,Mask Maker,Permite tallar máscaras y tocados rituales con los restos más extraños de las presas de caza.
+barber_surgeon,Cirujano Barbero,Barber Surgeon,"Permite tratar heridas, mutilaciones y dolencias de los supervivientes con botiquines y remedios caseros."
+plumery,Plumería,Plumery,"Permite trabajar plumas, cresta y hueso ligero para fabricar indumentaria y adornos plumados."
+catarium,Felinarium,Catarium,"Permite aprovechar los restos felinos —garras, ojos y bigotes— para fabricar equipo de caza."
+blacksmith,Herrería,Blacksmith,Permite forjar hierro y ensamblar equipo resistente a partir del metal recuperado.
+weapon_crafter,Armería,Weapon Crafter,"Permite forjar las armas más pesadas: hachas, mazas y katanas con hueso, hierro y órganos."
+dragon_armory,,Dragon Armory,
+gormchymist,,Gormchymist,
+gormery,,Gormery,
+silk_mill,,Silk Mill,
+skyreef_sanctuary,,Skyreef Sanctuary,
+wet_resin_crafter,,Wet Resin Crafter,

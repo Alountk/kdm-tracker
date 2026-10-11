@@ -147,6 +147,7 @@ private fun combineLocations(
         buildCost = if (current.buildCost.isNotEmpty()) current.buildCost else candidate.buildCost,
         actions = (current.actions + candidate.actions).distinctBy { it.kind },
         recipes = (current.recipes + candidate.recipes).distinctBy { it.gearId },
+        description = current.description ?: candidate.description,
     )
 
 /**

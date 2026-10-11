@@ -15,12 +15,14 @@ while the ``-raw`` order binds the correct cost to the target name.
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import ingest_locations as locations  # noqa: E402
+from identity import load_identity, load_locations_identity  # noqa: E402
 
 HIDE = "Piel de Monstruo"
 BONE = "Hueso de Monstruo"
@@ -243,9 +245,23 @@ class ParseLocationsTests(unittest.TestCase):
 
 
 def _identity(name: str):
-    from identity import load_identity
+    base = Path(__file__).resolve().parents[1] / "identity"
+    if name == "locations.csv":
+        return load_locations_identity(base / name)
+    return load_identity(base / name)
 
-    return load_identity(Path(__file__).resolve().parents[1] / "identity" / name)
+
+class AuthoredProseTests(unittest.TestCase):
+    """The locations CSV is also the authored prose for every row the pipeline can emit."""
+
+    def test_every_locations_row_with_a_spanish_name_carries_prose(self) -> None:
+        rows = load_locations_identity(Path(__file__).resolve().parents[1] / "identity" / "locations.csv")
+
+        missing = sorted(
+            {row.resource_id for row in rows.values() if row.spanish_name and not row.description}
+        )
+
+        self.assertEqual([], missing, "every emitted location needs its description in the CSV")
 
 
 def _identities():
@@ -254,6 +270,28 @@ def _identities():
 
 class EmitIdentityTests(unittest.TestCase):
     """The emitter resolves every name through the identity CSVs before writing Kotlin."""
+
+    def test_emission_carries_the_authored_description(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "locations.csv"
+            path.write_text(
+                "id,spanishName,englishName,description\n"
+                "bone_smith,Taller de Huesos,Bone Smith,Talla armas de hueso.\n"
+                "weapon_crafter,Armería,Weapon Crafter,\n",
+                encoding="utf-8",
+            )
+            identity = load_locations_identity(path)
+
+            out = locations.emit_kotlin(
+                locations.parse_locations(TALLER_DEFAULT, TALLER_RAW),
+                identity,
+                _identity("resources.csv"),
+            )
+
+        self.assertIn('description = LocalizedText(es = "Talla armas de hueso."),', out)
+        # A row with no authored prose emits no description at all — never a blank one.
+        self.assertEqual(1, out.count("description ="))
+
 
     def test_emission_carries_ids_and_localized_names(self) -> None:
         text = deck(TALLER_DEFAULT, PELE_DEFAULT, MOLINO_DEFAULT, LANTERN_DEFAULT)

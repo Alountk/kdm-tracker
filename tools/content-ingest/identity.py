@@ -1,9 +1,10 @@
 """The identity layer shared by every ingest script.
 
 Each content family has a committed CSV under ``identity/`` giving every card a stable, permanent
-id (a human-chosen slug, never derived from a display name) and its names per language. The scripts
-read the PDFs for the *content* and the CSV for the *identity*, and a card the CSV does not cover
-aborts the run rather than entering the catalog with an id that could drift.
+id (a human-chosen slug, never derived from a display name) and its names per language. The
+locations CSV additionally carries each entity's authored prose (see ``LOCATIONS_HEADER``).
+The scripts read the PDFs for the *content* and the CSV for the *identity*, and a card the CSV
+does not cover aborts the run rather than entering the catalog with an id that could drift.
 
 A row may name the same entity in more than one language — the 1.5 packs are Spanish and the 1.6
 seed is English — so a row is indexed under **every** name it carries. That is what lets
@@ -46,6 +47,12 @@ MATERIALS = frozenset(PRIMARY_MATERIAL_BY_TAG.values())
 
 IDENTITY_HEADER = ("id", "spanishName", "englishName")
 
+# The locations CSV carries one authored column more than the rest: the card prose the
+# settlement-location cards never print and no PDF transcribes. It rides here because the row is
+# the entity's single content record, and it is optional — a row with no Spanish name (an entity
+# only the 1.6 seed defines) has no authored prose either.
+LOCATIONS_HEADER = ("id", "spanishName", "englishName", "description")
+
 
 def normalize_ws(text: str) -> str:
     """Collapse runs of whitespace and strip; PDF text arrives with ragged spacing."""
@@ -64,6 +71,8 @@ class IdentityRow:
     resource_id: str
     spanish_name: str
     english_name: str
+    #: The authored card prose, when this CSV carries a [LOCATIONS_HEADER]; empty otherwise.
+    description: str = ""
 
     def names(self) -> Tuple[str, ...]:
         """Every non-empty name this row is reachable by."""
@@ -93,6 +102,7 @@ def load_identity(
                 resource_id=normalize_ws(raw["id"]),
                 spanish_name=normalize_ws(raw.get("spanishName") or ""),
                 english_name=normalize_ws(raw.get("englishName") or ""),
+                description=normalize_ws(raw.get("description") or ""),
             )
             if not row.resource_id:
                 raise SystemExit(f"identity CSV {csv_path.name}: a row has no id: {raw!r}")
@@ -103,6 +113,11 @@ def load_identity(
                     raise SystemExit(f"identity CSV {csv_path.name} repeats the name {name!r}")
                 by_name[name] = row
     return by_name
+
+
+def load_locations_identity(csv_path: Path) -> Dict[str, IdentityRow]:
+    """Read the locations identity CSV — the one family whose rows carry authored prose."""
+    return load_identity(csv_path, header=LOCATIONS_HEADER)
 
 
 def require_row(by_name: Dict[str, IdentityRow], name: str, *, source: str) -> IdentityRow:

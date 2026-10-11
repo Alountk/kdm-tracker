@@ -17,6 +17,12 @@ object Core15Locations {
                     SettlementLocation(
                         id = LocationId("weapon_crafter"),
                         names = LocalizedText(es = "Armería", en = "Weapon Crafter"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite forjar las armas más pesadas: hachas, mazas y katanas con " +
+                                        "hueso, hierro y órganos.",
+                            ),
                         requires = listOf(LocationId("bone_smith")),
                         buildEndeavors = 1,
                         buildCost = mapOf(ResourceId("bone.monster") to 3, ResourceId("hide.monster") to 1),
@@ -24,14 +30,32 @@ object Core15Locations {
                     SettlementLocation(
                         id = LocationId("mask_maker"),
                         names = LocalizedText(es = "Artesano de Máscaras", en = "Mask Maker"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite tallar máscaras y tocados rituales con los restos más " +
+                                        "extraños de las presas de caza.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("barber_surgeon"),
                         names = LocalizedText(es = "Cirujano Barbero", en = "Barber Surgeon"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite tratar heridas, mutilaciones y dolencias de los " +
+                                        "supervivientes con botiquines y remedios caseros.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("leather_worker"),
                         names = LocalizedText(es = "Curtiduría", en = "Leather Worker"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite trabajar el cuero ya curtido y fabricar armaduras ligeras " +
+                                        "resistentes a los golpes.",
+                            ),
                         requires = listOf(LocationId("skinnery")),
                         buildEndeavors = 1,
                         buildCost = mapOf(ResourceId("hide.monster") to 3, ResourceId("organ.monster") to 1),
@@ -39,6 +63,12 @@ object Core15Locations {
                     SettlementLocation(
                         id = LocationId("stone_circle"),
                         names = LocalizedText(es = "Círculo de Piedra", en = "Stone Circle"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite pinturas de guerra, amuletos y rituales que purgan la locura " +
+                                        "y forjan la voluntad del asentamiento.",
+                            ),
                         requires = listOf(LocationId("organ_grinder")),
                         buildEndeavors = 1,
                         buildCost = mapOf(ResourceId("organ.monster") to 3, ResourceId("hide.monster") to 1),
@@ -46,6 +76,12 @@ object Core15Locations {
                     SettlementLocation(
                         id = LocationId("lantern_hoard"),
                         names = LocalizedText(es = "Cúmulo de Linternas", en = "Lantern Hoard"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Un mar de linternas metálicas frías. Permite guiar a los " +
+                                        "supervivientes mediante el Augurio.",
+                            ),
                         actions =
                             listOf(
                                 SettlementAction(
@@ -71,34 +107,76 @@ object Core15Locations {
                     SettlementLocation(
                         id = LocationId("exhausted_lantern_hoard"),
                         names = LocalizedText(es = "Cúmulo de Linternas Extinto", en = "Exhausted Lantern Hoard"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "El Cúmulo original, apagado tras la primera noche: de él sólo quedan " +
+                                        "cenizas y viejos recuerdos.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("catarium"),
                         names = LocalizedText(es = "Felinarium", en = "Catarium"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite aprovechar los restos felinos —garras, ojos y bigotes— para " +
+                                        "fabricar equipo de caza.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("blacksmith"),
                         names = LocalizedText(es = "Herrería", en = "Blacksmith"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite forjar hierro y ensamblar equipo resistente a partir del " +
+                                        "metal recuperado.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("organ_grinder"),
                         names = LocalizedText(es = "Molino de Órganos", en = "Organ Grinder"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Especializado en medicina primitiva, desecado de carne y ungüentos " +
+                                        "que restauran la cordura.",
+                            ),
                         requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
                     SettlementLocation(
                         id = LocationId("skinnery"),
                         names = LocalizedText(es = "Peletería", en = "Skinnery"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite curtir pieles crudas y confeccionar las primeras armaduras " +
+                                        "ligeras con los restos de las presas.",
+                            ),
                         requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
                     SettlementLocation(
                         id = LocationId("plumery"),
                         names = LocalizedText(es = "Plumería", en = "Plumery"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite trabajar plumas, cresta y hueso ligero para fabricar " +
+                                        "indumentaria y adornos plumados.",
+                            ),
                     ),
                     SettlementLocation(
                         id = LocationId("bone_smith"),
                         names = LocalizedText(es = "Taller de Huesos", en = "Bone Smith"),
+                        description =
+                            LocalizedText(
+                                es =
+                                    "Permite tallar armas blancas, dagas de hueso y lanzas primitivas con " +
+                                        "los restos de las presas de caza.",
+                            ),
                         requires = listOf(LocationId("lantern_hoard")),
                         buildEndeavors = 1,
                     ),
