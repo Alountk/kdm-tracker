@@ -46,3 +46,20 @@ look cannot regress silently.
 - Raised by: maintainer, 2026-10-12, while approving the Innovar flow v2 plan.
 - Scope: the Innovaciones panel and its innovation cards (`DevelopPanels.kt`,
   `InnovationCardView.kt`).
+
+## Sin salida visible desde dentro de una campaña
+
+Inside a campaign the app skips its own top bar on purpose (`KdmTrackerApp.kt`:
+`if (AppShell.inShell(current.screen)) return@let`), so `AppTopBar` — the only place the `Home`
+button lives — never renders where it is needed. `AppChrome.showHome` computes `true` for exactly
+those screens, which makes it a dead flag: **the only way back to the "Settlements" list is the
+system back gesture**, and the maintainer reports it failing.
+
+Proposals were requested from Stitch and landed as
+`.superpowers/design/innovar-flow/salida_4_propuestas.html` (chevron in the screen header, a global
+header action, a `SALIR` item in the bottom navigation, a floating edge pill). Pick one, wire it,
+and delete or repurpose the dead `showHome`.
+
+- Raised by: maintainer, 2026-10-12, while reviewing the Innovar flow states.
+- Scope: `app-android/src/main/kotlin/io/kdmtracker/app/KdmTrackerApp.kt`,
+  `ui/AppTopBar.kt`, `ui/AppChrome.kt`, `ui/AppShell.kt`.
