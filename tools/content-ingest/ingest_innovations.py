@@ -30,7 +30,7 @@ from typing import Dict, List, Optional, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from identity import load_identity, require_row, unused_rows  # noqa: E402
+from identity import load_innovations_identity, require_row, unused_rows  # noqa: E402
 from ingest_locations import _localized_lines  # noqa: E402
 from kotlin_emit import description_lines, indent, kotlin_escape, normalize_ws  # noqa: E402
 from pdf_text import pdf_info, pdf_text  # noqa: E402
@@ -218,6 +218,8 @@ def emit_kotlin(cards: Sequence[Card], identity: Dict[str, "IdentityRow"]) -> st
         lines.append("                    Innovation(")
         lines.append(f'{indent(_NAME_INDENT)}id = InnovationId("{kotlin_escape(row.resource_id)}"),')
         lines.extend(_localized_lines("names", _NAME_INDENT, row.spanish_name or row.english_name, row.english_name))
+        if row.category:
+            lines.append(f'{indent(_NAME_INDENT)}category = "{kotlin_escape(row.category)}",')
         lines.extend(description_lines(card.description))
         lines.extend(_consequence_lines(card.consequences))
         lines.append(f"{indent(_NAME_INDENT)}survivalLimitBonus = {card.survival_limit_bonus},")
@@ -257,7 +259,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         raise SystemExit(f"page split mismatch: pdfinfo says {declared_pages}, split found {len(pages)}")
 
     cards = resolve_consequences(parse_cards(text))
-    identity = load_identity(repo_root / DEFAULT_IDENTITY_RELATIVE)
+    identity = load_innovations_identity(repo_root / DEFAULT_IDENTITY_RELATIVE)
     output = emit_kotlin(cards, identity)
     unused_rows(identity, [card.name for card in cards])
 

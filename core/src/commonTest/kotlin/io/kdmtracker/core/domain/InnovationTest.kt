@@ -1,5 +1,6 @@
 package io.kdmtracker.core.domain
 
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -131,5 +132,26 @@ class InnovationTest {
     @Test
     fun survivalLimitBonusIsZeroWithoutInnovations() {
         assertEquals(0, InnovationCollection().survivalLimitBonus())
+    }
+
+    @Test
+    fun categoryIsNeverSerialized() {
+        val innovation =
+            Innovation(
+                id = InnovationId("pintura"),
+                names = LocalizedText(es = "Pintura"),
+                description = "Pintura ritual.",
+                category = "Arte",
+            )
+
+        val json = Json.encodeToString(Innovation.serializer(), innovation)
+
+        assertFalse(json.contains("category"), "category is content, not state — it never travels")
+        assertEquals("Arte", innovation.category, "encoding must not touch the value in memory")
+        assertEquals(
+            "",
+            Json.decodeFromString<Innovation>(json).category,
+            "a document written before the column existed decodes to none, not to a crash",
+        )
     }
 }

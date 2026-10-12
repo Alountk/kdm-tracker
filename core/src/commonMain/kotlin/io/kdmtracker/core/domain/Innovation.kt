@@ -28,6 +28,11 @@ import kotlinx.serialization.serializer
  * @property description the rules text shown on the innovation card.
  * @property consequences the names of the cards the innovation adds to the deck.
  * @property survivalLimitBonus the survival limit increase the innovation grants.
+ * @property category the authored domain of the tree branch this card descends from
+ *   (`Arte`, `Hogar`, `Principio`, …), read by the deck's category chips and by each card's
+ *   badge. It is **content, not state**: it is never written to [InnovationSerializer], so an
+ *   unlocked innovation imported from an older document simply has none until the catalog
+ *   supplies it. Null-less and defaulting to `""` keeps every existing constructor valid.
  */
 @Serializable(with = InnovationSerializer::class)
 data class Innovation(
@@ -36,6 +41,7 @@ data class Innovation(
     val description: String,
     val consequences: List<String> = emptyList(),
     val survivalLimitBonus: Int = 0,
+    val category: String = "",
 )
 
 /**

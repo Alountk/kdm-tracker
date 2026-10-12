@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import ingest_innovations as innovations  # noqa: E402
+from identity import load_innovations_identity  # noqa: E402
 
 FORM_FEED = "\f"
 
@@ -171,9 +172,7 @@ if __name__ == "__main__":
 
 
 def _identity():
-    from identity import load_identity
-
-    return load_identity(Path(__file__).resolve().parents[1] / "identity" / "innovations.csv")
+    return load_innovations_identity(Path(__file__).resolve().parents[1] / "identity" / "innovations.csv")
 
 
 class EmitIdentityTests(unittest.TestCase):
@@ -208,3 +207,25 @@ class EmitIdentityTests(unittest.TestCase):
             innovations.emit_kotlin([self._card(consequences=["Inexistente"])], _identity())
 
         self.assertIn("Inexistente", str(ctx.exception))
+
+
+class InnovationCategoryTests(unittest.TestCase):
+    """Every innovation row carries the domain the tree branch it descends from belongs to."""
+
+    @staticmethod
+    def _csv_path() -> Path:
+        return Path(__file__).resolve().parents[1] / "identity" / "innovations.csv"
+
+    def test_every_identity_row_carries_a_category(self) -> None:
+        rows = load_innovations_identity(self._csv_path())
+
+        missing = sorted({row.resource_id for row in rows.values() if not row.category})
+
+        self.assertEqual([], missing, "every innovation needs a category for the deck chips")
+
+    def test_the_emitted_card_carries_its_category(self) -> None:
+        identity = load_innovations_identity(self._csv_path())
+
+        out = innovations.emit_kotlin([EmitIdentityTests._card(name="Pintura")], identity)
+
+        self.assertIn('category = "Arte"', out)

@@ -96,14 +96,14 @@ class GearParserTest(unittest.TestCase):
 
 
 def _identities():
-    from identity import load_identity, load_locations_identity
+    from identity import load_identity, load_innovations_identity, load_locations_identity
 
     base = Path(__file__).resolve().parents[1] / "identity"
     return (
         load_identity(base / "gear.csv"),
         load_locations_identity(base / "locations.csv"),
         load_identity(base / "resources.csv"),
-        load_identity(base / "innovations.csv"),
+        load_innovations_identity(base / "innovations.csv"),
     )
 
 

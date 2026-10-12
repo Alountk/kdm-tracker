@@ -171,6 +171,7 @@ private fun combineInnovations(
         id = current.id,
         names = LocalizedText(es = current.names.es, en = current.names.en ?: candidate.names.en),
         description = current.description.ifBlank { candidate.description },
+        category = current.category.ifBlank { candidate.category },
         consequences = (current.consequences + candidate.consequences).distinct(),
         survivalLimitBonus =
             if (current.survivalLimitBonus != 0) current.survivalLimitBonus else candidate.survivalLimitBonus,

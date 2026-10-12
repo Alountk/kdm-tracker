@@ -1,43 +1,43 @@
-id,spanishName,englishName
-aceptar_la_oscuridad,Aceptar la Oscuridad,
-amoniaco,Amoníaco,
-archivos,Archivos,
-arma_definitiva,Arma Definitiva,
-arte_de_combate_final,Arte de Combate Final,
-barbarico,Barbárico,
-cama,Cama,
-canibalismo,Canibalismo,
-canto_de_los_valientes,Canto de los Valientes,
-ceramica,Cerámica,
-choza,Choza,
-clan_de_la_muerte,Clan de la Muerte,
-cocinar,Cocinar,
-companeros,Compañeros,
-danza_prohibida,Danza Prohibida,
-destino,Destino,
-entrenamiento_de_pesadilla,Entrenamiento de Pesadilla,
-escarificacion,Escarificación,
-escultura,Escultura,
-esfuerzo_colectivo,Esfuerzo Colectivo,
-familia,Familia,
-flauta_corazon,Flauta Corazón,
-fundicion_de_restos,Fundición de Restos,
-guia_del_rey,Guía del Rey,
-horno_linterna,Horno Linterna,
-language,Lenguaje,Language
-linterna_interior,Linterna Interior,
-memento_mori,Memento Mori,
-narracion,Narración,Storytelling
-pictografia,Pictografía,
-pintura,Pintura,
-pintura_facial,Pintura Facial,
-proteged_a_los_jovenes,Proteged a los Jóvenes,
-romantico,Romántico,
-sacrificio,Sacrificio,
-saga,Saga,
-sangria,Sangría,
-santuario,Santuario,
-sepulturas,Sepulturas,
-simposio,Simposio,
-supervivencia_del_mas_apto,Supervivencia del más Apto,
-tambores,Tambores,
+id,spanishName,englishName,category
+aceptar_la_oscuridad,Aceptar la Oscuridad,,Principio
+amoniaco,Amoníaco,,Ciencia
+archivos,Archivos,,Educación
+arma_definitiva,Arma Definitiva,,Especial
+arte_de_combate_final,Arte de Combate Final,,Especial
+barbarico,Barbárico,,Principio
+cama,Cama,,Hogar
+canibalismo,Canibalismo,,Principio
+canto_de_los_valientes,Canto de los Valientes,,Arte
+ceramica,Cerámica,,Arte
+choza,Choza,,Hogar
+clan_de_la_muerte,Clan de la Muerte,,Hogar
+cocinar,Cocinar,,Ciencia
+companeros,Compañeros,,Hogar
+danza_prohibida,Danza Prohibida,,Arte
+destino,Destino,,Especial
+entrenamiento_de_pesadilla,Entrenamiento de Pesadilla,,Educación
+escarificacion,Escarificación,,Creencia
+escultura,Escultura,,Arte
+esfuerzo_colectivo,Esfuerzo Colectivo,,Principio
+familia,Familia,,Hogar
+flauta_corazon,Flauta Corazón,,Arte
+fundicion_de_restos,Fundición de Restos,,Ciencia
+guia_del_rey,Guía del Rey,,Especial
+horno_linterna,Horno Linterna,,Ciencia
+language,Lenguaje,Language,Sociedad
+linterna_interior,Linterna Interior,,Creencia
+memento_mori,Memento Mori,,Arte
+narracion,Narración,Storytelling,Educación
+pictografia,Pictografía,,Arte
+pintura,Pintura,,Arte
+pintura_facial,Pintura Facial,,Arte
+proteged_a_los_jovenes,Proteged a los Jóvenes,,Principio
+romantico,Romántico,,Principio
+sacrificio,Sacrificio,,Creencia
+saga,Saga,,Arte
+sangria,Sangría,,Ciencia
+santuario,Santuario,,Creencia
+sepulturas,Sepulturas,,Principio
+simposio,Simposio,,Educación
+supervivencia_del_mas_apto,Supervivencia del más Apto,,Principio
+tambores,Tambores,,Arte

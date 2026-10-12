@@ -53,6 +53,13 @@ IDENTITY_HEADER = ("id", "spanishName", "englishName")
 # only the 1.6 seed defines) has no authored prose either.
 LOCATIONS_HEADER = ("id", "spanishName", "englishName", "description")
 
+# The innovations CSV carries one more authored column than the rest: the domain of the
+# tree branch the innovation descends from, which the deck's category chips and each
+# card's badge read. Like the location prose it is optional in the type and required by
+# this family's loader, so a row that forgets it fails the run rather than shipping a
+# chip-less card.
+INNOVATIONS_HEADER = ("id", "spanishName", "englishName", "category")
+
 
 def normalize_ws(text: str) -> str:
     """Collapse runs of whitespace and strip; PDF text arrives with ragged spacing."""
@@ -73,6 +80,8 @@ class IdentityRow:
     english_name: str
     #: The authored card prose, when this CSV carries a [LOCATIONS_HEADER]; empty otherwise.
     description: str = ""
+    #: The authored tree-branch domain, when this CSV carries an [INNOVATIONS_HEADER].
+    category: str = ""
 
     def names(self) -> Tuple[str, ...]:
         """Every non-empty name this row is reachable by."""
@@ -103,6 +112,7 @@ def load_identity(
                 spanish_name=normalize_ws(raw.get("spanishName") or ""),
                 english_name=normalize_ws(raw.get("englishName") or ""),
                 description=normalize_ws(raw.get("description") or ""),
+                category=normalize_ws(raw.get("category") or ""),
             )
             if not row.resource_id:
                 raise SystemExit(f"identity CSV {csv_path.name}: a row has no id: {raw!r}")
@@ -118,6 +128,11 @@ def load_identity(
 def load_locations_identity(csv_path: Path) -> Dict[str, IdentityRow]:
     """Read the locations identity CSV — the one family whose rows carry authored prose."""
     return load_identity(csv_path, header=LOCATIONS_HEADER)
+
+
+def load_innovations_identity(csv_path: Path) -> Dict[str, IdentityRow]:
+    """Read the innovations identity CSV — the one family whose rows carry a category."""
+    return load_identity(csv_path, header=INNOVATIONS_HEADER)
 
 
 def require_row(by_name: Dict[str, IdentityRow], name: str, *, source: str) -> IdentityRow:
