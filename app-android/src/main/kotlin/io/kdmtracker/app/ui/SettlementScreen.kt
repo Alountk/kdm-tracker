@@ -106,15 +106,7 @@ fun SettlementScreen(
             7 -> {
                 var developTab by remember { mutableStateOf(DevelopTab.RECURSOS) }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    InnovationsPanel(
-                        model =
-                            InnovationsModel.of(
-                                deck = state.innovationDeck,
-                                principles = state.chosenPrinciples.values.toList(),
-                                draw = state.innovationDraw,
-                                keep = state.innovationKeep,
-                            ),
-                    )
+                    InnovationsPanel(model = InnovationsModel.of(state = state))
                     LocationsSection(
                         model = FabricarModel.of(state),
                         onBuild = onBuild,
