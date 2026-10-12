@@ -143,6 +143,7 @@ private fun InCampaignScreen(
         tab = tab,
         onSelectTab = { viewModel.show(it.screen) },
         onAccount = viewModel::goAccount,
+        onExit = viewModel::goHome,
         onSelectStep = viewModel::selectStep,
     ) {
         when (state.screen) {

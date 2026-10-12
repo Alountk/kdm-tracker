@@ -44,6 +44,7 @@ private val NavHeight = 64.dp
 fun ShellBottomNav(
     selected: ShellTab,
     onSelect: (ShellTab) -> Unit,
+    onExit: () -> Unit,
 ) {
     Column(
         // Size, then decoration, then the inset: the background covers the navigation-bar strip, so
@@ -61,9 +62,18 @@ fun ShellBottomNav(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
+            // The design proposal chosen for leaving a campaign: it sits where the thumb already
+            // rests, so returning to the "Settlements" list needs no reach to the top corner.
+            Tab(
+                icon = "home",
+                label = "Salir",
+                selected = false,
+                onClick = onExit,
+            )
             ShellTab.entries.forEach { tab ->
                 Tab(
-                    tab = tab,
+                    icon = tab.icon,
+                    label = tab.label,
                     selected = tab == selected,
                     onClick = { onSelect(tab) },
                 )
@@ -74,7 +84,8 @@ fun ShellBottomNav(
 
 @Composable
 private fun Tab(
-    tab: ShellTab,
+    icon: String,
+    label: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -96,13 +107,13 @@ private fun Tab(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = KdmSymbols.glyph(tab.icon),
+            text = KdmSymbols.glyph(icon),
             fontFamily = KdmSymbols.family,
             fontSize = 20.sp,
             color = color,
         )
         Text(
-            text = tab.label.uppercase(),
+            text = label.uppercase(),
             style = KdmType.labelCaps,
             color = color,
             maxLines = 1,
