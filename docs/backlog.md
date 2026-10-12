@@ -63,3 +63,9 @@ and delete or repurpose the dead `showHome`.
 - Raised by: maintainer, 2026-10-12, while reviewing the Innovar flow states.
 - Scope: `app-android/src/main/kotlin/io/kdmtracker/app/KdmTrackerApp.kt`,
   `ui/AppTopBar.kt`, `ui/AppChrome.kt`, `ui/AppShell.kt`.
+
+**Resuelto (2026-10-12)** — propuesta **C** elegida: un `SALIR` como quinta acción al extremo
+izquierdo del dock inferior, antes de `ASENTAMIENTO`, con un `home` (el `logout` del tablero no está
+en el subset de fuentes). Cableado como `onExit -> viewModel.goHome` y verificado en el emulador.
+Las cuatro propuestas siguen en `.superpowers/design/innovar-flow/salida_4_propuestas.html` como
+contexto del dictamen.
