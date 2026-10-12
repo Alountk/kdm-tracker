@@ -103,7 +103,7 @@ fun SettlementScreen(
                 )
             7 -> {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    InnovationsPanel(model = InnovationsModel.of(state = state), onSelect = onInnovate)
+                    InnovationsPanel(model = InnovationsModel.of(state = state), onConfirm = onInnovate)
                     LocationsSection(
                         model = FabricarModel.of(state),
                         onBuild = onBuild,

@@ -21,6 +21,34 @@ enum class PhaseState { OFFER, USED_THIS_PHASE, NO_CARDS, UNAFFORDABLE }
  */
 enum class InnovarGate { NO_ACCESS, SHORT_ON_RESOURCES, READY }
 
+/**
+ * How a milestone-grid cell got there. The board paints the three differently: gold and
+ * `ACTIVO PERMANENTE` for [OWNED], green with `NUEVA` for [NEW_THIS_YEAR], dashed grey for [EMPTY].
+ */
+enum class SlotState {
+    OWNED,
+    NEW_THIS_YEAR,
+    EMPTY,
+    ;
+
+    companion object {
+        /**
+         * Gold when it was already there, green when it arrived this lantern year. `0` means the
+         * document predates the field and reads as "already owned", never as "new".
+         */
+        fun of(
+            unlockedInYear: Int,
+            lanternYear: Int,
+        ): SlotState = if (unlockedInYear == 0 || unlockedInYear < lanternYear) OWNED else NEW_THIS_YEAR
+    }
+}
+
+/** One filled cell of the design's 2x2 milestone grid. */
+data class SlotView(
+    val name: String,
+    val state: SlotState,
+)
+
 /** One thing the Innovate action needs, and how much of it the settlement holds. */
 data class ResourceNeed(
     val name: String,
@@ -72,6 +100,7 @@ data class InnovationsModel(
     val gate: InnovarGate,
     val missing: List<ResourceNeed>,
     val motivo: String,
+    val slots: List<SlotView>,
     val categoryChips: List<Pair<String, Int>>,
     val acquisitionChips: List<Pair<String, Int>>,
     val activeDeck: ActiveDeck?,
@@ -122,7 +151,7 @@ data class InnovationsModel(
                 )
             val gate =
                 when {
-                    innovatingLocation == null || state.innovationViews.any { it.used } -> InnovarGate.NO_ACCESS
+                    innovatingLocation == null -> InnovarGate.NO_ACCESS
                     !cost.ok -> InnovarGate.SHORT_ON_RESOURCES
                     else -> InnovarGate.READY
                 }
@@ -152,6 +181,17 @@ data class InnovationsModel(
             val acquired = definitions.count { it.id in unlocked }
             val draw = state.innovationDraw
             val keep = state.innovationKeep
+            val slots =
+                state.record
+                    ?.state
+                    ?.innovations
+                    ?.innovations
+                    ?.map {
+                        SlotView(
+                            name = it.names.es,
+                            state = SlotState.of(it.unlockedInYear, state.lanternYear),
+                        )
+                    } ?: emptyList()
             return InnovationsModel(
                 deckSize = state.innovationDeck.size,
                 principleSlots = state.chosenPrinciples.values.toList(),
@@ -163,6 +203,7 @@ data class InnovationsModel(
                 gate = gate,
                 missing = (listOf(cost.endeavors) + cost.resources).filter { !it.ok },
                 motivo = cost.reason,
+                slots = slots,
                 categoryChips =
                     definitions
                         .groupingBy { it.category }

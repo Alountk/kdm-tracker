@@ -4,6 +4,7 @@ import io.kdmtracker.app.ui.settlement.InnovarGate
 import io.kdmtracker.app.ui.settlement.InnovationsModel
 import io.kdmtracker.app.ui.settlement.PhaseState
 import io.kdmtracker.app.ui.settlement.ResourceNeed
+import io.kdmtracker.app.ui.settlement.SlotState
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
@@ -398,5 +399,37 @@ class DevelopPanelsTest {
 
         assertEquals(InnovarGate.NO_ACCESS, model.gate)
         assertEquals(emptyList(), model.hand)
+    }
+
+    @Test
+    fun anInnovationUnlockedThisYearIsNew() {
+        assertEquals(SlotState.NEW_THIS_YEAR, SlotState.of(unlockedInYear = 3, lanternYear = 3))
+    }
+
+    @Test
+    fun anOlderInnovationIsOwned() {
+        assertEquals(SlotState.OWNED, SlotState.of(unlockedInYear = 2, lanternYear = 3))
+        assertEquals(
+            SlotState.OWNED,
+            SlotState.of(unlockedInYear = 0, lanternYear = 3),
+            "a document from before the field existed reads as already owned",
+        )
+    }
+
+    @Test
+    fun theGridPaintsTheSlotsByTheirState() {
+        val fresh = innovation("pintura", es = "Pintura")
+        val old = innovation("lenguaje", es = "Lenguaje")
+        val model =
+            InnovationsModel.of(
+                state(
+                    definitions = listOf(old, fresh),
+                    unlocked = listOf(old.copy(unlockedInYear = 1), fresh.copy(unlockedInYear = 3)),
+                    lanternYear = 3,
+                ),
+            )
+
+        assertEquals(SlotState.OWNED, model.slots.first { it.name == "Lenguaje" }.state)
+        assertEquals(SlotState.NEW_THIS_YEAR, model.slots.first { it.name == "Pintura" }.state)
     }
 }

@@ -4,13 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +33,8 @@ import io.kdmtracker.app.ui.theme.KdmType
 fun InnovationCardView(
     card: InnovationCard,
     phaseState: PhaseState,
-    onSelect: (String) -> Unit,
+    selected: Boolean = false,
+    onPick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = MaterialTheme.shapes.small
@@ -44,15 +43,14 @@ fun InnovationCardView(
             modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
-                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.3f), shape)
-                .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+                .border(
+                    1.dp,
+                    if (selected) MaterialTheme.colorScheme.secondary else KdmPalette.outlineVariant.copy(alpha = 0.3f),
+                    shape,
+                ).padding(10.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = card.category.uppercase(),
                 style = microLabel,
@@ -62,49 +60,52 @@ fun InnovationCardView(
                         .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f), shape)
                         .padding(horizontal = 4.dp, vertical = 2.dp),
             )
+
             Text(
                 text = card.subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
             )
-        }
 
-        Text(
-            text = card.name,
-            style = cardTitle,
-            color = MaterialTheme.colorScheme.primary,
-        )
-
-        if (card.survivalBonus != 0) {
             Text(
-                text = "Límite de Supervivencia +${card.survivalBonus}",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.secondary,
+                text = card.name,
+                style = cardTitle,
+                color = MaterialTheme.colorScheme.primary,
             )
-        }
 
-        Text(
-            text = card.effect,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+            if (card.survivalBonus != 0) {
+                Text(
+                    text = "Límite de Supervivencia +${card.survivalBonus}",
+                    style = KdmType.labelCaps,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
 
-        card.consequenceNote?.let { note ->
             Text(
-                text = note,
+                text = card.effect,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            card.consequenceNote?.let { note ->
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
         }
 
         when (phaseState) {
             PhaseState.OFFER ->
                 KdmActionButton(
-                    text = "SELECCIONAR",
-                    onClick = { onSelect(card.name) },
+                    text = if (selected) "SELECCIONADA" else "SELECCIONAR",
+                    onClick = { onPick(card.name) },
                     icon = "check_circle",
-                    variant = KdmActionVariant.GOLD,
-                    modifier = Modifier.fillMaxWidth(),
+                    variant = if (selected) KdmActionVariant.GOLD else KdmActionVariant.DARK,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    border = if (selected) null else KdmPalette.outline,
                 )
             PhaseState.UNAFFORDABLE ->
                 KdmActionButton(

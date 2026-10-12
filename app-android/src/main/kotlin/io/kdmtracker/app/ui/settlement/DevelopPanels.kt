@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +55,7 @@ enum class SlotKind { FILLED, EMPTY, ACTIVE_DECK }
  */
 data class SlotCardData(
     val kind: SlotKind,
+    val state: SlotState = SlotState.EMPTY,
     val label: String,
     val icon: String,
     val iconColor: Color,
@@ -71,9 +75,12 @@ data class SlotCardData(
 @Composable
 fun InnovationsPanel(
     model: InnovationsModel,
-    onSelect: (String) -> Unit,
+    onConfirm: (String) -> Unit,
 ) {
     var catalogueOpen by remember { mutableStateOf(true) }
+    var picked by remember { mutableStateOf<String?>(null) }
+    var resolved by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var drawn by remember { mutableStateOf(false) }
     val shape = MaterialTheme.shapes.small
 
     Column(
@@ -87,15 +94,34 @@ fun InnovationsPanel(
     ) {
         PanelTitle(icon = "auto_stories", title = "Innovaciones", trailing = "Mazo: ${model.deckSize} cartas")
 
-        when (model.gate) {
-            InnovarGate.NO_ACCESS -> NoAccessBlock()
-            InnovarGate.SHORT_ON_RESOURCES -> CostBlock(cost = model.cost)
-            InnovarGate.READY ->
+        when {
+            // Consumed wins over everything: after the draw the pool is empty, and empty must not
+            // masquerade as "no resources" while the resolution of the draw is still owed.
+            model.phaseState == PhaseState.USED_THIS_PHASE ->
+                ConsumedBlock(
+                    model = model,
+                    resolution = resolved,
+                    onToggleCatalogue = { catalogueOpen = !catalogueOpen },
+                )
+            model.gate == InnovarGate.NO_ACCESS -> NoAccessBlock()
+            model.gate == InnovarGate.SHORT_ON_RESOURCES -> CostBlock(cost = model.cost)
+            model.phaseState == PhaseState.NO_CARDS ->
+                NoCardsBlock(model = model, onToggleCatalogue = { catalogueOpen = !catalogueOpen })
+            else ->
                 ReadyBody(
                     model = model,
-                    onSelect = onSelect,
+                    picked = picked,
+                    onPick = { picked = it },
+                    drawn = drawn,
+                    onDraw = { drawn = true },
                     catalogueOpen = catalogueOpen,
                     onToggleCatalogue = { catalogueOpen = !catalogueOpen },
+                    onConfirm = { chosen ->
+                        // Capture the resolution before the commit changes the model's hand.
+                        resolved = chosen to (model.hand.firstOrNull { it.name != chosen }?.name ?: "")
+                        picked = null
+                        onConfirm(chosen)
+                    },
                 )
         }
     }
@@ -105,9 +131,13 @@ fun InnovationsPanel(
 @Composable
 private fun ReadyBody(
     model: InnovationsModel,
-    onSelect: (String) -> Unit,
+    picked: String?,
+    onPick: (String) -> Unit,
+    drawn: Boolean,
+    onDraw: () -> Unit,
     catalogueOpen: Boolean,
     onToggleCatalogue: () -> Unit,
+    onConfirm: (String) -> Unit,
 ) {
     val shape = MaterialTheme.shapes.small
 
@@ -117,58 +147,259 @@ private fun ReadyBody(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             row.forEach { card ->
-                SlotCard(
-                    card = card,
-                    modifier = Modifier.weight(1f),
-                    onToggle = onToggleCatalogue,
-                )
+                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
             }
         }
     }
 
+    if (!drawn) {
+        // The design's cost row: no wrapper around the row itself, full width — the label
+        // sits left and the minified price is boxed on the right.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = "COSTE", style = microLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, shape)
+                        .border(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = "1*", style = KdmType.labelCaps, color = InnovarPalette.gold)
+                Text(text = "| 1H 1Ó 1P", style = microLabel, color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+
+        KdmActionButton(
+            text = "Robar cartas para innovar",
+            onClick = onDraw,
+            icon = "style",
+            variant = KdmActionVariant.GOLD,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
     // The offer, exactly as the HTML draws it: its own container, its own gold border.
+    if (drawn) {
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OfferHeader(model = model)
+
+            if (drawn) {
+                model.hand.chunked(2).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        row.forEach { card ->
+                            InnovationCardView(
+                                card = card,
+                                phaseState = model.phaseState,
+                                selected = picked == card.name,
+                                onPick = onPick,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                            )
+                        }
+                        if (row.size == 1) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            if (drawn) {
+                picked?.let { chosen ->
+                    KdmActionButton(
+                        text = "ACEPTAR ELECCIÓN",
+                        onClick = { onConfirm(chosen) },
+                        icon = "check_circle",
+                        variant = KdmActionVariant.GOLD,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** The design's `ESTADO 2 - CONSUMADA`: the resolution of the draw and the year's gold note. */
+@Composable
+private fun ConsumedBlock(
+    model: InnovationsModel,
+    resolution: Pair<String, String>?,
+    onToggleCatalogue: () -> Unit,
+) {
+    val shape = MaterialTheme.shapes.small
+
+    slotCards(model, true).chunked(2).forEach { row ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            row.forEach { card ->
+                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
+            }
+        }
+    }
+
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), shape)
-                .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.3f), shape)
+                .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        OfferHeader(model = model)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Symbol("check_circle", InnovarPalette.green, 16.sp)
+            Text(
+                text = "Resolución del robo de cartas",
+                style = KdmType.labelCaps,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "Completado",
+                style = microLabel,
+                color = InnovarPalette.green,
+                modifier =
+                    Modifier
+                        .background(InnovarPalette.greenWash, shape)
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        }
+        if (resolution != null) {
+            Text(
+                text = "${resolution.first} · ${resolution.second} devuelta al fondo del mazo de innovación",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(text = "1 CARTA DEVUELTA", style = microLabel, color = MaterialTheme.colorScheme.outline)
+        }
+    }
 
-        model.hand.chunked(2).forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                row.forEach { card ->
-                    InnovationCardView(
-                        card = card,
-                        phaseState = model.phaseState,
-                        onSelect = onSelect,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                if (row.size == 1) {
-                    Spacer(Modifier.weight(1f))
-                }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(InnovarPalette.goldWash, shape)
+                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), shape)
+                .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Symbol("check_circle", MaterialTheme.colorScheme.secondary, 16.sp)
+            Text(
+                text = "Innovación Realizada en este Año Linterna",
+                style = KdmType.labelCaps,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+        Text(
+            text =
+                "El esfuerzo gastado y los 3 recursos (1 Hueso, 1 Órgano, 1 Pellejo) " +
+                    "ya fueron deducidos del almacén.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * The design's `ESTADO 6 - SIN CARTAS EN EL MAZO`: the grid is unchanged — an empty deck says
+ * nothing about what the settlement owns — and only the part below it differs.
+ */
+@Composable
+private fun NoCardsBlock(
+    model: InnovationsModel,
+    onToggleCatalogue: () -> Unit,
+) {
+    val shape = MaterialTheme.shapes.small
+
+    slotCards(model, true).chunked(2).forEach { row ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            row.forEach { card ->
+                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
             }
         }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        // The board draws `swap_horizontal_circle`; it is not in the bundled subset.
+        Symbol("crisis_alert", MaterialTheme.colorScheme.outline, 28.sp)
+        Text(
+            text = "No quedan innovaciones en el mazo",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text =
+                "No hay cartas con acceso directo en el mazo de robo actual: todas las " +
+                    "consecuencias requieren innovaciones previas que todavía no se han desbloqueado.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .topHairline(KdmPalette.outlineVariant.copy(alpha = 0.2f))
-                    .padding(top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+                    .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.5f), shape)
+                    .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            DeckRow(deckSize = model.deckSize, open = catalogueOpen, onToggle = onToggleCatalogue)
-            ChipRow(chips = model.acquisitionChips)
-            ChipRow(chips = model.categoryChips)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Symbol("lightbulb", InnovarPalette.gold, 16.sp)
+                Text(
+                    text = "¿Cómo desbloquear nuevas cartas?",
+                    style = KdmType.labelCaps,
+                    color = InnovarPalette.gold,
+                )
+            }
+            listOf(
+                "Construye localizaciones que añadan consecuencias al mazo.",
+                "Supera hitos de población para desbloquear nuevos principios.",
+                "Usa eventos de historia para introducir cartas raras.",
+            ).forEach { line ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(text = "•", style = microLabel, color = InnovarPalette.gold.copy(alpha = 0.7f))
+                    Text(
+                        text = line,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
         }
+
+        KdmActionButton(
+            text = "Innovar no disponible",
+            onClick = {},
+            icon = "lock",
+            variant = KdmActionVariant.BLOCKED,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -220,41 +451,51 @@ private fun slotCards(
 ): List<SlotCardData> {
     val positions = listOf("Principio", "Ranura 2", "Ranura 3")
     val cards = mutableListOf<SlotCardData>()
+    val filled = model.slots.take(positions.size)
 
-    model.principleSlots.forEachIndexed { index, chosen ->
+    filled.forEachIndexed { index, slot ->
         cards +=
             SlotCardData(
                 kind = SlotKind.FILLED,
+                state = slot.state,
                 label = positions[index],
                 icon = "verified",
-                iconColor = MaterialTheme.colorScheme.outline,
+                iconColor =
+                    if (slot.state ==
+                        SlotState.NEW_THIS_YEAR
+                    ) {
+                        InnovarPalette.green
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    },
                 iconSize = 14.sp,
-                title = chosen,
+                title = slot.name,
                 note = null,
-                footer = "Activo Permanente",
+                footer = if (slot.state == SlotState.NEW_THIS_YEAR) "Nueva · Desbloqueado" else "Activo Permanente",
                 footerCentered = false,
             )
     }
-    repeat(model.emptySlots) { index ->
-        val position = model.principleSlots.size + index
+    repeat(positions.size - filled.size) { index ->
         cards +=
             SlotCardData(
                 kind = SlotKind.EMPTY,
-                label = positions.getOrElse(position) { "Ranura ${position + 1}" },
+                state = SlotState.EMPTY,
+                label = positions.getOrElse(filled.size + index) { "Ranura ${filled.size + index + 1}" },
                 icon = "crop_square",
                 iconColor = MaterialTheme.colorScheme.outline,
                 iconSize = 14.sp,
-                title = if (index == 0) "Por Descubrir" else "Futuro",
+                title = if (filled.isEmpty() && index == 0) "Por Descubrir" else "Futuro",
                 note = null,
-                footer = if (index == 0) "Sin asignar" else "Vacío",
+                footer = if (filled.isEmpty() && index == 0) "Sin asignar" else "Vacío",
                 footerCentered = true,
-                centerIcon = if (index == 0) "style" else "hourglass_bottom",
+                centerIcon = if (filled.isEmpty() && index == 0) "style" else "hourglass_bottom",
             )
     }
     model.activeDeck?.let { deck ->
         cards +=
             SlotCardData(
                 kind = SlotKind.ACTIVE_DECK,
+                state = SlotState.OWNED,
                 label = "Mazo Activo",
                 icon = "flare",
                 iconColor = MaterialTheme.colorScheme.secondary,
@@ -327,10 +568,11 @@ private fun SlotCard(
                     shape,
                 ).border(
                     1.dp,
-                    if (card.kind == SlotKind.ACTIVE_DECK) {
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
-                    } else {
-                        KdmPalette.outlineVariant.copy(alpha = 0.3f)
+                    when {
+                        card.kind == SlotKind.ACTIVE_DECK -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                        card.state == SlotState.OWNED -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
+                        card.state == SlotState.NEW_THIS_YEAR -> InnovarPalette.green.copy(alpha = 0.6f)
+                        else -> KdmPalette.outlineVariant.copy(alpha = 0.3f)
                     },
                     shape,
                 ).padding(12.dp),
@@ -363,10 +605,10 @@ private fun SlotCard(
                     text = card.label,
                     style = KdmType.labelCaps,
                     color =
-                        if (filled) {
-                            MaterialTheme.colorScheme.secondary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                        when {
+                            card.state == SlotState.NEW_THIS_YEAR -> InnovarPalette.green
+                            card.state == SlotState.OWNED -> MaterialTheme.colorScheme.secondary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
                 )
             }
@@ -421,8 +663,26 @@ private fun SlotCard(
             Text(
                 text = card.footer,
                 style = microLabel,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = if (card.footerCentered) Modifier.fillMaxWidth() else Modifier,
+                color =
+                    when (card.state) {
+                        SlotState.OWNED -> MaterialTheme.colorScheme.secondary
+                        SlotState.NEW_THIS_YEAR -> InnovarPalette.green
+                        SlotState.EMPTY -> MaterialTheme.colorScheme.outline
+                    },
+                modifier =
+                    if (card.footerCentered) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier
+                            .background(
+                                when (card.state) {
+                                    SlotState.OWNED -> InnovarPalette.goldWash
+                                    SlotState.NEW_THIS_YEAR -> InnovarPalette.greenWash
+                                    SlotState.EMPTY -> Color.Transparent
+                                },
+                                MaterialTheme.shapes.small,
+                            ).padding(horizontal = 4.dp, vertical = 2.dp)
+                    },
                 textAlign = if (card.footerCentered) TextAlign.Center else TextAlign.Start,
             )
         }
@@ -525,10 +785,7 @@ private fun ChipRow(chips: List<Pair<String, Int>>) {
 private fun OfferHeader(model: InnovationsModel) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .bottomHairline(KdmPalette.outlineVariant.copy(alpha = 0.2f))
-                .padding(bottom = 8.dp),
+            Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
@@ -544,29 +801,13 @@ private fun OfferHeader(model: InnovationsModel) {
                 Text(
                     text = model.offerTitle.uppercase(),
                     style = KdmType.labelCaps,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Text(
                 text = model.ruleLine,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(
-            modifier =
-                Modifier
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.shapes.small)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(text = "COSTE", style = microLabel, color = MaterialTheme.colorScheme.outline)
-            Text(
-                text =
-                    "-${model.cost.endeavors.need} Esfuerzo · " +
-                        "-${model.cost.resources.size} Recursos",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.error,
             )
         }
     }
