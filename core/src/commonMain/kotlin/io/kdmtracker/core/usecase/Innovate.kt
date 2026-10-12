@@ -85,7 +85,12 @@ object Innovate {
                 state =
                     spent.state
                         .withPhaseAction(locationId.value)
-                        .copy(innovations = spent.state.innovations.with(innovation)),
+                        .copy(
+                            innovations =
+                                spent.state.innovations.with(
+                                    innovation.copy(unlockedInYear = record.settlement.lanternYear),
+                                ),
+                        ),
             ),
         )
     }

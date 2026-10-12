@@ -79,6 +79,7 @@ class InnovateUseCaseTest {
 
     private fun record(
         endeavors: Int = 1,
+        lanternYear: Int = 1,
         state: SettlementState = SettlementState(),
     ): SettlementRecord =
         SettlementRecord(
@@ -87,7 +88,7 @@ class InnovateUseCaseTest {
                     id = Ulid.generate(1L) { 0 },
                     campaignId = Ulid.generate(2L) { 0 },
                     name = "Kingsport",
-                    lanternYear = 1,
+                    lanternYear = lanternYear,
                     phase = SettlementPhase.SETTLEMENT,
                     currentStep = 7,
                     endeavors = endeavors,
@@ -219,5 +220,24 @@ class InnovateUseCaseTest {
             )
 
         assertIs<StepResult.Blocked>(result)
+    }
+
+    @Test
+    fun aValidInnovateStampsTheUnlockedYear() {
+        val result =
+            Innovate.run(
+                record(lanternYear = 3, state = stocked()),
+                LocationId("lantern_hoard"),
+                InnovationId("ammonia"),
+                catalog,
+            )
+
+        val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
+        assertEquals(
+            3,
+            ok.value.state.innovations.innovations
+                .single()
+                .unlockedInYear,
+        )
     }
 }

@@ -213,4 +213,34 @@ class SettlementStateSerializationTest {
         assertTrue(decoded.principles.isEmpty())
         assertTrue(decoded.resolvedMilestones.isEmpty())
     }
+
+    @Test
+    fun anInnovationRoundTripsItsUnlockedYear() {
+        val state =
+            populated.copy(
+                innovations =
+                    InnovationCollection(
+                        listOf(
+                            populated.innovations.innovations
+                                .first()
+                                .copy(unlockedInYear = 3),
+                        ),
+                    ),
+            )
+        val decoded = json.decodeFromString<SettlementState>(json.encodeToString(state))
+        assertEquals(
+            3,
+            decoded.innovations.innovations
+                .single()
+                .unlockedInYear,
+        )
+    }
+
+    @Test
+    fun aDocumentWithoutAnUnlockedYearDecodesToZero() {
+        val older =
+            """{"id":"language","names":{"es":"Language"},"description":"You can talk.",""" +
+                """"consequences":[],"survivalLimitBonus":1}"""
+        assertEquals(0, json.decodeFromString<Innovation>(older).unlockedInYear)
+    }
 }

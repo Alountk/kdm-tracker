@@ -33,6 +33,9 @@ import kotlinx.serialization.serializer
  *   badge. It is **content, not state**: it is never written to [InnovationSerializer], so an
  *   unlocked innovation imported from an older document simply has none until the catalog
  *   supplies it. Null-less and defaulting to `""` keeps every existing constructor valid.
+ * @property unlockedInYear the lantern year this innovation entered the settlement's collection.
+ *   Unlike [category] this **is** state and is persisted. `0` means "recorded before this field
+ *   existed", which reads as "already owned" rather than "new this year".
  */
 @Serializable(with = InnovationSerializer::class)
 data class Innovation(
@@ -42,6 +45,7 @@ data class Innovation(
     val consequences: List<String> = emptyList(),
     val survivalLimitBonus: Int = 0,
     val category: String = "",
+    val unlockedInYear: Int = 0,
 )
 
 /**
@@ -120,6 +124,7 @@ object InnovationSerializer : KSerializer<Innovation> {
             element<String>("description")
             element("consequences", ListSerializer(serializer<String>()).descriptor)
             element<Int>("survivalLimitBonus")
+            element<Int>("unlockedInYear")
         }
 
     override fun serialize(
@@ -135,6 +140,7 @@ object InnovationSerializer : KSerializer<Innovation> {
                     "description" to JsonPrimitive(value.description),
                     "consequences" to JsonArray(value.consequences.map { JsonPrimitive(it) }),
                     "survivalLimitBonus" to JsonPrimitive(value.survivalLimitBonus),
+                    "unlockedInYear" to JsonPrimitive(value.unlockedInYear),
                 ),
             ),
         )
@@ -160,6 +166,7 @@ object InnovationSerializer : KSerializer<Innovation> {
             description = fields["description"]?.jsonPrimitive?.content ?: "",
             consequences = fields["consequences"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
             survivalLimitBonus = fields["survivalLimitBonus"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0,
+            unlockedInYear = fields["unlockedInYear"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0,
         )
     }
 }
