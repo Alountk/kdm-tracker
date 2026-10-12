@@ -24,6 +24,8 @@ Implement the Innovar flow — **draw N innovation cards, keep one** — as the 
 6. **The card's subtitle is derived, never authored:** `consecuencia de <madre>` when the unlock tree has a parent for it, otherwise `innovación inicial`. Its footnote follows `consequences` (`Añade consecuencias de <nombre> al mazo`), and its bonus chip follows `survivalLimitBonus`.
 7. **One language per render.** `names.es` today; no parenthetical English (content-identity Decision 1).
 8. **No `:core` rule change.** `Innovate.run` already enforces the endeavor + resource cost, the once-per-phase limit and the unlock; this phase only decides *which* cards are offered and how they are drawn.
+9. **One surface for innovating.** The panel carries the offer *and* the catalogue. The app's `InnovarTab` — a second, already-working way to innovate, with its own `Disponibles / Desbloqueadas / Sin acceso` filters — retires with its `Innovar` chip, exactly as Phase 1 retired `FabricarTab`. Two surfaces would have re-created the duplicate the maintainer rejected in Phase 1.
+10. **The location card keeps its cost line and loses its button.** `LocationsSection`'s action row still renders `Costo: N Esfuerzo` whenever the location offers an action — the design draws it on the card *and* on the offer header — but the `Innovar`/`Augurio` button goes: under decision 9 the offer is already on screen, so there is nothing left for it to navigate to. `LocationsSection.onAction` and its `SettlementScreen` wiring disappear with it.
 
 ## Design
 
@@ -91,7 +93,11 @@ Everything else (deck size, slots, `drawLabel`, the phase limit) keeps its curre
 
 ### Retired in this phase
 
-The disabled `Innovar` `KdmActionButton` in `InnovationsPanel` — the reference has no such button. Nothing else is removed.
+- The disabled `Innovar` `KdmActionButton` in `InnovationsPanel` — the reference has no such button.
+- **`InnovarTab.kt`, the `DevelopTab` enum and the tab chip row** of `DevelopStepScreen`, which keeps only `RecursosTab` (decisions 9).
+- **The location card's action button** and `LocationsSection.onAction` (decision 10); its `Costo: N Esfuerzo` line stays.
+
+`FabricarModel.actionLabel`/`actionEndeavorCost` stay — they still decide whether the card draws the cost row.
 
 ## Out of scope
 
@@ -103,7 +109,8 @@ The disabled `Innovar` `KdmActionButton` in `InnovationsPanel` — the reference
 
 - **`InnovationDrawTest` (JVM, `:core`):** returns exactly `ruleset.innovationDraw` when more are available; returns fewer when they are not; never returns an `UNLOCKED` or `NO_ACCESS` card; the same state yields the same hand twice (determinism); the hand is identical for two campaigns with different ids only in its *choice*, never in its *order* relative to a given id (stability); an empty deck yields an empty hand.
 - **`InnovationsModel` tests (JVM, app — the assertions today in `DevelopPanelsTest`, split out if they grow):** the `PhaseState` priority table, one state per input; `CostView.ok` and the `FALTA`/`OK` split for a short ledger; the subtitle and footnote derivation; the acquisition chips and the category chips both as counts, and that the acquisition group is the one rendered first.
-- Port every existing test that touches `InnovationsModel` (the `drawLabel`/slots assertions stay).
+- Port every existing test that touches `InnovationsModel` (the `drawLabel`/slots assertions stay) and the three `actionLabel`/`actionEndeavorCost` assertions in `FabricarModelTest`, which must now prove the row still appears without its button.
+- `TransferDocumentTest` must still read `schemaVersion = 12`: `Innovation.category` is content and is deliberately not a key of `InnovationSerializer`, so no persisted shape changes.
 - Gate: `./gradlew spotlessApply && ./gradlew :core:jvmTest :data:jvmTest :app-android:testDebugUnitTest :server:test spotlessCheck`, plus `python3 -m unittest discover -s tools/content-ingest/tests`.
 
 ## Visual gate (hard rule)
