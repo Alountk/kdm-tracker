@@ -43,6 +43,16 @@ enum class SlotState {
     }
 }
 
+/**
+ * The design's minified price for the draw row — the effort count and the resource initials,
+ * as `1H 1Ó 1P`. [resources] holds the initials; [abbreviated] is what the row prints.
+ */
+data class CostChip(
+    val endeavors: Int,
+    val resources: List<String>,
+    val abbreviated: String,
+)
+
 /** One filled cell of the design's 2x2 milestone grid. */
 data class SlotView(
     val name: String,
@@ -101,6 +111,7 @@ data class InnovationsModel(
     val missing: List<ResourceNeed>,
     val motivo: String,
     val slots: List<SlotView>,
+    val costChip: CostChip,
     val categoryChips: List<Pair<String, Int>>,
     val acquisitionChips: List<Pair<String, Int>>,
     val activeDeck: ActiveDeck?,
@@ -204,6 +215,7 @@ data class InnovationsModel(
                 missing = (listOf(cost.endeavors) + cost.resources).filter { !it.ok },
                 motivo = cost.reason,
                 slots = slots,
+                costChip = costChip(endeavors, resources),
                 categoryChips =
                     definitions
                         .groupingBy { it.category }
@@ -223,6 +235,21 @@ data class InnovationsModel(
                 offerTitle = "Innovar: Elige $keep de $draw Cartas",
                 ruleLine = ruleLine(draw, keep),
                 lanternYear = state.lanternYear,
+            )
+        }
+
+        /** The minified price: `1` plus the first letter of each costed resource. */
+        private fun costChip(
+            endeavors: ResourceNeed,
+            resources: List<ResourceNeed>,
+        ): CostChip {
+            fun initial(name: String) = name.take(1).uppercase()
+            val head = listOf("${endeavors.need}${resources.firstOrNull()?.let { initial(it.name) } ?: ""}")
+            val tail = resources.drop(1).map { "${it.need}${initial(it.name)}" }
+            return CostChip(
+                endeavors = endeavors.need,
+                resources = resources.map { initial(it.name) },
+                abbreviated = (head + tail).joinToString(" "),
             )
         }
 

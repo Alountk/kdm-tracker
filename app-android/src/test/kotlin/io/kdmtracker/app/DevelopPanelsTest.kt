@@ -432,4 +432,64 @@ class DevelopPanelsTest {
         assertEquals(SlotState.OWNED, model.slots.first { it.name == "Lenguaje" }.state)
         assertEquals(SlotState.NEW_THIS_YEAR, model.slots.first { it.name == "Pintura" }.state)
     }
+
+    @Test
+    fun theCostChipAbbreviatesResourcesToInitials() {
+        val hoard =
+            SettlementLocation(
+                LocationId("lantern_hoard"),
+                LocalizedText(es = "Cúmulo de Linternas"),
+                actions =
+                    listOf(
+                        SettlementAction(
+                            names = LocalizedText(es = "Innovar"),
+                            kind = ActionKind.INNOVATE,
+                            endeavorCost = 1,
+                            resourceCost =
+                                mapOf(
+                                    ResourceId("bone") to 1,
+                                    ResourceId("organ") to 1,
+                                    ResourceId("hide") to 1,
+                                ),
+                        ),
+                    ),
+            )
+        val model =
+            InnovationsModel.of(
+                state(
+                    locations = listOf(hoard),
+                    built = listOf("Cúmulo de Linternas"),
+                    views =
+                        listOf(
+                            view(
+                                innovation("pintura"),
+                                InnovationStatus.AVAILABLE,
+                                endeavorCost = 1,
+                                resourceCost =
+                                    mapOf(
+                                        ResourceId("bone") to 1,
+                                        ResourceId("organ") to 1,
+                                        ResourceId("hide") to 1,
+                                    ),
+                            ),
+                        ),
+                    resources =
+                        listOf(
+                            resource("bone", "Hueso de Monstruo"),
+                            resource("organ", "Órgano de Monstruo"),
+                            resource("hide", "Piel de Monstruo"),
+                        ),
+                    storage =
+                        listOf(
+                            StorageLine(ResourceId("bone"), 1),
+                            StorageLine(ResourceId("organ"), 1),
+                            StorageLine(ResourceId("hide"), 1),
+                        ),
+                ),
+            )
+
+        assertEquals(1, model.costChip.endeavors)
+        assertEquals(listOf("H", "Ó", "P"), model.costChip.resources)
+        assertEquals("1H 1Ó 1P", model.costChip.abbreviated)
+    }
 }
