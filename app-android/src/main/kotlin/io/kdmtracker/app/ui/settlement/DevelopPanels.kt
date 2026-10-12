@@ -170,8 +170,16 @@ private fun ReadyBody(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "1*", style = KdmType.labelCaps, color = InnovarPalette.gold)
-                Text(text = "| 1H 1Ó 1P", style = microLabel, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = "${model.costChip.endeavors}*",
+                    style = KdmType.labelCaps,
+                    color = InnovarPalette.gold,
+                )
+                Text(
+                    text = "| ${model.costChip.abbreviated}",
+                    style = microLabel,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
 
