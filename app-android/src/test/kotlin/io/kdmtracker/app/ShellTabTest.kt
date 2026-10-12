@@ -14,7 +14,7 @@ class ShellTabTest {
     @Test
     fun everyTabCarriesTheDesignsLabelAndIcon() {
         assertEquals(
-            listOf("Asentamiento", "Supervivientes", "Caza", "Enfrentamiento"),
+            listOf("Asent.", "Superv.", "Caza", "Enfrent."),
             ShellTab.entries.map { it.label },
         )
         assertEquals(
