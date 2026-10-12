@@ -19,10 +19,11 @@ Implement the Innovar flow — **draw N innovation cards, keep one** — as the 
 1. **The hand is derived, never stored.** The drawn cards are computed from campaign state, so there is no new field in `SettlementState` and **no transfer-document version bump** (v12 stays). Chosen over persisting the hand (needs a v13) and over drawing transiently in the UI (two devices could see different offers).
 2. **There is no `Innovar` button.** The reference shows the offer directly under `Innovar: Elige 1 de 2 Cartas` in the active state; the blocked states show status badges (`Acción de Innovar Agotada`, `INNOVAR NO DISPONIBLE`), not an action. `SELECCIONAR` is the only thing that fires.
 3. **The whole copy ships.** The closing reason (quoting the once-per-phase rule), the per-resource `FALTA`/`OK` checklist, and the three "how to unlock more cards" bullets are in. All three are derivable from state we already hold; none of them adds model.
-4. **The card's category is content.** `identity/innovations.csv` gains a `category` column, threaded through `ingest_innovations.py` into `Innovation.category` — the same move Phase 1 made with the location prose. The values are **authored** (the cards carry them; the CSV does not), so they are flagged for review. The deck row's filters (`Todas / Supervivencia / Creencia / Arte / Sociedad`) become counts over that column instead of being literals.
-5. **The card's subtitle is derived, never authored:** `consecuencia de <madre>` when the unlock tree has a parent for it, otherwise `innovación inicial`. Its footnote follows `consequences` (`Añade consecuencias de <nombre> al mazo`), and its bonus chip follows `survivalLimitBonus`.
-6. **One language per render.** `names.es` today; no parenthetical English (content-identity Decision 1).
-7. **No `:core` rule change.** `Innovate.run` already enforces the endeavor + resource cost, the once-per-phase limit and the unlock; this phase only decides *which* cards are offered and how they are drawn.
+4. **Acquisition state filters first, category second.** The catalogue browser carries two chip groups, in this order: **`Todas` / `Adquiridas` / `No adquiridas`** (the maintainer's — they describe what the deck actually does), and *then* the per-category chips. Both groups filter the **catalogue browser only** — never the hand, which by construction can only hold not-yet-acquired cards. The mock's category order (`Supervivencia / Creencia / Arte / Sociedad`) is dropped as the leading group; the maintainer kept categories behind his own.
+5. **The card's category is content.** `identity/innovations.csv` gains a `category` column, threaded through `ingest_innovations.py` into `Innovation.category` — the same move Phase 1 made with the location prose. The values are **authored** (the cards carry them; the CSV does not), so they are flagged for review. The column is what both the second filter group and each card's category badge read; neither is a literal.
+6. **The card's subtitle is derived, never authored:** `consecuencia de <madre>` when the unlock tree has a parent for it, otherwise `innovación inicial`. Its footnote follows `consequences` (`Añade consecuencias de <nombre> al mazo`), and its bonus chip follows `survivalLimitBonus`.
+7. **One language per render.** `names.es` today; no parenthetical English (content-identity Decision 1).
+8. **No `:core` rule change.** `Innovate.run` already enforces the endeavor + resource cost, the once-per-phase limit and the unlock; this phase only decides *which* cards are offered and how they are drawn.
 
 ## Design
 
@@ -71,8 +72,8 @@ data class CostView(
 
 ### Components
 
-1. **Slots** — the three principle slots plus the design's fourth, `MAZO ACTIVO` (`Cúmulo Linternas / Robando 2 cartas… / DESPLEGADO`).
-2. **Deck row** — `Mazo de Innovación (N Descubribles)` with its catalogue toggle, plus a `Todas (N)` chip and one chip per **distinct value of `Innovation.category`**, each showing its count. The labels come from the content; no chip literal is hardcoded.
+1. **Slots** — not milestones: one slot per **principle already chosen at a milestone** (`state.chosenPrinciples`, filled by `ChoosePrinciple` in steps 5/6, one per `PrincipleCategory`), plus empty slots for the categories not chosen yet. The design's fourth, `MAZO ACTIVO` (`Cúmulo Linternas / Robando 2 cartas… / DESPLEGADO`), is not a principle — it is the built location whose `INNOVATE` action feeds the draw, derived from the catalog.
+2. **Deck row** — `Mazo de Innovación (N Descubribles)` with its catalogue toggle, then the **acquisition chips first**: `Todas (N)`, `Adquiridas (N)`, `No adquiridas (N)` (counts over what is unlocked), and only **after them** one chip per distinct `Innovation.category`, each with its count. Labels come from the content; only `Todas`/`Adquiridas`/`No adquiridas` are literals, and they are the maintainer's wording. Both groups filter the browser, not the hand.
 3. **Offer header** — `Innovar: Elige 1 de 2 Cartas`, the cost line (`COSTE: N ✳ + <chips>`), and the official rule line.
 4. **The hand** — a **2-column grid** of `InnovationCardView`: category badge, subtitle, name, bonus chip, effect, footnote, and the action — `✓ SELECCIONAR` (gold) when selectable, `INERTE` in `USED_THIS_PHASE`, `REQUIERE COSTE` with a lock in `UNAFFORDABLE`.
 5. **State banners** — `Acción de Innovar Agotada` + `1 DE 1 USADO` + `YA UTILIZADO (AÑO 1)`/`BLOQUEO TEMPORAL` (3); `MAZO: 0 CARTAS` + `No Quedan Innovaciones en el Mazo` + the three help bullets (4); `INNOVAR NO DISPONIBLE` + `Cartas a robar en la oferta: Vista previa no interactiva` (5).
@@ -83,6 +84,8 @@ data class CostView(
 | UI action | Callback (existing) | Path |
 |---|---|---|
 | `SELECCIONAR` | `onInnovate(innovationName)` | controller resolves the name → `Innovate.run(record, locationId, id, catalog)` — same transaction, same blockers as today |
+
+On success the deck **recomputes from the state we just wrote**: the chosen card leaves `AVAILABLE` (it is `UNLOCKED` now) and its `consequences` enter `InnovationDeck`, so the next offer is a different hand built on the card that was taken. Nothing is stored to make that happen — it falls out of the derived hand.
 
 Everything else (deck size, slots, `drawLabel`, the phase limit) keeps its current wiring.
 
@@ -99,7 +102,7 @@ The disabled `Innovar` `KdmActionButton` in `InnovationsPanel` — the reference
 ## Testing
 
 - **`InnovationDrawTest` (JVM, `:core`):** returns exactly `ruleset.innovationDraw` when more are available; returns fewer when they are not; never returns an `UNLOCKED` or `NO_ACCESS` card; the same state yields the same hand twice (determinism); the hand is identical for two campaigns with different ids only in its *choice*, never in its *order* relative to a given id (stability); an empty deck yields an empty hand.
-- **`InnovationsModel` tests (JVM, app — the assertions today in `DevelopPanelsTest`, split out if they grow):** the `PhaseState` priority table, one state per input; `CostView.ok` and the `FALTA`/`OK` split for a short ledger; the subtitle and footnote derivation; the category chips as counts.
+- **`InnovationsModel` tests (JVM, app — the assertions today in `DevelopPanelsTest`, split out if they grow):** the `PhaseState` priority table, one state per input; `CostView.ok` and the `FALTA`/`OK` split for a short ledger; the subtitle and footnote derivation; the acquisition chips and the category chips both as counts, and that the acquisition group is the one rendered first.
 - Port every existing test that touches `InnovationsModel` (the `drawLabel`/slots assertions stay).
 - Gate: `./gradlew spotlessApply && ./gradlew :core:jvmTest :data:jvmTest :app-android:testDebugUnitTest :server:test spotlessCheck`, plus `python3 -m unittest discover -s tools/content-ingest/tests`.
 
