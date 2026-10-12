@@ -1,18 +1,23 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.app.ui.settlement.InnovarGate
 import io.kdmtracker.app.ui.settlement.InnovationsModel
 import io.kdmtracker.app.ui.settlement.PhaseState
 import io.kdmtracker.app.ui.settlement.ResourceNeed
+import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
+import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Settlement
+import io.kdmtracker.core.domain.SettlementAction
+import io.kdmtracker.core.domain.SettlementLocation
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
@@ -72,8 +77,25 @@ class DevelopPanelsTest {
             state = SettlementState(innovations = InnovationCollection(unlocked)),
         )
 
+    private val freeHoard =
+        SettlementLocation(
+            LocationId("lantern_hoard"),
+            LocalizedText(es = "Cúmulo de Linternas"),
+            actions =
+                listOf(
+                    SettlementAction(
+                        names = LocalizedText(es = "Innovar"),
+                        kind = ActionKind.INNOVATE,
+                        endeavorCost = 0,
+                    ),
+                ),
+        )
+
     private fun state(
         definitions: List<Innovation> = emptyList(),
+        locations: List<SettlementLocation> = listOf(freeHoard),
+        built: List<String> = listOf("Cúmulo de Linternas"),
+        lanternYear: Int = 1,
         views: List<InnovationView> = emptyList(),
         deck: List<String> = emptyList(),
         principles: Map<PrincipleCategory, String> = emptyMap(),
@@ -86,7 +108,7 @@ class DevelopPanelsTest {
         campaign: Boolean = true,
     ) = UiState(
         screen = Screen.Settlement,
-        lanternYear = 1,
+        lanternYear = lanternYear,
         phase = SettlementPhase.SETTLEMENT,
         settlementName = "Test",
         currentStep = 7,
@@ -97,6 +119,8 @@ class DevelopPanelsTest {
         reachableSteps = emptySet(),
         lastTransition = null,
         record = if (campaign) record(unlocked) else null,
+        catalogLocations = locations,
+        builtLocations = built,
         innovationDefinitions = definitions,
         innovationViews = views,
         innovationDeck = deck,
@@ -207,7 +231,7 @@ class DevelopPanelsTest {
                 ),
             )
 
-        assertTrue(model.hand.isNotEmpty())
+        assertFalse(model.cost.ok, "the action is unaffordable here")
         assertEquals(PhaseState.USED_THIS_PHASE, model.phaseState)
     }
 
@@ -219,7 +243,7 @@ class DevelopPanelsTest {
                 state(views = listOf(view(paint, InnovationStatus.AVAILABLE, endeavorCost = 1)), endeavors = 0),
             )
 
-        assertTrue(model.hand.isNotEmpty())
+        assertFalse(model.cost.ok, "the action is unaffordable here")
         assertEquals(PhaseState.UNAFFORDABLE, model.phaseState)
     }
 
@@ -282,6 +306,47 @@ class DevelopPanelsTest {
     }
 
     @Test
+    fun theFourthSlotAndTheRuleLineComeFromTheState() {
+        val hoard =
+            SettlementLocation(
+                LocationId("lantern_hoard"),
+                LocalizedText(es = "Cúmulo de Linternas"),
+                actions = listOf(SettlementAction(names = LocalizedText(es = "Innovar"), kind = ActionKind.INNOVATE)),
+            )
+
+        val model =
+            InnovationsModel.of(
+                state(
+                    locations = listOf(hoard),
+                    built = listOf("Cúmulo de Linternas"),
+                    draw = 2,
+                    keep = 1,
+                    lanternYear = 3,
+                ),
+            )
+
+        assertEquals("Cúmulo de Linternas", model.activeDeck?.name)
+        assertEquals("Robando 2 cartas...", model.activeDeck?.note)
+        assertEquals("Innovar: Elige 1 de 2 Cartas", model.offerTitle)
+        assertEquals(
+            "Regla oficial KDM: Roba 2 innovaciones, quédate 1 y devuelve la otra al mazo.",
+            model.ruleLine,
+        )
+        assertEquals(3, model.lanternYear)
+    }
+
+    @Test
+    fun theRuleLineFollowsAHouseRuleThatKeepsMoreThanOne() {
+        val model = InnovationsModel.of(state(draw = 4, keep = 3))
+
+        assertEquals(
+            "Regla oficial KDM: Roba 4 innovaciones, quédate 3 y devuelve el resto al mazo.",
+            model.ruleLine,
+        )
+        assertEquals("Innovar: Elige 3 de 4 Cartas", model.offerTitle)
+    }
+
+    @Test
     fun eachChipGroupCountsItsOwnDimension() {
         val art = innovation("pintura", es = "Pintura", category = "Arte")
         val art2 = innovation("escultura", es = "Escultura", category = "Arte")
@@ -298,5 +363,40 @@ class DevelopPanelsTest {
 
         assertEquals(listOf("Todas" to 3, "Adquiridas" to 1, "No adquiridas" to 2), model.acquisitionChips)
         assertEquals(listOf("Arte" to 2, "Hogar" to 1), model.categoryChips)
+    }
+
+    @Test
+    fun aSettlementShortOnResourcesShowsOnlyTheCostBlock() {
+        val hoard =
+            SettlementLocation(
+                LocationId("lantern_hoard"),
+                LocalizedText(es = "Cúmulo de Linternas"),
+                actions = listOf(SettlementAction(names = LocalizedText(es = "Innovar"), kind = ActionKind.INNOVATE)),
+            )
+        val model =
+            InnovationsModel.of(
+                state(
+                    locations = listOf(hoard),
+                    built = listOf("Cúmulo de Linternas"),
+                    views = listOf(view(innovation("pintura"), InnovationStatus.AVAILABLE, endeavorCost = 1)),
+                    endeavors = 0,
+                ),
+            )
+
+        assertEquals(InnovarGate.SHORT_ON_RESOURCES, model.gate)
+        assertEquals(emptyList(), model.hand, "a settlement that cannot pay holds no cards")
+        assertEquals(listOf(ResourceNeed("Esfuerzo", have = 0, need = 1)), model.missing)
+        assertTrue(model.motivo.startsWith("No es posible seleccionar"), model.motivo)
+    }
+
+    @Test
+    fun aSettlementWithoutABuiltInnovateLocationShowsTheNoAccessBlock() {
+        val model =
+            InnovationsModel.of(
+                state(built = emptyList(), views = listOf(view(innovation("pintura"), InnovationStatus.AVAILABLE))),
+            )
+
+        assertEquals(InnovarGate.NO_ACCESS, model.gate)
+        assertEquals(emptyList(), model.hand)
     }
 }

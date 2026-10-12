@@ -277,7 +277,7 @@ class FabricarModelTest {
     }
 
     @Test
-    fun aBuiltLocationWithoutAnActionHasNoActionButton() {
+    fun aBuiltLocationWithoutAnActionHasNoCostRow() {
         val model = FabricarModel.of(state(catalog = listOf(taller), built = listOf("Taller de Huesos")))
 
         assertNull(model.built.single().actionLabel)

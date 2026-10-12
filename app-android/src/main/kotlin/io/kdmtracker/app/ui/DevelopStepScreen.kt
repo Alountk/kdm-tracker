@@ -2,7 +2,6 @@ package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -16,22 +15,16 @@ import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.StorageLine
 
-internal enum class DevelopTab { RECURSOS, INNOVAR }
-
 /**
- * The Step 7 "Develop" body: a small tab switcher over [RecursosTab] and [InnovarTab], inside
- * the cockpit's chrome (the Fabricar flow lives in the settlement screen's locations section). The selected tab is hoisted to the caller
- * ([selectedTab]/[onTabSelected]) so the Settlement screen's panels can open a tab — the
- * locations panel's Innovar action jumps here; every action is reported through a callback and
- * every list comes from [state].
+ * The Step 7 "Develop" body: the resource ledger, inside the cockpit's chrome. The other two
+ * flows of this step — the fabricar section and the innovar offer — live in the settlement
+ * screen's panels above it, so there is no tab to switch any more; every action is reported
+ * through a callback and every list comes from [state].
  */
 @Composable
 internal fun DevelopStepScreen(
     state: UiState,
-    onInnovate: (String) -> Unit,
     onAddResource: (ResourceEntry) -> Unit,
-    selectedTab: DevelopTab = DevelopTab.RECURSOS,
-    onTabSelected: (DevelopTab) -> Unit = {},
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -45,21 +38,13 @@ internal fun DevelopStepScreen(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ChoiceChip("Recursos", selectedTab == DevelopTab.RECURSOS) { onTabSelected(DevelopTab.RECURSOS) }
-            ChoiceChip("Innovar", selectedTab == DevelopTab.INNOVAR) { onTabSelected(DevelopTab.INNOVAR) }
-        }
-
         Text(
             text = "Endeavors ${state.endeavors} · ${storageText(state.storageLines, state.resourceDefinitions)}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        when (selectedTab) {
-            DevelopTab.RECURSOS -> RecursosTab(state = state, onAddResource = onAddResource)
-            DevelopTab.INNOVAR -> InnovarTab(state = state, onInnovate = onInnovate)
-        }
+        RecursosTab(state = state, onAddResource = onAddResource)
     }
 }
 

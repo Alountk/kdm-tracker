@@ -2,6 +2,7 @@ package io.kdmtracker.app.ui.settlement
 
 import io.kdmtracker.app.UiState
 import io.kdmtracker.core.content.ContentIdentity
+import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.rules.InnovationDraw
@@ -13,6 +14,12 @@ import io.kdmtracker.core.rules.InnovationDraw
  * spent its action this phase never also claims it is out of cards or short of resources.
  */
 enum class PhaseState { OFFER, USED_THIS_PHASE, NO_CARDS, UNAFFORDABLE }
+
+/**
+ * Whether the Innovar action is reachable at all, affordable, or neither — the design's outer gate,
+ * decided before anything else in the section is drawn.
+ */
+enum class InnovarGate { NO_ACCESS, SHORT_ON_RESOURCES, READY }
 
 /** One thing the Innovate action needs, and how much of it the settlement holds. */
 data class ResourceNeed(
@@ -29,6 +36,12 @@ data class CostView(
     val resources: List<ResourceNeed>,
     val ok: Boolean,
     val reason: String,
+)
+
+/** The location whose [ActionKind.INNOVATE] action is feeding this draw — the reference's `MAZO ACTIVO` slot. */
+data class ActiveDeck(
+    val name: String,
+    val note: String,
 )
 
 /** One card of the drawn hand, built from the catalog definition rather than the persisted state. */
@@ -56,8 +69,15 @@ data class InnovationsModel(
     val hand: List<InnovationCard>,
     val phaseState: PhaseState,
     val cost: CostView,
+    val gate: InnovarGate,
+    val missing: List<ResourceNeed>,
+    val motivo: String,
     val categoryChips: List<Pair<String, Int>>,
     val acquisitionChips: List<Pair<String, Int>>,
+    val activeDeck: ActiveDeck?,
+    val offerTitle: String,
+    val ruleLine: String,
+    val lanternYear: Int,
 ) {
     companion object {
         /** The design's three slots: the chosen principle plus two to discover. */
@@ -72,17 +92,12 @@ data class InnovationsModel(
                     ?.innovations
                     ?.mapTo(mutableSetOf()) { it.id } ?: mutableSetOf()
 
-            val hand =
-                InnovationDraw
-                    .of(
-                        state.record
-                            ?.settlement
-                            ?.campaignId
-                            ?.value,
-                        state.innovationViews,
-                        state.innovationDraw,
-                    ).map { card -> cardOf(state, card) }
-
+            val innovatingLocation =
+                state.catalogLocations
+                    .firstOrNull { location ->
+                        location.names.es in state.builtLocations &&
+                            location.actions.any { it.kind == ActionKind.INNOVATE }
+                    }
             val action = state.innovationViews.firstOrNull()
             val endeavors = ResourceNeed(name = "Esfuerzo", have = state.endeavors, need = action?.endeavorCost ?: 0)
             val resources =
@@ -105,16 +120,38 @@ data class InnovationsModel(
                     ok = affordable,
                     reason = if (affordable) "" else reasonFor(endeavors, resources),
                 )
+            val gate =
+                when {
+                    innovatingLocation == null || state.innovationViews.any { it.used } -> InnovarGate.NO_ACCESS
+                    !cost.ok -> InnovarGate.SHORT_ON_RESOURCES
+                    else -> InnovarGate.READY
+                }
+            val hand =
+                if (gate == InnovarGate.READY) {
+                    InnovationDraw
+                        .of(
+                            state.record
+                                ?.settlement
+                                ?.campaignId
+                                ?.value,
+                            state.innovationViews,
+                            state.innovationDraw,
+                        ).map { card -> cardOf(state, card) }
+                } else {
+                    emptyList()
+                }
 
             val phaseState =
                 when {
                     state.innovationViews.any { it.used } -> PhaseState.USED_THIS_PHASE
-                    hand.isEmpty() -> PhaseState.NO_CARDS
                     !cost.ok -> PhaseState.UNAFFORDABLE
+                    hand.isEmpty() -> PhaseState.NO_CARDS
                     else -> PhaseState.OFFER
                 }
 
             val acquired = definitions.count { it.id in unlocked }
+            val draw = state.innovationDraw
+            val keep = state.innovationKeep
             return InnovationsModel(
                 deckSize = state.innovationDeck.size,
                 principleSlots = state.chosenPrinciples.values.toList(),
@@ -123,6 +160,9 @@ data class InnovationsModel(
                 hand = hand,
                 phaseState = phaseState,
                 cost = cost,
+                gate = gate,
+                missing = (listOf(cost.endeavors) + cost.resources).filter { !it.ok },
+                motivo = cost.reason,
                 categoryChips =
                     definitions
                         .groupingBy { it.category }
@@ -135,7 +175,26 @@ data class InnovationsModel(
                         "Adquiridas" to acquired,
                         "No adquiridas" to definitions.size - acquired,
                     ),
+                activeDeck =
+                    innovatingLocation?.let { location ->
+                        ActiveDeck(name = location.names.es, note = "Robando $draw cartas...")
+                    },
+                offerTitle = "Innovar: Elige $keep de $draw Cartas",
+                ruleLine = ruleLine(draw, keep),
+                lanternYear = state.lanternYear,
             )
+        }
+
+        /**
+         * The reference's rule line, with the numbers the ruleset actually holds so a house rule
+         * never leaves a stale "2" on screen. `la otra` only reads correctly while one card is kept.
+         */
+        private fun ruleLine(
+            draw: Int,
+            keep: Int,
+        ): String {
+            val tail = if (keep == 1) "la otra" else "el resto"
+            return "Regla oficial KDM: Roba $draw innovaciones, quédate $keep y devuelve $tail al mazo."
         }
 
         /** The reference's `Motivo:` sentence: the whole price, named, not only the shortfall. */

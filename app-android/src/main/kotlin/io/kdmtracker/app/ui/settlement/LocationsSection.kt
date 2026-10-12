@@ -59,7 +59,6 @@ fun LocationsSection(
     model: FabricarModel,
     onBuild: (String) -> Unit,
     onCraft: (String, String) -> Unit,
-    onAction: (String) -> Unit,
     onSpendEndeavor: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -69,7 +68,7 @@ fun LocationsSection(
             trailing = "${model.builtCount} CONSTRUIDAS · ${model.pendingCount} PENDIENTES",
         )
         model.built.forEach { card ->
-            BuiltCard(card = card, onAction = onAction, onCraft = onCraft, onBuild = onBuild)
+            BuiltCard(card = card, onCraft = onCraft, onBuild = onBuild)
         }
         model.buildable.forEach { card ->
             BuildableCard(card = card, onBuild = onBuild)
@@ -96,7 +95,6 @@ fun LocationsSection(
 @Composable
 private fun BuiltCard(
     card: BuiltLocationCard,
-    onAction: (String) -> Unit,
     onCraft: (String, String) -> Unit,
     onBuild: (String) -> Unit,
 ) {
@@ -196,15 +194,7 @@ private fun BuiltCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                } else {
-                    Spacer(Modifier.weight(1f))
                 }
-                KdmActionButton(
-                    text = card.actionLabel,
-                    onClick = { onAction(card.name) },
-                    icon = "psychology",
-                    variant = KdmActionVariant.DARK,
-                )
             }
         }
     }
@@ -624,19 +614,26 @@ private fun PanelTitle(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Symbol(icon, MaterialTheme.colorScheme.secondary, 16.sp)
-            Spacer(Modifier.width(6.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Symbol(icon, MaterialTheme.colorScheme.secondary, 18.sp)
             Text(
-                text = title.uppercase(),
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
         Text(
-            text = trailing,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = trailing.uppercase(),
+            style = KdmType.labelCaps,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.small)
+                    .border(1.dp, MaterialTheme.colorScheme.secondary, MaterialTheme.shapes.small)
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }
 }

@@ -11,8 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -104,26 +102,15 @@ fun SettlementScreen(
                     onResolveMilestone = onResolveMilestone,
                 )
             7 -> {
-                var developTab by remember { mutableStateOf(DevelopTab.RECURSOS) }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    InnovationsPanel(model = InnovationsModel.of(state = state))
+                    InnovationsPanel(model = InnovationsModel.of(state = state), onSelect = onInnovate)
                     LocationsSection(
                         model = FabricarModel.of(state),
                         onBuild = onBuild,
                         onCraft = onCraft,
-                        // The location's action is Innovate; innovating means picking an
-                        // innovation, which happens in the Develop body's Innovar tab — so the
-                        // button opens that tab instead of firing onInnovate with no choice.
-                        onAction = { developTab = DevelopTab.INNOVAR },
                         onSpendEndeavor = onSpendEndeavor,
                     )
-                    DevelopStepScreen(
-                        state = state,
-                        onInnovate = onInnovate,
-                        onAddResource = onAddResource,
-                        selectedTab = developTab,
-                        onTabSelected = { developTab = it },
-                    )
+                    DevelopStepScreen(state = state, onAddResource = onAddResource)
                 }
             }
             8 ->
