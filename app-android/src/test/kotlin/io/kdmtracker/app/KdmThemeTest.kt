@@ -6,6 +6,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import io.kdmtracker.app.ui.theme.InnovarPalette
 import io.kdmtracker.app.ui.theme.KdmScheme
 import io.kdmtracker.app.ui.theme.KdmShapes
 import io.kdmtracker.app.ui.theme.KdmType
@@ -164,6 +165,43 @@ class KdmThemeTest {
             contrastRatio(woundBoxColor(checked = true, scheme = KdmScheme), panel) >= 3f,
             "the checked wound box must stay readable on the panel",
         )
+    }
+
+    /**
+     * The Innovar-flow board carries colours the Atramentum Lantern palette does not: a gold that
+     * is not [KdmPalette.gold], plus a green and a red the theme has no role for. They are pinned
+     * here so the section cannot drift from the design it was built from. The choice of these over
+     * the theme's own gold/red is under review — see `docs/backlog.md`.
+     */
+    @Test
+    fun theInnovarFlowTokensMatchTheBoard() {
+        val expected =
+            mapOf(
+                "gold" to Color(0xFFE5B842),
+                "goldLight" to Color(0xFFF5D376),
+                "goldDark" to Color(0xFF9B7617),
+                "goldWash" to Color(0x1FE5B842),
+                "goldPillBg" to Color(0xFF342800),
+                "green" to Color(0xFF10B981),
+                "greenWash" to Color(0x1F10B981),
+                "red" to Color(0xFFEF4444),
+                "redBg" to Color(0x1AEF4444),
+                "outlineBorder" to Color(0x14FFFFFF),
+            )
+        val actual =
+            mapOf(
+                "gold" to InnovarPalette.gold,
+                "goldLight" to InnovarPalette.goldLight,
+                "goldDark" to InnovarPalette.goldDark,
+                "goldWash" to InnovarPalette.goldWash,
+                "goldPillBg" to InnovarPalette.goldPillBg,
+                "green" to InnovarPalette.green,
+                "greenWash" to InnovarPalette.greenWash,
+                "red" to InnovarPalette.red,
+                "redBg" to InnovarPalette.redBg,
+                "outlineBorder" to InnovarPalette.outlineBorder,
+            )
+        assertEquals(expected, actual, "the Innovar board's tokens must not drift")
     }
 }
 
