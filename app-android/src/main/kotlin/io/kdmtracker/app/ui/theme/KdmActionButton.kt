@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,6 +78,7 @@ fun KdmActionButton(
     enabled: Boolean = true,
     icon: String? = null,
     variant: KdmActionVariant = KdmActionVariant.LIGHT,
+    border: Color? = null,
 ) {
     val shape = MaterialTheme.shapes.small
     val colors = actionColors(variant, enabled)
@@ -87,6 +89,7 @@ fun KdmActionButton(
                 .clip(shape)
                 .background(colors.container)
                 .clickable(enabled = interactive, onClick = onClick)
+                .then(if (border != null) Modifier.border(1.dp, border, shape) else Modifier)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
