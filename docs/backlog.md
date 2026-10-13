@@ -69,3 +69,12 @@ izquierdo del dock inferior, antes de `ASENTAMIENTO`, con un `home` (el `logout`
 en el subset de fuentes). Cableado como `onExit -> viewModel.goHome` y verificado en el emulador.
 Las cuatro propuestas siguen en `.superpowers/design/innovar-flow/salida_4_propuestas.html` como
 contexto del dictamen.
+
+**Segunda mitad de esta misma entrada:** the subset was regenerated ad hoc from a throwaway venv —
+there is no checked-in script, so nobody can reproduce it after the glyph map changes. The recipe
+is: `fontTools` reads `KdmSymbols.CODEPOINTS` plus any new names, resolves them through the full
+Material Symbols TTF's cmap, and runs `pyftsubset --unicodes=… --layout-features=* --no-hinting
+--desubroutinize` over `google/material-design-icons`' variable font. Worth committing as
+`tools/fonts/subset_material_symbols.py` next time the font is touched.
+
+- Raised by: 2026-10-12, after regenerating the subset for the Innovar flow.
