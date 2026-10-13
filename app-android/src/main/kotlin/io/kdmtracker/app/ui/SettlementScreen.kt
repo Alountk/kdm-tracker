@@ -27,6 +27,7 @@ import io.kdmtracker.app.ui.settlement.StepFrameModel
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 
@@ -77,6 +78,7 @@ fun SettlementScreen(
         onAdvance = onAdvance,
         onPrevious = onPrevious,
         onSelectStep = onSelectStep,
+        onAdjust = { id, delta -> onAddResource(ResourceEntry(id, delta)) },
     ) {
         when (state.currentStep) {
             2 ->
@@ -145,6 +147,7 @@ private fun SettlementCockpit(
     onAdvance: () -> Unit,
     onPrevious: () -> Unit,
     onSelectStep: (Int) -> Unit,
+    onAdjust: (ResourceId, Int) -> Unit = { _, _ -> },
     body: @Composable () -> Unit,
 ) {
     val frame = state.steps.firstOrNull { it.number == state.currentStep }?.let { StepFrameModel.of(it, state.steps) }
@@ -174,6 +177,7 @@ private fun SettlementCockpit(
                     ),
                 year = state.lanternYear,
                 phaseLabel = "Fase Activa",
+                onAdjust = onAdjust,
             )
 
             frame?.let { StepFrameHeader(model = it) }

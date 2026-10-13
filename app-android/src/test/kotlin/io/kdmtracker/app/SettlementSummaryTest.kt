@@ -26,10 +26,10 @@ class SettlementSummaryTest {
                 maxEndeavors = 4,
                 resources =
                     listOf(
-                        SummaryResource("Hueso de Monstruo", "Hueso", 1, ResourceColour.BONE),
-                        SummaryResource("Órgano de Monstruo", "Órgano", 1, ResourceColour.CORAL),
-                        SummaryResource("Piel de Monstruo", "Pellejo", 1, ResourceColour.GOLD),
-                        SummaryResource("Scrap", "Chatarra", 0, ResourceColour.DIM),
+                        SummaryResource(ResourceId("bone"), "Hueso de Monstruo", "Hueso", 1, ResourceColour.BONE),
+                        SummaryResource(ResourceId("organ"), "Órgano de Monstruo", "Órgano", 1, ResourceColour.CORAL),
+                        SummaryResource(ResourceId("hide"), "Piel de Monstruo", "Pellejo", 1, ResourceColour.GOLD),
+                        SummaryResource(ResourceId("scrap"), "Scrap", "Chatarra", 0, ResourceColour.DIM),
                     ),
             )
 
