@@ -65,9 +65,8 @@ data class SlotCardData(
 )
 
 /**
- * The Develop step's Innovations panel. `Innovar` is drawn and disabled: the design's flow draws
- * several cards and keeps one, and that flow is not modelled — the Develop body below is where an
- * innovation is actually unlocked.
+ * The Develop step's Innovaciones panel: the outer gate (access, then resources), the milestone
+ * grid, the draw action and the offer, resolving to the consumed state once the choice is made.
  */
 @Composable
 fun InnovationsPanel(
@@ -345,7 +344,6 @@ private fun NoCardsBlock(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // The board draws `swap_horizontal_circle`; it is not in the bundled subset.
         Symbol("swap_horizontal_circle", MaterialTheme.colorScheme.outline, 28.sp)
         Text(
             text = "No quedan innovaciones en el mazo",
@@ -767,8 +765,6 @@ private fun CostBlock(cost: CostView) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            // The board draws `error`; the bundled subset has no such glyph and the font is not
-            // re-subsettable here, so the nearest mapped one stands in. See docs/backlog.md.
             Symbol("error", InnovarPalette.red, 16.sp)
             Text(
                 text = "Coste de Innovación Insuficiente",
