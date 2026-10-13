@@ -38,7 +38,7 @@ import io.kdmtracker.core.domain.Ulid
  * confirm action. Every other step shows the cockpit — a header, a **thin top step bar** (the 11
  * steps as numbered chips, the current one highlighted and unreachable ones disabled, so the
  * navigation never eats half the width), a full-width body and the back/next controls. Step 7
- * (Develop) supplies [DevelopStepScreen] as that body. All navigation is reported through the
+ * (Develop) renders its own panels inline. All navigation is reported through the
  * callbacks; this composable owns no state and no rules.
  */
 @Composable
@@ -112,7 +112,6 @@ fun SettlementScreen(
                         onCraft = onCraft,
                         onSpendEndeavor = onSpendEndeavor,
                     )
-                    DevelopStepScreen(state = state, onAddResource = onAddResource)
                 }
             }
             8 ->

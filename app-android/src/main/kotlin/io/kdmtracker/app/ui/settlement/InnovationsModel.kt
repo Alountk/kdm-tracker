@@ -101,8 +101,6 @@ data class InnovationCard(
  */
 data class InnovationsModel(
     val deckSize: Int,
-    val principleSlots: List<String>,
-    val emptySlots: Int,
     val drawLabel: String,
     val hand: List<InnovationCard>,
     val phaseState: PhaseState,
@@ -112,8 +110,6 @@ data class InnovationsModel(
     val motivo: String,
     val slots: List<SlotView>,
     val costChip: CostChip,
-    val categoryChips: List<Pair<String, Int>>,
-    val acquisitionChips: List<Pair<String, Int>>,
     val activeDeck: ActiveDeck?,
     val offerTitle: String,
     val ruleLine: String,
@@ -192,6 +188,7 @@ data class InnovationsModel(
             val acquired = definitions.count { it.id in unlocked }
             val draw = state.innovationDraw
             val keep = state.innovationKeep
+            val drawLabel = "Robar ${state.innovationDraw}, elegir ${state.innovationKeep}"
             val slots =
                 state.record
                     ?.state
@@ -205,9 +202,7 @@ data class InnovationsModel(
                     } ?: emptyList()
             return InnovationsModel(
                 deckSize = state.innovationDeck.size,
-                principleSlots = state.chosenPrinciples.values.toList(),
-                emptySlots = (SLOT_COUNT - state.chosenPrinciples.size).coerceAtLeast(0),
-                drawLabel = "Robar ${state.innovationDraw}, elegir ${state.innovationKeep}",
+                drawLabel = drawLabel,
                 hand = hand,
                 phaseState = phaseState,
                 cost = cost,
@@ -216,21 +211,9 @@ data class InnovationsModel(
                 motivo = cost.reason,
                 slots = slots,
                 costChip = costChip(endeavors, resources),
-                categoryChips =
-                    definitions
-                        .groupingBy { it.category }
-                        .eachCount()
-                        .toList()
-                        .sortedBy { (label, _) -> label },
-                acquisitionChips =
-                    listOf(
-                        "Todas" to definitions.size,
-                        "Adquiridas" to acquired,
-                        "No adquiridas" to definitions.size - acquired,
-                    ),
                 activeDeck =
                     innovatingLocation?.let { location ->
-                        ActiveDeck(name = location.names.es, note = "Robando $draw cartas...")
+                        ActiveDeck(name = location.names.es, note = drawLabel)
                     },
                 offerTitle = "Innovar: Elige $keep de $draw Cartas",
                 ruleLine = ruleLine(draw, keep),

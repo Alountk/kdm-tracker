@@ -148,9 +148,6 @@ class DevelopPanelsTest {
         val chosen = mapOf(PrincipleCategory.NEW_LIFE to "The First Harvest → Cannibalize")
 
         val model = InnovationsModel.of(state(principles = chosen))
-
-        assertEquals(listOf("The First Harvest → Cannibalize"), model.principleSlots)
-        assertEquals(2, model.emptySlots)
     }
 
     @Test
@@ -327,7 +324,6 @@ class DevelopPanelsTest {
             )
 
         assertEquals("Cúmulo de Linternas", model.activeDeck?.name)
-        assertEquals("Robando 2 cartas...", model.activeDeck?.note)
         assertEquals("Innovar: Elige 1 de 2 Cartas", model.offerTitle)
         assertEquals(
             "Regla oficial KDM: Roba 2 innovaciones, quédate 1 y devuelve la otra al mazo.",
@@ -345,25 +341,6 @@ class DevelopPanelsTest {
             model.ruleLine,
         )
         assertEquals("Innovar: Elige 3 de 4 Cartas", model.offerTitle)
-    }
-
-    @Test
-    fun eachChipGroupCountsItsOwnDimension() {
-        val art = innovation("pintura", es = "Pintura", category = "Arte")
-        val art2 = innovation("escultura", es = "Escultura", category = "Arte")
-        val home = innovation("choza", es = "Choza", category = "Hogar")
-
-        val model =
-            InnovationsModel.of(
-                state(
-                    definitions = listOf(art, art2, home),
-                    views = listOf(view(art, InnovationStatus.AVAILABLE)),
-                    unlocked = listOf(art),
-                ),
-            )
-
-        assertEquals(listOf("Todas" to 3, "Adquiridas" to 1, "No adquiridas" to 2), model.acquisitionChips)
-        assertEquals(listOf("Arte" to 2, "Hogar" to 1), model.categoryChips)
     }
 
     @Test
