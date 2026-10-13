@@ -144,13 +144,6 @@ class DevelopPanelsTest {
     }
 
     @Test
-    fun aPrincipleSlotShowsTheChoiceLabelNotTheCategoryPrefix() {
-        val chosen = mapOf(PrincipleCategory.NEW_LIFE to "The First Harvest → Cannibalize")
-
-        val model = InnovationsModel.of(state(principles = chosen))
-    }
-
-    @Test
     fun aCampaignWithNothingUnlockedIsTheEmptyState() {
         val model = InnovationsModel.of(state(views = listOf(view(innovation("lenguaje"), InnovationStatus.UNLOCKED))))
 

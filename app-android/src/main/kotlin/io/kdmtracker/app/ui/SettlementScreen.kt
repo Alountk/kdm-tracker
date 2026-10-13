@@ -1,7 +1,9 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,8 +14,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.app.ui.settlement.FabricarModel
 import io.kdmtracker.app.ui.settlement.InnovationsModel
@@ -24,6 +28,7 @@ import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
 import io.kdmtracker.app.ui.settlement.StepFrameFooter
 import io.kdmtracker.app.ui.settlement.StepFrameHeader
 import io.kdmtracker.app.ui.settlement.StepFrameModel
+import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
@@ -178,6 +183,33 @@ private fun SettlementCockpit(
                 phaseLabel = "Fase Activa",
                 onAdjust = onAdjust,
             )
+
+            state.actionError?.let { reason ->
+                // Every controller refusal — innovar, fabricar, construir, ajustar recursos — is
+                // published here. Without this block they disappear the moment they happen.
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.small)
+                            .padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Text(
+                        text = KdmSymbols.glyph("warning"),
+                        fontFamily = KdmSymbols.family,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Text(
+                        text = reason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
 
             frame?.let { StepFrameHeader(model = it) }
 
