@@ -2,12 +2,9 @@ package io.kdmtracker.app.ui.settlement
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -717,77 +714,6 @@ private fun Symbol(
     )
 }
 
-/** `Mazo de Innovación (N Descubribles)` with the toggle that shows or hides the chip groups. */
-@Composable
-private fun DeckRow(
-    deckSize: Int,
-    open: Boolean,
-    onToggle: () -> Unit,
-) {
-    val shape = MaterialTheme.shapes.small
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.2f), shape)
-                .clickable(onClick = onToggle)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Symbol("grid_view", MaterialTheme.colorScheme.outline, 15.sp)
-            Text(
-                text = "Mazo de Innovación ($deckSize Descubribles)".uppercase(),
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(text = "Catálogo", style = microLabel, color = MaterialTheme.colorScheme.outline)
-            Symbol(
-                name = if (open) "arrow_drop_up" else "arrow_drop_down",
-                color = MaterialTheme.colorScheme.outline,
-                size = 14.sp,
-            )
-        }
-    }
-}
-
-/**
- * One chip group. The reference draws these as counts over the deck, not as controls over the
- * hand: the hand only ever holds not-yet-acquired cards, so an acquisition filter would only
- * empty it, and neither the reference nor this model carries a catalogue list to narrow.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ChipRow(chips: List<Pair<String, Int>>) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        chips.forEach { (label, count) ->
-            Text(
-                text = "$label ($count)",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.small)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-    }
-}
-
 /** The offer's header: what it costs today and the rule behind it. */
 @Composable
 private fun OfferHeader(model: InnovationsModel) {
@@ -818,60 +744,6 @@ private fun OfferHeader(model: InnovationsModel) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-    }
-}
-
-/** State 3: the action is spent for this phase and says so, with the reference's reason. */
-@Composable
-private fun UsedThisPhaseBanner(year: Int) {
-    val shape = MaterialTheme.shapes.small
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.3f), shape)
-                .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Symbol("lock", MaterialTheme.colorScheme.onSurface, 16.sp)
-            Text(
-                text = "Acción de Innovar Agotada",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(text = "1 DE 1 USADO", style = KdmType.labelCaps, color = MaterialTheme.colorScheme.secondary)
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = "YA UTILIZADO (AÑO $year)",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.error,
-                modifier =
-                    Modifier
-                        .background(
-                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-                            shape,
-                        ).padding(horizontal = 4.dp, vertical = 2.dp),
-            )
-            Text(text = "BLOQUEO TEMPORAL", style = KdmType.labelCaps, color = MaterialTheme.colorScheme.outline)
-        }
-        Text(
-            text =
-                "Motivo visible: La acción de desarrollo de Innovación solo puede ejecutarse una vez " +
-                    "por cada fase de asentamiento. Se reactivará de forma automática al alcanzar " +
-                    "el Paso 7 del siguiente Año Linterna.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -972,50 +844,6 @@ private fun CostLine(
             style = KdmType.labelCaps,
             color = if (ok) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
         )
-    }
-}
-
-/** State 4: nothing is offered, and the reference says what to do about it. */
-@Composable
-private fun EmptyDeckState() {
-    val shape = MaterialTheme.shapes.small
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.3f), shape)
-                .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(
-            text = "No Quedan Innovaciones en el Mazo",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text =
-                "No hay cartas con acceso directo en el mazo de robo actual o todas las consecuencias " +
-                    "requieren innovaciones previas aún no dominadas.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = "¿Cómo desbloquear nuevas cartas?",
-            style = KdmType.labelCaps,
-            color = MaterialTheme.colorScheme.secondary,
-        )
-        listOf(
-            "Construye localizaciones que añadan consecuencias (ej. Taller de Huesos, Armería).",
-            "Supera hitos de población para agregar nuevos principios de sociedad.",
-            "Usa eventos de historia para introducir cartas raras en el mazo.",
-        ).forEach { bullet ->
-            Text(
-                text = "•  $bullet",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
     }
 }
 
