@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -73,20 +72,45 @@ fun LocationsSection(
         model.buildable.forEach { card ->
             BuildableCard(card = card, onBuild = onBuild)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Symbol("warning", MaterialTheme.colorScheme.secondary, 16.sp)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = "Regla de Año Linterna 1 · Sáltate el Paso 9",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        // The design's special-showdown warning: a boxed icon beside three lines, in its own card.
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.small)
+                    .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            KdmActionButton(text = "Gastar endeavor (−1)", onClick = onSpendEndeavor, variant = KdmActionVariant.DARK)
+            Box(
+                modifier =
+                    Modifier
+                        .background(KdmPalette.onCrimsonContainer, MaterialTheme.shapes.small)
+                        .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Symbol("warning", KdmPalette.onCrimson, 20.sp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "Regla de Año Linterna 1",
+                    style = KdmType.labelCaps,
+                    color = KdmPalette.blood,
+                    letterSpacing = 0.1f.sp,
+                )
+                Text(
+                    text = "Sáltate el Paso 9",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text =
+                        "\"Sáltate el paso 9 en la primera fase de asentamiento. " +
+                            "Los supervivientes aún no conocen las némesis.\"",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
