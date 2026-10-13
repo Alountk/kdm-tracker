@@ -116,9 +116,6 @@ data class InnovationsModel(
     val lanternYear: Int,
 ) {
     companion object {
-        /** The design's three slots: the chosen principle plus two to discover. */
-        const val SLOT_COUNT = 3
-
         fun of(state: UiState): InnovationsModel {
             val definitions = state.innovationDefinitions
             val unlocked =
