@@ -186,17 +186,26 @@ data class InnovationsModel(
             val draw = state.innovationDraw
             val keep = state.innovationKeep
             val drawLabel = "Robar ${state.innovationDraw}, elegir ${state.innovationKeep}"
-            val slots =
+            val owned =
                 state.record
                     ?.state
                     ?.innovations
-                    ?.innovations
-                    ?.map {
-                        SlotView(
-                            name = it.names.es,
-                            state = SlotState.of(it.unlockedInYear, state.lanternYear),
-                        )
-                    } ?: emptyList()
+                    ?.innovations ?: emptyList()
+            val byName = owned.associateBy { it.names.es }
+            val chosen = state.chosenPrinciples.values
+            // Spec Component 1: the cells are the chosen principles. Whatever else the settlement
+            // has unlocked fills the rest of the grid, newest first, so the cell that should read
+            // `NUEVA` is never pushed past the take(3) by three older ones.
+            val principles =
+                chosen.mapNotNull { name ->
+                    byName[name]?.let { SlotView(it.names.es, SlotState.of(it.unlockedInYear, state.lanternYear)) }
+                }
+            val others =
+                owned
+                    .filter { it.names.es !in chosen }
+                    .sortedByDescending { it.unlockedInYear }
+                    .map { SlotView(it.names.es, SlotState.of(it.unlockedInYear, state.lanternYear)) }
+            val slots = (principles + others).take(SLOT_COUNT)
             return InnovationsModel(
                 deckSize = state.innovationDeck.size,
                 drawLabel = drawLabel,
@@ -217,6 +226,9 @@ data class InnovationsModel(
                 lanternYear = state.lanternYear,
             )
         }
+
+        /** The design's grid: three slots, then the deck cell. */
+        const val SLOT_COUNT = 3
 
         /** The minified price: `1` plus the first letter of each costed resource. */
         private fun costChip(

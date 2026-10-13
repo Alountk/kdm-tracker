@@ -462,4 +462,37 @@ class DevelopPanelsTest {
         assertEquals(listOf("H", "Ó", "P"), model.costChip.resources)
         assertEquals("1H 1Ó 1P", model.costChip.abbreviated)
     }
+
+    @Test
+    fun theGridShowsTheChosenPrincipleAndTheNewestUnlock() {
+        val principle = innovation("lenguaje", es = "Lenguaje")
+        val oldA = innovation("escultura", es = "Escultura")
+        val oldB = innovation("choza", es = "Choza")
+        val fresh = innovation("pintura", es = "Pintura")
+
+        val model =
+            InnovationsModel.of(
+                state(
+                    definitions = listOf(principle, oldA, oldB, fresh),
+                    unlocked =
+                        listOf(
+                            principle.copy(unlockedInYear = 1),
+                            oldA.copy(unlockedInYear = 1),
+                            oldB.copy(unlockedInYear = 2),
+                            fresh.copy(unlockedInYear = 3),
+                        ),
+                    principles = mapOf(PrincipleCategory.NEW_LIFE to "Lenguaje"),
+                    lanternYear = 3,
+                ),
+            )
+
+        assertEquals("Lenguaje", model.slots.first().name, "the spec's cells lead with the chosen principle")
+        assertEquals(
+            "Pintura",
+            model.slots.firstOrNull { it.name == "Pintura" }?.name,
+            "the newest unlock must not be pushed past take(3) by three older ones",
+        )
+        assertEquals(SlotState.NEW_THIS_YEAR, model.slots.first { it.name == "Pintura" }.state)
+        assertEquals(SlotState.OWNED, model.slots.first { it.name == "Lenguaje" }.state)
+    }
 }
