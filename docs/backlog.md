@@ -2,18 +2,20 @@
 
 Work that is known, wanted, and deliberately not being done yet.
 
-## Ampliar el subset de Material Symbols al vocabulario del flujo Innovar
+## Ampliar el subset de Material Symbols — glifos resueltos, falta el test
 
-`app-android/src/main/res/font/material_symbols_outlined.ttf` bundles only the glyphs the original
-four screens used. The `Innovaciones: Flujo de Innovar` board draws several the subset does not
-have, and `KdmSymbols.glyph` **throws** on an unmapped name (it crashed the app once already).
+**Glifos:** resuelto. The bundled TTF now contains exactly the 86 codepoints
+`KdmSymbols.CODEPOINTS` maps — nothing missing, nothing unmapped. The ten that were absent
+(`error`, `lock_open`, `sync_alt`, `undo`, `brush`, `unfold_more`, `manage_search`, `check`,
+`palette`, `swap_horizontal_circle`) plus the resource flow's (`inventory_2`, `nutrition`,
+`touch_app`, `balance`, `logout`) are all in, and every earlier glyph substitution has been
+reverted to the icon the design actually draws.
 
-Missing and needed: `error`, `lock_open`, `sync_alt`, `undo`, `brush`, `unfold_more`,
-`manage_search`, `check`, `palette`.
-
-Until the font is re-subset, those draw as the nearest mapped glyph (`error` → `warning`, and so
-on) with a comment at each site. Re-subsetting needs `fonttools` and the full Material Symbols
-TTF — an environment decision, not a code one.
+**What is still owed:** a test that opens the bundled TTF and asserts every mapped codepoint is in
+its cmap. `KdmSymbolsTest` pins the *map*, which is exactly how sixteen glyphs shipped missing
+without anything failing — the count read 86 while the font disagreed. `KdmSymbols.glyph` still
+throws on an unknown name, so that is the class of bug this guards. `KdmSymbolsTest` also still
+pins the old 71 individually instead of the new 86.
 
 - Raised by: implementing Task 3 of the Innovar flow, 2026-10-12.
 - Scope: `app-android/src/main/res/font/material_symbols_outlined.ttf`,
