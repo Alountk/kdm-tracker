@@ -267,7 +267,7 @@ private fun ConsumedBlock(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Symbol("check_circle", InnovarPalette.green, 16.sp)
+            Symbol("sync_alt", InnovarPalette.green, 16.sp)
             Text(
                 text = "Resolución del robo de cartas",
                 style = KdmType.labelCaps,
@@ -349,7 +349,7 @@ private fun NoCardsBlock(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // The board draws `swap_horizontal_circle`; it is not in the bundled subset.
-        Symbol("crisis_alert", MaterialTheme.colorScheme.outline, 28.sp)
+        Symbol("swap_horizontal_circle", MaterialTheme.colorScheme.outline, 28.sp)
         Text(
             text = "No quedan innovaciones en el mazo",
             style = MaterialTheme.typography.titleMedium,
@@ -897,7 +897,7 @@ private fun CostBlock(cost: CostView) {
         ) {
             // The board draws `error`; the bundled subset has no such glyph and the font is not
             // re-subsettable here, so the nearest mapped one stands in. See docs/backlog.md.
-            Symbol("warning", InnovarPalette.red, 16.sp)
+            Symbol("error", InnovarPalette.red, 16.sp)
             Text(
                 text = "Coste de Innovación Insuficiente",
                 style = MaterialTheme.typography.bodySmall,

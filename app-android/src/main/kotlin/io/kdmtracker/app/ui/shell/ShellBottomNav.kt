@@ -65,7 +65,7 @@ fun ShellBottomNav(
             // The design proposal chosen for leaving a campaign: it sits where the thumb already
             // rests, so returning to the "Settlements" list needs no reach to the top corner.
             Tab(
-                icon = "home",
+                icon = "logout",
                 label = "Salir",
                 selected = false,
                 onClick = onExit,

@@ -104,6 +104,6 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(71, KdmSymbols.glyphCount)
+        assertEquals(86, KdmSymbols.glyphCount)
     }
 }
