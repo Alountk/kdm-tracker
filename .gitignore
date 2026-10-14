@@ -20,3 +20,7 @@ external-assets
 # Python bytecode from the tools/ scripts.
 __pycache__/
 *.py[cod]
+
+# Local design cache (Stitch HTML/PNG exports); the specs under
+# docs/superpowers/ are the tracked record.
+.superpowers/
