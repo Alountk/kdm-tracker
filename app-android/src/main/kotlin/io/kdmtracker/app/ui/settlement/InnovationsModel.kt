@@ -114,6 +114,8 @@ data class InnovationsModel(
     val offerTitle: String,
     val ruleLine: String,
     val lanternYear: Int,
+    /** The catalogue browser's cards (design estados B/C), classified and in display order. */
+    val catalogue: List<CatalogCard>,
 ) {
     companion object {
         fun of(state: UiState): InnovationsModel {
@@ -224,6 +226,7 @@ data class InnovationsModel(
                 offerTitle = "Innovar: Elige $keep de $draw Cartas",
                 ruleLine = ruleLine(draw, keep),
                 lanternYear = state.lanternYear,
+                catalogue = InnovationCatalog.cards(state.innovationViews),
             )
         }
 

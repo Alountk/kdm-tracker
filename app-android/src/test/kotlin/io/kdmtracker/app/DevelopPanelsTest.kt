@@ -239,6 +239,31 @@ class DevelopPanelsTest {
     }
 
     @Test
+    fun theModelCarriesTheClassifiedCatalogue() {
+        val locked = innovation("alfa", es = "Alfa", category = "Ciencia")
+        val owned = innovation("zeta", es = "Zeta", category = "Arte")
+
+        val model =
+            InnovationsModel.of(
+                state(
+                    definitions = listOf(locked, owned),
+                    views =
+                        listOf(
+                            InnovationView(locked, InnovationStatus.NO_ACCESS, missingParent = "Lenguaje"),
+                            view(owned, InnovationStatus.UNLOCKED),
+                        ),
+                ),
+            )
+
+        // Acquired first, then by name — the browser's order, not the definitions'.
+        assertEquals(listOf("Zeta", "Alfa"), model.catalogue.map { it.name })
+        assertEquals("ADQUIRIDA", model.catalogue[0].footer)
+        assertEquals("SIN ACCESO", model.catalogue[1].footer)
+        assertEquals("Lenguaje", model.catalogue[1].requires)
+        assertEquals("Ciencia", model.catalogue[1].category)
+    }
+
+    @Test
     fun theSubtitleNamesTheParentOrTheInitialInnovation() {
         val tongue = innovation("language", es = "Lenguaje", consequences = listOf("Pintura"))
         val paint = innovation("pintura", es = "Pintura")

@@ -42,6 +42,7 @@ import io.kdmtracker.app.ui.theme.KdmFontFamilies
 import io.kdmtracker.app.ui.theme.KdmPalette
 import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.app.ui.theme.KdmType
+import io.kdmtracker.core.rules.InnovationStatus
 
 /** The kind of cell in the design's 2x2 slot grid. */
 enum class SlotKind { FILLED, EMPTY, ACTIVE_DECK }
@@ -73,10 +74,12 @@ fun InnovationsPanel(
     model: InnovationsModel,
     onConfirm: (String) -> Unit,
 ) {
-    var catalogueOpen by remember { mutableStateOf(true) }
+    var catalogueOpen by remember { mutableStateOf(false) }
     var picked by remember { mutableStateOf<String?>(null) }
     var resolved by remember { mutableStateOf<Pair<String, String>?>(null) }
     var drawn by remember { mutableStateOf(false) }
+    var acquisition by remember { mutableStateOf(Acquisition.ALL) }
+    var category by remember { mutableStateOf<String?>(null) }
     val shape = MaterialTheme.shapes.small
 
     Column(
@@ -90,35 +93,47 @@ fun InnovationsPanel(
     ) {
         PanelTitle(icon = "auto_stories", title = "Innovaciones", trailing = "Mazo: ${model.deckSize} cartas")
 
-        when {
-            // Consumed wins over everything: after the draw the pool is empty, and empty must not
-            // masquerade as "no resources" while the resolution of the draw is still owed.
-            model.phaseState == PhaseState.USED_THIS_PHASE ->
-                ConsumedBlock(
-                    model = model,
-                    resolution = resolved,
-                    onToggleCatalogue = { catalogueOpen = !catalogueOpen },
-                )
-            model.gate == InnovarGate.NO_ACCESS -> NoAccessBlock()
-            model.gate == InnovarGate.SHORT_ON_RESOURCES -> CostBlock(cost = model.cost)
-            model.phaseState == PhaseState.NO_CARDS ->
-                NoCardsBlock(model = model, onToggleCatalogue = { catalogueOpen = !catalogueOpen })
-            else ->
-                ReadyBody(
-                    model = model,
-                    picked = picked,
-                    onPick = { picked = it },
-                    drawn = drawn,
-                    onDraw = { drawn = true },
-                    catalogueOpen = catalogueOpen,
-                    onToggleCatalogue = { catalogueOpen = !catalogueOpen },
-                    onConfirm = { chosen ->
-                        // Capture the resolution before the commit changes the model's hand.
-                        resolved = chosen to (model.hand.firstOrNull { it.name != chosen }?.name ?: "")
-                        picked = null
-                        onConfirm(chosen)
-                    },
-                )
+        if (catalogueOpen) {
+            // The catalogue replaces the panel body: the design's estados B/C are a separate view
+            // over the panel, reached only through the entrance row (spec decision 9).
+            CatalogueView(
+                model = model,
+                acquisition = acquisition,
+                onAcquisition = { acquisition = it },
+                category = category,
+                onCategory = { category = it },
+                onClose = { catalogueOpen = false },
+            )
+        } else {
+            when {
+                // Consumed wins over everything: after the draw the pool is empty, and empty must not
+                // masquerade as "no resources" while the resolution of the draw is still owed.
+                model.phaseState == PhaseState.USED_THIS_PHASE ->
+                    ConsumedBlock(
+                        model = model,
+                        resolution = resolved,
+                        onOpenCatalogue = { catalogueOpen = true },
+                    )
+                model.gate == InnovarGate.NO_ACCESS -> NoAccessBlock()
+                model.gate == InnovarGate.SHORT_ON_RESOURCES -> CostBlock(cost = model.cost)
+                model.phaseState == PhaseState.NO_CARDS ->
+                    NoCardsBlock(model = model, onOpenCatalogue = { catalogueOpen = true })
+                else ->
+                    ReadyBody(
+                        model = model,
+                        picked = picked,
+                        onPick = { picked = it },
+                        drawn = drawn,
+                        onDraw = { drawn = true },
+                        onOpenCatalogue = { catalogueOpen = true },
+                        onConfirm = { chosen ->
+                            // Capture the resolution before the commit changes the model's hand.
+                            resolved = chosen to (model.hand.firstOrNull { it.name != chosen }?.name ?: "")
+                            picked = null
+                            onConfirm(chosen)
+                        },
+                    )
+            }
         }
     }
 }
@@ -131,19 +146,18 @@ private fun ReadyBody(
     onPick: (String) -> Unit,
     drawn: Boolean,
     onDraw: () -> Unit,
-    catalogueOpen: Boolean,
-    onToggleCatalogue: () -> Unit,
+    onOpenCatalogue: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
     val shape = MaterialTheme.shapes.small
 
-    slotCards(model, catalogueOpen).chunked(2).forEach { row ->
+    slotCards(model).chunked(2).forEach { row ->
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             row.forEach { card ->
-                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
+                SlotCard(card = card, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -228,6 +242,8 @@ private fun ReadyBody(
             }
         }
     }
+
+    CatalogueEntrance(deckSize = model.deckSize, onClick = onOpenCatalogue)
 }
 
 /** The design's `ESTADO 2 - CONSUMADA`: the resolution of the draw and the year's gold note. */
@@ -235,17 +251,17 @@ private fun ReadyBody(
 private fun ConsumedBlock(
     model: InnovationsModel,
     resolution: Pair<String, String>?,
-    onToggleCatalogue: () -> Unit,
+    onOpenCatalogue: () -> Unit,
 ) {
     val shape = MaterialTheme.shapes.small
 
-    slotCards(model, true).chunked(2).forEach { row ->
+    slotCards(model).chunked(2).forEach { row ->
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             row.forEach { card ->
-                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
+                SlotCard(card = card, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -315,6 +331,8 @@ private fun ConsumedBlock(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+
+    CatalogueEntrance(deckSize = model.deckSize, onClick = onOpenCatalogue)
 }
 
 /**
@@ -324,17 +342,17 @@ private fun ConsumedBlock(
 @Composable
 private fun NoCardsBlock(
     model: InnovationsModel,
-    onToggleCatalogue: () -> Unit,
+    onOpenCatalogue: () -> Unit,
 ) {
     val shape = MaterialTheme.shapes.small
 
-    slotCards(model, true).chunked(2).forEach { row ->
+    slotCards(model).chunked(2).forEach { row ->
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             row.forEach { card ->
-                SlotCard(card = card, modifier = Modifier.weight(1f), onToggle = onToggleCatalogue)
+                SlotCard(card = card, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -404,6 +422,8 @@ private fun NoCardsBlock(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+
+    CatalogueEntrance(deckSize = model.deckSize, onClick = onOpenCatalogue)
 }
 
 /** The design's `ESTADO 1 - SIN ACCESO`: the only thing on screen when Innovar cannot run at all. */
@@ -448,10 +468,7 @@ private fun NoAccessBlock() {
 
 /** The design's 2x2 grid: up to three principle slots plus the deck slot that feeds the draw. */
 @Composable
-private fun slotCards(
-    model: InnovationsModel,
-    catalogueOpen: Boolean,
-): List<SlotCardData> {
+private fun slotCards(model: InnovationsModel): List<SlotCardData> {
     val positions = listOf("Principio", "Ranura 2", "Ranura 3")
     val cards = mutableListOf<SlotCardData>()
     val filled = model.slots.take(positions.size)
@@ -505,7 +522,7 @@ private fun slotCards(
                 iconSize = 16.sp,
                 title = deck.name,
                 note = deck.note,
-                footer = if (catalogueOpen) "Desplegado" else "Replegado",
+                footer = "${model.catalogue.count { it.status == InnovationStatus.AVAILABLE }} disponibles",
                 footerCentered = false,
             )
     }
@@ -551,7 +568,6 @@ private fun PanelTitle(
 private fun SlotCard(
     card: SlotCardData,
     modifier: Modifier = Modifier,
-    onToggle: () -> Unit = {},
 ) {
     val shape = MaterialTheme.shapes.small
     val filled = card.kind == SlotKind.FILLED
@@ -655,13 +671,19 @@ private fun SlotCard(
         }
 
         if (card.kind == SlotKind.ACTIVE_DECK) {
-            KdmActionButton(
-                text = card.footer,
-                onClick = onToggle,
-                icon = "visibility",
-                variant = KdmActionVariant.GOLD,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // Design estado A: the deck slot carries a static count line, not the old toggle —
+            // the entrance row below the grid is the single affordance now.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Symbol("style", MaterialTheme.colorScheme.secondary, 12.sp)
+                Text(
+                    text = card.footer,
+                    style = microLabel,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
         } else {
             Text(
                 text = card.footer,
