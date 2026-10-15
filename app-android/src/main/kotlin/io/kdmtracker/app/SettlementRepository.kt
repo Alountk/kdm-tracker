@@ -344,7 +344,7 @@ class SettlementRepository(
             state =
                 SettlementState(
                     locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION)),
-                    innovations = InnovationCollection(STARTING_INNOVATIONS),
+                    innovations = InnovationCollection(STARTING_INNOVATIONS.map { it.copy(unlockedInYear = 1) }),
                 ),
         ).withSurvivors(
             List(FOUNDING_SURVIVORS) {

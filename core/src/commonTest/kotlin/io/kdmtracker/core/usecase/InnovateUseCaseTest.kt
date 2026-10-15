@@ -7,6 +7,7 @@ import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
@@ -40,11 +41,25 @@ class InnovateUseCaseTest {
             keep = 1,
         )
 
-    private val ammonia =
+    private val amoniaco =
         Innovation(
-            id = InnovationId("ammonia"),
-            names = LocalizedText(es = "Ammonia"),
+            id = InnovationId("amoniaco"),
+            names = LocalizedText(es = "Amoníaco"),
             description = "Acids for tanning.",
+        )
+
+    /**
+     * The fixture's deck root: unlocked by the default state, it lists [amoniaco] among its
+     * consequences, which is what puts that card in the deck. The consequence string is the
+     * Spanish name because [io.kdmtracker.core.content.ContentIdentity] resolves deck cards
+     * through that table, exactly as the shipped catalog does.
+     */
+    private val startingPrinciple =
+        Innovation(
+            id = InnovationId("starting_principle"),
+            names = LocalizedText(es = "Principio Inicial", en = "Starting Principle"),
+            description = "The root the deck grows from.",
+            consequences = listOf("Amoníaco"),
         )
 
     private val catalog =
@@ -56,7 +71,7 @@ class InnovateUseCaseTest {
                     name = "Test",
                     bundle =
                         ContentBundle(
-                            innovations = listOf(ammonia),
+                            innovations = listOf(startingPrinciple, amoniaco),
                             locations =
                                 listOf(
                                     SettlementLocation(
@@ -79,6 +94,7 @@ class InnovateUseCaseTest {
 
     private fun record(
         endeavors: Int = 1,
+        lanternYear: Int = 1,
         state: SettlementState = SettlementState(),
     ): SettlementRecord =
         SettlementRecord(
@@ -87,7 +103,7 @@ class InnovateUseCaseTest {
                     id = Ulid.generate(1L) { 0 },
                     campaignId = Ulid.generate(2L) { 0 },
                     name = "Kingsport",
-                    lanternYear = 1,
+                    lanternYear = lanternYear,
                     phase = SettlementPhase.SETTLEMENT,
                     currentStep = 7,
                     endeavors = endeavors,
@@ -101,6 +117,7 @@ class InnovateUseCaseTest {
     private fun stocked(): SettlementState =
         SettlementState(
             locations = LocationSet(built = listOf(LocationId("lantern_hoard"))),
+            innovations = InnovationCollection(listOf(startingPrinciple)),
             resourceEntries =
                 listOf(
                     ResourceEntry(ResourceId("Bone"), 2),
@@ -110,7 +127,10 @@ class InnovateUseCaseTest {
         )
 
     private fun builtButUnstocked(): SettlementState =
-        SettlementState(locations = LocationSet(built = listOf(LocationId("lantern_hoard"))))
+        SettlementState(
+            locations = LocationSet(built = listOf(LocationId("lantern_hoard"))),
+            innovations = InnovationCollection(listOf(startingPrinciple)),
+        )
 
     @Test
     fun aValidInnovateSpendsTheCostAddsTheInnovationAndMarksThePhase() {
@@ -118,7 +138,7 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(state = stocked()),
                 LocationId("lantern_hoard"),
-                InnovationId("ammonia"),
+                InnovationId("amoniaco"),
                 catalog,
             )
 
@@ -126,7 +146,7 @@ class InnovateUseCaseTest {
         assertEquals(0, ok.value.settlement.endeavors)
         assertTrue(
             ok.value.state.innovations.innovations
-                .any { it.names.es == "Ammonia" },
+                .any { it.names.es == "Amoníaco" },
         )
         assertTrue(ok.value.state.usedInPhase("lantern_hoard"))
         for (name in listOf("Bone", "Organ", "Hide")) {
@@ -139,10 +159,10 @@ class InnovateUseCaseTest {
     fun aSecondInnovateInTheSamePhaseIsBlocked() {
         val first =
             assertIs<StepResult.Ok<SettlementRecord>>(
-                Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), InnovationId("ammonia"), catalog),
+                Innovate.run(record(state = stocked()), LocationId("lantern_hoard"), InnovationId("amoniaco"), catalog),
             )
 
-        val second = Innovate.run(first.value, LocationId("lantern_hoard"), InnovationId("ammonia"), catalog)
+        val second = Innovate.run(first.value, LocationId("lantern_hoard"), InnovationId("amoniaco"), catalog)
 
         assertIs<StepResult.Blocked>(second)
     }
@@ -153,7 +173,7 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(state = builtButUnstocked()),
                 LocationId("lantern_hoard"),
-                InnovationId("ammonia"),
+                InnovationId("amoniaco"),
                 catalog,
             )
 
@@ -168,7 +188,7 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(state = unbuilt),
                 LocationId("lantern_hoard"),
-                InnovationId("ammonia"),
+                InnovationId("amoniaco"),
                 catalog,
             )
 
@@ -181,7 +201,7 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(state = stocked()),
                 LocationId("stone_circle"),
-                InnovationId("ammonia"),
+                InnovationId("amoniaco"),
                 catalog,
             )
 
@@ -190,7 +210,7 @@ class InnovateUseCaseTest {
 
     @Test
     fun anUnknownLocationIsBlocked() {
-        val result = Innovate.run(record(state = stocked()), LocationId("nowhere"), InnovationId("ammonia"), catalog)
+        val result = Innovate.run(record(state = stocked()), LocationId("nowhere"), InnovationId("amoniaco"), catalog)
 
         assertIs<StepResult.Blocked>(result)
     }
@@ -214,10 +234,67 @@ class InnovateUseCaseTest {
             Innovate.run(
                 record(endeavors = 0, state = stocked()),
                 LocationId("lantern_hoard"),
-                InnovationId("ammonia"),
+                InnovationId("amoniaco"),
                 catalog,
             )
 
         assertIs<StepResult.Blocked>(result)
+    }
+
+    @Test
+    fun aValidInnovateStampsTheUnlockedYear() {
+        val result =
+            Innovate.run(
+                record(lanternYear = 3, state = stocked()),
+                LocationId("lantern_hoard"),
+                InnovationId("amoniaco"),
+                catalog,
+            )
+
+        val ok = assertIs<StepResult.Ok<SettlementRecord>>(result)
+        assertEquals(
+            3,
+            ok.value.state.innovations.innovations
+                .single { it.id == InnovationId("amoniaco") }
+                .unlockedInYear,
+        )
+    }
+
+    @Test
+    fun innovatingACardThatIsNotInTheDeckIsBlocked() {
+        val state = stocked().copy(innovations = InnovationCollection())
+
+        val result =
+            Innovate.run(
+                record(state = state),
+                LocationId("lantern_hoard"),
+                InnovationId("amoniaco"),
+                catalog,
+            )
+
+        val blocked = assertIs<StepResult.Blocked>(result)
+        assertTrue(
+            blocked.reason.contains("not available"),
+            "the refusal names the missing access: ${blocked.reason}",
+        )
+    }
+
+    @Test
+    fun innovatingAnAlreadyUnlockedCardIsBlocked() {
+        val state = stocked().copy(innovations = InnovationCollection(listOf(amoniaco)))
+
+        val result =
+            Innovate.run(
+                record(state = state),
+                LocationId("lantern_hoard"),
+                InnovationId("amoniaco"),
+                catalog,
+            )
+
+        val blocked = assertIs<StepResult.Blocked>(result)
+        assertTrue(
+            blocked.reason.contains("already unlocked"),
+            "the refusal names the duplicate unlock: ${blocked.reason}",
+        )
     }
 }

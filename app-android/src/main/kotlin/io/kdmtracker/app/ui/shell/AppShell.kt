@@ -28,6 +28,7 @@ fun AppShell(
     tab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
     onAccount: () -> Unit,
+    onExit: () -> Unit,
     onSelectStep: (Int) -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -50,6 +51,6 @@ fun AppShell(
             }
             content()
         }
-        ShellBottomNav(selected = tab, onSelect = onSelectTab)
+        ShellBottomNav(selected = tab, onSelect = onSelectTab, onExit = onExit)
     }
 }

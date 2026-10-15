@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,8 +58,6 @@ fun LocationsSection(
     model: FabricarModel,
     onBuild: (String) -> Unit,
     onCraft: (String, String) -> Unit,
-    onAction: (String) -> Unit,
-    onSpendEndeavor: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PanelTitle(
@@ -69,25 +66,50 @@ fun LocationsSection(
             trailing = "${model.builtCount} CONSTRUIDAS · ${model.pendingCount} PENDIENTES",
         )
         model.built.forEach { card ->
-            BuiltCard(card = card, onAction = onAction, onCraft = onCraft, onBuild = onBuild)
+            BuiltCard(card = card, onCraft = onCraft, onBuild = onBuild)
         }
         model.buildable.forEach { card ->
             BuildableCard(card = card, onBuild = onBuild)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Symbol("warning", MaterialTheme.colorScheme.secondary, 16.sp)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = "Regla de Año Linterna 1 · Sáltate el Paso 9",
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        // The design's special-showdown warning: a boxed icon beside three lines, in its own card.
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.small)
+                    .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            KdmActionButton(text = "Gastar endeavor (−1)", onClick = onSpendEndeavor, variant = KdmActionVariant.DARK)
+            Box(
+                modifier =
+                    Modifier
+                        .background(KdmPalette.onCrimsonContainer, MaterialTheme.shapes.small)
+                        .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Symbol("warning", KdmPalette.onCrimson, 20.sp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "Regla de Año Linterna 1",
+                    style = KdmType.labelCaps,
+                    color = KdmPalette.blood,
+                    letterSpacing = 0.1f.sp,
+                )
+                Text(
+                    text = "Sáltate el Paso 9",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text =
+                        "\"Sáltate el paso 9 en la primera fase de asentamiento. " +
+                            "Los supervivientes aún no conocen las némesis.\"",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -96,7 +118,6 @@ fun LocationsSection(
 @Composable
 private fun BuiltCard(
     card: BuiltLocationCard,
-    onAction: (String) -> Unit,
     onCraft: (String, String) -> Unit,
     onBuild: (String) -> Unit,
 ) {
@@ -196,15 +217,7 @@ private fun BuiltCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                } else {
-                    Spacer(Modifier.weight(1f))
                 }
-                KdmActionButton(
-                    text = card.actionLabel,
-                    onClick = { onAction(card.name) },
-                    icon = "psychology",
-                    variant = KdmActionVariant.DARK,
-                )
             }
         }
     }
@@ -624,19 +637,26 @@ private fun PanelTitle(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Symbol(icon, MaterialTheme.colorScheme.secondary, 16.sp)
-            Spacer(Modifier.width(6.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Symbol(icon, MaterialTheme.colorScheme.secondary, 18.sp)
             Text(
-                text = title.uppercase(),
-                style = KdmType.labelCaps,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
         Text(
-            text = trailing,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = trailing.uppercase(),
+            style = KdmType.labelCaps,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.small)
+                    .border(1.dp, MaterialTheme.colorScheme.secondary, MaterialTheme.shapes.small)
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }
 }

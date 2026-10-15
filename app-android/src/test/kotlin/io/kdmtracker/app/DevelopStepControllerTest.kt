@@ -6,6 +6,7 @@ import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.resourceDefinition
 import io.kdmtracker.core.domain.ActionKind
 import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
@@ -46,11 +47,25 @@ class DevelopStepControllerTest {
             effect = "Draw 2 innovation cards, keep 1.",
         )
 
-    private val ammonia =
+    private val amoniaco =
         Innovation(
-            id = InnovationId("ammonia"),
-            names = LocalizedText(es = "Ammonia"),
+            id = InnovationId("amoniaco"),
+            names = LocalizedText(es = "Amoníaco", en = "Ammonia"),
             description = "Acids for tanning.",
+        )
+
+    /**
+     * The fixture's deck root: unlocked by the seeded state, it lists [amoniaco] among its
+     * consequences, which is what puts that card in the deck. The consequence string is the
+     * Spanish name because [io.kdmtracker.core.content.ContentIdentity] resolves deck cards
+     * through that table, exactly as the shipped catalog does.
+     */
+    private val startingPrinciple =
+        Innovation(
+            id = InnovationId("starting_principle"),
+            names = LocalizedText(es = "Principio Inicial", en = "Starting Principle"),
+            description = "The root the deck grows from.",
+            consequences = listOf("Amoníaco"),
         )
 
     private val catalog =
@@ -62,7 +77,7 @@ class DevelopStepControllerTest {
                     name = "Test",
                     bundle =
                         ContentBundle(
-                            innovations = listOf(ammonia),
+                            innovations = listOf(startingPrinciple, amoniaco),
                             locations =
                                 listOf(
                                     SettlementLocation(
@@ -111,6 +126,9 @@ class DevelopStepControllerTest {
                 settlement = repository.settlement.copy(endeavors = endeavors),
                 state =
                     repository.record.state.copy(
+                        innovations =
+                            repository.record.state.innovations
+                                .with(startingPrinciple),
                         resourceEntries =
                             listOf(
                                 ResourceEntry(ResourceId("Bone"), bone),
@@ -130,7 +148,7 @@ class DevelopStepControllerTest {
     fun innovateSpendsTheCostAndMarksThePhase() {
         val controller = controller(storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2))
 
-        controller.innovate("Ammonia")
+        controller.innovate("Amoníaco")
 
         val record = controller.state.value.record
         assertNotNull(record)
@@ -138,7 +156,7 @@ class DevelopStepControllerTest {
         assertTrue(record.state.usedInPhase("lantern_hoard"))
         assertTrue(
             record.state.innovations.innovations
-                .any { it.names.es == "Ammonia" },
+                .any { it.names.es == "Amoníaco" },
         )
         assertEquals(1, record.storage().single { it.id.value == "Bone" }.quantity)
         assertNull(controller.state.value.actionError)
@@ -147,15 +165,34 @@ class DevelopStepControllerTest {
     @Test
     fun aSecondInnovateIsBlockedWithAReasonAndChangesNothing() {
         val controller = controller(storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2))
-        controller.innovate("Ammonia")
+        controller.innovate("Amoníaco")
         val afterFirst = controller.state.value.record
 
-        controller.innovate("Ammonia")
+        controller.innovate("Amoníaco")
 
         assertEquals(afterFirst, controller.state.value.record)
         val reason = controller.state.value.actionError
         assertNotNull(reason)
         assertTrue(reason.contains("already used"), "the block reason names the once-per-phase limit: $reason")
+    }
+
+    @Test
+    fun innovatingACardOutsideTheDeckIsBlockedAndChangesNothing() {
+        val store = storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2)
+        // Strip the deck root: with nothing unlocked the fixture card is out of the deck.
+        val repository = SettlementRepository(store)
+        repository.update(
+            repository.record.copy(state = repository.record.state.copy(innovations = InnovationCollection())),
+        )
+        val controller = controller(store)
+        val before = controller.state.value.record
+
+        controller.innovate("Amoníaco")
+
+        val reason = controller.state.value.actionError
+        assertNotNull(reason)
+        assertTrue(reason.contains("not available"), "the block reason names the missing access: $reason")
+        assertEquals(before, controller.state.value.record)
     }
 
     @Test
@@ -237,7 +274,7 @@ class DevelopStepControllerTest {
         val store = storeWith(endeavors = 3, bone = 3, organ = 3, hide = 3)
         val controller = controller(store)
 
-        controller.innovate("Ammonia")
+        controller.innovate("Amoníaco")
         controller.build("Skinnery")
         controller.spendEndeavor()
         controller.addResource(ResourceEntry(ResourceId("Bone"), 2))

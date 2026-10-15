@@ -39,6 +39,7 @@ object Core16Content {
                                 names = LocalizedText(es = "Lenguaje", en = "Language"),
                                 description = "The survivors can speak and record what they learn.",
                                 consequences = listOf("Storytelling"),
+                                category = "Sociedad",
                             ),
                         ),
                     locations =

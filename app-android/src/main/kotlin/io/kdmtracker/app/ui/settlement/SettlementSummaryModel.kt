@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui.settlement
 
 import io.kdmtracker.core.domain.ResourceDefinition
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.StorageLine
 
 /** A basic resource's colour role, and the Material Symbol the design draws with it. */
@@ -15,6 +16,7 @@ enum class ResourceColour(
 
 /** One cell of the summary's resource grid. */
 data class SummaryResource(
+    val id: ResourceId,
     val name: String,
     val label: String,
     val quantity: Int,
@@ -69,6 +71,7 @@ data class SettlementSummaryModel(
             definitions.map { definition ->
                 val design = DESIGN[definition.names.es]
                 SummaryResource(
+                    id = definition.id,
                     name = definition.names.es,
                     label = design?.first ?: definition.names.es,
                     quantity = storage.firstOrNull { it.id == definition.id }?.quantity ?: 0,

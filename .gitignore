@@ -52,6 +52,10 @@ __pycache__/
 .venv/
 venv/
 
+# Local design cache (Stitch HTML/PNG exports); the specs under
+# docs/superpowers/ are the tracked record.
+.superpowers/
+
 # Local agent-tooling state (worktrees, caches); never committed.
 .kilo/
 .kilocode/

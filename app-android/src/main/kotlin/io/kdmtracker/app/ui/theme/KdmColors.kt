@@ -43,6 +43,30 @@ object KdmPalette {
     val inverseOnCanvas = Color(0xFF313032)
 }
 
+/**
+ * The Innovar-flow board's own tokens — the colours `Innovaciones: Flujo de Innovar`
+ * (`.superpowers/design/innovar-flow/flow.html`) renders that [KdmPalette] does not carry.
+ *
+ * Kept separate from [KdmPalette] on purpose: this board's gold is `#E5B842`, not [KdmPalette.gold]
+ * `#E9C349`, and it introduces a green and a red the theme has no role for. Adopting these over the
+ * theme's own gold/red is under review — see `docs/backlog.md`.
+ *
+ * The washes are the board's `rgba(...)` values packed as ARGB: 12% is `0x1F`, 10% is `0x1A` and
+ * 8% is `0x14`.
+ */
+object InnovarPalette {
+    val gold = Color(0xFFE5B842)
+    val goldLight = Color(0xFFF5D376)
+    val goldDark = Color(0xFF9B7617)
+    val goldWash = Color(0x1FE5B842)
+    val goldPillBg = Color(0xFF342800)
+    val green = Color(0xFF10B981)
+    val greenWash = Color(0x1F10B981)
+    val red = Color(0xFFEF4444)
+    val redBg = Color(0x1AEF4444)
+    val outlineBorder = Color(0x14FFFFFF)
+}
+
 /** The Material 3 colour roles for the Atramentum Lantern design system. */
 val KdmScheme =
     darkColorScheme(

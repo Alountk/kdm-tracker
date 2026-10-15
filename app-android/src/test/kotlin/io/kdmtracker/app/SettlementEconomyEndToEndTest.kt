@@ -44,14 +44,14 @@ class SettlementEconomyEndToEndTest {
         }
         assertNull(controller.state.value.actionError, "the manual resource bridge records gains")
 
-        controller.innovate("Language")
+        controller.innovate("Amoníaco")
         assertNull(controller.state.value.actionError)
         val afterInnovate = controller.state.value.record
         assertTrue(
             afterInnovate!!
                 .state.innovations.innovations
-                .any { it.id == InnovationId("language") },
-            "Innovate unlocks the innovation at the seeded, built Lantern Hoard",
+                .any { it.id == InnovationId("amoniaco") },
+            "Innovate unlocks a deck card at the seeded, built Lantern Hoard",
         )
         assertEquals(3, afterInnovate.settlement.endeavors)
 

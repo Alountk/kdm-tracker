@@ -1,5 +1,7 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.Innovation
+import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceId
@@ -25,6 +27,14 @@ class ContentCatalogMergeTest {
         assertTrue(result is CatalogResult.Ok, "expected Ok but was $result")
         return result.catalog
     }
+
+    private fun packWithInnovations(vararg innovations: Innovation) =
+        ContentPack(
+            id = "innovations-${innovations.size}",
+            version = "1.0.0",
+            name = "innovations",
+            bundle = ContentBundle(innovations = innovations.toList()),
+        )
 
     private fun packWithSettlementEvents(vararg events: SettlementEvent) =
         ContentPack(
@@ -82,6 +92,29 @@ class ContentCatalogMergeTest {
                         "Armería"
                 }.buildCost,
         )
+    }
+
+    @Test
+    fun aCategoryFillsInFromWhicheverPackCarriesOne() {
+        val bare = Innovation(InnovationId("pintura"), LocalizedText(es = "Pintura"), "Pintura ritual.")
+        val withCategory =
+            Innovation(InnovationId("pintura"), LocalizedText(es = "Pintura"), "Pintura ritual.", category = "Arte")
+
+        val seedFirst =
+            ok(
+                ContentCatalogComposer.compose(
+                    listOf(packWithInnovations(bare), packWithInnovations(withCategory)),
+                ),
+            )
+        val pipelineFirst =
+            ok(
+                ContentCatalogComposer.compose(
+                    listOf(packWithInnovations(withCategory), packWithInnovations(bare)),
+                ),
+            )
+
+        assertEquals("Arte", seedFirst.innovationDefinitions.single().category)
+        assertEquals("Arte", pipelineFirst.innovationDefinitions.single().category)
     }
 
     @Test

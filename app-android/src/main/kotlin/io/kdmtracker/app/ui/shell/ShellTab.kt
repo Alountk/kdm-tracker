@@ -12,10 +12,10 @@ enum class ShellTab(
     val label: String,
     val icon: String,
 ) {
-    SETTLEMENT(Screen.Settlement, "Asentamiento", "fort"),
-    SURVIVORS(Screen.Survivors, "Supervivientes", "shield_person"),
+    SETTLEMENT(Screen.Settlement, "Asent.", "fort"),
+    SURVIVORS(Screen.Survivors, "Superv.", "shield_person"),
     HUNT(Screen.Hunt, "Caza", "explore"),
-    SHOWDOWN(Screen.Showdown, "Enfrentamiento", "swords"),
+    SHOWDOWN(Screen.Showdown, "Enfrent.", "swords"),
     ;
 
     companion object {

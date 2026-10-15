@@ -1,7 +1,9 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,11 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
 import io.kdmtracker.app.ui.settlement.FabricarModel
 import io.kdmtracker.app.ui.settlement.InnovationsModel
@@ -26,9 +28,11 @@ import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
 import io.kdmtracker.app.ui.settlement.StepFrameFooter
 import io.kdmtracker.app.ui.settlement.StepFrameHeader
 import io.kdmtracker.app.ui.settlement.StepFrameModel
+import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 
@@ -39,7 +43,7 @@ import io.kdmtracker.core.domain.Ulid
  * confirm action. Every other step shows the cockpit — a header, a **thin top step bar** (the 11
  * steps as numbered chips, the current one highlighted and unreachable ones disabled, so the
  * navigation never eats half the width), a full-width body and the back/next controls. Step 7
- * (Develop) supplies [DevelopStepScreen] as that body. All navigation is reported through the
+ * (Develop) renders its own panels inline. All navigation is reported through the
  * callbacks; this composable owns no state and no rules.
  */
 @Composable
@@ -50,7 +54,6 @@ fun SettlementScreen(
     onSelectStep: (Int) -> Unit,
     onInnovate: (String) -> Unit = {},
     onBuild: (String) -> Unit = {},
-    onSpendEndeavor: () -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
     onCraft: (String, String) -> Unit = { _, _ -> },
     onRecordEvent: (String) -> Unit = {},
@@ -79,6 +82,7 @@ fun SettlementScreen(
         onAdvance = onAdvance,
         onPrevious = onPrevious,
         onSelectStep = onSelectStep,
+        onAdjust = { id, delta -> onAddResource(ResourceEntry(id, delta)) },
     ) {
         when (state.currentStep) {
             2 ->
@@ -104,33 +108,12 @@ fun SettlementScreen(
                     onResolveMilestone = onResolveMilestone,
                 )
             7 -> {
-                var developTab by remember { mutableStateOf(DevelopTab.RECURSOS) }
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    InnovationsPanel(
-                        model =
-                            InnovationsModel.of(
-                                deck = state.innovationDeck,
-                                principles = state.chosenPrinciples.values.toList(),
-                                draw = state.innovationDraw,
-                                keep = state.innovationKeep,
-                            ),
-                    )
+                    InnovationsPanel(model = InnovationsModel.of(state = state), onConfirm = onInnovate)
                     LocationsSection(
                         model = FabricarModel.of(state),
                         onBuild = onBuild,
                         onCraft = onCraft,
-                        // The location's action is Innovate; innovating means picking an
-                        // innovation, which happens in the Develop body's Innovar tab — so the
-                        // button opens that tab instead of firing onInnovate with no choice.
-                        onAction = { developTab = DevelopTab.INNOVAR },
-                        onSpendEndeavor = onSpendEndeavor,
-                    )
-                    DevelopStepScreen(
-                        state = state,
-                        onInnovate = onInnovate,
-                        onAddResource = onAddResource,
-                        selectedTab = developTab,
-                        onTabSelected = { developTab = it },
                     )
                 }
             }
@@ -166,6 +149,7 @@ private fun SettlementCockpit(
     onAdvance: () -> Unit,
     onPrevious: () -> Unit,
     onSelectStep: (Int) -> Unit,
+    onAdjust: (ResourceId, Int) -> Unit = { _, _ -> },
     body: @Composable () -> Unit,
 ) {
     val frame = state.steps.firstOrNull { it.number == state.currentStep }?.let { StepFrameModel.of(it, state.steps) }
@@ -195,7 +179,35 @@ private fun SettlementCockpit(
                     ),
                 year = state.lanternYear,
                 phaseLabel = "Fase Activa",
+                onAdjust = onAdjust,
             )
+
+            state.actionError?.let { reason ->
+                // Every controller refusal — innovar, fabricar, construir, ajustar recursos — is
+                // published here. Without this block they disappear the moment they happen.
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.small)
+                            .padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Text(
+                        text = KdmSymbols.glyph("warning"),
+                        fontFamily = KdmSymbols.family,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Text(
+                        text = reason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
 
             frame?.let { StepFrameHeader(model = it) }
 
