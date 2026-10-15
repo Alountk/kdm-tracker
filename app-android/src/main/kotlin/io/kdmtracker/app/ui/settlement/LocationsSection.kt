@@ -58,7 +58,6 @@ fun LocationsSection(
     model: FabricarModel,
     onBuild: (String) -> Unit,
     onCraft: (String, String) -> Unit,
-    onSpendEndeavor: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PanelTitle(

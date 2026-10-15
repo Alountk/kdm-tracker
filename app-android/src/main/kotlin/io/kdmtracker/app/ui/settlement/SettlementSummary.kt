@@ -157,7 +157,10 @@ fun SettlementSummary(
             }
         }
 
-        if (editing == null) {
+        // Resolved once: the edited name can go stale if the model changes under the editor,
+        // and a missing resource must degrade to the hint, never throw mid-composition.
+        val target = editing?.let { name -> model.resources.firstOrNull { it.name == name } }
+        if (target == null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -186,7 +189,7 @@ fun SettlementSummary(
                     )
                 } else {
                     Text(
-                        text = "previo: ${model.resources.first { it.name == editing }.quantity}",
+                        text = "previo: ${target.quantity}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
@@ -195,7 +198,6 @@ fun SettlementSummary(
                 KdmActionButton(
                     text = "Guardar ajuste",
                     onClick = {
-                        val target = model.resources.first { it.name == editing }
                         val delta = pending - target.quantity
                         if (delta != 0) onAdjust(target.id, delta)
                         saved = AdjustResult(target.label, target.quantity, pending)

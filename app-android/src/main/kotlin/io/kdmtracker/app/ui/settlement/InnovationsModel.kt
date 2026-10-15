@@ -96,7 +96,7 @@ data class InnovationCard(
 /**
  * The Innovaciones panel's values, derived from one [UiState] frame.
  *
- * [drawLabel] and [principleSlots] keep their Phase 1 behaviour (ruleset text, chosen labels
+ * [drawLabel] and [slots] keep their Phase 1 behaviour (ruleset text, chosen labels
  * passed through unchanged); everything else is the reference's five states.
  */
 data class InnovationsModel(
@@ -119,14 +119,6 @@ data class InnovationsModel(
 ) {
     companion object {
         fun of(state: UiState): InnovationsModel {
-            val definitions = state.innovationDefinitions
-            val unlocked =
-                state.record
-                    ?.state
-                    ?.innovations
-                    ?.innovations
-                    ?.mapTo(mutableSetOf()) { it.id } ?: mutableSetOf()
-
             val innovatingLocation =
                 state.catalogLocations
                     .firstOrNull { location ->
@@ -184,7 +176,6 @@ data class InnovationsModel(
                     else -> PhaseState.OFFER
                 }
 
-            val acquired = definitions.count { it.id in unlocked }
             val draw = state.innovationDraw
             val keep = state.innovationKeep
             val drawLabel = "Robar ${state.innovationDraw}, elegir ${state.innovationKeep}"
@@ -197,7 +188,7 @@ data class InnovationsModel(
             val chosen = state.chosenPrinciples.values
             // Spec Component 1: the cells are the chosen principles. Whatever else the settlement
             // has unlocked fills the rest of the grid, newest first, so the cell that should read
-            // `NUEVA` is never pushed past the take(3) by three older ones.
+            // `NUEVA` is never pushed past the take(SLOT_COUNT) by three older ones.
             val principles =
                 chosen.mapNotNull { name ->
                     byName[name]?.let { SlotView(it.names.es, SlotState.of(it.unlockedInYear, state.lanternYear)) }

@@ -9,8 +9,8 @@ import io.kdmtracker.app.R
  * The Material Symbols Outlined glyphs the design's screens use.
  *
  * The design renders icons with the Material Symbols web font, so the app does the same: a
- * **subset** of the font is bundled (the glyphs the design's four screens use, ~0.14 MB instead of
- * the full 10.23 MB) and glyphs are drawn as text by codepoint. Every codepoint was taken from
+ * **subset** of the font is bundled (only the glyphs the designs draw, ~0.18 MB instead of
+ * the full ~10.7 MB) and glyphs are drawn as text by codepoint. Every codepoint was taken from
  * Google's official `MaterialSymbolsOutlined[...].codepoints`, and [KdmSymbolsTest] pins them all —
  * a wrong value draws a different icon. `drive_file_stream` is absent from that official file and is
  * therefore not bundled.

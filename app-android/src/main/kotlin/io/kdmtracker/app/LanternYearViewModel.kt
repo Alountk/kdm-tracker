@@ -307,9 +307,6 @@ class LanternYearViewModel(
     /** Builds the settlement location named [locationName]. */
     fun build(locationName: String) = mutate { it.build(locationName) }
 
-    /** Spends one endeavor for a generic Settlement Phase action. */
-    fun spendEndeavor() = mutate { it.spendEndeavor() }
-
     /** Appends [entry] to the settlement's resource ledger. */
     fun addResource(entry: ResourceEntry) = mutate { it.addResource(entry) }
 

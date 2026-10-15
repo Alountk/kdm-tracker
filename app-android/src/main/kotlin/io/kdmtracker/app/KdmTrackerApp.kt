@@ -155,7 +155,6 @@ private fun InCampaignScreen(
                     onSelectStep = viewModel::selectStep,
                     onInnovate = viewModel::innovate,
                     onBuild = viewModel::build,
-                    onSpendEndeavor = viewModel::spendEndeavor,
                     onAddResource = viewModel::addResource,
                     onCraft = viewModel::craft,
                     onRecordEvent = viewModel::recordSettlementEvent,

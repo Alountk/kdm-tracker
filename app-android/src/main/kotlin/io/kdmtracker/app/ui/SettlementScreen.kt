@@ -54,7 +54,6 @@ fun SettlementScreen(
     onSelectStep: (Int) -> Unit,
     onInnovate: (String) -> Unit = {},
     onBuild: (String) -> Unit = {},
-    onSpendEndeavor: () -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
     onCraft: (String, String) -> Unit = { _, _ -> },
     onRecordEvent: (String) -> Unit = {},
@@ -115,7 +114,6 @@ fun SettlementScreen(
                         model = FabricarModel.of(state),
                         onBuild = onBuild,
                         onCraft = onCraft,
-                        onSpendEndeavor = onSpendEndeavor,
                     )
                 }
             }

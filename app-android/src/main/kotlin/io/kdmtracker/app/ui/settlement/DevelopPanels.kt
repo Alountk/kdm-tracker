@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,8 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -207,38 +204,34 @@ private fun ReadyBody(
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OfferHeader(model = model)
 
-            if (drawn) {
-                model.hand.chunked(2).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        row.forEach { card ->
-                            InnovationCardView(
-                                card = card,
-                                phaseState = model.phaseState,
-                                selected = picked == card.name,
-                                onPick = onPick,
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                            )
-                        }
-                        if (row.size == 1) {
-                            Spacer(Modifier.weight(1f))
-                        }
+            model.hand.chunked(2).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    row.forEach { card ->
+                        InnovationCardView(
+                            card = card,
+                            phaseState = model.phaseState,
+                            selected = picked == card.name,
+                            onPick = onPick,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
+                    if (row.size == 1) {
+                        Spacer(Modifier.weight(1f))
                     }
                 }
             }
 
-            if (drawn) {
-                picked?.let { chosen ->
-                    KdmActionButton(
-                        text = "ACEPTAR ELECCIÓN",
-                        onClick = { onConfirm(chosen) },
-                        icon = "check_circle",
-                        variant = KdmActionVariant.GOLD,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+            picked?.let { chosen ->
+                KdmActionButton(
+                    text = "ACEPTAR ELECCIÓN",
+                    onClick = { onConfirm(chosen) },
+                    icon = "check_circle",
+                    variant = KdmActionVariant.GOLD,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -847,24 +840,6 @@ private fun CostBlock(cost: CostView) {
     }
 }
 
-@Composable
-private fun CostLine(
-    label: String,
-    ok: Boolean,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
-        Text(
-            text = if (ok) "OK" else "FALTA",
-            style = KdmType.labelCaps,
-            color = if (ok) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
-        )
-    }
-}
-
 /** The slot grid's title: `font-headline-sm text-[14px] font-bold` — Playfair, not Inter. */
 private val slotTitle =
     TextStyle(
@@ -883,25 +858,3 @@ private val microLabel =
         fontWeight = FontWeight.Bold,
         letterSpacing = 0.1f.em,
     )
-
-/** A 1dp hairline across the top of the box — the mock's `border-t`. */
-private fun Modifier.topHairline(color: Color): Modifier =
-    drawBehind {
-        drawLine(
-            color = color,
-            start = Offset(0f, 0.5f),
-            end = Offset(size.width, 0.5f),
-            strokeWidth = 1.dp.toPx(),
-        )
-    }
-
-/** A 1dp hairline across the bottom of the box — the mock's `border-b`. */
-private fun Modifier.bottomHairline(color: Color): Modifier =
-    drawBehind {
-        drawLine(
-            color = color,
-            start = Offset(0f, size.height - 0.5f),
-            end = Offset(size.width, size.height - 0.5f),
-            strokeWidth = 1.dp.toPx(),
-        )
-    }
