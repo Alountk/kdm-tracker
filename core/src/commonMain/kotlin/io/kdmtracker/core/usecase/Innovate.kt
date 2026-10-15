@@ -6,6 +6,8 @@ import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.rules.InnovationAccess
+import io.kdmtracker.core.rules.InnovationStatus
 import io.kdmtracker.core.rules.StepResult
 
 /**
@@ -15,6 +17,10 @@ import io.kdmtracker.core.rules.StepResult
  * (and its campaign variants) offers the action once per Settlement Phase for an endeavor
  * plus a resource cost. This use case enforces the whole rule as one transaction — every
  * precondition is checked before any state changes, so a refusal leaves [record] untouched.
+ *
+ * Access is one of those preconditions: [innovationId] must be [InnovationStatus.AVAILABLE] in
+ * the settlement's unlock tree — in the deck, not yet unlocked and not walled behind an
+ * unreached parent — because that is exactly the set a draw can offer.
  *
  * The action's cost is content, never a literal here: its [SettlementRecord.settlement]
  * endeavor pool funds [io.kdmtracker.core.domain.SettlementAction.endeavorCost], and each
@@ -30,8 +36,10 @@ object Innovate {
      *
      * Blocks, without changing anything, when: [locationId] is unknown, the location offers
      * no [ActionKind.INNOVATE] action, the location is not yet built, the location's action was
-     * already used this phase, [innovationId] is unknown, the endeavor pool cannot fund the
-     * action, a cost resource has no catalog definition, or the ledger cannot cover a spend. On
+     * already used this phase, [innovationId] is unknown, [innovationId] is not
+     * [InnovationStatus.AVAILABLE] (already unlocked, or absent from the deck), the endeavor pool
+     * cannot fund the action, a cost resource has no catalog definition, or the ledger cannot
+     * cover a spend. On
      * success it spends the cost, unlocks the innovation, and marks the location's action used
      * for the phase.
      *
@@ -60,6 +68,18 @@ object Innovate {
         val innovation =
             catalog.innovationDefinitions.firstOrNull { it.id == innovationId }
                 ?: return StepResult.Blocked("unknown innovation ${innovationId.value}")
+        val status =
+            InnovationAccess
+                .view(record.state, catalog)
+                .firstOrNull { it.innovation.id == innovationId }
+                ?.status
+        when (status) {
+            InnovationStatus.AVAILABLE -> Unit
+            InnovationStatus.UNLOCKED ->
+                return StepResult.Blocked("innovation ${innovation.names.es} is already unlocked")
+            InnovationStatus.NO_ACCESS, null ->
+                return StepResult.Blocked("innovation ${innovation.names.es} is not available to innovate")
+        }
         if (record.settlement.endeavors < action.endeavorCost) {
             return StepResult.Blocked("insufficient endeavors")
         }
