@@ -43,6 +43,14 @@ class SettlementSummaryTest {
     }
 
     @Test
+    fun theCellsDrawTheIconsTheNewestDesignNames() {
+        assertEquals("nutrition", ResourceColour.BONE.icon)
+        assertEquals("psychology", ResourceColour.CORAL.icon)
+        assertEquals("layers", ResourceColour.GOLD.icon)
+        assertEquals("hardware", ResourceColour.DIM.icon)
+    }
+
+    @Test
     fun theEndeavorsPairCarriesTheDerivedMaximum() {
         val model = SettlementSummaryModel.of(1, endeavors = 3, maxEndeavors = 4, resources = emptyList())
 
