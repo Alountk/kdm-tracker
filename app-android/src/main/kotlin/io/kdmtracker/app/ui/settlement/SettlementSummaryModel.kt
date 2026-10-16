@@ -8,8 +8,8 @@ import io.kdmtracker.core.domain.StorageLine
 enum class ResourceColour(
     val icon: String,
 ) {
-    BONE("format_h4"),
-    CORAL("vital_signs"),
+    BONE("nutrition"),
+    CORAL("psychology"),
     GOLD("layers"),
     DIM("hardware"),
 }

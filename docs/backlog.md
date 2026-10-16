@@ -93,3 +93,33 @@ risk + reliability lenses) left two informational, non-blocking findings worth a
 - Raised by: native review of `902726a..ec497b2`, closed 2026-10-13.
 - Scope: `app-android/src/main/kotlin/io/kdmtracker/app/ui/settlement/InnovationCatalogue.kt`,
   `DevelopPanels.kt`, `app-android/src/test/`.
+
+## Menores visuales del flujo Innovar (diferidos)
+
+Two visual minors from the Innovar review stayed deferred — they touch the Innovaciones surface,
+not this phase, and each needs its own emulator gate:
+
+- **`costChip` mezcla esfuerzo con la inicial** — the minified price row mixes the effort count
+  with the resource initials (`1H 1Ó 1P`) in a way the review flagged as misleading.
+- **La fila de robo se desvía del tablero** — the draw row's alignment drifts from the board.
+
+Everything else from that review's nine minors is now closed: the two fragile `first{}` calls, the
+dead code (`CostLine`, hairlines, nested `if (drawn)`, `onSpendEndeavor`, `acquired`), the stale
+comments, the `Innovate.run` availability guard (M1 on `feat/innovar-flow`), `ResourceEdit` (it
+became the foundation of the add-resources flow, not debt), the "mantén pulsada" hint and the
+save-without-change celebration (both closed by Part A Phase 3 — `feat/anadir-recursos`).
+
+- Raised by: native review of the Innovar flow, 2026-10-14.
+- Scope: `app-android/src/main/kotlin/io/kdmtracker/app/ui/settlement/DevelopPanels.kt`,
+  `InnovationCardView.kt`.
+
+## Añadir recursos (Part A, Fase 3) — hecho
+
+Implemented 2026-10-16 on `feat/anadir-recursos` per
+`docs/superpowers/specs/2026-10-15-anadir-recursos-design.md` and its plan: `ResourceAdjustFlow`
+owns the four design states, `SettlementSummary` renders them (tap to edit, dimmed neighbours,
+red minimum with the save button kept, green confirmed cell with its strip), icons follow the
+newest board (`nutrition` / `psychology`), and `delta == 0` saves nothing. Visual gate approved on
+the emulator before the commits.
+
+- Raised by: Part A roadmap, 2026-10-15.
