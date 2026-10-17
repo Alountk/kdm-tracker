@@ -12,7 +12,7 @@ program. All of Part A is merged.
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
-| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes, Caza, Enfrentamiento | ⚠️ Asentamiento done; **3 open** |
+| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes, Caza, Enfrentamiento | ⚠️ Asentamiento's designed part done; **3 open** |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
 Design sources (Stitch project `4909212909494507782`):
@@ -27,7 +27,14 @@ Design sources (Stitch project `4909212909494507782`):
 ## Track 1 — the three screens still to rebuild 1:1
 
 The app-shell spec (slice 5) declared the order: Asentamiento → Supervivientes → Caza →
-Enfrentamiento. Asentamiento is done; the rest follow.
+Enfrentamiento. Asentamiento's designed part is done; the rest follow.
+
+**Scope of "Asentamiento done":** the settlement-screen spec states the design covers the
+summary, the step frame and **one step of eleven (7 · Desarrollo)** — that is exactly what is
+rebuilt 1:1 (`2026-10-10-settlement-screen-design.md`, "The design covers the summary and one
+step of eleven"). Steps 1–6 and 8–11 have **no Stitch design at all**: they are functional
+implementations of our own text, kept as they are, and are therefore not pending design work.
+The three Part A flows (Fabricar, Innovar, Añadir recursos) are actions inside step 7.
 
 ### V1 — Supervivientes: the paged survivor sheet tab *(next)*
 
