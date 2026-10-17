@@ -4,12 +4,15 @@ import io.kdmtracker.app.ui.advance
 import io.kdmtracker.app.ui.clampIndex
 import io.kdmtracker.app.ui.genderLabel
 import io.kdmtracker.app.ui.isEmptyRoster
+import io.kdmtracker.app.ui.pagerFrame
 import io.kdmtracker.core.domain.Sex
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -60,5 +63,28 @@ class SurvivorPagerModelTest {
         assertEquals(2, clampIndex(index = 4, size = 3))
         assertEquals(0, clampIndex(index = 4, size = 0), "an emptied roster resets to 0")
         assertEquals(2, clampIndex(index = 2, size = 3), "an in-range index is untouched")
+    }
+
+    @Test
+    fun frameResolvesTheSurvivorAtIndex() {
+        val roster = listOf(survivor(Sex.MALE), survivor(Sex.FEMALE), survivor(Sex.OTHER))
+
+        assertEquals(roster[1], pagerFrame(roster, index = 1).survivor)
+        assertEquals(roster[2], pagerFrame(roster, index = 5).survivor, "an overflowing index clamps to the last")
+    }
+
+    @Test
+    fun frameIsEmptyOnAnEmptyRoster() {
+        assertNull(pagerFrame(emptyList<Survivor>(), index = 0).survivor, "the empty state shows no survivor")
+    }
+
+    @Test
+    fun aRosterFrameAlwaysResolvesToSomeSurvivor() {
+        // The seam SurvivorsScreen reads: for any index over a non-empty roster, a survivor.
+        val roster = List(4) { Survivor(id = Ulid.generate(200L + it) { 0 }) }
+
+        listOf(0, 1, 2, 3, 7, 99).forEach { i ->
+            assertNotNull(pagerFrame(roster, index = i).survivor, "index $i must resolve inside the roster")
+        }
     }
 }

@@ -42,3 +42,18 @@ fun clampIndex(
     } else {
         index.coerceIn(0, size - 1)
     }
+
+/**
+ * What the tab renders for one pager index over [survivors]: the survivor to show, or nothing
+ * when the roster is empty (the empty state). The index is clamped first, so a roster that
+ * shrank between frames can never strand the sheet out of bounds.
+ */
+data class PagerFrame(
+    val survivor: Survivor?,
+)
+
+/** Resolves the survivor at [index], or `null` for the empty state on an empty roster. */
+fun pagerFrame(
+    survivors: List<Survivor>,
+    index: Int,
+): PagerFrame = PagerFrame(survivors.getOrNull(clampIndex(index, survivors.size)))

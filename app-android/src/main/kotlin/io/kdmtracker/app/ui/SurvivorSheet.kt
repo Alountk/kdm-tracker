@@ -35,6 +35,10 @@ import io.kdmtracker.core.domain.Survivor
  *
  * Stateless: every control computes the next survivor through [SurvivorSheetEdits] and reports it
  * through [onSave]; the labels are the design's Spanish copy.
+ *
+ * [showHeader] lets the paged tab (which renders its own pager bar — prev button, name, gender
+ * chip and `Equipo`, per the design's sub-header) suppress this sheet's built-in header, so the
+ * two never stack. The expanded roster card keeps the default `true`.
  */
 @Composable
 fun SurvivorSheet(
@@ -47,6 +51,7 @@ fun SurvivorSheet(
     onAssignGear: (String) -> Unit,
     onUnassignGear: (String) -> Unit,
     onEditSheet: () -> Unit,
+    showHeader: Boolean = true,
 ) {
     val model =
         SurvivorSheetModel.from(
@@ -57,7 +62,9 @@ fun SurvivorSheet(
         )
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SurvivorHeader(model = model, onEditSheet = onEditSheet)
+        if (showHeader) {
+            SurvivorHeader(model = model, onEditSheet = onEditSheet)
+        }
 
         SheetPanel(title = "PE de Caza (Experiencia)") {
             Row(verticalAlignment = Alignment.CenterVertically) {
