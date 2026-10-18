@@ -52,6 +52,22 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 
 ## Log
 
+- **L5** (2026-10-18): T1 inspection found the plan's premise wrong — `Symbol` is duplicated ×6
+  with **divergent** signatures (`settlement/*.kt` pass `size`+`lineHeight`, SurvivorSheet does
+  not), `CounterRow` in `DeathCountStepScreen` is a **different** component (field+record), and
+  `GearGrid` is already its own file. Consolidating would change unrelated renders. Maintainer
+  chose **conservative extraction** (`ask_user_choice`): `ui/components/` with exact current
+  signatures, only `SurvivorSheet` imports them, zero visual change; the global `Symbol` cleanup is
+  deferred.
+- **L6** (2026-10-18): **slice boundary** — after T1+T2 the branch is at 532 authored lines (past
+  the ~400-line budget). Delivery strategy: **T1+T2 ship as slice 1** (prep + `MoveMonster`, both
+  domain/refactor, no visual change → green suite is the only gate, no emulator gate needed for
+  this slice). Open PR #1 `refactor+feat: shared sheet primitives and the hunt monster move` now.
+  **Slice 2 = T3–T6** (board-frame test, screen 1:1 rebuild, emulator gate, PR) carries the visual
+  change and its gate.
+
+## Tasks
+
 - **L1** (2026-10-18): maintainer chose V2 = Caza next and approved starting it ("dale").
 - **L2** (2026-10-18): maintainer corrected a **Caza/Enfrentamiento conflation** — the Hunt Phase
   advances a linear **13-space** board (manual pág. 61–63); `E` spaces hold Monster Event cards and
