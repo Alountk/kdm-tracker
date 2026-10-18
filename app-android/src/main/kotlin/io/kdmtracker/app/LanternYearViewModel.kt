@@ -388,6 +388,9 @@ class LanternYearViewModel(
     /** Advances the hunt party one space. */
     fun advanceHunt() = mutate { it.advanceHunt() }
 
+    /** Steps the monster one space toward the party, ambushing on contact. */
+    fun moveMonster() = mutate { it.moveMonster() }
+
     /** Places a hunt event on a space. */
     fun assignHuntEvent(
         index: Int,

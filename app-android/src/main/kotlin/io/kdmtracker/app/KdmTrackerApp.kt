@@ -192,6 +192,7 @@ private fun InCampaignScreen(
                     onAssignHuntEvent = viewModel::assignHuntEvent,
                     onResolveHuntEvent = viewModel::resolveHuntEvent,
                     onAdvanceHunt = viewModel::advanceHunt,
+                    onMoveMonster = viewModel::moveMonster,
                     onFinishHunt = viewModel::finishHunt,
                 )
             Screen.Showdown ->
