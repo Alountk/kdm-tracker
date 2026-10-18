@@ -26,9 +26,14 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
   `Tirada d10`, `Bruma Olorosa y Viento Fétido`, ranges `1 - 3`/`4 - 7`/`8 - 10` with their effects,
   `Resultado d10`, `Sin tirar aún`, `Tirar Dado`). The **d100** table resolution is **deferred to
   backlog** — the control renders in the design's `Sin tirar aún` state.
-- **S5** — Prep: extract shared sheet primitives (`SheetPanel`, `CounterRow`, `PipTrack`,
-  `StoneButton`, `ChipRow`, `AttributeStat`, `Symbol`) from `SurvivorSheet.kt` into
-  `ui/components/` for V2/V3 reuse; `SurvivorSheet` behaviour unchanged.
+- **S5** — Prep: extract shared sheet primitives (`SheetPanel`, `PipTrack`, `AttributeStat`,
+  `StoneButton`, `Symbol`) from `SurvivorSheet.kt` into `ui/components/`, **conservatively** — each
+  keeps its **exact current signature and render** (e.g. `Symbol(name, color)` keeps SurvivorSheet's
+  `bodyLarge` render, no `lineHeight` change), and only `SurvivorSheet` imports them in V2. **Not**
+  in scope: consolidating the 6 divergent `Symbol` copies across `settlement/*.kt` (5 of them pass
+  `size` + `lineHeight`, a different render), the `CounterRow` in `DeathCountStepScreen` (a
+  different component: field+record, not −/value/+), or `GearGrid` (already its own file) — those
+  stay as-is so V2 introduces **zero visual change** outside the hunt screen.
 - **S6** — Tests: `MoveMonster` usecase test (move + ambush edges) and a 13-space board-frame
   views/model test, both RED→GREEN; full suite + both Python suites green.
 - **S7** — Visual gate: emulator captures of the rebuilt screen **approved by the maintainer
@@ -58,3 +63,10 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 - **L4** (2026-10-18): maintainer scope decision (`ask_user_choice`) — **V2 = render 1:1 +
   `MoveMonster`; the d100 hunt-event table → backlog** (a contradictory "todo en V2" first answer
   was resolved to this by a follow-up choice).
+- **L5** (2026-10-18): T1 inspection found the plan's premise wrong — `Symbol` is duplicated ×6
+  with **divergent** signatures (`settlement/*.kt` pass `size`+`lineHeight`, SurvivorSheet does
+  not), `CounterRow` in `DeathCountStepScreen` is a **different** component (field+record), and
+  `GearGrid` is already its own file. Consolidating would change unrelated renders. Maintainer
+  chose **conservative extraction** (`ask_user_choice`): `ui/components/` with exact current
+  signatures, only `SurvivorSheet` imports them, zero visual change; the global `Symbol` cleanup is
+  deferred.

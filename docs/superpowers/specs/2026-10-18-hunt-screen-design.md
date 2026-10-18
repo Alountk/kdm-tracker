@@ -73,9 +73,11 @@ Two corrections to the Stitch render, decided by the maintainer 2026-10-18:
 - **S4** — The hunt-event card renders the event's title/description/ranges verbatim; `Tirar Dado`
   is present but its **d100** table resolution is deferred (out of scope, backlog) — the control
   renders in the design's disabled/`Sin tirar aún` state until that slice lands.
-- **S5** — Prep: extract the shared sheet primitives (`SheetPanel`, `CounterRow`, `PipTrack`,
-  `StoneButton`, `ChipRow`, `AttributeStat`, `Symbol`) from `SurvivorSheet.kt` into
-  `ui/components/` so V2/V3 reuse them (V2 uses `ChipRow`/`StoneButton`/`SheetPanel`).
+- **S5** — Prep: extract the shared sheet primitives (`SheetPanel`, `PipTrack`, `AttributeStat`,
+  `StoneButton`, `Symbol`) from `SurvivorSheet.kt` into `ui/components/`, **conservatively** — each
+  keeps its exact current signature and render, and only `SurvivorSheet` imports them in V2. The 6
+  divergent `Symbol` copies in `settlement/*.kt`, the `DeathCountStepScreen.CounterRow` (a different
+  component) and `GearGrid` (its own file) stay as-is: **zero visual change** outside the hunt screen.
 - **S6** — Tests: `MoveMonster` usecase test (move + ambush edge cases) RED→GREEN; a views/model
   test pinning the 13-space board frame; full suite + both Python suites green.
 - **S7** — Visual gate: emulator captures of the rebuilt screen (board with 13 spaces, quarry
