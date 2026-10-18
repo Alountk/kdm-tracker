@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -28,12 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.app.ui.theme.KdmPalette
 import io.kdmtracker.core.domain.HuntSpace
 import io.kdmtracker.core.domain.HuntSpaceKind
+import io.kdmtracker.core.domain.HuntState
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SurvivorStatus
@@ -83,7 +92,6 @@ fun HuntScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         QuarryPlinth(state = state, level = hunt.level)
-        InstinctRule()
         ExpeditionChips(party = party, onAssignPlayer = onAssignPlayer, players = hunt.players)
         HuntBoard(hunt = hunt, selectedIndex = selected, onSelectIndex = { selected = it })
         HuntEventCard(
@@ -108,61 +116,86 @@ private fun QuarryPlinth(
     state: UiState,
     level: Int,
 ) {
+    // The design renders this whole block in one card (`surface-container-low`), with the
+    // `Distancia` badge pinned to the top-right of the header row.
     HuntPanel {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val hunt = state.hunt ?: HuntState()
+        val frame = HuntPlinthFrame.from(hunt.copy(level = level))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
             Box(
                 modifier =
                     Modifier
-                        .clip(CircleShape)
-                        .background(HuntRed)
-                        .padding(6.dp),
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(KdmPalette.surfaceHighest),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(text = "pets", color = Color.White, fontSize = 14.sp)
+                Symbol("pets", KdmPalette.gold, 26)
             }
-            Text(text = "Presa Activa", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(
-                text = "Nivel $level",
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(HuntRed)
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-            )
-        }
-        Text(
-            text = state.hunt?.quarry ?: "León Blanco",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-        )
-        Text(text = "Variante Primera Historia", color = Color(0xFFB9B9BE), fontSize = 12.sp)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = "Distancia", color = HuntInk, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(text = distance(state), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(text = "casillas", color = Color(0xFFB9B9BE), fontSize = 12.sp)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(text = frame.eyebrow, color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(KdmPalette.gold),
+                    )
+                    Text(text = frame.levelLabel, color = KdmPalette.ash, fontSize = 14.sp)
+                }
+                Text(text = frame.quarry, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(text = frame.variant, color = KdmPalette.ash, fontSize = 11.sp)
+            }
+            DistanceBadge(distance = frame.distance)
         }
         StatMatrix()
+        InstinctRule()
     }
 }
 
-private fun distance(state: UiState): String {
-    val hunt = state.hunt ?: return "3"
-    return (hunt.monsterPosition - hunt.position).coerceAtLeast(0).toString()
+/** The plinth's top-right `Distancia` badge: label, stat display, `casillas` unit, stacked. */
+@Composable
+private fun DistanceBadge(distance: String) {
+    Column(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(KdmPalette.surfaceHighest)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(text = "Distancia", color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        Text(text = distance, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+        Text(text = "casillas", color = KdmPalette.ash, fontSize = 11.sp)
+    }
 }
 
-/** Region 2b — the monster stat matrix `Mov 6 / Res 8 / Vel - / Daño -`. */
+/** Region 2b — the monster stat matrix `Mov 6 / Res 8 / Vel - / Daño -`, a 4-cell grid on its own
+ *  darker track, exactly as the design's `surface-container-lowest` wrapper renders it. */
 @Composable
 private fun StatMatrix() {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(KdmPalette.surfaceLowest)
+                .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         StatCell("Mov", "6", Modifier.weight(1f))
         StatCell("Res", "8", Modifier.weight(1f))
-        StatCell("Vel", "-", Modifier.weight(1f))
-        StatCell("Daño", "-", Modifier.weight(1f))
+        StatCell("Vel", "-", Modifier.weight(1f), muted = true)
+        StatCell("Daño", "-", Modifier.weight(1f), muted = true)
     }
 }
 
@@ -171,37 +204,65 @@ private fun StatCell(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    muted: Boolean = false,
 ) {
     Column(
         modifier =
             modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(HuntDeepRed)
-                .padding(vertical = 8.dp),
+                .clip(RoundedCornerShape(6.dp))
+                .background(KdmPalette.surfaceLow)
+                .padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(text = label, color = HuntInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-        Text(text = value, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text(
+            text = label,
+            color = if (muted) KdmPalette.ash else KdmPalette.onCanvas,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = value,
+            color = if (muted) KdmPalette.ash.copy(alpha = 0.7f) else KdmPalette.onCanvas,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
-/** Region 3 — the active-instinct rule. */
+/** Region 3 — the active-instinct rule, rendered inside the plinth card (as in the design). */
 @Composable
 private fun InstinctRule() {
-    HuntPanel {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = "psychology", color = HuntInk, fontSize = 16.sp)
-            Text(text = "Instinto: Olfateo", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(KdmPalette.surfaceContainer)
+                .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Symbol("psychology", KdmPalette.gold, 16)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = "Instinto: Olfateo",
+                color = KdmPalette.onCanvas,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+            )
+            Text(
+                text =
+                    "El León Blanco olfatea el aire y finaliza su turno. " +
+                        "Todos los supervivientes pasan a ser considerados amenazas activas.",
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Text(
-            text =
-                "El León Blanco olfatea el aire y finaliza su turno. " +
-                    "Todos los supervivientes pasan a ser considerados amenazas activas.",
-            color = Color(0xFFD8D8DC),
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-        )
     }
 }
 
@@ -219,7 +280,7 @@ private fun ExpeditionChips(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "groups", color = HuntInk, fontSize = 14.sp)
+                Symbol("groups", HuntInk, 14)
                 Text(text = "Cazadores en Marcha", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
             Text(text = "${party.size} Linternas encendidas", color = Color(0xFFB9B9BE), fontSize = 11.sp)
@@ -287,14 +348,14 @@ private fun SurvivorChip(
     }
 }
 
-/** A dark panel with a gold hairline border, matching the design's cards. */
+/** A dark panel card with the design's `surface-container-low` fill. */
 @Composable
 private fun HuntPanel(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF1C1C1F),
-        contentColor = Color.White,
-        shape = RoundedCornerShape(10.dp),
+        color = KdmPalette.surfaceLow,
+        contentColor = KdmPalette.onCanvas,
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(10.dp),
@@ -316,37 +377,64 @@ private fun HuntEventCard(
 ) {
     HuntPanel {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = "auto_stories", color = HuntInk, fontSize = 16.sp)
-            Text(text = "Evento de Caza #$index", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Symbol("auto_stories", KdmPalette.gold, 16)
+            Text(
+                text = "Evento de Caza #$index",
+                color = KdmPalette.gold,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+            )
             Text(
                 text = "Tirada d10",
-                color = HuntInk,
+                color = KdmPalette.onCanvas,
                 fontSize = 11.sp,
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFF2A2A2E))
+                        .background(KdmPalette.surfaceHighest)
                         .padding(horizontal = 8.dp, vertical = 2.dp),
             )
         }
         Text(
             text = "Bruma Olorosa y Viento Fétido",
-            color = Color.White,
+            color = KdmPalette.onCanvas,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
         )
         Text(
             text =
-                "El hedor metálico a carne descompuesta empapa las túnicas. " +
-                    "En la penumbra, una densa neblina borra las huellas de la bestia.",
-            color = Color(0xFFD8D8DC),
+                "\"El hedor metálico a carne descompuesta empapa las túnicas. " +
+                    "En la penumbra, una densa neblina borra las huellas de la bestia.\"",
+            color = KdmPalette.ash,
             fontSize = 12.sp,
             lineHeight = 16.sp,
+            fontStyle = FontStyle.Italic,
         )
-        Text(text = "Tabla de Resultados", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-        ResultRange("1 - 3", "Pánico en la Ceguera", "1 de daño al Cerebro")
-        ResultRange("4 - 7", "Huellas Frescas", "+1 de Supervivencia")
-        ResultRange("8 - 10", "Viento a Favor (Ventaja)", "+1 PE de Caza")
+        Text(text = "Tabla de Resultados", color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        ResultRange(
+            "1 - 3",
+            "Pánico en la Ceguera",
+            "Todos los cazadores sufren ",
+            "1 de daño al Cerebro",
+            ". El monstruo avanza 1 casilla hacia ellos.",
+            KdmPalette.blood,
+        )
+        ResultRange(
+            "4 - 7",
+            "Huellas Frescas",
+            "El rastreador activo obtiene ",
+            "+1 de Supervivencia",
+            ". Los cazadores continúan la marcha sin desvíos.",
+            KdmPalette.gold,
+        )
+        ResultRange(
+            "8 - 10",
+            "Viento a Favor (Ventaja)",
+            "Descubrís mechones de pelaje ensangrentado. ",
+            "+1 PE de Caza",
+            " para el grupo y avanzáis 1 casilla adicional.",
+            KdmPalette.onCanvas,
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -362,42 +450,68 @@ private fun HuntEventCard(
                 enabled = false,
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text(text = "casino  Tirar Dado", fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Symbol("casino", MaterialTheme.colorScheme.secondary, 18)
+                    Text(text = "Tirar Dado", fontSize = 12.sp)
+                }
             }
         }
     }
 }
 
+/** One result row: a boxed d10 range, its title, and its effect with the highlighted phrase. */
 @Composable
 private fun ResultRange(
     range: String,
     title: String,
-    effect: String,
+    prefix: String,
+    highlight: String,
+    suffix: String,
+    highlightColor: Color,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF242427))
+                .background(KdmPalette.surfaceLowest)
                 .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = range,
-            color = HuntInk,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            modifier = Modifier.align(Alignment.Top),
-        )
+        // The design's fixed range box (`w-8 h-8`) on the left of every row.
+        Box(
+            modifier =
+                Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(KdmPalette.surfaceHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = range, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text(text = effect, color = Color(0xFFD8D8DC), fontSize = 12.sp, lineHeight = 15.sp)
+            Text(text = title, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(
+                text =
+                    buildAnnotatedString {
+                        append(prefix)
+                        withStyle(
+                            SpanStyle(color = highlightColor, fontWeight = FontWeight.SemiBold),
+                        ) { append(highlight) }
+                        append(suffix)
+                    },
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
         }
     }
 }
 
-/** Region 7 — the three hunt action buttons. */
+/** Region 7 — the three hunt action buttons: a full-width advance over a 2-up pair. */
 @Composable
 private fun ActionButtons(
     onAdvance: () -> Unit,
@@ -408,23 +522,61 @@ private fun ActionButtons(
         onClick = onAdvance,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = KdmPalette.surfaceHigh,
+                contentColor = KdmPalette.onCanvas,
+            ),
     ) {
-        Text(text = "arrow_forward  Avanzar Supervivientes (+1 Casilla)", fontSize = 13.sp)
+        Row(
+            modifier = Modifier.padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Symbol("arrow_forward", KdmPalette.gold, 20)
+            Text(text = "Avanzar Supervivientes (+1 Casilla)", fontSize = 13.sp)
+        }
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(
+        // Mover Bestia: filled `surface-container-low`, ink on the right.
+        Button(
             onClick = onMoveMonster,
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(8.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = KdmPalette.surfaceLow,
+                    contentColor = KdmPalette.ash,
+                ),
         ) {
-            Text(text = "directions_walk  Mover Bestia", fontSize = 12.sp)
+            Row(
+                modifier = Modifier.padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Symbol("directions_walk", KdmPalette.blood, 18)
+                Text(text = "Mover Bestia", fontSize = 12.sp)
+            }
         }
-        OutlinedButton(
+        // Enfrentamiento: the design's red filled action.
+        Button(
             onClick = onShowdown,
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(8.dp),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = KdmPalette.onCrimsonContainer, // #8E1214
+                    contentColor = KdmPalette.crimsonContainer, // #FFDAD6
+                ),
         ) {
-            Text(text = "swords  Enfrentamiento", fontSize = 12.sp)
+            Row(
+                modifier = Modifier.padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Symbol("swords", KdmPalette.crimsonContainer, 18)
+                Text(text = "Enfrentamiento", fontSize = 12.sp)
+            }
         }
     }
 }

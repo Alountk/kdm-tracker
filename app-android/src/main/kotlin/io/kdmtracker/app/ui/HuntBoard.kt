@@ -1,26 +1,36 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.kdmtracker.core.domain.HuntSpace
-import io.kdmtracker.core.domain.HuntSpaceKind
+import androidx.compose.ui.unit.sp
+import io.kdmtracker.app.ui.theme.KdmPalette
 import io.kdmtracker.core.domain.HuntState
 
 /**
- * The 13-space hunt board: a horizontal, scrollable row of the spaces, each showing its kind and how
- * many of its events are resolved. The current space and the selected space are highlighted.
+ * The 13-space hunt board, rebuilt 1:1 from the Stitch design: a horizontal track of stone cells
+ * over the [HuntBoardFrame] view (which pins each cell's index, icon and label). The survivor
+ * party's cell glows gold, the monster's glows red, and each carries the design's position lozenge.
  */
 @Composable
 fun HuntBoard(
@@ -28,60 +38,166 @@ fun HuntBoard(
     selectedIndex: Int,
     onSelectIndex: (Int) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    val frame = HuntBoardFrame.from(hunt)
+    val isMonsterCell = { view: HuntSpaceView -> view.icon == "skull" && view.label == "Guarida" }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(KdmPalette.surfaceLow)
+                .padding(12.dp),
     ) {
-        hunt.spaces.forEachIndexed { index, space ->
-            HuntSpaceCell(
-                index = index,
-                space = space,
-                current = index == hunt.position,
-                selected = index == selectedIndex,
-                onClick = { onSelectIndex(index) },
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Symbol("route", KdmPalette.gold, 16)
+                Text(
+                    text = "Tablero de Caza",
+                    color = KdmPalette.onCanvas,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                )
+            }
+            Text(text = frame.rangeLabel, color = KdmPalette.ash, fontSize = 11.sp)
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            frame.spaces.forEach { view ->
+                HuntSpaceCell(
+                    view = view,
+                    selected = view.index == selectedIndex,
+                    isMonster = isMonsterCell(view),
+                    onClick = { onSelectIndex(view.index) },
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            MarkerRow(color = KdmPalette.gold, text = frame.partyMarker)
+            MarkerRow(color = KdmPalette.blood, text = frame.monsterMarker)
         }
     }
 }
 
+/** One board cell: the index on top, the icon medallion, the label, and the position lozenge. */
 @Composable
 private fun HuntSpaceCell(
-    index: Int,
-    space: HuntSpace,
-    current: Boolean,
+    view: HuntSpaceView,
     selected: Boolean,
+    isMonster: Boolean,
     onClick: () -> Unit,
 ) {
-    val container =
+    val accent =
         when {
-            selected -> MaterialTheme.colorScheme.secondaryContainer
-            current -> MaterialTheme.colorScheme.primaryContainer
-            else -> MaterialTheme.colorScheme.surfaceVariant
+            isMonster -> KdmPalette.blood
+            view.isParty -> KdmPalette.gold
+            selected -> KdmPalette.gold
+            else -> null
         }
-    Surface(
-        onClick = onClick,
-        color = container,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = MaterialTheme.shapes.small,
+    val numberColor = accent ?: KdmPalette.ash
+    val cellBg =
+        when {
+            isMonster -> KdmPalette.surfaceHigh
+            view.isParty -> KdmPalette.surfaceHigh
+            else -> KdmPalette.surfaceHighest
+        }
+    val medallionSize = if (view.isParty || isMonster) 32.dp else 28.dp
+
+    Box(
+        modifier =
+            Modifier
+                .width(72.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(cellBg)
+                .clickable(onClick = onClick)
+                .padding(vertical = 8.dp, horizontal = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(text = space.kind.marker(), style = MaterialTheme.typography.labelLarge)
-            Text(text = "$index", style = MaterialTheme.typography.bodySmall)
-            Text(text = "${space.resolved.size}/${space.events.size}", style = MaterialTheme.typography.labelSmall)
+            Text(
+                text = view.index.toString(),
+                color = numberColor,
+                fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 11.sp,
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .size(medallionSize)
+                        .clip(if (view.isParty || isMonster) CircleShape else RoundedCornerShape(4.dp))
+                        .background(accent ?: KdmPalette.surfaceContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                // Filled medallions (party / monster) need ink on the accent, not the accent itself.
+                val ink =
+                    when {
+                        view.isParty -> KdmPalette.onGold // gold medallion -> dark ink
+                        isMonster -> KdmPalette.onBlood // blood medallion -> dark ink
+                        else -> KdmPalette.ash
+                    }
+                if (view.icon == "E") {
+                    Text(
+                        text = "E",
+                        color = ink.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
+                } else {
+                    Symbol(
+                        name = view.icon,
+                        color = ink,
+                        size = if (view.isParty || isMonster) 18 else 16,
+                    )
+                }
+            }
+            Text(
+                text = view.label,
+                color = accent ?: KdmPalette.ash,
+                fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 10.sp,
+            )
+            // The design's rotated position lozenge, only on the party / monster cells.
+            if (accent != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(8.dp)
+                            .rotate(45f)
+                            .background(accent),
+                )
+            }
         }
     }
 }
 
-private fun HuntSpaceKind.marker(): String =
-    when (this) {
-        HuntSpaceKind.START -> "★"
-        HuntSpaceKind.NORMAL -> "•"
-        HuntSpaceKind.MONSTER_E -> "E"
-        HuntSpaceKind.OVERWHELMING_DARKNESS -> "◎"
-        HuntSpaceKind.STARVATION -> "☠"
-        HuntSpaceKind.MONSTER -> "◆"
+/** One of the two board markers: a coloured dot plus its label. */
+@Composable
+private fun MarkerRow(
+    color: Color,
+    text: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(color),
+        )
+        Text(text = text, color = KdmPalette.ash, fontSize = 11.sp)
     }
+}
