@@ -29,9 +29,9 @@ import io.kdmtracker.app.ui.AppTopBar
 import io.kdmtracker.app.ui.ChipAction
 import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.HuntScreen
-import io.kdmtracker.app.ui.PendientePlaceholder
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
+import io.kdmtracker.app.ui.SurvivorsScreen
 import io.kdmtracker.app.ui.shell.AppShell
 import io.kdmtracker.app.ui.shell.ShellTab
 import io.kdmtracker.app.ui.theme.KdmTheme
@@ -174,9 +174,15 @@ private fun InCampaignScreen(
                     onWoundMonster = viewModel::woundMonster,
                     onGrantHuntXp = viewModel::grantHuntXp,
                 )
-            // The design's Supervivientes tab is the paged survivor sheet; that view is its own
-            // slice, so the tab is deliberately empty rather than a sheet with a dead button.
-            Screen.Survivors -> PendientePlaceholder()
+            // The design's Supervivientes tab is the paged survivor sheet: one survivor at a
+            // time with a cycling prev button, no roster list.
+            Screen.Survivors ->
+                SurvivorsScreen(
+                    state = state,
+                    onSave = viewModel::updateSurvivor,
+                    onAssignGear = viewModel::assignGear,
+                    onUnassignGear = viewModel::unassignGear,
+                )
             Screen.Hunt ->
                 HuntScreen(
                     state = state,

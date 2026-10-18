@@ -123,3 +123,22 @@ newest board (`nutrition` / `psychology`), and `delta == 0` saves nothing. Visua
 the emulator before the commits.
 
 - Raised by: Part A roadmap, 2026-10-15.
+
+## Ficha de superviviente: subtítulo de rol y estado vacío en emulador (V1, diferidos)
+
+Two gaps from the V1 paged survivor sheet (`feat/supervivientes-paged`) were deferred, each out of
+that slice's scope:
+
+- **Subtítulo de rol no modelado** — the design carries `Prólogo • Superviviente Fundador` under
+  the survivor's name in the pager bar; the `Survivor` domain has no role field, so the pager shows
+  only name + gender chip. Adding a modelled role is its own feature, not a render gap.
+- **Estado vacío sin captura en emulador** — `Aún no hay supervivientes.` renders only on a
+  0-survivor roster, but `population = 4` is the fixed default (`Settlement.kt:60`), there is no UI
+  to remove a survivor or create with population 0, and the sync does not import new campaigns
+  (`rebind` only), so an empty roster is unreachable on-device without a domain change. The branch
+  is pinned by JVM tests (`emptyRosterPredicate`, `frameIsEmptyOnAnEmptyRoster`,
+  `advanceOnAnEmptyRosterStaysAtZero`); capture it once a remove/kill flow exists.
+
+- Raised by: V1 visual gate review, 2026-10-16.
+- Scope: `app-android/src/main/kotlin/io/kdmtracker/app/ui/SurvivorsScreen.kt`,
+  `SurvivorPagerModel.kt`, `core/.../domain/Survivor.kt`.
