@@ -6,12 +6,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import io.kdmtracker.app.ui.components.woundBoxColor
 import io.kdmtracker.app.ui.theme.InnovarPalette
 import io.kdmtracker.app.ui.theme.KdmScheme
 import io.kdmtracker.app.ui.theme.KdmShapes
 import io.kdmtracker.app.ui.theme.KdmType
 import io.kdmtracker.app.ui.theme.KdmTypography
-import io.kdmtracker.app.ui.woundBoxColor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow

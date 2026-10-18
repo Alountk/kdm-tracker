@@ -55,6 +55,7 @@ object SetUpHunt {
                 players = players,
                 spaces = spaces,
                 position = 0,
+                monsterPosition = spaces.lastIndex,
                 status = HuntStatus.ACTIVE,
             )
         return StepResult.Ok(record.copy(state = record.state.copy(hunt = hunt)))
