@@ -142,3 +142,21 @@ that slice's scope:
 - Raised by: V1 visual gate review, 2026-10-16.
 - Scope: `app-android/src/main/kotlin/io/kdmtracker/app/ui/SurvivorsScreen.kt`,
   `SurvivorPagerModel.kt`, `core/.../domain/Survivor.kt`.
+
+## Tabla de Eventos de Caza (d100) — pendiente de modelar (V2 Caza, diferido)
+
+Decisión del mantenedor (2026-10-18) al planificar V2: la **Tabla de Eventos de Caza** — los
+eventos 01–100 que se tiran con **d100** en las casillas básicas — **queda fuera de V2** y se
+modela como slice aparte. V2 solo reconstruye la pantalla 1:1 y modela `MoveMonster`.
+
+- Los 100 eventos ya están transcritos en `external-assets/09..11_tabla_de_eventos_de_caza_*.md`
+  (págs. 90–105) pero **no están en el modelo de dominio**. `Core15HuntEvents.kt` solo tiene 37
+  cartas (3 BASIC, 32 MONSTER del León, 2 SPECIAL) — los decks, no la tabla d100.
+- El diseño de Stitch de Caza dibuja un evento con "Tirada **d10**" y 3 rangos: es un **ejemplo
+  ilustrativo**; el juego real usa **d100** sobre los 100 eventos (los rangos 1-3 / 4-7 / 8-10 del
+  diseño son de ese ejemplo concreto).
+- Al modelarla: parsear `external-assets/09..11`, crear el catálogo, y añadir un usecase de tirada
+  d100 que resuelva el evento elegido. Requiere gate visual aparte.
+
+- Raised by: V2 Caza scope decision, 2026-10-18.
+- Scope: `core/.../content/`, `core/.../usecase/`, `app-android/.../ui/HuntScreen.kt`.
