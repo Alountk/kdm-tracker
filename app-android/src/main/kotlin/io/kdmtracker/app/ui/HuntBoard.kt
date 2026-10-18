@@ -57,7 +57,7 @@ fun HuntBoard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Symbol("route", KdmPalette.gold, 16)
                 Text(
-                    text = "Tablero de Caza",
+                    text = "Tablero de Caza".uppercase(),
                     color = KdmPalette.onCanvas,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.app.ui.theme.KdmFontFamilies
 import io.kdmtracker.app.ui.theme.KdmPalette
 import io.kdmtracker.core.domain.HuntSpace
 import io.kdmtracker.core.domain.HuntSpaceKind
@@ -142,7 +143,12 @@ private fun QuarryPlinth(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text(text = frame.eyebrow, color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        text = frame.eyebrow.uppercase(),
+                        color = KdmPalette.gold,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
                     Box(
                         modifier =
                             Modifier
@@ -150,9 +156,15 @@ private fun QuarryPlinth(
                                 .clip(CircleShape)
                                 .background(KdmPalette.gold),
                     )
-                    Text(text = frame.levelLabel, color = KdmPalette.ash, fontSize = 14.sp)
+                    Text(text = frame.levelLabel.uppercase(), color = KdmPalette.ash, fontSize = 14.sp)
                 }
-                Text(text = frame.quarry, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    text = frame.quarry,
+                    color = KdmPalette.onCanvas,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    fontFamily = KdmFontFamilies.playfair,
+                )
                 Text(text = frame.variant, color = KdmPalette.ash, fontSize = 11.sp)
             }
             DistanceBadge(distance = frame.distance)
@@ -173,7 +185,7 @@ private fun DistanceBadge(distance: String) {
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = "Distancia", color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        Text(text = "Distancia".uppercase(), color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 11.sp)
         Text(text = distance, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 24.sp)
         Text(text = "casillas", color = KdmPalette.ash, fontSize = 11.sp)
     }
@@ -247,7 +259,7 @@ private fun InstinctRule() {
         Symbol("psychology", KdmPalette.gold, 16)
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = "Instinto: Olfateo",
+                text = "Instinto: Olfateo".uppercase(),
                 color = KdmPalette.onCanvas,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
@@ -281,7 +293,12 @@ private fun ExpeditionChips(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Symbol("groups", HuntInk, 14)
-                Text(text = "Cazadores en Marcha", color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(
+                    text = "Cazadores en Marcha".uppercase(),
+                    color = HuntInk,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                )
             }
             Text(text = "${party.size} Linternas encendidas", color = Color(0xFFB9B9BE), fontSize = 11.sp)
         }
@@ -379,7 +396,7 @@ private fun HuntEventCard(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Symbol("auto_stories", KdmPalette.gold, 16)
             Text(
-                text = "Evento de Caza #$index",
+                text = "Evento de Caza #$index".uppercase(),
                 color = KdmPalette.gold,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
@@ -400,6 +417,7 @@ private fun HuntEventCard(
             color = KdmPalette.onCanvas,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
+            fontFamily = KdmFontFamilies.playfair,
         )
         Text(
             text =
@@ -410,14 +428,15 @@ private fun HuntEventCard(
             lineHeight = 16.sp,
             fontStyle = FontStyle.Italic,
         )
-        Text(text = "Tabla de Resultados", color = KdmPalette.gold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         ResultRange(
             "1 - 3",
             "Pánico en la Ceguera",
             "Todos los cazadores sufren ",
             "1 de daño al Cerebro",
             ". El monstruo avanza 1 casilla hacia ellos.",
-            KdmPalette.blood,
+            rangeColor = KdmPalette.onCanvas,
+            titleColor = KdmPalette.onCanvas,
+            highlightColor = KdmPalette.blood,
         )
         ResultRange(
             "4 - 7",
@@ -425,7 +444,9 @@ private fun HuntEventCard(
             "El rastreador activo obtiene ",
             "+1 de Supervivencia",
             ". Los cazadores continúan la marcha sin desvíos.",
-            KdmPalette.gold,
+            rangeColor = KdmPalette.onCanvas,
+            titleColor = KdmPalette.onCanvas,
+            highlightColor = KdmPalette.gold,
         )
         ResultRange(
             "8 - 10",
@@ -433,7 +454,9 @@ private fun HuntEventCard(
             "Descubrís mechones de pelaje ensangrentado. ",
             "+1 PE de Caza",
             " para el grupo y avanzáis 1 casilla adicional.",
-            KdmPalette.onCanvas,
+            rangeColor = KdmPalette.gold,
+            titleColor = KdmPalette.gold,
+            highlightColor = KdmPalette.onCanvas,
         )
 
         Row(
@@ -442,8 +465,13 @@ private fun HuntEventCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Text(text = "Resultado d10", color = HuntInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text(text = "Sin tirar aún", color = Color(0xFFB9B9BE), fontSize = 12.sp)
+                Text(
+                    text = "Resultado d10".uppercase(),
+                    color = KdmPalette.onCanvas,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(text = "Sin tirar aún", color = KdmPalette.ash, fontSize = 12.sp)
             }
             Button(
                 onClick = { /* d100 resolution is deferred to the backlog slice (S4) */ },
@@ -455,7 +483,7 @@ private fun HuntEventCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Symbol("casino", MaterialTheme.colorScheme.secondary, 18)
-                    Text(text = "Tirar Dado", fontSize = 12.sp)
+                    Text(text = "Tirar Dado".uppercase(), color = KdmPalette.onCanvas, fontSize = 12.sp)
                 }
             }
         }
@@ -470,6 +498,8 @@ private fun ResultRange(
     prefix: String,
     highlight: String,
     suffix: String,
+    rangeColor: Color,
+    titleColor: Color,
     highlightColor: Color,
 ) {
     Row(
@@ -490,10 +520,10 @@ private fun ResultRange(
                     .background(KdmPalette.surfaceHigh),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = range, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+            Text(text = range, color = rangeColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = title, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(text = title, color = titleColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text(
                 text =
                     buildAnnotatedString {
@@ -534,7 +564,7 @@ private fun ActionButtons(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Symbol("arrow_forward", KdmPalette.gold, 20)
-            Text(text = "Avanzar Supervivientes (+1 Casilla)", fontSize = 13.sp)
+            Text(text = "Avanzar Supervivientes (+1 Casilla)".uppercase(), fontSize = 13.sp)
         }
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -555,7 +585,7 @@ private fun ActionButtons(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Symbol("directions_walk", KdmPalette.blood, 18)
-                Text(text = "Mover Bestia", fontSize = 12.sp)
+                Text(text = "Mover Bestia".uppercase(), fontSize = 12.sp)
             }
         }
         // Enfrentamiento: the design's red filled action.
@@ -565,7 +595,7 @@ private fun ActionButtons(
             shape = RoundedCornerShape(8.dp),
             colors =
                 ButtonDefaults.buttonColors(
-                    containerColor = KdmPalette.onCrimsonContainer, // #8E1214
+                    containerColor = HuntDeepRed, // design's on-tertiary-fixed-variant #8E1214
                     contentColor = KdmPalette.crimsonContainer, // #FFDAD6
                 ),
         ) {
@@ -575,7 +605,7 @@ private fun ActionButtons(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Symbol("swords", KdmPalette.crimsonContainer, 18)
-                Text(text = "Enfrentamiento", fontSize = 12.sp)
+                Text(text = "Enfrentamiento".uppercase(), fontSize = 12.sp)
             }
         }
     }
