@@ -47,7 +47,7 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 | T2 | S3, S6 | inline (TDD) | `feat(core): move the hunt monster and resolve ambush` → **`7f95404` (PR #38, slice 1)** |
 | T3 | S6 | inline (TDD) | `feat(app): model the 13-space hunt board frame` → **`cae7db9` (slice 2)** |
 | T4 | S1, S2, S4 | inline | `feat(app): render the hunt phase screen 1:1` → **`4265bf4` (slice 2)** |
-| T5 | S7 (visual gate) | inline + maintainer | *(gate before any push/PR)* |
+| T5 | S7 (visual gate) | inline + maintainer | **APPROVED as-is** 2026-10-18 (chips require real DEPARTING data; Distancia derived) |
 | T6 | S6 (suite + PR) | inline | `chore(test): pin the hunt phase screen` |
 
 ## Log
