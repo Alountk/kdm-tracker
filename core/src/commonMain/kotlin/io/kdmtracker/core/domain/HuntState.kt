@@ -31,7 +31,10 @@ data class HuntSpace(
  * @property players the number of players (1–4).
  * @property assignments the party's player assignment, keyed by survivor id (1-based player index).
  * @property spaces the thirteen board spaces once set up.
- * @property position the current space index.
+ * @property position the current space index of the survivor party.
+ * @property monsterPosition the current space index of the monster's miniature; starts on the last
+ *   space (the `MONSTER` space) once set up and steps toward the party with
+ *   [io.kdmtracker.core.usecase.MoveMonster]. `-1` when no board is set up.
  * @property status the hunt outcome; [HuntStatus.ACTIVE] while in progress.
  */
 @Serializable
@@ -42,5 +45,6 @@ data class HuntState(
     val assignments: Map<Ulid, Int> = emptyMap(),
     val spaces: List<HuntSpace> = emptyList(),
     val position: Int = 0,
+    val monsterPosition: Int = spaces.lastIndex,
     val status: HuntStatus = HuntStatus.ACTIVE,
 )
