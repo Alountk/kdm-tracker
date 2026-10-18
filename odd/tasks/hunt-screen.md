@@ -43,8 +43,8 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 
 | ID | Spec | Route | Commit |
 |---|---|---|---|
-| T1 | S5 | inline (refactor, suite-pinned) | `refactor(app): extract the shared sheet primitives` |
-| T2 | S3, S6 | inline (TDD) | `feat(core): move the hunt monster and resolve ambush` |
+| T1 | S5 | inline (refactor, suite-pinned) | `refactor(app): extract the shared sheet primitives` → **`9cdde77` (PR #38, slice 1)** |
+| T2 | S3, S6 | inline (TDD) | `feat(core): move the hunt monster and resolve ambush` → **`7f95404` (PR #38, slice 1)** |
 | T3 | S6 | inline (TDD) | `feat(app): model the 13-space hunt board frame` |
 | T4 | S1, S2, S4 | inline | `feat(app): render the hunt phase screen 1:1` |
 | T5 | S7 (visual gate) | inline + maintainer | *(gate before any push/PR)* |
