@@ -12,7 +12,7 @@ program. All of Part A is merged.
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
-| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes, Caza, Enfrentamiento | ⚠️ Asentamiento's designed part done; **3 open** |
+| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes (#37), Caza, Enfrentamiento | ⚠️ Asentamiento's designed part + Supervivientes done; **2 open** |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
 Design sources (Stitch project `4909212909494507782`):
@@ -36,20 +36,22 @@ step of eleven"). Steps 1–6 and 8–11 have **no Stitch design at all**: they 
 implementations of our own text, kept as they are, and are therefore not pending design work.
 The three Part A flows (Fabricar, Innovar, Añadir recursos) are actions inside step 7.
 
-### V1 — Supervivientes: the paged survivor sheet tab *(next)*
+### V1 — Supervivientes: the paged survivor sheet tab ✅ done (#37)
 
-The tab renders `PendientePlaceholder()` today (`KdmTrackerApp.kt:179`) even though the
-survivor sheet itself is already reskinned and working inside the settlement flow. The design
-has **no roster list**: the tab is a full-screen paged sheet with a prev/next survivor selector.
+Merged as squash `01b4274`. The tab now routes `Screen.Survivors` to a paged `SurvivorSheet`:
+the pager bar (one cycling prev button `(idx + 1) % len`, name + gender chip `H/M/O`, `Equipo`)
+over the sheet with its header suppressed, the empty state, and a local `SurvivorEditorDialog`
+host. The last `PendientePlaceholder()` in the shell's four tabs is gone. Gate approved on the
+emulator (seed + newly created settlement) before merge; full suite green.
 
-- Scope: route `Screen.Survivors` to a paged `SurvivorSheet` (prev/next over the roster),
-  with its own not-started state when the settlement has no survivors.
 - The sheet's **9 recorded gaps** (4 regions: Edad 1–4/Retiro, Ruleta de Muerte, Armaduras
   rotas, Acto del Superviviente; 5 elements: narrative subtitle, `+0` modifiers, "Derribado",
   gear affinities, Hunt-XP milestone glyphs) need domain modelling — **follow-up slices, not V1**.
-- Closes the last placeholder in the shell's four tabs.
+- Deferred to `docs/backlog.md`: the role subtitle (`Prólogo • Superviviente Fundador`, no
+  domain field) and the on-device empty-state capture (0-survivor roster unreachable without a
+  domain change; pinned by JVM tests).
 
-### V2 — Caza: rebuild 1:1
+### V2 — Caza: rebuild 1:1 *(next)*
 
 `HuntScreen` (199 lines) is a functional tracker whose layout predates the design: it keeps
 the theme but not the design's structure. Rebuild against Stitch `4632e56b…`: the hunt board,
