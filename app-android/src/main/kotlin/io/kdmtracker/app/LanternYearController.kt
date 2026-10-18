@@ -46,6 +46,7 @@ import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.MarkDeparting
 import io.kdmtracker.core.usecase.MarkSpaceKind
+import io.kdmtracker.core.usecase.MoveMonster
 import io.kdmtracker.core.usecase.RecordBirths
 import io.kdmtracker.core.usecase.RecordDeaths
 import io.kdmtracker.core.usecase.RecordHuntXp
@@ -438,6 +439,11 @@ class LanternYearController(
     /** Advances the hunt party one space. */
     fun advanceHunt() {
         applyResult(AdvanceHunt.run(repository.record))
+    }
+
+    /** Steps the monster one space toward the party, ambushing it on contact. */
+    fun moveMonster() {
+        applyResult(MoveMonster.run(repository.record))
     }
 
     /** Assigns a party survivor to a player (1-based). */
