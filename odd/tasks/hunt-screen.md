@@ -39,6 +39,14 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 - **S7** — Visual gate: emulator captures of the rebuilt screen **approved by the maintainer
   before any push/PR** (standing rule).
 
+- **L7** (2026-10-18): **T5 visual gate APPROVED as-is** and **T6 done**. Full suite green
+  (Gradle 4 targets + spotless, content-ingest 106, fonts 7). Stacked delivery: **PR #38** =
+  slice 1 (T1+T2, vs main), **PR #39** = slice 2 (T3+T4, base `feat/hunt-screen` so only the
+  visual commits show). Data-dependent gaps recorded: `Distancia` shows the real board distance
+  (design's `3` illustrative); expedition chips need real `DEPARTING` survivors. Orphan local
+  branch `feat/hunt-screen-v2` removed; its **remote** twin still exists pending maintainer
+  confirmation to delete.
+
 ## Tasks
 
 | ID | Spec | Route | Commit |
@@ -48,7 +56,7 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
 | T3 | S6 | inline (TDD) | `feat(app): model the 13-space hunt board frame` → **`cae7db9` (slice 2)** |
 | T4 | S1, S2, S4 | inline | `feat(app): render the hunt phase screen 1:1` → **`4265bf4` (slice 2)** |
 | T5 | S7 (visual gate) | inline + maintainer | **APPROVED as-is** 2026-10-18 (chips require real DEPARTING data; Distancia derived) |
-| T6 | S6 (suite + PR) | inline | `chore(test): pin the hunt phase screen` |
+| T6 | S6 (suite + PR) | inline | **Suite green + PR #39 (stacked slice 2/2)** 2026-10-18 |
 
 ## Log
 
@@ -65,6 +73,14 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
   this slice). Open PR #1 `refactor+feat: shared sheet primitives and the hunt monster move` now.
   **Slice 2 = T3–T6** (board-frame test, screen 1:1 rebuild, emulator gate, PR) carries the visual
   change and its gate.
+
+- **L7** (2026-10-18): **T5 visual gate APPROVED as-is** and **T6 done**. Full suite green
+  (Gradle 4 targets + spotless, content-ingest 106, fonts 7). Stacked delivery: **PR #38** =
+  slice 1 (T1+T2, vs main), **PR #39** = slice 2 (T3+T4, base `feat/hunt-screen` so only the
+  visual commits show). Data-dependent gaps recorded: `Distancia` shows the real board distance
+  (design's `3` illustrative); expedition chips need real `DEPARTING` survivors. Orphan local
+  branch `feat/hunt-screen-v2` removed; its **remote** twin still exists pending maintainer
+  confirmation to delete.
 
 ## Tasks
 
