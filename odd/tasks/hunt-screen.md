@@ -46,6 +46,23 @@ Design: Stitch `4632e56b39c5470188dbe0b087122767`, cached `.superpowers/design/c
   (design's `3` illustrative); expedition chips need real `DEPARTING` survivors. Orphan local
   branch `feat/hunt-screen-v2` removed; its **remote** twin still exists pending maintainer
   confirmation to delete.
+- **L8** (2026-10-19): **restyle pass + region 4; V2 complete & merged.** Maintainer flagged the
+  screen looked "half-done" vs Stitch and set a hard rule: build from the canonical **`caza.html`**,
+  never screenshots. Root causes: icons rendered as literal `Text("pets")` without the bundled
+  Material Symbols font; `HuntBoard` never rewired to `HuntBoardFrame`; plinth used ad-hoc colors.
+  Rebuilt regions 1:1 — `5ad345a` (pure `HuntPlinthFrame`+test, shared `Symbol.kt`, plinth,
+  board rewiring, event card, action grid), `26a64f1` (uppercase labels, Playfair titles,
+  `Enfrentamiento` `#8e1214`, row-3 gold, drop stray "Tabla de Resultados"). Delivery: **#38** +
+  **#39** merged, but #39's base was `feat/hunt-screen` (not main) so its squash left slice-2
+  content off main → opened **#40** to land it; **#41** later landed the region-4 expedition
+  chips (independent `surface-container-low` tiles; swapped header colors fixed: label ash,
+  lantern count gold). Orphan remotes `feat/hunt-screen`, `feat/hunt-screen-slice2`,
+  `feat/hunt-screen-v2` deleted (squash merges leave them behind). Region 4 populated by
+  **navigating settlement steps 2→8** (maintainer chose this over seeding data) and marking 3
+  survivors `Depart` → `3 Linternas encendidas` + 3 chips. Known: the 3 test survivors have blank
+  names (avatar `??`/`Unnamed` fallback — styling correct, shows initials once named); verified
+  region-by-region via delegated emulator captures (rounds 1–2 hit a stale APK — always rebuild
+  before visual verify).
 
 ## Tasks
 

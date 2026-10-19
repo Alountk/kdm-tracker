@@ -12,7 +12,7 @@ program. All of Part A is merged.
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
-| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes (#37), Caza, Enfrentamiento | ⚠️ Asentamiento's designed part + Supervivientes done; **2 open** |
+| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes (#37), Caza (#38–#41), Enfrentamiento | ✅ Asentamiento's designed part, Supervivientes & Caza done; **1 open** |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
 Design sources (Stitch project `4909212909494507782`):
@@ -51,7 +51,7 @@ emulator (seed + newly created settlement) before merge; full suite green.
   domain field) and the on-device empty-state capture (0-survivor roster unreachable without a
   domain change; pinned by JVM tests).
 
-### V2 — Caza: rebuild 1:1 *(next)*
+### V2 — Caza: rebuild 1:1 ✅ *(done — PRs #38–#41 merged)*
 
 `HuntScreen` (199 lines) is a functional tracker whose layout predates the design: it keeps
 the theme but not the design's structure. Rebuild against Stitch `4632e56b…`: the hunt board,
