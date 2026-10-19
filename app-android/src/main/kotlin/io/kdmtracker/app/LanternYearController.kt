@@ -438,7 +438,9 @@ class LanternYearController(
 
     /** Advances the hunt party one space. */
     fun advanceHunt() {
-        applyResult(AdvanceHunt.run(repository.record))
+        val quarry = repository.record.state.hunt.quarry
+        val deck = quarry?.let { content.huntEventsFor(it) }.orEmpty()
+        applyResult(AdvanceHunt.run(repository.record, deck = deck))
     }
 
     /** Steps the monster one space toward the party, ambushing it on contact. */

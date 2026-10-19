@@ -31,12 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
@@ -98,6 +94,7 @@ fun HuntScreen(
             space = hunt.spaces.getOrElse(selected) { HuntSpace() },
             index = selected,
             huntEvents = state.huntEvents,
+            drawnEvent = hunt.drawnEvent,
             onAssign = { onAssignHuntEvent(selected, it) },
             onResolve = { onResolveHuntEvent(selected, it) },
             onMarkKind = { onMarkSpaceKind(selected, it) },
@@ -419,6 +416,7 @@ private fun HuntEventCard(
     space: HuntSpace,
     index: Int,
     huntEvents: List<io.kdmtracker.core.domain.HuntEvent>,
+    drawnEvent: io.kdmtracker.core.domain.HuntEvent?,
     onAssign: (String) -> Unit,
     onResolve: (String) -> Unit,
     onMarkKind: (HuntSpaceKind) -> Unit,
@@ -443,131 +441,77 @@ private fun HuntEventCard(
                         .padding(horizontal = 8.dp, vertical = 2.dp),
             )
         }
-        Text(
-            text = "Bruma Olorosa y Viento Fétido",
-            color = KdmPalette.onCanvas,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            fontFamily = KdmFontFamilies.playfair,
-        )
-        Text(
-            text =
-                "\"El hedor metálico a carne descompuesta empapa las túnicas. " +
-                    "En la penumbra, una densa neblina borra las huellas de la bestia.\"",
-            color = KdmPalette.ash,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontStyle = FontStyle.Italic,
-        )
-        ResultRange(
-            "1 - 3",
-            "Pánico en la Ceguera",
-            "Todos los cazadores sufren ",
-            "1 de daño al Cerebro",
-            ". El monstruo avanza 1 casilla hacia ellos.",
-            rangeColor = KdmPalette.onCanvas,
-            titleColor = KdmPalette.onCanvas,
-            highlightColor = KdmPalette.blood,
-        )
-        ResultRange(
-            "4 - 7",
-            "Huellas Frescas",
-            "El rastreador activo obtiene ",
-            "+1 de Supervivencia",
-            ". Los cazadores continúan la marcha sin desvíos.",
-            rangeColor = KdmPalette.onCanvas,
-            titleColor = KdmPalette.onCanvas,
-            highlightColor = KdmPalette.gold,
-        )
-        ResultRange(
-            "8 - 10",
-            "Viento a Favor (Ventaja)",
-            "Descubrís mechones de pelaje ensangrentado. ",
-            "+1 PE de Caza",
-            " para el grupo y avanzáis 1 casilla adicional.",
-            rangeColor = KdmPalette.gold,
-            titleColor = KdmPalette.gold,
-            highlightColor = KdmPalette.onCanvas,
-        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    text = "Resultado d10".uppercase(),
-                    color = KdmPalette.onCanvas,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(text = "Sin tirar aún", color = KdmPalette.ash, fontSize = 12.sp)
-            }
-            Button(
-                onClick = { /* d100 resolution is deferred to the backlog slice (S4) */ },
-                enabled = false,
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Symbol("casino", MaterialTheme.colorScheme.secondary, 18)
-                    Text(text = "Tirar Dado".uppercase(), color = KdmPalette.onCanvas, fontSize = 12.sp)
-                }
-            }
-        }
-    }
-}
-
-/** One result row: a boxed d10 range, its title, and its effect with the highlighted phrase. */
-@Composable
-private fun ResultRange(
-    range: String,
-    title: String,
-    prefix: String,
-    highlight: String,
-    suffix: String,
-    rangeColor: Color,
-    titleColor: Color,
-    highlightColor: Color,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(KdmPalette.surfaceLowest)
-                .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        // The design's fixed range box (`w-8 h-8`) on the left of every row.
-        Box(
-            modifier =
-                Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(KdmPalette.surfaceHigh),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = range, color = rangeColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = title, color = titleColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        // The card the group drew on their last advance (S5): its real name and rules text.
+        if (drawnEvent != null) {
             Text(
-                text =
-                    buildAnnotatedString {
-                        append(prefix)
-                        withStyle(
-                            SpanStyle(color = highlightColor, fontWeight = FontWeight.SemiBold),
-                        ) { append(highlight) }
-                        append(suffix)
-                    },
+                text = drawnEvent.name,
+                color = KdmPalette.onCanvas,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                fontFamily = KdmFontFamilies.playfair,
+            )
+            Text(
+                text = drawnEvent.text,
                 color = KdmPalette.ash,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
             )
+            // Resolve by hand: record the drawn card on this space and mark it resolved.
+            val alreadyOnSpace = drawnEvent.name in space.events
+            val isResolved = drawnEvent.name in space.resolved
+            OutlinedButton(
+                onClick = {
+                    if (!alreadyOnSpace) onAssign(drawnEvent.name)
+                    if (!isResolved) onResolve(drawnEvent.name)
+                },
+                enabled = !isResolved,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (isResolved) "Resuelta ✓" else "Marcar resuelta")
+            }
+        } else {
+            Text(
+                text = "Avanza el grupo para robar una carta de evento de caza.",
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+            )
+        }
+
+        // The selected space's resolved history (S5): visible when navigating backward.
+        if (space.events.isNotEmpty()) {
+            Text(
+                text = "Historial de la casilla $index".uppercase(),
+                color = KdmPalette.onCanvas,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+            space.events.forEach { name ->
+                val resolved = name in space.resolved
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(KdmPalette.surfaceHighest)
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = name,
+                        color = if (resolved) KdmPalette.ash else KdmPalette.onCanvas,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = if (resolved) "Resuelta" else "Pendiente",
+                        color = if (resolved) KdmPalette.gold else KdmPalette.blood,
+                        fontSize = 11.sp,
+                    )
+                }
+            }
         }
     }
 }

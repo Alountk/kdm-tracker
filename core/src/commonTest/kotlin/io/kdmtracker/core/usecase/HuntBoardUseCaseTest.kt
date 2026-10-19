@@ -1,5 +1,7 @@
 package io.kdmtracker.core.usecase
 
+import io.kdmtracker.core.domain.HuntEvent
+import io.kdmtracker.core.domain.HuntEventKind
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.HybridLogicalClock
@@ -9,9 +11,13 @@ import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.StepResult
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 
 class HuntBoardUseCaseTest {
     private fun record(): SettlementRecord =
@@ -82,6 +88,52 @@ class HuntBoardUseCaseTest {
                 .value.state.hunt.spaces
         assertEquals(13, spaces.size)
         assertEquals(HuntSpaceKind.OVERWHELMING_DARKNESS, spaces[5].kind)
+    }
+
+    /** S5: advancing draws a random card from the real deck into the persistent hunt state. */
+    @Test
+    fun advanceDrawsARandomHuntEventFromTheDeck() {
+        val deck =
+            listOf(
+                HuntEvent("Card A", "a", HuntEventKind.BASIC),
+                HuntEvent("Card B", "b", HuntEventKind.BASIC),
+                HuntEvent("Card C", "c", HuntEventKind.BASIC),
+            )
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+
+        val result = AdvanceHunt.run(started, deck = deck, random = Random(42))
+
+        val hunt = assertIs<StepResult.Ok<SettlementRecord>>(result).value.state.hunt
+        assertEquals(1, hunt.position)
+        val drawn = assertIs<HuntEvent>(hunt.drawnEvent)
+        // the drawn card comes from the deck
+        assertContains(deck.map { it.name }, drawn.name)
+    }
+
+    /** S5: a second advance replaces the previously drawn card with a new one. */
+    @Test
+    fun advancingAgainRedrawsTheEvent() {
+        val deck =
+            listOf(
+                HuntEvent("Card A", "a", HuntEventKind.BASIC),
+                HuntEvent("Card B", "b", HuntEventKind.BASIC),
+            )
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+
+        val one = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, deck = deck, Random(1))).value
+        val two = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(one, deck = deck, Random(2))).value
+
+        assertNotEquals(one.state.hunt.drawnEvent, two.state.hunt.drawnEvent)
+    }
+
+    /** S5: advancing with no deck draws nothing (backwards compatible with the bare signature). */
+    @Test
+    fun advanceWithoutADrawnDeckLeavesTheEventNull() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+
+        val result = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started)).value
+
+        assertNull(result.state.hunt.drawnEvent)
     }
 
     @Test

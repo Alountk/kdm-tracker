@@ -36,6 +36,9 @@ data class HuntSpace(
  *   space (the `MONSTER` space) once set up and steps toward the party with
  *   [io.kdmtracker.core.usecase.MoveMonster]. `-1` when no board is set up.
  * @property status the hunt outcome; [HuntStatus.ACTIVE] while in progress.
+ * @property drawnEvent the hunt-event card most recently drawn on advance, or `null` before the
+ *   first advance (S5). A transient view of the active card: the player resolves it by hand; the
+ *   resolved history lives in [HuntSpace.resolved], not here.
  */
 @Serializable
 data class HuntState(
@@ -47,4 +50,5 @@ data class HuntState(
     val position: Int = 0,
     val monsterPosition: Int = spaces.lastIndex,
     val status: HuntStatus = HuntStatus.ACTIVE,
+    val drawnEvent: HuntEvent? = null,
 )
