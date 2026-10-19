@@ -2,6 +2,7 @@ package io.kdmtracker.app.ui.theme
 
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import io.kdmtracker.app.R
 
@@ -18,6 +19,24 @@ import io.kdmtracker.app.R
 object KdmSymbols {
     /** The icon font. Registered at its default instance (FILL 0, weight 400). */
     val family: FontFamily = FontFamily(Font(R.font.material_symbols_outlined, weight = FontWeight.Normal))
+
+    /**
+     * The icon font pinned at FILL 1 — the design's **filled** marks (the party's star, the
+     * beast's paw). The same variable font, so the FILL axis selects the solid glyph on API 26+;
+     * below it the font falls back to its default (outline) instance.
+     */
+    val filledFamily: FontFamily =
+        FontFamily(
+            Font(
+                R.font.material_symbols_outlined,
+                weight = FontWeight.Normal,
+                variationSettings =
+                    FontVariation.Settings(
+                        FontVariation.weight(400),
+                        FontVariation.Setting("FILL", 1f),
+                    ),
+            ),
+        )
 
     /** How many glyphs the bundle maps — the designs' whole icon vocabulary. */
     val glyphCount: Int get() = CODEPOINTS.size
@@ -97,6 +116,7 @@ object KdmSymbols {
             "publish" to 0xE255,
             "remove" to 0xE15B,
             "replay" to 0xE042,
+            "restaurant" to 0xE56C,
             "restart_alt" to 0xF053,
             "roller_shades" to 0xEC12,
             "route" to 0xEACD,
@@ -118,5 +138,6 @@ object KdmSymbols {
             "visibility" to 0xE8F4,
             "vital_signs" to 0xE650,
             "warning" to 0xF083,
+            "wb_twilight" to 0xE1C6,
         )
 }

@@ -50,30 +50,28 @@ data class HuntBoardFrame(
             index: Int,
             hunt: HuntState,
         ): String =
-            when {
-                this == HuntSpaceKind.START -> "home"
-                index == hunt.position -> "flare"
-                this == HuntSpaceKind.MONSTER -> "skull"
-                this == HuntSpaceKind.MONSTER_E -> "E"
-                this == HuntSpaceKind.NORMAL -> "E"
-                this == HuntSpaceKind.OVERWHELMING_DARKNESS -> "wb_twilight"
-                this == HuntSpaceKind.STARVATION -> "restaurant"
-                else -> "help"
+            when (this) {
+                // Fixed spaces keep their own mark, never the party's star.
+                HuntSpaceKind.START -> "home"
+                HuntSpaceKind.OVERWHELMING_DARKNESS -> "wb_twilight"
+                HuntSpaceKind.STARVATION -> "restaurant"
+                HuntSpaceKind.MONSTER -> "pets" // the beast: a paw, not the lair skull
+                HuntSpaceKind.MONSTER_E -> "visibility" // the quarry's gold special event
+                HuntSpaceKind.NORMAL -> if (index == hunt.position) "flare" else "E"
             }
 
         private fun HuntSpaceKind.cellLabel(
             index: Int,
             hunt: HuntState,
         ): String =
-            when {
-                this == HuntSpaceKind.START -> "Asent."
-                index == hunt.position -> "Grupo"
-                this == HuntSpaceKind.MONSTER -> "Guarida"
-                this == HuntSpaceKind.MONSTER_E -> "Evento"
-                this == HuntSpaceKind.NORMAL -> "Evento"
-                this == HuntSpaceKind.OVERWHELMING_DARKNESS -> "Oscuridad Abrumadora"
-                this == HuntSpaceKind.STARVATION -> "Hambruna"
-                else -> ""
+            when (this) {
+                HuntSpaceKind.START -> "Asent."
+                HuntSpaceKind.OVERWHELMING_DARKNESS -> "Oscuridad Abrumadora"
+                HuntSpaceKind.STARVATION -> "Hambruna"
+                // The beast's space names the quarry below the paw (wraps for long names).
+                HuntSpaceKind.MONSTER -> hunt.quarry ?: "Bestia"
+                HuntSpaceKind.MONSTER_E -> "Evento"
+                HuntSpaceKind.NORMAL -> if (index == hunt.position) "Grupo" else "Evento"
             }
     }
 }

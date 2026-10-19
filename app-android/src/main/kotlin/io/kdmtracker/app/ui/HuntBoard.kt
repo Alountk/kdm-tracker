@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.ui.theme.KdmPalette
@@ -39,7 +41,6 @@ fun HuntBoard(
     onSelectIndex: (Int) -> Unit,
 ) {
     val frame = HuntBoardFrame.from(hunt)
-    val isMonsterCell = { view: HuntSpaceView -> view.icon == "skull" && view.label == "Guarida" }
 
     Column(
         modifier =
@@ -74,7 +75,6 @@ fun HuntBoard(
                 HuntSpaceCell(
                     view = view,
                     selected = view.index == selectedIndex,
-                    isMonster = isMonsterCell(view),
                     onClick = { onSelectIndex(view.index) },
                 )
             }
@@ -95,24 +95,28 @@ fun HuntBoard(
 private fun HuntSpaceCell(
     view: HuntSpaceView,
     selected: Boolean,
-    isMonster: Boolean,
     onClick: () -> Unit,
 ) {
+    // The beast's space is a paw; the quarry's special event is a gold eye; the rest are grey.
+    val isBeast = view.icon == "pets"
+    val isSpecialEvent = view.icon == "visibility"
+    val isFilledMedallion = view.isParty || isBeast // star (party) / paw (beast) are solid
     val accent =
         when {
-            isMonster -> KdmPalette.blood
+            isBeast -> KdmPalette.blood
             view.isParty -> KdmPalette.gold
+            isSpecialEvent -> KdmPalette.gold
             selected -> KdmPalette.gold
             else -> null
         }
     val numberColor = accent ?: KdmPalette.ash
     val cellBg =
         when {
-            isMonster -> KdmPalette.surfaceHigh
+            isBeast -> KdmPalette.surfaceHigh
             view.isParty -> KdmPalette.surfaceHigh
             else -> KdmPalette.surfaceHighest
         }
-    val medallionSize = if (view.isParty || isMonster) 32.dp else 28.dp
+    val medallionSize = if (isFilledMedallion) 32.dp else 28.dp
 
     Box(
         modifier =
@@ -138,15 +142,16 @@ private fun HuntSpaceCell(
                 modifier =
                     Modifier
                         .size(medallionSize)
-                        .clip(if (view.isParty || isMonster) CircleShape else RoundedCornerShape(4.dp))
+                        .clip(if (isFilledMedallion) CircleShape else RoundedCornerShape(4.dp))
                         .background(accent ?: KdmPalette.surfaceContainer),
                 contentAlignment = Alignment.Center,
             ) {
-                // Filled medallions (party / monster) need ink on the accent, not the accent itself.
+                // Filled medallions (party / beast) need ink on the accent, not the accent itself.
                 val ink =
                     when {
                         view.isParty -> KdmPalette.onGold // gold medallion -> dark ink
-                        isMonster -> KdmPalette.onBlood // blood medallion -> dark ink
+                        isBeast -> KdmPalette.onBlood // blood medallion -> dark ink
+                        isSpecialEvent -> KdmPalette.gold // gold eye on a dark tile
                         else -> KdmPalette.ash
                     }
                 if (view.icon == "E") {
@@ -160,7 +165,8 @@ private fun HuntSpaceCell(
                     Symbol(
                         name = view.icon,
                         color = ink,
-                        size = if (view.isParty || isMonster) 18 else 16,
+                        size = if (isFilledMedallion) 18 else 16,
+                        fill = isFilledMedallion,
                     )
                 }
             }
@@ -169,15 +175,18 @@ private fun HuntSpaceCell(
                 color = accent ?: KdmPalette.ash,
                 fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
                 fontSize = 10.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
-            // The design's rotated position lozenge, only on the party / monster cells.
-            if (accent != null) {
+            // The design's rotated position lozenge, only on the party / beast cells.
+            if (view.isParty || isBeast) {
                 Box(
                     modifier =
                         Modifier
                             .size(8.dp)
                             .rotate(45f)
-                            .background(accent),
+                            .background(accent ?: KdmPalette.gold),
                 )
             }
         }

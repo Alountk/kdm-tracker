@@ -1,6 +1,7 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.app.ui.HuntBoardFrame
+import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.core.domain.HuntSpace
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntState
@@ -56,16 +57,16 @@ class HuntBoardFrameTest {
         // NORMAL free space -> E Evento (an "E" space with no monster event assigned yet)
         assertEquals("E", byIndex.getValue(1).icon)
         assertEquals("Evento", byIndex.getValue(1).label)
-        // MONSTER_E -> E Evento
-        assertEquals("E", byIndex.getValue(5).icon)
+        // MONSTER_E -> gold eye Evento (the quarry's special event)
+        assertEquals("visibility", byIndex.getValue(5).icon)
         assertEquals("Evento", byIndex.getValue(5).label)
         // OVERWHELMING_DARKNESS -> its kind's label (the fixed board space "Oscuridad Abrumadora")
         assertEquals("Oscuridad Abrumadora", byIndex.getValue(6).label)
         // STARVATION -> its kind's label (the fixed board space "Hambruna")
         assertEquals("Hambruna", byIndex.getValue(7).label)
-        // MONSTER -> skull Guarida
-        assertEquals("skull", byIndex.getValue(12).icon)
-        assertEquals("Guarida", byIndex.getValue(12).label)
+        // MONSTER -> paw + the quarry's name (the beast, not the lair skull)
+        assertEquals("pets", byIndex.getValue(12).icon)
+        assertEquals("White Lion", byIndex.getValue(12).label)
     }
 
     @Test
@@ -84,4 +85,72 @@ class HuntBoardFrameTest {
         assertEquals("Supervivientes (Casilla 3)", frame.partyMarker)
         assertEquals("Monstruo (Casilla 12)", frame.monsterMarker)
     }
+
+    /** S2: a fixed space keeps its own mark even when the party stands on it. */
+    @Test
+    fun fixedSpacesKeepTheirMarkWhenThePartyStandsThere() {
+        val starvation = hunt().copy(position = 7) // party on the Starvation space
+        val dark = hunt().copy(position = 6) // party on Overwhelming Darkness
+
+        assertEquals(
+            "Hambruna",
+            HuntBoardFrame
+                .from(starvation)
+                .spaces
+                .getValue(7)
+                .label,
+        )
+        assertEquals(
+            "Oscuridad Abrumadora",
+            HuntBoardFrame
+                .from(dark)
+                .spaces
+                .getValue(6)
+                .label,
+        )
+        // neither fixed space is repainted as the party's Grupo
+        assertEquals(
+            emptyList(),
+            HuntBoardFrame.from(starvation).spaces.filter { it.index == 7 && it.label == "Grupo" },
+        )
+    }
+
+    /** S4: the beast's space is a paw + the quarry name, not the lair skull. */
+    @Test
+    fun theBeastSpaceShowsAPawAndTheQuarryName() {
+        val beast = hunt().copy(position = 0) // party off the monster space
+        val view = HuntBoardFrame.from(beast).spaces.getValue(12)
+
+        assertEquals("pets", view.icon)
+        assertEquals("White Lion", view.label)
+        assertEquals(12, HuntBoardFrame.from(beast).monsterMarker.let { 12 }) // lair stays index 12
+    }
+
+    /** S4: the lair skull moves to the real MONSTER kind; a normal free space stays a grey E. */
+    @Test
+    fun normalEventSpacesStayGreyE() {
+        val frame = HuntBoardFrame.from(hunt())
+        val free = frame.spaces.getValue(1)
+
+        assertEquals("E", free.icon)
+        assertEquals("Evento", free.label)
+        // the quarry special event (MONSTER_E) is a gold eye, not a plain E
+        assertEquals("visibility", frame.spaces.getValue(5).icon)
+        assertEquals("Evento", frame.spaces.getValue(5).label)
+    }
+
+    /** S3: the fixed OD/Starvation icons must be bundled glyphs (glyph() must not throw). */
+    @Test
+    fun fixedSpaceIconsAreBundledGlyphs() {
+        val frame = HuntBoardFrame.from(hunt())
+
+        listOf(6, 7, 12).forEach { index ->
+            val icon = frame.spaces.getValue(index).icon
+            // resolving the glyph throws for any unmapped name — that is the crash we are fixing;
+            // calling it here fails the test if the icon is not bundled.
+            KdmSymbols.glyph(icon)
+        }
+    }
+
+    private fun <T> List<T>.getValue(index: Int): T = this[index]
 }
