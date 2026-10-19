@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,8 +50,6 @@ import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.SurvivorStatus
 import io.kdmtracker.core.domain.Ulid
 
-private val HuntInk = Color(0xFFE9C349)
-private val HuntRed = Color(0xFFB9332E)
 private val HuntDeepRed = Color(0xFF8E1214)
 private val HuntBg = Color(0xFF131315)
 
@@ -285,22 +284,28 @@ private fun ExpeditionChips(
     onAssignPlayer: (Ulid, Int) -> Unit,
     players: Int,
 ) {
-    HuntPanel {
+    // The design renders this region directly on the `surface` (no wrapper card): a header row
+    // with the label in `on-surface-variant` and the lantern count in `secondary` (gold), then a
+    // grid of independent `surface-container-low` chips separated by gaps.
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Symbol("groups", HuntInk, 14)
+                Symbol("groups", KdmPalette.ash, 14)
                 Text(
                     text = "Cazadores en Marcha".uppercase(),
-                    color = HuntInk,
+                    color = KdmPalette.ash,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                 )
             }
-            Text(text = "${party.size} Linternas encendidas", color = Color(0xFFB9B9BE), fontSize = 11.sp)
+            Text(text = "${party.size} Linternas encendidas", color = KdmPalette.gold, fontSize = 11.sp)
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -338,30 +343,56 @@ private fun SurvivorChip(
                     .joinToString("")
             }
         }
+    // The design's expedition chip: `surface-container-low` tile, a `surface-container-highest`
+    // avatar with the survivor's initials, the name in `text-primary`, and the insanity (psychology)
+    // / survival (favorite) counters in `text-secondary` / `text-error`.
     Column(
         modifier =
             modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (selected) HuntRed else Color(0xFF2A2A2E)),
+                .clip(RoundedCornerShape(8.dp))
+                .background(KdmPalette.surfaceLow)
+                .clickable(onClick = onClick)
+                .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
             modifier =
                 Modifier
-                    .padding(top = 6.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF131315))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .background(KdmPalette.surfaceHighest),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(text = initials, color = HuntInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(text = initials, color = KdmPalette.onCanvas, fontWeight = FontWeight.Bold, fontSize = 11.sp)
         }
         Text(
             text = survivor.name.ifBlank { "Unnamed" },
-            color = Color.White,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            color = KdmPalette.onCanvas,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Symbol("psychology", KdmPalette.gold, 11)
+            Text(
+                text = "${survivor.insanity}",
+                color = KdmPalette.onCanvas,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Symbol("favorite", KdmPalette.blood, 11)
+            Text(
+                text = "${survivor.survival}",
+                color = KdmPalette.onCanvas,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
