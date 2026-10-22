@@ -180,4 +180,57 @@ class HuntBoardUseCaseTest {
             assertEquals(HuntSpaceKind.NORMAL, spaces[4].kind, "$quarry must not invent an E at 4")
         }
     }
+
+    /**
+     * S5 history isolation: an event resolved on one space must stay on that space — advancing to
+     * the next space must not make it appear in the next space's history.
+     */
+    @Test
+    fun resolvedEventStaysOnItsOwnSpaceAcrossAdvance() {
+        val deck = listOf(HuntEvent(name = "Evento Aleatorio", text = "x", kind = HuntEventKind.BASIC))
+        val setup = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 1)).value
+        // party advances to space 1 (draw 1)
+        val adv1 = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(setup, deck)).value
+        // resolve the drawn card on space 1
+        val name =
+            adv1.state.hunt.drawnEvent!!
+                .name
+        val assigned = assertIs<StepResult.Ok<SettlementRecord>>(AssignHuntEvent.run(adv1, 1, name)).value
+        val resolved = assertIs<StepResult.Ok<SettlementRecord>>(ResolveHuntEvent.run(assigned, 1, name)).value
+
+        assertContains(
+            resolved.state.hunt.spaces[1]
+                .events,
+            name,
+        )
+        assertContains(
+            resolved.state.hunt.spaces[1]
+                .resolved,
+            name,
+        )
+        // space 2 must not have picked it up
+        assertEquals(
+            emptyList(),
+            resolved.state.hunt.spaces[2]
+                .events,
+        )
+        assertEquals(
+            emptyList(),
+            resolved.state.hunt.spaces[2]
+                .resolved,
+        )
+
+        // advancing to space 2 keeps history isolated
+        val adv2 = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(resolved, deck)).value
+        assertEquals(
+            emptyList(),
+            adv2.state.hunt.spaces[2]
+                .events,
+        )
+        assertContains(
+            adv2.state.hunt.spaces[1]
+                .resolved,
+            name,
+        )
+    }
 }

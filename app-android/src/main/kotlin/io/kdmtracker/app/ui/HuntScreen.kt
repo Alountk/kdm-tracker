@@ -93,10 +93,14 @@ fun HuntScreen(
         HuntEventCard(
             space = hunt.spaces.getOrElse(selected) { HuntSpace() },
             index = selected,
+            // The drawn card belongs to the party's current space, so resolving it always writes
+            // there — navigating to another space never re-targets the card (it stays a history
+            // view). onMarkKind still edits the selected space, as the mark picker is per-space.
+            partySpace = hunt.spaces.getOrElse(hunt.position) { HuntSpace() },
             huntEvents = state.huntEvents,
             drawnEvent = hunt.drawnEvent,
-            onAssign = { onAssignHuntEvent(selected, it) },
-            onResolve = { onResolveHuntEvent(selected, it) },
+            onAssign = { onAssignHuntEvent(hunt.position, it) },
+            onResolve = { onResolveHuntEvent(hunt.position, it) },
             onMarkKind = { onMarkSpaceKind(selected, it) },
         )
         ActionButtons(
@@ -415,6 +419,7 @@ private fun HuntPanel(content: @Composable ColumnScope.() -> Unit) {
 private fun HuntEventCard(
     space: HuntSpace,
     index: Int,
+    partySpace: HuntSpace,
     huntEvents: List<io.kdmtracker.core.domain.HuntEvent>,
     drawnEvent: io.kdmtracker.core.domain.HuntEvent?,
     onAssign: (String) -> Unit,
@@ -457,12 +462,14 @@ private fun HuntEventCard(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
             )
-            // Resolve by hand: record the drawn card on this space and mark it resolved.
-            val alreadyOnSpace = drawnEvent.name in space.events
-            val isResolved = drawnEvent.name in space.resolved
+            // Resolve by hand: record the drawn card on the party's current space and mark it
+            // resolved. The button always acts on the current space (partySpace), independent of
+            // which space is being viewed (space / index).
+            val onParty = drawnEvent.name in partySpace.events
+            val isResolved = drawnEvent.name in partySpace.resolved
             OutlinedButton(
                 onClick = {
-                    if (!alreadyOnSpace) onAssign(drawnEvent.name)
+                    if (!onParty) onAssign(drawnEvent.name)
                     if (!isResolved) onResolve(drawnEvent.name)
                 },
                 enabled = !isResolved,
