@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -97,26 +99,26 @@ private fun HuntSpaceCell(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    // The beast's space is a paw; the quarry's special event is a gold eye; the rest are grey.
-    val isBeast = view.icon == "pets"
+    // Design anatomy (Stitch `estados`): the tone drives the cell border, medallion and label.
+    val tone = view.tone
+    val isBeast = view.isBeast || view.icon == "cruelty_free"
     val isSpecialEvent = view.icon == "visibility"
-    val isFilledMedallion = view.isParty || isBeast // star (party) / paw (beast) are solid
-    val accent =
-        when {
-            isBeast -> KdmPalette.blood
-            view.isParty -> KdmPalette.gold
-            isSpecialEvent -> KdmPalette.gold
-            selected -> KdmPalette.gold
-            else -> null
+    val isFilledMedallion = view.isParty || isBeast // groups (party) / paw (beast) are solid
+
+    // Accent = the tone's border/label colour; SURFACE and OUTLINE have no accent.
+    val accent: Color? =
+        when (tone) {
+            SpaceTone.GOLD -> KdmPalette.gold
+            SpaceTone.BLOOD -> KdmPalette.blood
+            SpaceTone.VIOLET -> KdmPalette.violet
+            SpaceTone.AMBER -> KdmPalette.amber
+            SpaceTone.SURFACE, SpaceTone.OUTLINE -> if (selected) KdmPalette.gold else null
         }
     val numberColor = accent ?: KdmPalette.ash
-    val cellBg =
-        when {
-            isBeast -> KdmPalette.surfaceHigh
-            view.isParty -> KdmPalette.surfaceHigh
-            else -> KdmPalette.surfaceHighest
-        }
+    val cellBg = KdmPalette.surfaceLow
     val medallionSize = if (isFilledMedallion) 32.dp else 28.dp
+    // Border weight: the active/party and the beast cells carry the design's 2px accent border.
+    val borderWidth = if (view.isParty || isBeast || isSpecialEvent) 2.dp else 1.dp
 
     Box(
         modifier =
@@ -124,40 +126,52 @@ private fun HuntSpaceCell(
                 .width(72.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(cellBg)
-                .clickable(onClick = onClick)
+                .border(
+                    borderWidth,
+                    accent ?: KdmPalette.outlineVariant.copy(alpha = 0.5f),
+                    RoundedCornerShape(8.dp),
+                ).clickable(onClick = onClick)
                 .padding(vertical = 8.dp, horizontal = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = view.index.toString(),
+                text = view.index.toString().padStart(2, '0'),
                 color = numberColor,
                 fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
             )
             Box(
                 modifier =
                     Modifier
                         .size(medallionSize)
                         .clip(if (isFilledMedallion) CircleShape else RoundedCornerShape(4.dp))
-                        .background(accent ?: KdmPalette.surfaceContainer),
+                        .background(medallionBg(tone))
+                        .border(
+                            if (isFilledMedallion || tone == SpaceTone.OUTLINE) 1.dp else 2.dp,
+                            accent ?: KdmPalette.outlineVariant.copy(alpha = 0.5f),
+                            if (isFilledMedallion) CircleShape else RoundedCornerShape(4.dp),
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
-                // Filled medallions (party / beast) need ink on the accent, not the accent itself.
+                // Ink: filled medallions get dark ink on their accent; the rest get the accent itself.
                 val ink =
                     when {
                         view.isParty -> KdmPalette.onGold // gold medallion -> dark ink
-                        isBeast -> KdmPalette.onBlood // blood medallion -> dark ink
-                        isSpecialEvent -> KdmPalette.gold // gold eye on a dark tile
+                        tone == SpaceTone.BLOOD && isBeast -> KdmPalette.blood // red paw on the container
+                        isSpecialEvent -> KdmPalette.gold // gold eye
+                        tone == SpaceTone.VIOLET -> KdmPalette.violet
+                        tone == SpaceTone.AMBER -> KdmPalette.amber
                         else -> KdmPalette.ash
                     }
                 if (view.icon == "E") {
                     Text(
                         text = "E",
                         color = ink.copy(alpha = 0.7f),
+                        fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                     )
@@ -179,6 +193,15 @@ private fun HuntSpaceCell(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (view.subLabel.isNotEmpty()) {
+                Text(
+                    text = view.subLabel,
+                    color = (accent ?: KdmPalette.outline).copy(alpha = 0.75f),
+                    fontSize = 7.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             // The design's rotated position lozenge, only on the party / beast cells.
             if (view.isParty || isBeast) {
                 Box(
@@ -192,6 +215,16 @@ private fun HuntSpaceCell(
         }
     }
 }
+
+/** The medallion fill by tone: filled accents are solid; the rest sit on the container tile. */
+private fun medallionBg(tone: SpaceTone): Color =
+    when (tone) {
+        SpaceTone.GOLD -> KdmPalette.gold
+        SpaceTone.BLOOD -> KdmPalette.bloodContainer
+        SpaceTone.VIOLET -> KdmPalette.violetContainer
+        SpaceTone.AMBER -> KdmPalette.amberContainer
+        SpaceTone.SURFACE, SpaceTone.OUTLINE -> KdmPalette.surfaceContainer
+    }
 
 /** One of the two board markers: a coloured dot plus its label. */
 @Composable

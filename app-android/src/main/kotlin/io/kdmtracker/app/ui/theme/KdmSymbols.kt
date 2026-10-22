@@ -60,6 +60,7 @@ object KdmSymbols {
             "arrow_back" to 0xE5C4, // beast retreat (S8)
             "auto_stories" to 0xE666,
             "balance" to 0xEAF6,
+            "bedtime" to 0xF159, // hunt board: Overwhelming Darkness (Stitch)
             "bolt" to 0xEA0B,
             "brush" to 0xE3AE,
             "casino" to 0xEB40,
@@ -69,6 +70,7 @@ object KdmSymbols {
             "chevron_left" to 0xE5CB,
             "colorize" to 0xE3B8,
             "crisis_alert" to 0xEBE9,
+            "cruelty_free" to 0xE799, // hunt board: the beast's paw (Stitch)
             "crop_square" to 0xE3C6,
             "directions_run" to 0xE566,
             "directions_walk" to 0xE536,
@@ -85,6 +87,7 @@ object KdmSymbols {
             "flare" to 0xE3E4,
             "format_h4" to 0xF860,
             "fort" to 0xEAAD,
+            "foundation" to 0xF200, // hunt board: Inicio/Asentamiento (Stitch)
             "front_hand" to 0xE769,
             "grass" to 0xF205,
             "grid_4x4" to 0xF016,
@@ -108,6 +111,7 @@ object KdmSymbols {
             "lock_open" to 0xE898,
             "logout" to 0xE9BA,
             "manage_search" to 0xF02F,
+            "no_meals" to 0xF1D6, // hunt board: Starvation/Hambruna (Stitch)
             "nutrition" to 0xE110,
             "palette" to 0xE3B7,
             "person" to 0xF0D3,

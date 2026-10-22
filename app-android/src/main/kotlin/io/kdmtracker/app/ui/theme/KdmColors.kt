@@ -32,6 +32,15 @@ object KdmPalette {
     val onBloodContainer = Color(0xFFFFDAD6)
     val outline = Color(0xFF919189)
     val outlineVariant = Color(0xFF474741)
+
+    // Hunt-board tones the design's space anatomy uses: the violet Overwhelming Darkness space and
+    // the amber Starvation space, plus their dark container fills.
+    val violet = Color(0xFFC5B5E3)
+    val violetContainer = Color(0xFF1E1329)
+    val onVioletContainer = Color(0xFFD5C6F5)
+    val amber = Color(0xFFF59E0B)
+    val amberContainer = Color(0xFF3B2A00)
+    val onAmberContainer = Color(0xFFFBBF24)
     val surfaceLowest = Color(0xFF0E0E10)
     val surfaceLow = Color(0xFF1B1B1D)
     val surfaceContainer = Color(0xFF201F21)

@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -466,44 +470,75 @@ private fun HuntEventCard(
                 fontSize = 16.sp,
                 fontFamily = KdmFontFamilies.playfair,
             )
-            // S9: the design's "Flujo de Casillas" card — italic intro + toned d10 result blocks.
+            // S9: the design's "Flujo de Casillas" card — an italic quote intro + toned d10 blocks.
             val card = HuntEventCardModel.parse(drawnEvent.text)
             if (card.intro.isNotEmpty()) {
                 Text(
-                    text = card.intro,
-                    color = KdmPalette.ash,
+                    text = "\"${card.intro}\"",
+                    color = KdmPalette.ash.copy(alpha = 0.85f),
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
                     fontStyle = FontStyle.Italic,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawRect(
+                                    KdmPalette.outlineVariant,
+                                    topLeft = Offset.Zero,
+                                    size = Size(2.dp.toPx(), size.height),
+                                )
+                            }.padding(start = 10.dp, top = 2.dp, bottom = 2.dp),
                 )
             }
             card.ranges.forEach { range ->
-                val tone =
-                    when (range.tone) {
-                        RangeTone.DANGER -> KdmPalette.blood
-                        RangeTone.ADVANTAGE -> KdmPalette.gold
-                        RangeTone.NEUTRAL -> KdmPalette.onCanvas
+                val style = range.tone.style()
+                val chipBg =
+                    when (style.chipBg) {
+                        ChipBg.DANGER -> KdmPalette.bloodContainer
+                        ChipBg.GOLD -> KdmPalette.goldContainer
+                        ChipBg.NEUTRAL -> KdmPalette.surfaceHighest
+                    }
+                val chipText =
+                    when (style.chipText) {
+                        ChipText.DANGER -> KdmPalette.blood
+                        ChipText.GOLD -> KdmPalette.gold
+                        ChipText.NEUTRAL -> KdmPalette.onCanvas
+                    }
+                val borderColor =
+                    when (style.border) {
+                        BorderAccent.DANGER -> KdmPalette.blood
+                        BorderAccent.GOLD -> KdmPalette.gold
+                        BorderAccent.NEUTRAL -> KdmPalette.onCanvas.copy(alpha = 0.5f)
                     }
                 Row(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
-                            .background(KdmPalette.surfaceHighest)
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                            .background(KdmPalette.surfaceLow)
+                            .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                            // the design's 3px tone accent down the left edge of each block
+                            .drawBehind {
+                                drawRect(
+                                    borderColor,
+                                    topLeft = Offset.Zero,
+                                    size = Size(3.dp.toPx(), size.height),
+                                )
+                            }.padding(start = 10.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.Top,
                 ) {
-                    // Range chip, colored by tone (design: red for damage, gold for advantage).
+                    // Range chip with the design's tone fill (red / gold / neutral).
                     Text(
                         text = range.label,
-                        color = tone,
+                        color = chipText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier =
                             Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(KdmPalette.surfaceHigh)
+                                .background(chipBg)
                                 .padding(horizontal = 6.dp, vertical = 3.dp),
                     )
                     Text(

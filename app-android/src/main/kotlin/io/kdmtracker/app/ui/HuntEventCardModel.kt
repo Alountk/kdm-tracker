@@ -17,6 +17,26 @@ data class HuntEventRange(
 enum class RangeTone { DANGER, ADVANTAGE, NEUTRAL }
 
 /**
+ * The design's per-tone visual roles for a range block, mirroring the `Flujo de Casillas` card in
+ * `.superpowers/design` + the Stitch `flujo` screen: each tone has a **filled chip background**,
+ * a **chip text** colour and a **3px left border** accent, all of the same hue family.
+ *
+ * The roles are semantic (not `androidx` colours) so the model stays Compose-free and testable;
+ * the render maps them to `KdmPalette` colours.
+ */
+data class RangeStyle(
+    val chipBg: ChipBg,
+    val chipText: ChipText,
+    val border: BorderAccent,
+)
+
+enum class ChipBg { DANGER, GOLD, NEUTRAL }
+
+enum class ChipText { DANGER, GOLD, NEUTRAL }
+
+enum class BorderAccent { DANGER, GOLD, NEUTRAL }
+
+/**
  * The parsed model of a hunt-event card's rules text, for the design's "Flujo de Casillas" card
  * (S9): an **italic** intro (everything before the first d10 range) plus one block per result
  * range, each with the design's tone.
@@ -68,3 +88,15 @@ data class HuntEventCardModel(
             }
     }
 }
+
+/**
+ * The design's visual style per tone. `danger` -> red chip on a red-tinted fill with a red border;
+ * `advantage` (the design's resource/gain rows) -> gold; `neutral` -> the primary-tinted row.
+ * Mirrors the `1-3` / `4-7` / `8-10` blocks of the design's `Flujo de Casillas` card.
+ */
+fun RangeTone.style(): RangeStyle =
+    when (this) {
+        RangeTone.DANGER -> RangeStyle(ChipBg.DANGER, ChipText.DANGER, BorderAccent.DANGER)
+        RangeTone.ADVANTAGE -> RangeStyle(ChipBg.GOLD, ChipText.GOLD, BorderAccent.GOLD)
+        RangeTone.NEUTRAL -> RangeStyle(ChipBg.NEUTRAL, ChipText.NEUTRAL, BorderAccent.NEUTRAL)
+    }

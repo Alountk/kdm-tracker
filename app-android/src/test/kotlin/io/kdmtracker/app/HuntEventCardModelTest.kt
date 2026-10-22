@@ -1,7 +1,11 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.app.ui.BorderAccent
+import io.kdmtracker.app.ui.ChipBg
+import io.kdmtracker.app.ui.ChipText
 import io.kdmtracker.app.ui.HuntEventCardModel
 import io.kdmtracker.app.ui.RangeTone
+import io.kdmtracker.app.ui.style
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -51,5 +55,25 @@ class HuntEventCardModelTest {
         val model = HuntEventCardModel.parse("Un evento sin tabla de tiradas.")
         assertTrue(model.ranges.isEmpty())
         assertEquals("Un evento sin tabla de tiradas.", model.intro.trim())
+    }
+
+    /** S9 (design): each tone maps to the design's chip fill, chip text and left border. */
+    @Test
+    fun eachToneMapsToTheDesignsChipAndBorderRoles() {
+        val danger = RangeTone.DANGER.style()
+        val advantage = RangeTone.ADVANTAGE.style()
+        val neutral = RangeTone.NEUTRAL.style()
+
+        assertEquals(ChipBg.DANGER, danger.chipBg)
+        assertEquals(ChipText.DANGER, danger.chipText)
+        assertEquals(BorderAccent.DANGER, danger.border)
+
+        assertEquals(ChipBg.GOLD, advantage.chipBg)
+        assertEquals(ChipText.GOLD, advantage.chipText)
+        assertEquals(BorderAccent.GOLD, advantage.border)
+
+        assertEquals(ChipBg.NEUTRAL, neutral.chipBg)
+        assertEquals(ChipText.NEUTRAL, neutral.chipText)
+        assertEquals(BorderAccent.NEUTRAL, neutral.border)
     }
 }

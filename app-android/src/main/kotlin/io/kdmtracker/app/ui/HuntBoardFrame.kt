@@ -4,13 +4,23 @@ import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntState
 
 /**
- * One rendered space of the hunt board: its [index], a material [icon] name, a short [label],
- * whether it is the survivor party's current space, and whether the beast currently stands here.
+ * The colour tone a hunt-board space renders in, mirroring the design's per-space anatomy
+ * (`.superpowers/design` + the Stitch `estados` screen): each fixed/role space has its own accent
+ * border, medallion fill and label colour.
+ */
+enum class SpaceTone { OUTLINE, GOLD, VIOLET, AMBER, BLOOD, SURFACE }
+
+/**
+ * One rendered space of the hunt board: its [index], a material [icon] name, a short [label], a
+ * small [subLabel] caption below it, its colour [tone], whether it is the survivor party's current
+ * space, and whether the beast currently stands here.
  */
 data class HuntSpaceView(
     val index: Int,
     val icon: String,
     val label: String,
+    val subLabel: String = "",
+    val tone: SpaceTone = SpaceTone.OUTLINE,
     val isParty: Boolean,
     val isBeast: Boolean = false,
 )
@@ -42,6 +52,8 @@ data class HuntBoardFrame(
                         index = index,
                         icon = markIcon(space.kind, isParty, isBeast),
                         label = markLabel(space.kind, hunt, isParty, isBeast),
+                        subLabel = markSubLabel(space.kind, isParty, isBeast),
+                        tone = markTone(space.kind, isParty, isBeast),
                         isParty = isParty,
                         isBeast = isBeast,
                     )
@@ -63,16 +75,16 @@ data class HuntBoardFrame(
             // Fixed spaces always keep their own mark — never the party's star (S2).
             val fixed =
                 when (kind) {
-                    HuntSpaceKind.START -> "home"
-                    HuntSpaceKind.OVERWHELMING_DARKNESS -> "wb_twilight"
-                    HuntSpaceKind.STARVATION -> "restaurant"
+                    HuntSpaceKind.START -> "foundation"
+                    HuntSpaceKind.OVERWHELMING_DARKNESS -> "bedtime"
+                    HuntSpaceKind.STARVATION -> "no_meals"
                     else -> null
                 }
             if (fixed != null) return fixed
             return when {
-                isBeast -> "pets" // the beast: a paw, wherever it currently stands
-                isParty -> "flare" // the party's filled star
-                kind == HuntSpaceKind.MONSTER -> "pets" // a marked beast space (legacy/manual)
+                isBeast -> "cruelty_free" // the beast: a paw, wherever it currently stands
+                isParty -> "groups" // the party's filled group marker
+                kind == HuntSpaceKind.MONSTER -> "cruelty_free" // a marked beast space (legacy/manual)
                 kind == HuntSpaceKind.MONSTER_E -> "visibility" // the quarry's gold special event
                 else -> "E"
             }
@@ -101,5 +113,38 @@ data class HuntBoardFrame(
                 else -> "Evento"
             }
         }
+
+        /** The design's small caption under the label (e.g. `Inicio`, `Tablero`, `Activo`). */
+        private fun markSubLabel(
+            kind: HuntSpaceKind,
+            isParty: Boolean,
+            isBeast: Boolean,
+        ): String =
+            when {
+                isParty -> "Activo"
+                isBeast -> "En Acecho"
+                kind == HuntSpaceKind.START -> "Inicio"
+                kind == HuntSpaceKind.OVERWHELMING_DARKNESS -> "Divisoria"
+                kind == HuntSpaceKind.STARVATION -> "Desgaste"
+                kind == HuntSpaceKind.MONSTER_E -> "Ojo"
+                else -> "Tablero"
+            }
+
+        /** The design's accent tone per space role — drives border, medallion and label colour. */
+        private fun markTone(
+            kind: HuntSpaceKind,
+            isParty: Boolean,
+            isBeast: Boolean,
+        ): SpaceTone =
+            when {
+                isBeast -> SpaceTone.BLOOD
+                isParty -> SpaceTone.GOLD
+                kind == HuntSpaceKind.MONSTER -> SpaceTone.BLOOD
+                kind == HuntSpaceKind.MONSTER_E -> SpaceTone.GOLD
+                kind == HuntSpaceKind.OVERWHELMING_DARKNESS -> SpaceTone.VIOLET
+                kind == HuntSpaceKind.STARVATION -> SpaceTone.AMBER
+                kind == HuntSpaceKind.START -> SpaceTone.SURFACE
+                else -> SpaceTone.OUTLINE
+            }
     }
 }
