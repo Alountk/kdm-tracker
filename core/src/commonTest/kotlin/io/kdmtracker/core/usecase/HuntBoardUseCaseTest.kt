@@ -49,7 +49,9 @@ class HuntBoardUseCaseTest {
         // the beast's location is hunt.monsterPosition, which starts at the end
         assertEquals(HuntSpaceKind.STARVATION, spaces.last().kind)
         assertEquals(HuntSpaceKind.NORMAL, spaces[1].kind)
-        assertEquals(12, ok.value.state.hunt.monsterPosition)
+        // S6: the beast's home is its level space (md 5 -> index 4 for a White Lion level 1),
+        // not the final Starvation space
+        assertEquals(4, ok.value.state.hunt.monsterPosition)
     }
 
     @Test
@@ -110,7 +112,7 @@ class HuntBoardUseCaseTest {
         assertContains(deck.map { it.name }, drawn.name)
     }
 
-    /** S5: a second advance replaces the previously drawn card with a new one. */
+    /** S5: a second advance replaces the previously drawn card with a new one (once the first is resolved). */
     @Test
     fun advancingAgainRedrawsTheEvent() {
         val deck =
@@ -121,7 +123,13 @@ class HuntBoardUseCaseTest {
         val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
 
         val one = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, deck = deck, Random(1))).value
-        val two = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(one, deck = deck, Random(2))).value
+        // S7: resolve the first drawn card on the party's current space (index 1) before advancing
+        val first = assertIs<HuntEvent>(one.state.hunt.drawnEvent)
+        val assigned = assertIs<StepResult.Ok<SettlementRecord>>(AssignHuntEvent.run(one, 1, first.name)).value
+        val resolved =
+            assertIs<StepResult.Ok<SettlementRecord>>(ResolveHuntEvent.run(assigned, 1, first.name)).value
+
+        val two = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(resolved, deck = deck, Random(2))).value
 
         assertNotEquals(one.state.hunt.drawnEvent, two.state.hunt.drawnEvent)
     }
@@ -148,36 +156,61 @@ class HuntBoardUseCaseTest {
         assertEquals(12, last.state.hunt.position)
     }
 
-    /** S1: the base 13-space layout (manual 9.1): OD is central, Starvation is last. */
+    /**
+     * S6: the per-quarry board is seeded from `25_tableros_de_caza_de_presa` (md spaces 1-13,
+     * codeIndex = md - 1): the fixed spaces, the quarry's `E` spaces, and the beast's starting
+     * space per level.
+     */
     @Test
-    fun setUpSeedsTheBaseLayoutWithOverwhelmingDarknessAndStarvation() {
-        val spaces =
-            assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4))
-                .value.state.hunt.spaces
-
-        assertEquals(13, spaces.size)
-        assertEquals(HuntSpaceKind.START, spaces[0].kind)
-        assertEquals(HuntSpaceKind.OVERWHELMING_DARKNESS, spaces[6].kind)
-        assertEquals(HuntSpaceKind.STARVATION, spaces[12].kind)
-        // every other space is an ordinary event space until the player marks a special E
-        listOf(1, 2, 3, 4, 5, 7, 8, 9, 10, 11).forEach { assertEquals(HuntSpaceKind.NORMAL, spaces[it].kind) }
-    }
-
-    /** S1: the same verified base layout applies to all three base quarries. */
-    @Test
-    fun setUpSeedsTheBaseLayoutForEveryBaseQuarry() {
-        listOf("White Lion", "Screaming Antelope", "Phoenix").forEach { quarry ->
+    fun setUpSeedsFixedSpacesAndTheQuarrysMonsterEventSpaces() {
+        // fixed spaces are the same for every quarry (md 1 / 7 / 13 -> index 0 / 6 / 12)
+        listOf("White Lion" to 1, "Phoenix" to 1, "Screaming Antelope" to 1).forEach { (quarry, lvl) ->
             val spaces =
-                assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), quarry, 1, 4))
+                assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), quarry, lvl, 4))
                     .value.state.hunt.spaces
-
             assertEquals(HuntSpaceKind.START, spaces[0].kind, "$quarry start")
             assertEquals(HuntSpaceKind.OVERWHELMING_DARKNESS, spaces[6].kind, "$quarry OD")
             assertEquals(HuntSpaceKind.STARVATION, spaces[12].kind, "$quarry starvation")
-            // the per-quarry special-E positions live only in the rulebook's diagrams (images),
-            // so none are invented here — the player still marks them with MarkSpaceKind
-            assertEquals(HuntSpaceKind.NORMAL, spaces[3].kind, "$quarry must not invent an E at 3")
-            assertEquals(HuntSpaceKind.NORMAL, spaces[4].kind, "$quarry must not invent an E at 4")
+        }
+
+        // monster-event (E) spaces per quarry, converted from md to 0-based index
+        val eSpaces =
+            mapOf(
+                "White Lion" to listOf(2, 3, 5, 8, 9),
+                "Phoenix" to listOf(2, 4, 7, 9),
+                "Screaming Antelope" to listOf(2, 3, 7, 9),
+            )
+        eSpaces.forEach { (quarry, expectedE) ->
+            val spaces =
+                assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), quarry, 1, 4))
+                    .value.state.hunt.spaces
+            expectedE.forEach {
+                assertEquals(HuntSpaceKind.MONSTER_E, spaces[it].kind, "$quarry E at $it")
+            }
+            // every index that is NOT a fixed space or an E space is an ordinary event space
+            val fixed = setOf(0, 6, 12)
+            spaces.indices
+                .filter { it !in fixed && it !in expectedE }
+                .forEach { assertEquals(HuntSpaceKind.NORMAL, spaces[it].kind, "$quarry normal at $it") }
+        }
+    }
+
+    /** S6: the beast's starting space depends on the quarry AND its level (md level table). */
+    @Test
+    fun setUpSeedsTheBeastHomePerQuarryAndLevel() {
+        val homes =
+            mapOf(
+                "White Lion" to mapOf(1 to 4, 2 to 7, 3 to 11),
+                "Phoenix" to mapOf(1 to 5, 2 to 8, 3 to 11),
+                "Screaming Antelope" to mapOf(1 to 4, 2 to 8, 3 to 10),
+            )
+        homes.forEach { (quarry, byLevel) ->
+            byLevel.forEach { (level, expectedHome) ->
+                val hunt =
+                    assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), quarry, level, 4))
+                        .value.state.hunt
+                assertEquals(expectedHome, hunt.monsterPosition, "$quarry L$level home")
+            }
         }
     }
 
@@ -232,5 +265,37 @@ class HuntBoardUseCaseTest {
                 .resolved,
             name,
         )
+    }
+
+    /**
+     * S7: the hunt cannot advance over an unresolved event — a drawn card must be marked resolved
+     * on the party's current space before the party can step forward. Once resolved, advance works.
+     */
+    @Test
+    fun advanceIsBlockedUntilTheDrawnEventIsResolved() {
+        val deck = listOf(HuntEvent("Card A", "a", HuntEventKind.BASIC))
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+
+        // first advance draws the card
+        val one = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, deck = deck, Random(1))).value
+        val drawn = assertIs<HuntEvent>(one.state.hunt.drawnEvent)
+
+        // second advance is blocked: the card is not resolved yet
+        assertIs<StepResult.Blocked>(AdvanceHunt.run(one, deck = deck, Random(2)))
+
+        // resolve it on the party's current space (index 1)
+        val assigned = assertIs<StepResult.Ok<SettlementRecord>>(AssignHuntEvent.run(one, 1, drawn.name)).value
+        val resolved = assertIs<StepResult.Ok<SettlementRecord>>(ResolveHuntEvent.run(assigned, 1, drawn.name)).value
+
+        // now advance is allowed
+        val two = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(resolved, deck = deck, Random(3))).value
+        assertEquals(2, two.state.hunt.position)
+    }
+
+    /** S7: with no drawn card there is no gate — the party can always advance. */
+    @Test
+    fun advanceIsNotBlockedWhenNoEventHasBeenDrawn() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started))
     }
 }
