@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,7 @@ fun HuntScreen(
     onResolveHuntEvent: (Int, String) -> Unit,
     onAdvanceHunt: () -> Unit,
     onMoveMonster: () -> Unit,
+    onRetreatMonster: () -> Unit,
     onFinishHunt: (HuntStatus) -> Unit,
 ) {
     val hunt = state.hunt
@@ -106,7 +108,15 @@ fun HuntScreen(
         ActionButtons(
             onAdvance = onAdvanceHunt,
             onMoveMonster = onMoveMonster,
+            onRetreatMonster = onRetreatMonster,
             onShowdown = { onFinishHunt(HuntStatus.QUARRY_FOUND) },
+            // S7: the advance gate — a drawn card not yet resolved on the party's space blocks it.
+            advanceBlocked =
+                run {
+                    val drawn = hunt.drawnEvent
+                    drawn != null &&
+                        drawn.name !in hunt.spaces.getOrElse(hunt.position) { HuntSpace() }.resolved
+                },
         )
     }
 }
@@ -456,12 +466,55 @@ private fun HuntEventCard(
                 fontSize = 16.sp,
                 fontFamily = KdmFontFamilies.playfair,
             )
-            Text(
-                text = drawnEvent.text,
-                color = KdmPalette.ash,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-            )
+            // S9: the design's "Flujo de Casillas" card — italic intro + toned d10 result blocks.
+            val card = HuntEventCardModel.parse(drawnEvent.text)
+            if (card.intro.isNotEmpty()) {
+                Text(
+                    text = card.intro,
+                    color = KdmPalette.ash,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontStyle = FontStyle.Italic,
+                )
+            }
+            card.ranges.forEach { range ->
+                val tone =
+                    when (range.tone) {
+                        RangeTone.DANGER -> KdmPalette.blood
+                        RangeTone.ADVANTAGE -> KdmPalette.gold
+                        RangeTone.NEUTRAL -> KdmPalette.onCanvas
+                    }
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(KdmPalette.surfaceHighest)
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    // Range chip, colored by tone (design: red for damage, gold for advantage).
+                    Text(
+                        text = range.label,
+                        color = tone,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(KdmPalette.surfaceHigh)
+                                .padding(horizontal = 6.dp, vertical = 3.dp),
+                    )
+                    Text(
+                        text = range.text,
+                        color = KdmPalette.onCanvas,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
             // Resolve by hand: record the drawn card on the party's current space and mark it
             // resolved. The button always acts on the current space (partySpace), independent of
             // which space is being viewed (space / index).
@@ -523,21 +576,26 @@ private fun HuntEventCard(
     }
 }
 
-/** Region 7 — the three hunt action buttons: a full-width advance over a 2-up pair. */
+/** Region 7 — the hunt action buttons: a full-width advance, a 2-up pair, then beast controls. */
 @Composable
 private fun ActionButtons(
     onAdvance: () -> Unit,
     onMoveMonster: () -> Unit,
+    onRetreatMonster: () -> Unit,
     onShowdown: () -> Unit,
+    advanceBlocked: Boolean = false,
 ) {
     Button(
         onClick = onAdvance,
+        enabled = !advanceBlocked,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = KdmPalette.surfaceHigh,
                 contentColor = KdmPalette.onCanvas,
+                disabledContainerColor = KdmPalette.surfaceHighest,
+                disabledContentColor = KdmPalette.ash,
             ),
     ) {
         Row(
@@ -546,7 +604,15 @@ private fun ActionButtons(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Symbol("arrow_forward", KdmPalette.gold, 20)
-            Text(text = "Avanzar Supervivientes (+1 Casilla)".uppercase(), fontSize = 13.sp)
+            Text(
+                text =
+                    if (advanceBlocked) {
+                        "Resuelve el evento para avanzar".uppercase()
+                    } else {
+                        "Avanzar Supervivientes (+1 Casilla)".uppercase()
+                    },
+                fontSize = 13.sp,
+            )
         }
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -589,6 +655,21 @@ private fun ActionButtons(
                 Symbol("swords", KdmPalette.crimsonContainer, 18)
                 Text(text = "Enfrentamiento".uppercase(), fontSize = 12.sp)
             }
+        }
+    }
+    // S8: a hunt event can make the beast step one space back — a manual counterpart of Mover Bestia.
+    OutlinedButton(
+        onClick = onRetreatMonster,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Symbol("arrow_back", KdmPalette.ash, 16)
+            Text(text = "Mover Bestia Atrás".uppercase(), fontSize = 12.sp, color = KdmPalette.ash)
         }
     }
 }

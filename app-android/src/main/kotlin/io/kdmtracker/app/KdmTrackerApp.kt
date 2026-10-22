@@ -193,6 +193,7 @@ private fun InCampaignScreen(
                     onResolveHuntEvent = viewModel::resolveHuntEvent,
                     onAdvanceHunt = viewModel::advanceHunt,
                     onMoveMonster = viewModel::moveMonster,
+                    onRetreatMonster = viewModel::retreatMonster,
                     onFinishHunt = viewModel::finishHunt,
                 )
             Screen.Showdown ->

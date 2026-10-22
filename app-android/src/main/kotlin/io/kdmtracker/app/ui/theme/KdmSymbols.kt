@@ -57,6 +57,7 @@ object KdmSymbols {
             "arrow_drop_down" to 0xE5C5,
             "arrow_drop_up" to 0xE5C7,
             "arrow_forward" to 0xE5C8,
+            "arrow_back" to 0xE5C4, // beast retreat (S8)
             "auto_stories" to 0xE666,
             "balance" to 0xEAF6,
             "bolt" to 0xEA0B,
