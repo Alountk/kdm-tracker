@@ -49,6 +49,11 @@ object AdvanceHunt {
         }
         val next = minOf(hunt.position + 1, hunt.spaces.lastIndex)
         val newDrawn = deck.randomOrNull(random)
+        // S6: roll 2d10 on the landed step — only the first time (a stored roll is kept).
+        val spaces =
+            hunt.spaces.mapIndexed { i, space ->
+                if (i == next && space.roll == null) space.copy(roll = roll2d10(random)) else space
+            }
         return StepResult.Ok(
             record.copy(
                 state =
@@ -56,10 +61,14 @@ object AdvanceHunt {
                         hunt =
                             hunt.copy(
                                 position = next,
+                                spaces = spaces,
                                 drawnEvent = newDrawn ?: hunt.drawnEvent,
                             ),
                     ),
             ),
         )
     }
+
+    /** A 2d10 sum (2..20), the per-step hunt roll (S6). */
+    private fun roll2d10(random: Random): Int = random.nextInt(1, 11) + random.nextInt(1, 11)
 }
