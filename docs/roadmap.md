@@ -3,7 +3,7 @@
 One page: what the Stitch designs still owe the app, in the order to build it. Updated as
 slices land. `docs/backlog.md` keeps the small deferred items; this file keeps the program.
 
-## Where we are (2026-10-16)
+## Where we are (2026-10-23)
 
 The design program is "apply the Stitch design to the screens", in two parts plus a screen
 program. All of Part A is merged.
@@ -32,9 +32,24 @@ Enfrentamiento. Asentamiento's designed part is done; the rest follow.
 **Scope of "Asentamiento done":** the settlement-screen spec states the design covers the
 summary, the step frame and **one step of eleven (7 · Desarrollo)** — that is exactly what is
 rebuilt 1:1 (`2026-10-10-settlement-screen-design.md`, "The design covers the summary and one
-step of eleven"). Steps 1–6 and 8–11 have **no Stitch design at all**: they are functional
-implementations of our own text, kept as they are, and are therefore not pending design work.
-The three Part A flows (Fabricar, Innovar, Añadir recursos) are actions inside step 7.
+step of eleven"). Steps 1–6 and 8–11 originally had **no Stitch design at all**: they are
+functional implementations of our own text, kept as they are. The three Part A flows (Fabricar,
+Innovar, Añadir recursos) are actions inside step 7.
+
+**Next session target — the remaining settlement steps' design.** The maintainer has Stitch
+designs for the steps that were previously undesigned (1–6, 8–11) and a new session will
+implement them 1:1. Handoff notes:
+- The eleven canonical Spanish step names are fixed by the spec (line 32): `1 Preparación ·
+  2 Supervivientes Regresan · 3 Ganar Esfuerzos · 4 Actualizar Línea de Tiempo · 5 Actualizar
+  Contador de Muertes · 6 Comprobar Hitos · 7 Desarrollo · 8 Preparar Supervivientes ·
+  9 Enfrentamiento Especial · 10 Anotar y Almacenar · 11 El Fin del Principio`.
+- The **step frame** (`StepFrame.kt`) and **summary** (`SettlementSummary.kt`) already render on
+  all eleven steps; only the **bodies** (per-step content below the frame) are to be restyled.
+- Build from the **Stitch HTML**, never screenshots (hard rule). Get each step's screen id from
+  the Stitch project `4909212909494507782` and cache the HTML as was done for Caza
+  (`/tmp/stitch_hunt/*.html`).
+- Rules that carry: visual gate (REGLA DUDA — maintainer approves rendered emulator output before
+  any commit/push/PR), ~400-line PR budget, full suite gate.
 
 ### V1 — Supervivientes: the paged survivor sheet tab ✅ done (#37)
 
@@ -60,6 +75,14 @@ its spaces and events, the party with per-player assignment, Overwhelming Darkne
 - Prep: extract the survivor-sheet primitives (`SheetPanel`, `StoneButton`, `CounterRow`,
   `PipTrack`, `ChipRow`, …) from `SurvivorSheet.kt` into a shared `ui/components/` layer first —
   V2/V3 need the same primitives plus new ones, and today they live inline.
+
+**Follow-up merged 2026-10-23 — per-space steps 1:1 + the 2d10 roll** (PRs #42–#44):
+rebuilt the board's per-space steps against the Stitch `estados de casilla` HTML (flush top row,
+per-type mark, uniform cards, round centre medallion, event-type footer, party ping dot, `star`
+on quarry-special steps, eye only in the centre), the start step's "Inicia la cacería", and a
+per-step 2d10 roll (`roll_edit`, rolled on land, persisted, editable). Also re-seeded the
+event-space config from the renumbered md (0-12: WL {1,2,5,8,9}, PHX {1,4,7,9},
+ANT {1,2,7,9}). Feature doc: `odd/tasks/hunt-steps-and-roll.md` (T1–T7, S1–S7, L1–L6).
 
 ### V3 — Enfrentamiento: rebuild 1:1
 
