@@ -10,13 +10,23 @@ import io.kdmtracker.core.rules.StepResult
 /**
  * Sets up the Hunting Phase for the current lantern year.
  *
- * Seeds the thirteen-space board with the Start space at index 0 and the monster on the last space;
- * the player marks Overwhelming Darkness / Starvation / the "E" spaces later with
- * [MarkSpaceKind], because the per-monster board diagram is not machine-readable.
+ * Seeds the thirteen-space board with the **base** layout from the manual (`kdm_parte1.md` 9.1 /
+ * rulebook p.61): Start at index 0, **Overwhelming Darkness** in the center (index 6), and
+ * **Starvation** at the end (index 12); every other space starts as an ordinary event space.
+ *
+ * The per-quarry special-"E" positions (and the monster's starting space by level) live only in
+ * each monster's hunt-board **diagram** — an image in the rulebook with no extractable text — so
+ * they are not invented here; the player marks them later with [MarkSpaceKind].
  */
 object SetUpHunt {
     /** The hunt board has thirteen spaces. */
     const val BOARD_SPACES = 13
+
+    /** Index of the central Overwhelming Darkness space (13 spaces: 0..12, center = 6). */
+    const val OVERWHELMING_DARKNESS_INDEX = 6
+
+    /** Index of the final Starvation space. */
+    const val STARVATION_INDEX = BOARD_SPACES - 1
 
     /**
      * Returns [StepResult.Ok] with the seeded board, or [StepResult.Blocked] on a blank quarry, a
@@ -39,14 +49,7 @@ object SetUpHunt {
         }
         val spaces =
             List(BOARD_SPACES) { index ->
-                HuntSpace(
-                    kind =
-                        when (index) {
-                            0 -> HuntSpaceKind.START
-                            BOARD_SPACES - 1 -> HuntSpaceKind.MONSTER
-                            else -> HuntSpaceKind.NORMAL
-                        },
-                )
+                HuntSpace(kind = baseLayoutKind(index))
             }
         val hunt =
             HuntState(
@@ -55,9 +58,18 @@ object SetUpHunt {
                 players = players,
                 spaces = spaces,
                 position = 0,
-                monsterPosition = spaces.lastIndex,
+                monsterPosition = STARVATION_INDEX,
                 status = HuntStatus.ACTIVE,
             )
         return StepResult.Ok(record.copy(state = record.state.copy(hunt = hunt)))
     }
+
+    /** The base role of [index] on the standard thirteen-space board (manual 9.1). */
+    private fun baseLayoutKind(index: Int): HuntSpaceKind =
+        when (index) {
+            0 -> HuntSpaceKind.START
+            OVERWHELMING_DARKNESS_INDEX -> HuntSpaceKind.OVERWHELMING_DARKNESS
+            STARVATION_INDEX -> HuntSpaceKind.STARVATION
+            else -> HuntSpaceKind.NORMAL
+        }
 }
