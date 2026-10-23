@@ -69,13 +69,13 @@ All of the above is taken from the Stitch HTML (`/tmp/stitch_hunt/estados.html` 
 
 | ID | Spec | Route | Commit |
 |----|------|-------|--------|
-| T1 | S1–S4 | app-ui render + frame model (badge/number/medallion/footer/halo, no lozenge, green party, beast eye) | (uncommitted) |
-| T2 | S5 | core + app-ui (start-step "Inicia la cacería", no draw on start) | (uncommitted) |
-| T3 | S6 | core domain + usecase + data (per-step 2d10 roll, persisted, editable) + app-ui | (uncommitted) |
-| T4 | S1–S6 | tests (frame pins, model pins, roll persistence/edit) RED→GREEN + suite gate | (uncommitted) |
+| T1 | S1–S4 | app-ui render + frame model (badge/number/medallion/footer/halo, no lozenge, green party, beast eye) | `8fea391` |
+| T2 | S5 | core + app-ui (start-step "Inicia la cacería", no draw on start) | `8fea391` |
+| T3 | S6 | core domain + usecase + data (per-step 2d10 roll, persisted, editable) + app-ui | `8ca8014` (core) + `8fea391` (ui) |
+| T4 | S1–S6 | tests (frame pins, model pins, roll persistence/edit) RED→GREEN + suite gate | (with each task's commit) |
 | T5 | S1–S6 | emulator capture per region (REGLA DUDA: maintainer approval) | — (approved, see L6) |
-| T6 | S7 / L5a | event-space config from md section 2 (0-12 `E` sets + beast homes) | (uncommitted) |
-| T7 | L5b–f | visual fixes: party ping replaces badge, flush top row, uniform card size, no badge on normal steps, star on E steps, eye only in centre | (uncommitted) |
+| T6 | S7 / L5a | event-space config from md section 2 (0-12 `E` sets + beast homes) | `07b349a` |
+| T7 | L5b–f | visual fixes: party ping replaces badge, flush top row, uniform card size, no badge on normal steps, star on E steps, eye only in centre | `8fea391` |
 
 ## Log
 
