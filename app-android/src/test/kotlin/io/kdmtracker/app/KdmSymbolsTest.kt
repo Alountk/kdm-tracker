@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 class KdmSymbolsTest {
     @Test
     fun glyphMapsEveryDesignedSymbol() {
-        assertEquals(88, designedGlyphs.size)
+        assertEquals(90, designedGlyphs.size)
         designedGlyphs.forEach { (name, code) -> assertEquals(code.toChar().toString(), KdmSymbols.glyph(name), name) }
     }
 
@@ -32,7 +32,14 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(88, KdmSymbols.glyphCount)
+        assertEquals(90, KdmSymbols.glyphCount)
+    }
+
+    /** S3: the fixed Overwhelming Darkness / Starvation icons resolve to bundled glyphs. */
+    @Test
+    fun fixedSpaceIconsResolveToBundledGlyphs() {
+        assertEquals("\uE1C6", KdmSymbols.glyph("wb_twilight")) // Overwhelming Darkness
+        assertEquals("\uE56C", KdmSymbols.glyph("restaurant")) // Starvation
     }
 }
 
@@ -106,6 +113,7 @@ internal val designedGlyphs: Map<String, Int> =
         "publish" to 0xE255,
         "remove" to 0xE15B,
         "replay" to 0xE042,
+        "restaurant" to 0xE56C,
         "restart_alt" to 0xF053,
         "roller_shades" to 0xEC12,
         "route" to 0xEACD,
@@ -127,4 +135,5 @@ internal val designedGlyphs: Map<String, Int> =
         "visibility" to 0xE8F4,
         "vital_signs" to 0xE650,
         "warning" to 0xF083,
+        "wb_twilight" to 0xE1C6,
     )
