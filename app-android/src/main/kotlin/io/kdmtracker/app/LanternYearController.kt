@@ -42,6 +42,7 @@ import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.ClearShowdown
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.DrawShowdownCard
+import io.kdmtracker.core.usecase.EditHuntRoll
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.MarkDeparting
@@ -476,6 +477,14 @@ class LanternYearController(
         eventName: String,
     ) {
         applyResult(ResolveHuntEvent.run(repository.record, index, eventName))
+    }
+
+    /** Overwrites a step's stored 2d10 roll by hand (S6, `roll_edit`). */
+    fun editHuntRoll(
+        index: Int,
+        roll: Int,
+    ) {
+        applyResult(EditHuntRoll.run(repository.record, index, roll))
     }
 
     /**

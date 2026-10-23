@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 class KdmSymbolsTest {
     @Test
     fun glyphMapsEveryDesignedSymbol() {
-        assertEquals(95, designedGlyphs.size)
+        assertEquals(98, designedGlyphs.size)
         designedGlyphs.forEach { (name, code) -> assertEquals(code.toChar().toString(), KdmSymbols.glyph(name), name) }
     }
 
@@ -32,7 +32,7 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(95, KdmSymbols.glyphCount)
+        assertEquals(98, KdmSymbols.glyphCount)
     }
 
     /** S3: the fixed Overwhelming Darkness / Starvation icons resolve to bundled glyphs. */
@@ -84,6 +84,7 @@ internal val designedGlyphs: Map<String, Int> =
         "format_h4" to 0xF860,
         "flare" to 0xE3E4,
         "foundation" to 0xF200,
+        "flag" to 0xF0C6,
         "fort" to 0xEAAD,
         "front_hand" to 0xE769,
         "grass" to 0xF205,
@@ -109,6 +110,7 @@ internal val designedGlyphs: Map<String, Int> =
         "logout" to 0xE9BA,
         "manage_search" to 0xF02F,
         "no_meals" to 0xF1D6,
+        "nights_stay" to 0xF174,
         "nutrition" to 0xE110,
         "palette" to 0xE3B7,
         "person" to 0xF0D3,
@@ -126,6 +128,7 @@ internal val designedGlyphs: Map<String, Int> =
         "shield" to 0xE9E0,
         "shield_person" to 0xF650,
         "skull" to 0xF89A,
+        "star" to 0xF09A,
         "sports_mma" to 0xEA2C,
         "style" to 0xE41D,
         "swap_horizontal_circle" to 0xE933,

@@ -88,6 +88,7 @@ object KdmSymbols {
             "format_h4" to 0xF860,
             "fort" to 0xEAAD,
             "foundation" to 0xF200, // hunt board: Inicio/Asentamiento (Stitch)
+            "flag" to 0xF0C6, // hunt board: Inicio step badge (Stitch)
             "front_hand" to 0xE769,
             "grass" to 0xF205,
             "grid_4x4" to 0xF016,
@@ -112,6 +113,7 @@ object KdmSymbols {
             "logout" to 0xE9BA,
             "manage_search" to 0xF02F,
             "no_meals" to 0xF1D6, // hunt board: Starvation/Hambruna (Stitch)
+            "nights_stay" to 0xF174, // hunt board: Overwhelming Darkness step badge (Stitch)
             "nutrition" to 0xE110,
             "palette" to 0xE3B7,
             "person" to 0xF0D3,
@@ -129,6 +131,7 @@ object KdmSymbols {
             "shield" to 0xE9E0,
             "shield_person" to 0xF650,
             "skull" to 0xF89A,
+            "star" to 0xF09A, // beast-event card mark, top-right (Stitch L4)
             "sports_mma" to 0xEA2C,
             "style" to 0xE41D,
             "swap_horizontal_circle" to 0xE933,

@@ -16,10 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,6 +72,7 @@ fun HuntScreen(
     onMarkSpaceKind: (Int, HuntSpaceKind) -> Unit,
     onAssignHuntEvent: (Int, String) -> Unit,
     onResolveHuntEvent: (Int, String) -> Unit,
+    onEditHuntRoll: (Int, Int) -> Unit,
     onAdvanceHunt: () -> Unit,
     onMoveMonster: () -> Unit,
     onRetreatMonster: () -> Unit,
@@ -105,6 +108,9 @@ fun HuntScreen(
             partySpace = hunt.spaces.getOrElse(hunt.position) { HuntSpace() },
             huntEvents = state.huntEvents,
             drawnEvent = hunt.drawnEvent,
+            atStart = hunt.position == 0,
+            stepRoll = hunt.spaces.getOrElse(selected) { HuntSpace() }.roll,
+            onEditRoll = { onEditHuntRoll(selected, it) },
             onAssign = { onAssignHuntEvent(hunt.position, it) },
             onResolve = { onResolveHuntEvent(hunt.position, it) },
             onMarkKind = { onMarkSpaceKind(selected, it) },
@@ -121,6 +127,69 @@ fun HuntScreen(
                     drawn != null &&
                         drawn.name !in hunt.spaces.getOrElse(hunt.position) { HuntSpace() }.resolved
                 },
+        )
+    }
+}
+
+/** S6: the per-step 2d10 roll, shown for the selected step and editable by hand (`roll_edit`). */
+@Composable
+private fun StepRoll(
+    stepRoll: Int?,
+    onEditRoll: (Int) -> Unit,
+) {
+    var editing by remember { mutableStateOf(false) }
+    var draft by remember(stepRoll) { mutableStateOf(stepRoll?.toString() ?: "") }
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(6.dp))
+                .background(KdmPalette.surfaceLow)
+                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(
+                text = "Tirada de la casilla".uppercase(),
+                color = KdmPalette.ash,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.5.sp,
+            )
+            Text(
+                text = stepRoll?.let { "$it" } ?: "—",
+                color = if (stepRoll != null) KdmPalette.gold else KdmPalette.outline,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        OutlinedButton(onClick = { editing = true }) { Text("Editar") }
+    }
+
+    if (editing) {
+        AlertDialog(
+            onDismissRequest = { editing = false },
+            title = { Text("Tirada 2d10") },
+            text = {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it.filter(Char::isDigit).take(2) },
+                    label = { Text("Valor (2–20)") },
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        draft.toIntOrNull()?.let { if (it in 2..20) onEditRoll(it) }
+                        editing = false
+                    },
+                ) { Text("Guardar") }
+            },
+            dismissButton = { OutlinedButton(onClick = { editing = false }) { Text("Cancelar") } },
         )
     }
 }
@@ -436,11 +505,33 @@ private fun HuntEventCard(
     partySpace: HuntSpace,
     huntEvents: List<io.kdmtracker.core.domain.HuntEvent>,
     drawnEvent: io.kdmtracker.core.domain.HuntEvent?,
+    atStart: Boolean,
+    stepRoll: Int?,
+    onEditRoll: (Int) -> Unit,
     onAssign: (String) -> Unit,
     onResolve: (String) -> Unit,
     onMarkKind: (HuntSpaceKind) -> Unit,
 ) {
     HuntPanel {
+        // S5: at the start step there is no event yet — only the hunt begins.
+        if (atStart) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Symbol("flag", KdmPalette.green, 16)
+                Text(
+                    text = "Inicia la cacería".uppercase(),
+                    color = KdmPalette.green,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                )
+            }
+            Text(
+                text = "El grupo aún no ha avanzado: no se roba carta hasta el primer paso.",
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
+            return@HuntPanel
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Symbol("auto_stories", KdmPalette.gold, 16)
             Text(
@@ -460,6 +551,8 @@ private fun HuntEventCard(
                         .padding(horizontal = 8.dp, vertical = 2.dp),
             )
         }
+
+        StepRoll(stepRoll = stepRoll, onEditRoll = onEditRoll)
 
         // The card the group drew on their last advance (S5): its real name and rules text.
         if (drawnEvent != null) {

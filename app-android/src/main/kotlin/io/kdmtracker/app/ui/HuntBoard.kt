@@ -1,5 +1,10 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,10 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -112,18 +118,25 @@ private fun HuntSpaceCell(
             SpaceTone.BLOOD -> KdmPalette.blood
             SpaceTone.VIOLET -> KdmPalette.violet
             SpaceTone.AMBER -> KdmPalette.amber
+            SpaceTone.GREEN -> KdmPalette.green
             SpaceTone.SURFACE, SpaceTone.OUTLINE -> if (selected) KdmPalette.gold else null
         }
     val numberColor = accent ?: KdmPalette.ash
     val cellBg = KdmPalette.surfaceLow
-    val medallionSize = if (isFilledMedallion) 32.dp else 28.dp
+    val medallionSize = 44.dp // the design's `w-11 h-11` round medallion, always round (S2)
     // Border weight: the active/party and the beast cells carry the design's 2px accent border.
     val borderWidth = if (view.isParty || isBeast || isSpecialEvent) 2.dp else 1.dp
+
+    // L5(d): every card is the SAME fixed size — the design's `w-[84px] h-[134px]`, so the track
+    // has one uniform card height regardless of label wrap.
+    val cellWidth = 72.dp
+    val cellHeight = 132.dp // the design's `h-[134px]`; fits a 2-line label + caption without clipping
 
     Box(
         modifier =
             Modifier
-                .width(72.dp)
+                .width(cellWidth)
+                .height(cellHeight) // uniform height (L5d) — never content-driven
                 .clip(RoundedCornerShape(8.dp))
                 .background(cellBg)
                 .border(
@@ -131,40 +144,63 @@ private fun HuntSpaceCell(
                     accent ?: KdmPalette.outlineVariant.copy(alpha = 0.5f),
                     RoundedCornerShape(8.dp),
                 ).clickable(onClick = onClick)
-                .padding(vertical = 8.dp, horizontal = 6.dp),
-        contentAlignment = Alignment.Center,
+                .padding(vertical = 4.dp, horizontal = 6.dp), // tight top pad so the row hugs the edge (L5c)
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = view.index.toString().padStart(2, '0'),
-                color = numberColor,
-                fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 10.sp,
-            )
+            // Top row (S1/L5c): number at the left + the type badge/ping at the right, flush to the
+            // card's top edge (the row itself touches the border — no stray gap above it).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (view.showNumber) {
+                    Text(
+                        text = view.index.toString().padStart(2, '0'),
+                        color = numberColor,
+                        fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 10.sp,
+                    )
+                } else {
+                    // Even with no number, the row keeps its left edge so the mark stays flush right.
+                    Box(modifier = Modifier.size(10.dp))
+                }
+                // L5b: the party's step swaps its type badge for the animated ping dot.
+                if (view.partyPing) {
+                    PartyPingDot(color = accent ?: KdmPalette.green)
+                } else {
+                    BadgeMark(name = view.badge, tint = accent ?: KdmPalette.ash)
+                }
+            }
             Box(
                 modifier =
                     Modifier
                         .size(medallionSize)
-                        .clip(if (isFilledMedallion) CircleShape else RoundedCornerShape(4.dp))
-                        .background(medallionBg(tone))
+                        .clip(CircleShape) // always round (S2)
+                        // The quarry's eye (S2) sits on the dark container with a gold ring + gold eye —
+                        // never a solid gold disc (the gold-on-gold eye would be invisible).
+                        .background(if (isSpecialEvent) KdmPalette.surfaceContainer else medallionBg(tone))
                         .border(
                             if (isFilledMedallion || tone == SpaceTone.OUTLINE) 1.dp else 2.dp,
                             accent ?: KdmPalette.outlineVariant.copy(alpha = 0.5f),
-                            if (isFilledMedallion) CircleShape else RoundedCornerShape(4.dp),
+                            CircleShape,
                         ),
                 contentAlignment = Alignment.Center,
             ) {
                 // Ink: filled medallions get dark ink on their accent; the rest get the accent itself.
                 val ink =
                     when {
-                        view.isParty -> KdmPalette.onGold // gold medallion -> dark ink
+                        view.isParty -> KdmPalette.green // emerald medallion -> ink on the wash
                         tone == SpaceTone.BLOOD && isBeast -> KdmPalette.blood // red paw on the container
                         isSpecialEvent -> KdmPalette.gold // gold eye
                         tone == SpaceTone.VIOLET -> KdmPalette.violet
                         tone == SpaceTone.AMBER -> KdmPalette.amber
+                        tone == SpaceTone.GREEN -> KdmPalette.green
                         else -> KdmPalette.ash
                     }
                 if (view.icon == "E") {
@@ -173,14 +209,16 @@ private fun HuntSpaceCell(
                         color = ink.copy(alpha = 0.7f),
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                     )
                 } else {
                     Symbol(
                         name = view.icon,
                         color = ink,
-                        size = if (isFilledMedallion) 18 else 16,
-                        fill = isFilledMedallion,
+                        size = 24,
+                        // Filled for the solid party/beast discs and for the quarry's gold eye (S2,
+                        // `FILL 1` in the design); outline for the neutral round marks.
+                        fill = isFilledMedallion || isSpecialEvent,
                     )
                 }
             }
@@ -188,7 +226,8 @@ private fun HuntSpaceCell(
                 text = view.label,
                 color = accent ?: KdmPalette.ash,
                 fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 10.sp,
+                fontSize = 9.5.sp,
+                lineHeight = 11.sp, // tight leading so a 2-line label (Oscuridad Abrumadora) fits (L5)
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -202,17 +241,69 @@ private fun HuntSpaceCell(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            // The design's rotated position lozenge, only on the party / beast cells.
-            if (view.isParty || isBeast) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(8.dp)
-                            .rotate(45f)
-                            .background(accent ?: KdmPalette.gold),
-                )
-            }
         }
+    }
+}
+
+/** The small top-right type badge (S1): a material glyph when it maps to a symbol, else its text. */
+@Composable
+private fun BadgeMark(
+    name: String,
+    tint: Color,
+) {
+    if (name.isBlank()) return
+    if (name == "GEN") {
+        Text(text = "GEN", color = tint.copy(alpha = 0.8f), fontSize = 8.sp, fontWeight = FontWeight.SemiBold)
+    } else {
+        Symbol(name = name, color = tint, size = 12, fill = false)
+    }
+}
+
+/** The `pulse-lantern` / `pulse-beast` phase: a 0f→1f triangle wave for the ping ring. */
+@Composable
+private fun pingPhase(): Float {
+    val transition = rememberInfiniteTransition(label = "ping")
+    val phase by
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Restart),
+            label = "pingPhase",
+        )
+    return phase
+}
+
+/**
+ * L5b/L5f: the party's top-right mark — a small circle that **switches on, grows small→large and
+ * vanishes, looping forever**, staying **inside the step** (its max size barely exceeds the other
+ * icons, never overflowing the card). The design's `animate-ping` dot at 6px base.
+ */
+@Composable
+private fun PartyPingDot(color: Color) {
+    val phase = pingPhase()
+    // 0→1: grows small→large then fades out; a solid dot always anchors the centre so it reads as
+    // "on" even at the low end of the cycle (never a blank gap).
+    val dotSize = 6.dp // the design's `w-1.5 h-1.5` base
+    val maxGrowth = 5.dp // grows to ~11dp — barely past the other icons, bounded inside the step
+    val grow = dotSize + (maxGrowth * phase)
+    val ringAlpha = (1f - phase) * 0.6f
+    Box(modifier = Modifier.size(dotSize + maxGrowth), contentAlignment = Alignment.Center) {
+        // The expanding, fading ring (the ping). Drawn as a growing, fading solid dot.
+        Box(
+            modifier =
+                Modifier
+                    .size(grow)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = ringAlpha)),
+        )
+        // The solid centre dot: always visible (the "on" state).
+        Box(
+            modifier =
+                Modifier
+                    .size(dotSize)
+                    .clip(CircleShape)
+                    .background(color),
+        )
     }
 }
 
@@ -223,6 +314,7 @@ private fun medallionBg(tone: SpaceTone): Color =
         SpaceTone.BLOOD -> KdmPalette.bloodContainer
         SpaceTone.VIOLET -> KdmPalette.violetContainer
         SpaceTone.AMBER -> KdmPalette.amberContainer
+        SpaceTone.GREEN -> KdmPalette.greenWash
         SpaceTone.SURFACE, SpaceTone.OUTLINE -> KdmPalette.surfaceContainer
     }
 
