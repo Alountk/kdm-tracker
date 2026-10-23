@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SettlementStateSerializationTest {
@@ -242,5 +243,22 @@ class SettlementStateSerializationTest {
             """{"id":"language","names":{"es":"Language"},"description":"You can talk.",""" +
                 """"consequences":[],"survivalLimitBonus":1}"""
         assertEquals(0, json.decodeFromString<Innovation>(older).unlockedInYear)
+    }
+
+    /** S6: a step's stored 2d10 roll persists through the JSON round trip. */
+    @Test
+    fun aPerStepRollSurvivesTheStateRoundTrip() {
+        val hunt =
+            HuntState(
+                quarry = "White Lion",
+                spaces = List(13) { HuntSpace(kind = HuntSpaceKind.START, roll = if (it == 3) 17 else null) },
+                position = 3,
+            )
+        val state = SettlementState(hunt = hunt)
+
+        val decoded = json.decodeFromString<SettlementState>(json.encodeToString(state))
+
+        assertEquals(17, decoded.hunt.spaces[3].roll)
+        assertNull(decoded.hunt.spaces[4].roll)
     }
 }

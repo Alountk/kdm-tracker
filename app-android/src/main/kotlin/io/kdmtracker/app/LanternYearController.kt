@@ -42,6 +42,7 @@ import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.ClearShowdown
 import io.kdmtracker.core.usecase.Craft
 import io.kdmtracker.core.usecase.DrawShowdownCard
+import io.kdmtracker.core.usecase.EditHuntRoll
 import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.MarkDeparting
@@ -53,6 +54,7 @@ import io.kdmtracker.core.usecase.RecordHuntXp
 import io.kdmtracker.core.usecase.RecordSettlementEvent
 import io.kdmtracker.core.usecase.ResolveHuntEvent
 import io.kdmtracker.core.usecase.ResolveMilestone
+import io.kdmtracker.core.usecase.RetreatMonster
 import io.kdmtracker.core.usecase.ReturnSurvivors
 import io.kdmtracker.core.usecase.SetHuntOutcome
 import io.kdmtracker.core.usecase.SetShowdownOutcome
@@ -438,12 +440,19 @@ class LanternYearController(
 
     /** Advances the hunt party one space. */
     fun advanceHunt() {
-        applyResult(AdvanceHunt.run(repository.record))
+        val quarry = repository.record.state.hunt.quarry
+        val deck = quarry?.let { content.huntEventsFor(it) }.orEmpty()
+        applyResult(AdvanceHunt.run(repository.record, deck = deck))
     }
 
     /** Steps the monster one space toward the party, ambushing it on contact. */
     fun moveMonster() {
         applyResult(MoveMonster.run(repository.record))
+    }
+
+    /** S8: steps the monster one space away from the party (a hunt-event retreat). */
+    fun retreatMonster() {
+        applyResult(RetreatMonster.run(repository.record))
     }
 
     /** Assigns a party survivor to a player (1-based). */
@@ -468,6 +477,14 @@ class LanternYearController(
         eventName: String,
     ) {
         applyResult(ResolveHuntEvent.run(repository.record, index, eventName))
+    }
+
+    /** Overwrites a step's stored 2d10 roll by hand (S6, `roll_edit`). */
+    fun editHuntRoll(
+        index: Int,
+        roll: Int,
+    ) {
+        applyResult(EditHuntRoll.run(repository.record, index, roll))
     }
 
     /**

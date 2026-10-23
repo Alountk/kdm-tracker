@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 class KdmSymbolsTest {
     @Test
     fun glyphMapsEveryDesignedSymbol() {
-        assertEquals(90, designedGlyphs.size)
+        assertEquals(98, designedGlyphs.size)
         designedGlyphs.forEach { (name, code) -> assertEquals(code.toChar().toString(), KdmSymbols.glyph(name), name) }
     }
 
@@ -32,14 +32,14 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(90, KdmSymbols.glyphCount)
+        assertEquals(98, KdmSymbols.glyphCount)
     }
 
     /** S3: the fixed Overwhelming Darkness / Starvation icons resolve to bundled glyphs. */
     @Test
     fun fixedSpaceIconsResolveToBundledGlyphs() {
-        assertEquals("\uE1C6", KdmSymbols.glyph("wb_twilight")) // Overwhelming Darkness
-        assertEquals("\uE56C", KdmSymbols.glyph("restaurant")) // Starvation
+        assertEquals("\uF159", KdmSymbols.glyph("bedtime")) // Overwhelming Darkness
+        assertEquals("\uF1D6", KdmSymbols.glyph("no_meals")) // Starvation
     }
 }
 
@@ -53,9 +53,11 @@ internal val designedGlyphs: Map<String, Int> =
         "airline_stops" to 0xE7D0,
         "arrow_drop_down" to 0xE5C5,
         "arrow_drop_up" to 0xE5C7,
+        "arrow_back" to 0xE5C4,
         "arrow_forward" to 0xE5C8,
         "auto_stories" to 0xE666,
         "balance" to 0xEAF6,
+        "bedtime" to 0xF159,
         "bolt" to 0xEA0B,
         "brush" to 0xE3AE,
         "casino" to 0xEB40,
@@ -65,6 +67,7 @@ internal val designedGlyphs: Map<String, Int> =
         "chevron_left" to 0xE5CB,
         "colorize" to 0xE3B8,
         "crisis_alert" to 0xEBE9,
+        "cruelty_free" to 0xE799,
         "crop_square" to 0xE3C6,
         "directions_run" to 0xE566,
         "directions_walk" to 0xE536,
@@ -80,6 +83,8 @@ internal val designedGlyphs: Map<String, Int> =
         "fitness_center" to 0xEB43,
         "format_h4" to 0xF860,
         "flare" to 0xE3E4,
+        "foundation" to 0xF200,
+        "flag" to 0xF0C6,
         "fort" to 0xEAAD,
         "front_hand" to 0xE769,
         "grass" to 0xF205,
@@ -104,6 +109,8 @@ internal val designedGlyphs: Map<String, Int> =
         "lock_open" to 0xE898,
         "logout" to 0xE9BA,
         "manage_search" to 0xF02F,
+        "no_meals" to 0xF1D6,
+        "nights_stay" to 0xF174,
         "nutrition" to 0xE110,
         "palette" to 0xE3B7,
         "person" to 0xF0D3,
@@ -121,6 +128,7 @@ internal val designedGlyphs: Map<String, Int> =
         "shield" to 0xE9E0,
         "shield_person" to 0xF650,
         "skull" to 0xF89A,
+        "star" to 0xF09A,
         "sports_mma" to 0xEA2C,
         "style" to 0xE41D,
         "swap_horizontal_circle" to 0xE933,

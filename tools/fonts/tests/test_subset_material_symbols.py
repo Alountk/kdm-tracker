@@ -24,7 +24,7 @@ BUNDLED_TTF = REPO / "app-android/src/main/res/font/material_symbols_outlined.tt
 class ParseKotlinMapTests(unittest.TestCase):
     def test_parses_every_entry_of_the_real_map(self) -> None:
         entries = script.parse_kotlin_map(KOTLIN_MAP.read_text(encoding="utf-8"))
-        self.assertEqual(90, len(entries))
+        self.assertEqual(98, len(entries))
 
     def test_reads_codepoints_as_integers(self) -> None:
         entries = script.parse_kotlin_map(
@@ -40,7 +40,7 @@ class ParseKotlinMapTests(unittest.TestCase):
 class CmapTests(unittest.TestCase):
     def test_reads_the_bundled_subset_cmap(self) -> None:
         codepoints = script.cmap_codepoints(BUNDLED_TTF.read_bytes())
-        self.assertEqual(90, len(codepoints))
+        self.assertEqual(98, len(codepoints))
 
     def test_rejects_a_file_without_cmap(self) -> None:
         with self.assertRaises(ValueError):

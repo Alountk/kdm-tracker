@@ -35,15 +35,16 @@ class MoveMonsterTest {
     }
 
     @Test
-    fun monsterStartsOnTheLastSpaceAfterSetUp() {
+    fun monsterStartsOnItsLevelSpaceAfterSetUp() {
         val hunt = started().state.hunt
-        assertEquals(hunt.spaces.lastIndex, hunt.monsterPosition)
+        // S6: a White Lion level 1 starts on md space 5 -> index 4 (md 25), not the last space
+        assertEquals(4, hunt.monsterPosition)
         assertEquals(HuntStatus.ACTIVE, hunt.status)
     }
 
     @Test
     fun moveMonsterStepsOneSpaceTowardTheParty() {
-        // The party advances to space 1; the monster starts at 12.
+        // The monster (index 4) is ahead of the party (index 0): it steps down to 3.
         val party = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started())).value
         val before = party.state.hunt.monsterPosition
         val moved = assertIs<StepResult.Ok<SettlementRecord>>(MoveMonster.run(party)).value
@@ -55,11 +56,11 @@ class MoveMonsterTest {
     fun moveMonsterAmbushesWhenItReachesTheParty() {
         // put the party and the monster one apart, then step the monster onto the party's space
         var record = started()
-        val partyIndex = 10
+        val partyIndex = 3
         while (record.state.hunt.position < partyIndex) {
             record = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(record)).value
         }
-        // walk the monster down to party+1
+        // walk the monster down to party+1 (it starts at 4, already one apart from 3)
         val target = partyIndex + 1
         while (record.state.hunt.monsterPosition > target) {
             record = assertIs<StepResult.Ok<SettlementRecord>>(MoveMonster.run(record)).value

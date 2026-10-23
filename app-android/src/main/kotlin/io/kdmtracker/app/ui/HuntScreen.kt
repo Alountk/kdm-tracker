@@ -1,6 +1,7 @@
 package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,10 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,13 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
@@ -69,8 +72,10 @@ fun HuntScreen(
     onMarkSpaceKind: (Int, HuntSpaceKind) -> Unit,
     onAssignHuntEvent: (Int, String) -> Unit,
     onResolveHuntEvent: (Int, String) -> Unit,
+    onEditHuntRoll: (Int, Int) -> Unit,
     onAdvanceHunt: () -> Unit,
     onMoveMonster: () -> Unit,
+    onRetreatMonster: () -> Unit,
     onFinishHunt: (HuntStatus) -> Unit,
 ) {
     val hunt = state.hunt
@@ -97,15 +102,94 @@ fun HuntScreen(
         HuntEventCard(
             space = hunt.spaces.getOrElse(selected) { HuntSpace() },
             index = selected,
+            // The drawn card belongs to the party's current space, so resolving it always writes
+            // there — navigating to another space never re-targets the card (it stays a history
+            // view). onMarkKind still edits the selected space, as the mark picker is per-space.
+            partySpace = hunt.spaces.getOrElse(hunt.position) { HuntSpace() },
             huntEvents = state.huntEvents,
-            onAssign = { onAssignHuntEvent(selected, it) },
-            onResolve = { onResolveHuntEvent(selected, it) },
+            drawnEvent = hunt.drawnEvent,
+            atStart = hunt.position == 0,
+            stepRoll = hunt.spaces.getOrElse(selected) { HuntSpace() }.roll,
+            onEditRoll = { onEditHuntRoll(selected, it) },
+            onAssign = { onAssignHuntEvent(hunt.position, it) },
+            onResolve = { onResolveHuntEvent(hunt.position, it) },
             onMarkKind = { onMarkSpaceKind(selected, it) },
         )
         ActionButtons(
             onAdvance = onAdvanceHunt,
             onMoveMonster = onMoveMonster,
+            onRetreatMonster = onRetreatMonster,
             onShowdown = { onFinishHunt(HuntStatus.QUARRY_FOUND) },
+            // S7: the advance gate — a drawn card not yet resolved on the party's space blocks it.
+            advanceBlocked =
+                run {
+                    val drawn = hunt.drawnEvent
+                    drawn != null &&
+                        drawn.name !in hunt.spaces.getOrElse(hunt.position) { HuntSpace() }.resolved
+                },
+        )
+    }
+}
+
+/** S6: the per-step 2d10 roll, shown for the selected step and editable by hand (`roll_edit`). */
+@Composable
+private fun StepRoll(
+    stepRoll: Int?,
+    onEditRoll: (Int) -> Unit,
+) {
+    var editing by remember { mutableStateOf(false) }
+    var draft by remember(stepRoll) { mutableStateOf(stepRoll?.toString() ?: "") }
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(6.dp))
+                .background(KdmPalette.surfaceLow)
+                .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(
+                text = "Tirada de la casilla".uppercase(),
+                color = KdmPalette.ash,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.5.sp,
+            )
+            Text(
+                text = stepRoll?.let { "$it" } ?: "—",
+                color = if (stepRoll != null) KdmPalette.gold else KdmPalette.outline,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        OutlinedButton(onClick = { editing = true }) { Text("Editar") }
+    }
+
+    if (editing) {
+        AlertDialog(
+            onDismissRequest = { editing = false },
+            title = { Text("Tirada 2d10") },
+            text = {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it.filter(Char::isDigit).take(2) },
+                    label = { Text("Valor (2–20)") },
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        draft.toIntOrNull()?.let { if (it in 2..20) onEditRoll(it) }
+                        editing = false
+                    },
+                ) { Text("Guardar") }
+            },
+            dismissButton = { OutlinedButton(onClick = { editing = false }) { Text("Cancelar") } },
         )
     }
 }
@@ -418,12 +502,36 @@ private fun HuntPanel(content: @Composable ColumnScope.() -> Unit) {
 private fun HuntEventCard(
     space: HuntSpace,
     index: Int,
+    partySpace: HuntSpace,
     huntEvents: List<io.kdmtracker.core.domain.HuntEvent>,
+    drawnEvent: io.kdmtracker.core.domain.HuntEvent?,
+    atStart: Boolean,
+    stepRoll: Int?,
+    onEditRoll: (Int) -> Unit,
     onAssign: (String) -> Unit,
     onResolve: (String) -> Unit,
     onMarkKind: (HuntSpaceKind) -> Unit,
 ) {
     HuntPanel {
+        // S5: at the start step there is no event yet — only the hunt begins.
+        if (atStart) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Symbol("flag", KdmPalette.green, 16)
+                Text(
+                    text = "Inicia la cacería".uppercase(),
+                    color = KdmPalette.green,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                )
+            }
+            Text(
+                text = "El grupo aún no ha avanzado: no se roba carta hasta el primer paso.",
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
+            return@HuntPanel
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Symbol("auto_stories", KdmPalette.gold, 16)
             Text(
@@ -443,150 +551,179 @@ private fun HuntEventCard(
                         .padding(horizontal = 8.dp, vertical = 2.dp),
             )
         }
-        Text(
-            text = "Bruma Olorosa y Viento Fétido",
-            color = KdmPalette.onCanvas,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            fontFamily = KdmFontFamilies.playfair,
-        )
-        Text(
-            text =
-                "\"El hedor metálico a carne descompuesta empapa las túnicas. " +
-                    "En la penumbra, una densa neblina borra las huellas de la bestia.\"",
-            color = KdmPalette.ash,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontStyle = FontStyle.Italic,
-        )
-        ResultRange(
-            "1 - 3",
-            "Pánico en la Ceguera",
-            "Todos los cazadores sufren ",
-            "1 de daño al Cerebro",
-            ". El monstruo avanza 1 casilla hacia ellos.",
-            rangeColor = KdmPalette.onCanvas,
-            titleColor = KdmPalette.onCanvas,
-            highlightColor = KdmPalette.blood,
-        )
-        ResultRange(
-            "4 - 7",
-            "Huellas Frescas",
-            "El rastreador activo obtiene ",
-            "+1 de Supervivencia",
-            ". Los cazadores continúan la marcha sin desvíos.",
-            rangeColor = KdmPalette.onCanvas,
-            titleColor = KdmPalette.onCanvas,
-            highlightColor = KdmPalette.gold,
-        )
-        ResultRange(
-            "8 - 10",
-            "Viento a Favor (Ventaja)",
-            "Descubrís mechones de pelaje ensangrentado. ",
-            "+1 PE de Caza",
-            " para el grupo y avanzáis 1 casilla adicional.",
-            rangeColor = KdmPalette.gold,
-            titleColor = KdmPalette.gold,
-            highlightColor = KdmPalette.onCanvas,
-        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
+        StepRoll(stepRoll = stepRoll, onEditRoll = onEditRoll)
+
+        // The card the group drew on their last advance (S5): its real name and rules text.
+        if (drawnEvent != null) {
+            Text(
+                text = drawnEvent.name,
+                color = KdmPalette.onCanvas,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                fontFamily = KdmFontFamilies.playfair,
+            )
+            // S9: the design's "Flujo de Casillas" card — an italic quote intro + toned d10 blocks.
+            val card = HuntEventCardModel.parse(drawnEvent.text)
+            if (card.intro.isNotEmpty()) {
                 Text(
-                    text = "Resultado d10".uppercase(),
-                    color = KdmPalette.onCanvas,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "\"${card.intro}\"",
+                    color = KdmPalette.ash.copy(alpha = 0.85f),
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontStyle = FontStyle.Italic,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawRect(
+                                    KdmPalette.outlineVariant,
+                                    topLeft = Offset.Zero,
+                                    size = Size(2.dp.toPx(), size.height),
+                                )
+                            }.padding(start = 10.dp, top = 2.dp, bottom = 2.dp),
                 )
-                Text(text = "Sin tirar aún", color = KdmPalette.ash, fontSize = 12.sp)
             }
-            Button(
-                onClick = { /* d100 resolution is deferred to the backlog slice (S4) */ },
-                enabled = false,
-                shape = RoundedCornerShape(8.dp),
-            ) {
+            card.ranges.forEach { range ->
+                val style = range.tone.style()
+                val chipBg =
+                    when (style.chipBg) {
+                        ChipBg.DANGER -> KdmPalette.bloodContainer
+                        ChipBg.GOLD -> KdmPalette.goldContainer
+                        ChipBg.NEUTRAL -> KdmPalette.surfaceHighest
+                    }
+                val chipText =
+                    when (style.chipText) {
+                        ChipText.DANGER -> KdmPalette.blood
+                        ChipText.GOLD -> KdmPalette.gold
+                        ChipText.NEUTRAL -> KdmPalette.onCanvas
+                    }
+                val borderColor =
+                    when (style.border) {
+                        BorderAccent.DANGER -> KdmPalette.blood
+                        BorderAccent.GOLD -> KdmPalette.gold
+                        BorderAccent.NEUTRAL -> KdmPalette.onCanvas.copy(alpha = 0.5f)
+                    }
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(KdmPalette.surfaceLow)
+                            .border(1.dp, KdmPalette.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                            // the design's 3px tone accent down the left edge of each block
+                            .drawBehind {
+                                drawRect(
+                                    borderColor,
+                                    topLeft = Offset.Zero,
+                                    size = Size(3.dp.toPx(), size.height),
+                                )
+                            }.padding(start = 10.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
                 ) {
-                    Symbol("casino", MaterialTheme.colorScheme.secondary, 18)
-                    Text(text = "Tirar Dado".uppercase(), color = KdmPalette.onCanvas, fontSize = 12.sp)
+                    // Range chip with the design's tone fill (red / gold / neutral).
+                    Text(
+                        text = range.label,
+                        color = chipText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(chipBg)
+                                .padding(horizontal = 6.dp, vertical = 3.dp),
+                    )
+                    Text(
+                        text = range.text,
+                        color = KdmPalette.onCanvas,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            // Resolve by hand: record the drawn card on the party's current space and mark it
+            // resolved. The button always acts on the current space (partySpace), independent of
+            // which space is being viewed (space / index).
+            val onParty = drawnEvent.name in partySpace.events
+            val isResolved = drawnEvent.name in partySpace.resolved
+            OutlinedButton(
+                onClick = {
+                    if (!onParty) onAssign(drawnEvent.name)
+                    if (!isResolved) onResolve(drawnEvent.name)
+                },
+                enabled = !isResolved,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (isResolved) "Resuelta ✓" else "Marcar resuelta")
+            }
+        } else {
+            Text(
+                text = "Avanza el grupo para robar una carta de evento de caza.",
+                color = KdmPalette.ash,
+                fontSize = 12.sp,
+            )
+        }
+
+        // The selected space's resolved history (S5): visible when navigating backward.
+        if (space.events.isNotEmpty()) {
+            Text(
+                text = "Historial de la casilla $index".uppercase(),
+                color = KdmPalette.onCanvas,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+            space.events.forEach { name ->
+                val resolved = name in space.resolved
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(KdmPalette.surfaceHighest)
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = name,
+                        color = if (resolved) KdmPalette.ash else KdmPalette.onCanvas,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = if (resolved) "Resuelta" else "Pendiente",
+                        color = if (resolved) KdmPalette.gold else KdmPalette.blood,
+                        fontSize = 11.sp,
+                    )
                 }
             }
         }
     }
 }
 
-/** One result row: a boxed d10 range, its title, and its effect with the highlighted phrase. */
-@Composable
-private fun ResultRange(
-    range: String,
-    title: String,
-    prefix: String,
-    highlight: String,
-    suffix: String,
-    rangeColor: Color,
-    titleColor: Color,
-    highlightColor: Color,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(KdmPalette.surfaceLowest)
-                .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        // The design's fixed range box (`w-8 h-8`) on the left of every row.
-        Box(
-            modifier =
-                Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(KdmPalette.surfaceHigh),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = range, color = rangeColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = title, color = titleColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text(
-                text =
-                    buildAnnotatedString {
-                        append(prefix)
-                        withStyle(
-                            SpanStyle(color = highlightColor, fontWeight = FontWeight.SemiBold),
-                        ) { append(highlight) }
-                        append(suffix)
-                    },
-                color = KdmPalette.ash,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-            )
-        }
-    }
-}
-
-/** Region 7 — the three hunt action buttons: a full-width advance over a 2-up pair. */
+/** Region 7 — the hunt action buttons: a full-width advance, a 2-up pair, then beast controls. */
 @Composable
 private fun ActionButtons(
     onAdvance: () -> Unit,
     onMoveMonster: () -> Unit,
+    onRetreatMonster: () -> Unit,
     onShowdown: () -> Unit,
+    advanceBlocked: Boolean = false,
 ) {
     Button(
         onClick = onAdvance,
+        enabled = !advanceBlocked,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = KdmPalette.surfaceHigh,
                 contentColor = KdmPalette.onCanvas,
+                disabledContainerColor = KdmPalette.surfaceHighest,
+                disabledContentColor = KdmPalette.ash,
             ),
     ) {
         Row(
@@ -595,7 +732,15 @@ private fun ActionButtons(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Symbol("arrow_forward", KdmPalette.gold, 20)
-            Text(text = "Avanzar Supervivientes (+1 Casilla)".uppercase(), fontSize = 13.sp)
+            Text(
+                text =
+                    if (advanceBlocked) {
+                        "Resuelve el evento para avanzar".uppercase()
+                    } else {
+                        "Avanzar Supervivientes (+1 Casilla)".uppercase()
+                    },
+                fontSize = 13.sp,
+            )
         }
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -638,6 +783,21 @@ private fun ActionButtons(
                 Symbol("swords", KdmPalette.crimsonContainer, 18)
                 Text(text = "Enfrentamiento".uppercase(), fontSize = 12.sp)
             }
+        }
+    }
+    // S8: a hunt event can make the beast step one space back — a manual counterpart of Mover Bestia.
+    OutlinedButton(
+        onClick = onRetreatMonster,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Symbol("arrow_back", KdmPalette.ash, 16)
+            Text(text = "Mover Bestia Atrás".uppercase(), fontSize = 12.sp, color = KdmPalette.ash)
         }
     }
 }

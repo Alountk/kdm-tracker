@@ -391,6 +391,8 @@ class LanternYearViewModel(
     /** Steps the monster one space toward the party, ambushing on contact. */
     fun moveMonster() = mutate { it.moveMonster() }
 
+    fun retreatMonster() = mutate { it.retreatMonster() }
+
     /** Places a hunt event on a space. */
     fun assignHuntEvent(
         index: Int,
@@ -402,6 +404,12 @@ class LanternYearViewModel(
         index: Int,
         eventName: String,
     ) = mutate { it.resolveHuntEvent(index, eventName) }
+
+    /** Overwrites a step's stored 2d10 roll by hand (S6, `roll_edit`). */
+    fun editHuntRoll(
+        index: Int,
+        roll: Int,
+    ) = mutate { it.editHuntRoll(index, roll) }
 
     /** Records the hunt outcome and moves the lantern year. */
     fun finishHunt(outcome: HuntStatus) = mutate { it.finishHunt(outcome) }

@@ -191,8 +191,10 @@ private fun InCampaignScreen(
                     onMarkSpaceKind = viewModel::markSpaceKind,
                     onAssignHuntEvent = viewModel::assignHuntEvent,
                     onResolveHuntEvent = viewModel::resolveHuntEvent,
+                    onEditHuntRoll = viewModel::editHuntRoll,
                     onAdvanceHunt = viewModel::advanceHunt,
                     onMoveMonster = viewModel::moveMonster,
+                    onRetreatMonster = viewModel::retreatMonster,
                     onFinishHunt = viewModel::finishHunt,
                 )
             Screen.Showdown ->
