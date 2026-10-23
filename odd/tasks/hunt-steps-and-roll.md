@@ -181,3 +181,11 @@ cards one uniform size; (e) ordinary event steps have **no** top-right mark, qua
   past the ~400-line single-slice guide; the work is delivered as three reviewable units:
   (1) core roll S6 `8ca8014`, (2) event-space config T6, (3) app-ui render + roll wiring T1/T2/T7.
   Each unit keeps tests/docs with its behavior; the feature doc lands on `main` with the final unit.
+
+## Status
+
+**CLOSED** (2026-10-23). T1–T7 done. PRs #42–#44 merged to `main` (stack retargeted in order
+#42 → #43 → #44). Commits `8ca8014`, `07b349a`, `8fea391`, `c154cbf` all in `origin/main`
+(`b004215`). Feature docs committed (`7a0883e`, `0e0d4b5`); roadmap handoff `6239731`.
+Next session: the remaining settlement steps' Stitch design (1–6, 8–11) — see `docs/roadmap.md`
+Track 1 "Next session target".
