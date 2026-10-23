@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class HuntBoardUseCaseTest {
     private fun record(): SettlementRecord =
@@ -48,8 +49,10 @@ class HuntBoardUseCaseTest {
         // the last space is Starvation (manual 9.1), not a fixed "monster" space;
         // the beast's location is hunt.monsterPosition, which starts at the end
         assertEquals(HuntSpaceKind.STARVATION, spaces.last().kind)
-        assertEquals(HuntSpaceKind.NORMAL, spaces[1].kind)
-        // S6: the beast's home is its level space (md 5 -> index 4 for a White Lion level 1),
+        // S6 (md section 2, 0-based): the White Lion's first monster-event (`E`) space is index 1,
+        // not an ordinary event space
+        assertEquals(HuntSpaceKind.MONSTER_E, spaces[1].kind)
+        // S6: the beast's home is its level space (md 4 for a White Lion level 1),
         // not the final Starvation space
         assertEquals(4, ok.value.state.hunt.monsterPosition)
     }
@@ -157,13 +160,13 @@ class HuntBoardUseCaseTest {
     }
 
     /**
-     * S6: the per-quarry board is seeded from `25_tableros_de_caza_de_presa` (md spaces 1-13,
-     * codeIndex = md - 1): the fixed spaces, the quarry's `E` spaces, and the beast's starting
+     * S6: the per-quarry board is seeded from `25_tableros_de_caza_de_presa` (md section 2,
+     * 0-based indices 0-12): the fixed spaces, the quarry's `E` spaces, and the beast's starting
      * space per level.
      */
     @Test
     fun setUpSeedsFixedSpacesAndTheQuarrysMonsterEventSpaces() {
-        // fixed spaces are the same for every quarry (md 1 / 7 / 13 -> index 0 / 6 / 12)
+        // fixed spaces are the same for every quarry (md 0 / 6 / 12)
         listOf("White Lion" to 1, "Phoenix" to 1, "Screaming Antelope" to 1).forEach { (quarry, lvl) ->
             val spaces =
                 assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), quarry, lvl, 4))
@@ -173,12 +176,12 @@ class HuntBoardUseCaseTest {
             assertEquals(HuntSpaceKind.STARVATION, spaces[12].kind, "$quarry starvation")
         }
 
-        // monster-event (E) spaces per quarry, converted from md to 0-based index
+        // monster-event (E) spaces per quarry (md section 2, 0-based indices)
         val eSpaces =
             mapOf(
-                "White Lion" to listOf(2, 3, 5, 8, 9),
-                "Phoenix" to listOf(2, 4, 7, 9),
-                "Screaming Antelope" to listOf(2, 3, 7, 9),
+                "White Lion" to listOf(1, 2, 5, 8, 9),
+                "Phoenix" to listOf(1, 4, 7, 9),
+                "Screaming Antelope" to listOf(1, 2, 7, 9),
             )
         eSpaces.forEach { (quarry, expectedE) ->
             val spaces =
@@ -297,5 +300,72 @@ class HuntBoardUseCaseTest {
     fun advanceIsNotBlockedWhenNoEventHasBeenDrawn() {
         val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
         assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started))
+    }
+
+    /** S6: landing on a step rolls 2d10 (sum 2..20) and stores it on that step. */
+    @Test
+    fun advanceRolls2d10OnTheLandedStep() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        val after = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, random = Random(7))).value
+
+        val landed = after.state.hunt.spaces[after.state.hunt.position]
+        val roll = assertIs<Int>(landed.roll)
+        assertTrue(roll in 2..20, "2d10 sum must be 2..20, was $roll")
+    }
+
+    /** S6: a step keeps its own roll — a later visit never re-rolls a step that already has one. */
+    @Test
+    fun aLandedStepKeepsItsRollOnALaterVisit() {
+        val deck = listOf(HuntEvent("Card A", "a", HuntEventKind.BASIC))
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        val first = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, deck = deck, Random(1))).value
+        // step 1 now has a roll
+        val firstRoll =
+            assertIs<Int>(
+                first.state.hunt.spaces[1]
+                    .roll,
+            )
+        // resolve the card so we can advance again
+        val drawn = assertIs<HuntEvent>(first.state.hunt.drawnEvent)
+        val assigned = assertIs<StepResult.Ok<SettlementRecord>>(AssignHuntEvent.run(first, 1, drawn.name)).value
+        val resolved =
+            assertIs<StepResult.Ok<SettlementRecord>>(ResolveHuntEvent.run(assigned, 1, drawn.name)).value
+        val second = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(resolved, deck = deck, Random(2))).value
+        // step 1 still holds its original roll (per-step, persisted)
+        assertEquals(
+            firstRoll,
+            second.state.hunt.spaces[1]
+                .roll,
+        )
+        // step 2 got its own fresh roll
+        assertIs<Int>(
+            second.state.hunt.spaces[2]
+                .roll,
+        )
+    }
+
+    /** S6: the player can edit a stored roll by hand; the edit persists. */
+    @Test
+    fun thePlayerCanEditAStoredRoll() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        val after = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, random = Random(3))).value
+        val edited =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                EditHuntRoll.run(after, after.state.hunt.position, 15),
+            ).value
+
+        assertEquals(
+            15,
+            edited.state.hunt.spaces[after.state.hunt.position]
+                .roll,
+        )
+    }
+
+    /** S6: an out-of-range edited roll is rejected. */
+    @Test
+    fun anOutOfRangeEditedRollIsRejected() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 1))
+        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 21))
     }
 }

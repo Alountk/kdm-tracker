@@ -12,7 +12,7 @@ import io.kdmtracker.core.rules.StepResult
  *
  * Seeds the thirteen-space board from the canonical hunt-track table in
  * `external-assets/25_tableros_de_caza_de_presas_le_n_blanco_f_nix_y_ant_lope_bramador.md`, whose
- * spaces are numbered **1-13** — this app array is **0-12**, so `codeIndex = mdSpaceNumber - 1`.
+ * spaces are numbered **0-12** (section 2, aligned with this app array).
  * The fixed spaces (`START` @0, `OVERWHELMING_DARKNESS` @6, `STARVATION` @12) hold for every
  * quarry; each quarry also has its own monster-event (`E`) spaces and a beast starting space that
  * depends on the level (S6). Layout is code-hardcoded (the per-monster diagrams are images).
@@ -23,27 +23,25 @@ object SetUpHunt {
     /** The hunt board has thirteen spaces. */
     const val BOARD_SPACES = 13
 
-    /** Index of the central Overwhelming Darkness space (md 7 -> 6). */
+    /** Index of the central Overwhelming Darkness space (md 6). */
     const val OVERWHELMING_DARKNESS_INDEX = 6
 
-    /** Index of the final Starvation space (md 13 -> 12). */
+    /** Index of the final Starvation space (md 12). */
     const val STARVATION_INDEX = BOARD_SPACES - 1
 
     /**
-     * Per-quarry monster-event (`E`) space indices (already converted from md 1-13 to 0-12).
-     * White Lion md 3,4,6,9,10; Phoenix md 3,5,8,10; Screaming Antelope md 3,4,8,10.
+     * The quarry's monster-event (`E`) spaces — md `25_tableros` section 2, 0-based indices 0-12.
      */
     private val MONSTER_EVENT_INDICES =
         mapOf(
-            "White Lion" to listOf(2, 3, 5, 8, 9),
-            "Phoenix" to listOf(2, 4, 7, 9),
-            "Screaming Antelope" to listOf(2, 3, 7, 9),
+            "White Lion" to listOf(1, 2, 5, 8, 9),
+            "Phoenix" to listOf(1, 4, 7, 9),
+            "Screaming Antelope" to listOf(1, 2, 7, 9),
         )
 
     /**
-     * Per-quarry, per-level beast starting-space index (md level table -> 0-12):
-     * White Lion L1/L2/L3 md 5/8/12 -> 4/7/11; Phoenix md 6/9/12 -> 5/8/11;
-     * Screaming Antelope md 5/9/11 -> 4/8/10.
+     * Per-quarry, per-level beast starting-space index (md section 2, 0-based 0-12):
+     * White Lion L1/L2/L3 = 4/7/11; Phoenix = 5/8/11; Screaming Antelope = 4/8/10.
      */
     private val BEAST_HOME_BY_LEVEL =
         mapOf(
