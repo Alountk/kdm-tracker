@@ -128,7 +128,7 @@ class SetUpStepControllerTest {
     fun advancingStillBehavesAsBefore() {
         val controller = controllerAt(SettlementPhase.SETTLEMENT, 11)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(Screen.Hunt, state.screen)
@@ -147,7 +147,7 @@ class SetUpStepControllerTest {
         )
         val controller = LanternYearController(repository)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(
             emptySet(),
@@ -168,7 +168,7 @@ class SetUpStepControllerTest {
         )
         val controller = LanternYearController(repository)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(SettlementPhase.SETTLEMENT, state.phase)
@@ -186,7 +186,7 @@ class SetUpStepControllerTest {
         )
         val controller = LanternYearController(repository)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(2, controller.state.value.currentStep)
         assertEquals(
@@ -208,7 +208,7 @@ class SetUpStepControllerTest {
         )
         val controller = LanternYearController(repository)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(SettlementPhase.SHOWDOWN, state.phase)

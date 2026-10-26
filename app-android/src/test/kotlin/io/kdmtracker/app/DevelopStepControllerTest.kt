@@ -148,7 +148,7 @@ class DevelopStepControllerTest {
     fun innovateSpendsTheCostAndMarksThePhase() {
         val controller = controller(storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2))
 
-        controller.innovate("Amoníaco")
+        controller.settlement.innovate("Amoníaco")
 
         val record = controller.state.value.record
         assertNotNull(record)
@@ -165,10 +165,10 @@ class DevelopStepControllerTest {
     @Test
     fun aSecondInnovateIsBlockedWithAReasonAndChangesNothing() {
         val controller = controller(storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2))
-        controller.innovate("Amoníaco")
+        controller.settlement.innovate("Amoníaco")
         val afterFirst = controller.state.value.record
 
-        controller.innovate("Amoníaco")
+        controller.settlement.innovate("Amoníaco")
 
         assertEquals(afterFirst, controller.state.value.record)
         val reason = controller.state.value.actionError
@@ -187,7 +187,7 @@ class DevelopStepControllerTest {
         val controller = controller(store)
         val before = controller.state.value.record
 
-        controller.innovate("Amoníaco")
+        controller.settlement.innovate("Amoníaco")
 
         val reason = controller.state.value.actionError
         assertNotNull(reason)
@@ -207,7 +207,7 @@ class DevelopStepControllerTest {
         )
         val controller = controller(store)
 
-        controller.build("Weapon Crafter")
+        controller.settlement.build("Weapon Crafter")
 
         assertNotNull(controller.state.value.actionError)
         val record = controller.state.value.record
@@ -225,7 +225,7 @@ class DevelopStepControllerTest {
         val store = storeWith(endeavors = 2, bone = 2, organ = 2, hide = 2)
         val controller = controller(store)
 
-        controller.build("Skinnery")
+        controller.settlement.build("Skinnery")
 
         assertNull(controller.state.value.actionError)
         val built = controller.state.value.record
@@ -244,7 +244,7 @@ class DevelopStepControllerTest {
         val controller = controller(storeWith(endeavors = 2, bone = 1, organ = 0, hide = 0))
         val before = controller.state.value.record
 
-        controller.addResource(ResourceEntry(ResourceId("Bone"), -5))
+        controller.settlement.addResource(ResourceEntry(ResourceId("Bone"), -5))
 
         val reason = controller.state.value.actionError
         assertNotNull(reason)
@@ -257,7 +257,7 @@ class DevelopStepControllerTest {
         val store = storeWith(endeavors = 2, bone = 0, organ = 0, hide = 0)
         val controller = controller(store)
 
-        controller.spendEndeavor()
+        controller.settlement.spendEndeavor()
 
         assertNull(controller.state.value.actionError)
         assertEquals(
@@ -274,10 +274,10 @@ class DevelopStepControllerTest {
         val store = storeWith(endeavors = 3, bone = 3, organ = 3, hide = 3)
         val controller = controller(store)
 
-        controller.innovate("Amoníaco")
-        controller.build("Skinnery")
-        controller.spendEndeavor()
-        controller.addResource(ResourceEntry(ResourceId("Bone"), 2))
+        controller.settlement.innovate("Amoníaco")
+        controller.settlement.build("Skinnery")
+        controller.settlement.spendEndeavor()
+        controller.settlement.addResource(ResourceEntry(ResourceId("Bone"), 2))
 
         assertNull(controller.state.value.actionError)
         assertEquals(controller.state.value.record, SettlementRepository(store).record)

@@ -51,7 +51,7 @@ class SurvivorRosterControllerTest {
         )
         val controller = controller(repository)
 
-        controller.healSurvivors()
+        controller.survivors.healSurvivors()
 
         val healed =
             controller.state.value.survivors
@@ -68,7 +68,7 @@ class SurvivorRosterControllerTest {
                 .take(2)
                 .map { it.id }
 
-        controller.markDeparting(ids)
+        controller.survivors.markDeparting(ids)
 
         assertEquals(
             2,
@@ -80,13 +80,13 @@ class SurvivorRosterControllerTest {
     @Test
     fun markingMoreThanFourIsBlocked() {
         val controller = controller()
-        controller.recordBirths(1)
+        controller.settlement.recordBirths(1)
         val ids =
             controller.state.value.survivors
                 .filter { it.status != SurvivorStatus.DEAD }
                 .map { it.id }
 
-        controller.markDeparting(ids)
+        controller.survivors.markDeparting(ids)
 
         assertNotNull(controller.state.value.actionError)
         assertTrue(
@@ -103,7 +103,7 @@ class SurvivorRosterControllerTest {
                 .first()
                 .id
 
-        controller.assignGear(id, "Hacha")
+        controller.survivors.assignGear(id, "Hacha")
 
         assertTrue(
             controller.state.value.survivors
@@ -117,7 +117,7 @@ class SurvivorRosterControllerTest {
     fun recordingADeathShrinksTheRoster() {
         val controller = controller()
 
-        controller.recordDeaths(1)
+        controller.settlement.recordDeaths(1)
 
         assertEquals(
             3,
@@ -130,7 +130,7 @@ class SurvivorRosterControllerTest {
     fun recordingABirthGrowsTheRoster() {
         val controller = controller()
 
-        controller.recordBirths(1)
+        controller.settlement.recordBirths(1)
 
         assertEquals(
             5,

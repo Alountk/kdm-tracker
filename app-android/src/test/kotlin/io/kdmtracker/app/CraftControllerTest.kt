@@ -86,7 +86,7 @@ class CraftControllerTest {
         val store = storeWith(built = listOf(LocationId("weapon_crafter")), bones = 3)
         val controller = controller(store)
 
-        controller.craft("Armería", "Hacha de Contrapeso")
+        controller.settlement.craft("Armería", "Hacha de Contrapeso")
 
         assertNull(controller.state.value.actionError)
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
@@ -100,7 +100,7 @@ class CraftControllerTest {
         val store = storeWith(built = emptyList(), bones = 3)
         val controller = controller(store)
 
-        controller.craft("Armería", "Hacha de Contrapeso")
+        controller.settlement.craft("Armería", "Hacha de Contrapeso")
 
         assertNotNull(controller.state.value.actionError)
         assertTrue(
@@ -125,13 +125,13 @@ class CraftControllerTest {
             val definition =
                 controller.state.value.resourceDefinitions
                     .single { it.names.es == name }
-            controller.addResource(ResourceEntry(definition.id, count))
+            controller.settlement.addResource(ResourceEntry(definition.id, count))
         }
         record("Hueso de Monstruo", 2)
         record("Piel de Monstruo", 1)
         record("Órgano de Monstruo", 1)
 
-        controller.craft("Armería", "Hacha de Contrapeso")
+        controller.settlement.craft("Armería", "Hacha de Contrapeso")
 
         assertNull(controller.state.value.actionError)
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)

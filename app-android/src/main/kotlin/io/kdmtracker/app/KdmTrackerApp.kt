@@ -138,74 +138,75 @@ private fun InCampaignScreen(
     viewModel: LanternYearViewModel,
 ) {
     val tab = ShellTab.of(state.screen) ?: return
+    val act = remember(viewModel) { viewModel::mutate }
     AppShell(
         state = state,
         tab = tab,
         onSelectTab = { viewModel.show(it.screen) },
         onAccount = viewModel::goAccount,
         onExit = viewModel::goHome,
-        onSelectStep = viewModel::selectStep,
+        onSelectStep = { act { flow.selectStep(it) } },
     ) {
         when (state.screen) {
             Screen.Settlement ->
                 SettlementScreen(
                     state = state,
-                    onAdvance = viewModel::advance,
-                    onPrevious = viewModel::previous,
-                    onSelectStep = viewModel::selectStep,
-                    onInnovate = viewModel::innovate,
-                    onBuild = viewModel::build,
-                    onAddResource = viewModel::addResource,
-                    onCraft = viewModel::craft,
-                    onRecordEvent = viewModel::recordSettlementEvent,
+                    onAdvance = { act { flow.advance() } },
+                    onPrevious = { act { flow.previous() } },
+                    onSelectStep = { act { flow.selectStep(it) } },
+                    onInnovate = { act { settlement.innovate(it) } },
+                    onBuild = { act { settlement.build(it) } },
+                    onAddResource = { act { settlement.addResource(it) } },
+                    onCraft = { location, gear -> act { settlement.craft(location, gear) } },
+                    onRecordEvent = { act { settlement.recordSettlementEvent(it) } },
                     onDrawEvent = viewModel::drawSettlementEvent,
-                    onRecordDeaths = viewModel::recordDeaths,
-                    onRecordBirths = viewModel::recordBirths,
-                    onChoosePrinciple = viewModel::choosePrinciple,
-                    onResolveMilestone = viewModel::resolveMilestone,
-                    onHealSurvivors = viewModel::healSurvivors,
-                    onDepartingChange = viewModel::markDeparting,
-                    onAssignGear = viewModel::assignGear,
-                    onUnassignGear = viewModel::unassignGear,
-                    onSaveSurvivor = viewModel::updateSurvivor,
-                    onDeclareSpecialShowdown = viewModel::declareSpecialShowdown,
-                    onSetUpShowdown = viewModel::setUpShowdown,
-                    onDrawShowdownCard = viewModel::drawShowdownCard,
-                    onWoundMonster = viewModel::woundMonster,
-                    onGrantHuntXp = viewModel::grantHuntXp,
+                    onRecordDeaths = { act { settlement.recordDeaths(it) } },
+                    onRecordBirths = { act { settlement.recordBirths(it) } },
+                    onChoosePrinciple = { category, label -> act { settlement.choosePrinciple(category, label) } },
+                    onResolveMilestone = { act { settlement.resolveMilestone(it) } },
+                    onHealSurvivors = { act { survivors.healSurvivors() } },
+                    onDepartingChange = { act { survivors.markDeparting(it) } },
+                    onAssignGear = { survivorId, gearName -> act { survivors.assignGear(survivorId, gearName) } },
+                    onUnassignGear = { survivorId, gearName -> act { survivors.unassignGear(survivorId, gearName) } },
+                    onSaveSurvivor = { act { survivors.updateSurvivor(it) } },
+                    onDeclareSpecialShowdown = { act { showdown.declareSpecialShowdown(it) } },
+                    onSetUpShowdown = { monster, level, deck -> act { showdown.setUpShowdown(monster, level, deck) } },
+                    onDrawShowdownCard = { act { showdown.drawShowdownCard() } },
+                    onWoundMonster = { act { showdown.woundMonster() } },
+                    onGrantHuntXp = { act { showdown.grantHuntXp(it) } },
                 )
             // The design's Supervivientes tab is the paged survivor sheet: one survivor at a
             // time with a cycling prev button, no roster list.
             Screen.Survivors ->
                 SurvivorsScreen(
                     state = state,
-                    onSave = viewModel::updateSurvivor,
-                    onAssignGear = viewModel::assignGear,
-                    onUnassignGear = viewModel::unassignGear,
+                    onSave = { act { survivors.updateSurvivor(it) } },
+                    onAssignGear = { survivorId, gearName -> act { survivors.assignGear(survivorId, gearName) } },
+                    onUnassignGear = { survivorId, gearName -> act { survivors.unassignGear(survivorId, gearName) } },
                 )
             Screen.Hunt ->
                 HuntScreen(
                     state = state,
-                    onSetUpHunt = viewModel::setUpHunt,
-                    onAssignPlayer = viewModel::assignPlayer,
-                    onMarkSpaceKind = viewModel::markSpaceKind,
-                    onAssignHuntEvent = viewModel::assignHuntEvent,
-                    onResolveHuntEvent = viewModel::resolveHuntEvent,
-                    onEditHuntRoll = viewModel::editHuntRoll,
-                    onAdvanceHunt = viewModel::advanceHunt,
-                    onMoveMonster = viewModel::moveMonster,
-                    onRetreatMonster = viewModel::retreatMonster,
-                    onFinishHunt = viewModel::finishHunt,
+                    onSetUpHunt = { quarry, level, players -> act { hunt.setUpHunt(quarry, level, players) } },
+                    onAssignPlayer = { survivorId, player -> act { hunt.assignPlayer(survivorId, player) } },
+                    onMarkSpaceKind = { index, kind -> act { hunt.markSpaceKind(index, kind) } },
+                    onAssignHuntEvent = { index, eventName -> act { hunt.assignHuntEvent(index, eventName) } },
+                    onResolveHuntEvent = { index, eventName -> act { hunt.resolveHuntEvent(index, eventName) } },
+                    onEditHuntRoll = { index, roll -> act { hunt.editHuntRoll(index, roll) } },
+                    onAdvanceHunt = { act { hunt.advanceHunt() } },
+                    onMoveMonster = { act { hunt.moveMonster() } },
+                    onRetreatMonster = { act { hunt.retreatMonster() } },
+                    onFinishHunt = { act { flow.finishHunt(it) } },
                 )
             Screen.Showdown ->
                 ShowdownScreen(
                     state = state,
-                    onSetUpShowdown = viewModel::setUpShowdown,
-                    onDrawShowdownCard = viewModel::drawShowdownCard,
-                    onWoundMonster = viewModel::woundMonster,
-                    onGrantHuntXp = viewModel::grantHuntXp,
-                    onRecordDeaths = viewModel::recordDeaths,
-                    onFinishShowdown = viewModel::finishShowdown,
+                    onSetUpShowdown = { monster, level, deck -> act { showdown.setUpShowdown(monster, level, deck) } },
+                    onDrawShowdownCard = { act { showdown.drawShowdownCard() } },
+                    onWoundMonster = { act { showdown.woundMonster() } },
+                    onGrantHuntXp = { act { showdown.grantHuntXp(it) } },
+                    onRecordDeaths = { act { settlement.recordDeaths(it) } },
+                    onFinishShowdown = { act { flow.finishShowdown(it) } },
                 )
             else -> Unit
         }

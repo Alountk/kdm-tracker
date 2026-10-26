@@ -28,7 +28,7 @@ class LanternYearLoopTest {
     fun advancingFromTheFinalSettlementStepOpensTheHunt() {
         val controller = controllerAt(SettlementPhase.SETTLEMENT, 11)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(Screen.Hunt, state.screen)
@@ -40,7 +40,7 @@ class LanternYearLoopTest {
     fun aSuccessfulHuntAdvancesToTheShowdown() {
         val controller = controllerAt(SettlementPhase.HUNT, 1)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(Screen.Showdown, state.screen)
@@ -53,7 +53,7 @@ class LanternYearLoopTest {
         val controller = controllerAt(SettlementPhase.SHOWDOWN, 1)
         val yearBefore = controller.state.value.lanternYear
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(Screen.Settlement, state.screen)
@@ -66,7 +66,7 @@ class LanternYearLoopTest {
     fun aFailedHuntRestartsTheSettlementAtStepOne() {
         val controller = controllerAt(SettlementPhase.HUNT, 1)
 
-        controller.failHunt()
+        controller.flow.failHunt()
 
         val state = controller.state.value
         assertEquals(Screen.Settlement, state.screen)
@@ -86,7 +86,7 @@ class LanternYearLoopTest {
         )
         val controller = LanternYearController(repository)
 
-        controller.failHunt()
+        controller.flow.failHunt()
 
         val state = controller.state.value
         assertEquals(SettlementPhase.SETTLEMENT, state.phase)

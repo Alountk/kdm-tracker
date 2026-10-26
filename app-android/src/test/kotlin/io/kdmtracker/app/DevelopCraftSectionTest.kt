@@ -91,7 +91,7 @@ class DevelopCraftSectionTest {
     fun craftingSurfacesTheGearInTheState() {
         val controller = controller()
 
-        controller.craft("Armería", "Hacha de Contrapeso")
+        controller.settlement.craft("Armería", "Hacha de Contrapeso")
 
         assertTrue("Hacha de Contrapeso" in controller.state.value.gear)
     }

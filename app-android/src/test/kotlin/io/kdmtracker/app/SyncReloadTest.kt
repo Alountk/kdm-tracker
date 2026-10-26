@@ -67,7 +67,7 @@ class SyncReloadTest {
         assertEquals("Remote settlement", repository.settlement.name, "sync must refresh the repository")
         assertEquals(42, controller.state.value.population, "the controller must render the remote change")
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(
             "Remote settlement",

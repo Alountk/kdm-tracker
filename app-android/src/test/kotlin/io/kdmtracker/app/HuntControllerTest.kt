@@ -22,7 +22,7 @@ class HuntControllerTest {
     fun setUpHuntExposesThirteenSpaces() {
         val (controller, _) = controller()
 
-        controller.setUpHunt("White Lion", level = 1, players = 4)
+        controller.hunt.setUpHunt("White Lion", level = 1, players = 4)
 
         assertEquals(
             13,
@@ -35,9 +35,9 @@ class HuntControllerTest {
     @Test
     fun markSpaceKindPersists() {
         val (controller, repository) = controller()
-        controller.setUpHunt("White Lion", 1, 4)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.markSpaceKind(5, HuntSpaceKind.OVERWHELMING_DARKNESS)
+        controller.hunt.markSpaceKind(5, HuntSpaceKind.OVERWHELMING_DARKNESS)
 
         assertEquals(
             HuntSpaceKind.OVERWHELMING_DARKNESS,
@@ -49,9 +49,9 @@ class HuntControllerTest {
     @Test
     fun finishingWithQuarryFoundMovesToTheShowdown() {
         val (controller, repository) = controller()
-        controller.setUpHunt("White Lion", 1, 4)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.finishHunt(HuntStatus.QUARRY_FOUND)
+        controller.flow.finishHunt(HuntStatus.QUARRY_FOUND)
 
         assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
         assertEquals(HuntStatus.QUARRY_FOUND, repository.record.state.hunt.status)
@@ -60,9 +60,9 @@ class HuntControllerTest {
     @Test
     fun finishingWithAmbushMovesToTheShowdown() {
         val (controller, _) = controller()
-        controller.setUpHunt("White Lion", 1, 4)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.finishHunt(HuntStatus.AMBUSH)
+        controller.flow.finishHunt(HuntStatus.AMBUSH)
 
         assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
     }
@@ -70,9 +70,9 @@ class HuntControllerTest {
     @Test
     fun finishingWithRunAwayRestartsTheSettlement() {
         val (controller, _) = controller()
-        controller.setUpHunt("White Lion", 1, 4)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.finishHunt(HuntStatus.RUN_AWAY)
+        controller.flow.finishHunt(HuntStatus.RUN_AWAY)
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
     }
@@ -80,9 +80,9 @@ class HuntControllerTest {
     @Test
     fun finishingWithFailedRestartsTheSettlement() {
         val (controller, _) = controller()
-        controller.setUpHunt("White Lion", 1, 4)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.finishHunt(HuntStatus.FAILED)
+        controller.flow.finishHunt(HuntStatus.FAILED)
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
         assertEquals(1, controller.state.value.currentStep)

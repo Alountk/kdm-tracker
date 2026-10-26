@@ -24,27 +24,27 @@ class SettlementEconomyEndToEndTest {
         val store = InMemoryCampaignStore()
         val controller = LanternYearController(SettlementRepository(store))
 
-        controller.advance()
+        controller.flow.advance()
         assertEquals(2, controller.state.value.currentStep)
         assertEquals(0, controller.state.value.endeavors)
 
-        controller.advance()
+        controller.flow.advance()
         assertEquals(3, controller.state.value.currentStep)
         assertEquals(4, controller.state.value.endeavors, "Step 3 funds the pool from the population")
 
-        controller.previous()
-        controller.selectStep(3)
+        controller.flow.previous()
+        controller.flow.selectStep(3)
         assertEquals(4, controller.state.value.endeavors, "a Step 3 revisit must not double-fund")
 
         listOf("Hueso de Monstruo", "Órgano de Monstruo", "Piel de Monstruo").forEach { spanish ->
             val definition =
                 controller.state.value.resourceDefinitions
                     .single { it.names.es == spanish }
-            controller.addResource(ResourceEntry(definition.id, 1))
+            controller.settlement.addResource(ResourceEntry(definition.id, 1))
         }
         assertNull(controller.state.value.actionError, "the manual resource bridge records gains")
 
-        controller.innovate("Amoníaco")
+        controller.settlement.innovate("Amoníaco")
         assertNull(controller.state.value.actionError)
         val afterInnovate = controller.state.value.record
         assertTrue(
@@ -55,7 +55,7 @@ class SettlementEconomyEndToEndTest {
         )
         assertEquals(3, afterInnovate.settlement.endeavors)
 
-        controller.build("Skinnery")
+        controller.settlement.build("Skinnery")
         assertNull(controller.state.value.actionError)
         assertTrue(
             LocationId("skinnery") in
@@ -63,7 +63,7 @@ class SettlementEconomyEndToEndTest {
                     .state.locations.built,
         )
 
-        controller.spendEndeavor()
+        controller.settlement.spendEndeavor()
         assertNull(controller.state.value.actionError)
         // The merged Skinnery is the 1.5 card: it charges the rulebook's 1 endeavor to build,
         // which the bare seed entry (merged away by id) used to waive.

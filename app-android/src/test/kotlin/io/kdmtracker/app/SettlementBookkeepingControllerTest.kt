@@ -46,7 +46,7 @@ class SettlementBookkeepingControllerTest {
     fun recordingADeathUpdatesCountersAndView() {
         val (controller, _) = controllerAt(5)
 
-        controller.recordDeaths(1)
+        controller.settlement.recordDeaths(1)
 
         assertEquals(1, controller.state.value.deaths)
         assertEquals(3, controller.state.value.population)
@@ -57,7 +57,7 @@ class SettlementBookkeepingControllerTest {
     fun recordingABirthMarksNewLifeReached() {
         val (controller, _) = controllerAt(5)
 
-        controller.recordBirths(1)
+        controller.settlement.recordBirths(1)
 
         assertEquals(1, controller.state.value.births)
         assertEquals(5, controller.state.value.population)
@@ -72,7 +72,7 @@ class SettlementBookkeepingControllerTest {
     fun choosingAPrincipleIsPersistedAndExposed() {
         val (controller, repository) = controllerAt(6)
 
-        controller.choosePrinciple(PrincipleCategory.DEATH, "The First Grave → Graves")
+        controller.settlement.choosePrinciple(PrincipleCategory.DEATH, "The First Grave → Graves")
 
         assertEquals("The First Grave → Graves", controller.state.value.chosenPrinciples[PrincipleCategory.DEATH])
         assertEquals(
@@ -84,9 +84,9 @@ class SettlementBookkeepingControllerTest {
     @Test
     fun resolvingAReachedMilestoneMarksItResolved() {
         val (controller, _) = controllerAt(6)
-        controller.recordDeaths(1)
+        controller.settlement.recordDeaths(1)
 
-        controller.resolveMilestone(Core16Milestones.PRINCIPLE_DEATH)
+        controller.settlement.resolveMilestone(Core16Milestones.PRINCIPLE_DEATH)
 
         assertTrue(controller.deathMilestone().resolved)
     }
@@ -95,7 +95,7 @@ class SettlementBookkeepingControllerTest {
     fun recordingASettlementEventStoresIt() {
         val (controller, _) = controllerAt(4)
 
-        controller.recordSettlementEvent("Rivalidad")
+        controller.settlement.recordSettlementEvent("Rivalidad")
 
         assertEquals("Rivalidad", controller.state.value.settlementEvent)
     }
@@ -104,11 +104,11 @@ class SettlementBookkeepingControllerTest {
     fun advancingPastStepFourIncrementsTheYearOnce() {
         val (controller, _) = controllerAt(4)
 
-        controller.advance()
+        controller.flow.advance()
         assertEquals(2, controller.state.value.lanternYear)
 
-        controller.previous()
-        controller.advance()
+        controller.flow.previous()
+        controller.flow.advance()
         assertEquals(2, controller.state.value.lanternYear)
     }
 
@@ -116,7 +116,7 @@ class SettlementBookkeepingControllerTest {
     fun aBadPrincipleChoiceSurfacesAnErrorAndChangesNothing() {
         val (controller, repository) = controllerAt(6)
 
-        controller.choosePrinciple(PrincipleCategory.DEATH, "Not A Choice")
+        controller.settlement.choosePrinciple(PrincipleCategory.DEATH, "Not A Choice")
 
         assertNotNull(controller.state.value.actionError)
         assertTrue(
@@ -129,16 +129,16 @@ class SettlementBookkeepingControllerTest {
     fun stepFlowDeathPrincipleResolveFlipsEachView() {
         val (controller, _) = controllerAt(5)
 
-        controller.recordDeaths(1)
+        controller.settlement.recordDeaths(1)
         assertTrue(controller.deathMilestone().reached)
 
-        controller.choosePrinciple(PrincipleCategory.DEATH, "The First Grave → Graves")
+        controller.settlement.choosePrinciple(PrincipleCategory.DEATH, "The First Grave → Graves")
         assertEquals(
             "The First Grave → Graves",
             controller.state.value.chosenPrinciples[PrincipleCategory.DEATH],
         )
 
-        controller.resolveMilestone(Core16Milestones.PRINCIPLE_DEATH)
+        controller.settlement.resolveMilestone(Core16Milestones.PRINCIPLE_DEATH)
         assertTrue(controller.deathMilestone().resolved)
     }
 
@@ -149,7 +149,7 @@ class SettlementBookkeepingControllerTest {
             controller.state.value.resourceDefinitions
                 .single { it.names.es == "Hueso de Monstruo" }
 
-        controller.addResource(ResourceEntry(definition.id, 3))
+        controller.settlement.addResource(ResourceEntry(definition.id, 3))
 
         assertTrue(
             controller.state.value.storageLines

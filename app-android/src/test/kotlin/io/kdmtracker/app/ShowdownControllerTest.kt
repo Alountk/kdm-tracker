@@ -22,7 +22,7 @@ class ShowdownControllerTest {
     fun setUpShowdownExposesTheEncounter() {
         val (controller, _) = controller()
 
-        controller.setUpShowdown("White Lion", level = 1, deck = listOf("A", "B"))
+        controller.showdown.setUpShowdown("White Lion", level = 1, deck = listOf("A", "B"))
 
         assertEquals(
             "White Lion",
@@ -40,9 +40,9 @@ class ShowdownControllerTest {
     @Test
     fun drawingAndWoundingUpdateTheDeck() {
         val (controller, _) = controller()
-        controller.setUpShowdown("White Lion", 1, listOf("A", "B"))
+        controller.showdown.setUpShowdown("White Lion", 1, listOf("A", "B"))
 
-        controller.drawShowdownCard()
+        controller.showdown.drawShowdownCard()
         assertTrue(
             controller.state.value.showdown
                 ?.lastDrawn in setOf("A", "B"),
@@ -60,7 +60,7 @@ class ShowdownControllerTest {
                 ?.size,
         )
 
-        controller.woundMonster()
+        controller.showdown.woundMonster()
         assertEquals(
             emptyList(),
             controller.state.value.showdown
@@ -77,9 +77,9 @@ class ShowdownControllerTest {
     @Test
     fun finishingWithVictoryReturnsToTheSettlement() {
         val (controller, repository) = controller()
-        controller.setUpShowdown("White Lion", 1, listOf("A"))
+        controller.showdown.setUpShowdown("White Lion", 1, listOf("A"))
 
-        controller.finishShowdown(ShowdownStatus.VICTORY)
+        controller.flow.finishShowdown(ShowdownStatus.VICTORY)
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
         assertEquals(1, controller.state.value.currentStep)
@@ -89,9 +89,9 @@ class ShowdownControllerTest {
     @Test
     fun finishingWithDefeatReturnsToTheSettlement() {
         val (controller, _) = controller()
-        controller.setUpShowdown("White Lion", 1, listOf("A"))
+        controller.showdown.setUpShowdown("White Lion", 1, listOf("A"))
 
-        controller.finishShowdown(ShowdownStatus.DEFEAT)
+        controller.flow.finishShowdown(ShowdownStatus.DEFEAT)
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
     }
