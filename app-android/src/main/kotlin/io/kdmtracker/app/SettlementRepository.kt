@@ -2,27 +2,14 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.content.CatalogResult
 import io.kdmtracker.core.content.ContentCatalog
-import io.kdmtracker.core.content.ContentCatalogComposer
-import io.kdmtracker.core.content.ContentPack
-import io.kdmtracker.core.content.Core16Content
-import io.kdmtracker.core.content.Legacy15Content
 import io.kdmtracker.core.domain.Campaign
-import io.kdmtracker.core.domain.Innovation
-import io.kdmtracker.core.domain.InnovationCollection
-import io.kdmtracker.core.domain.InnovationId
-import io.kdmtracker.core.domain.LocationId
-import io.kdmtracker.core.domain.LocationSet
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.SettlementState
-import io.kdmtracker.core.domain.Survivor
-import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.persistence.CampaignSnapshot
 import io.kdmtracker.core.persistence.CampaignStore
 import io.kdmtracker.core.persistence.SyncClock
-import io.kdmtracker.core.ruleset.Core16Ruleset
-import io.kdmtracker.core.ruleset.RulesetOverrides
 import io.kdmtracker.core.sync.CampaignBadge
 import io.kdmtracker.core.sync.CampaignBadges
 import io.kdmtracker.core.sync.CampaignBanner
@@ -65,38 +52,18 @@ class SettlementRepository(
     /** Scalars-only view of [record]'s settlement. */
     val settlement: Settlement get() = record.settlement
 
-    private val knownPacks: Map<String, ContentPack> =
-        listOf(Core16Content.pack, Legacy15Content.pack).associateBy { it.id }
-
     /**
      * Composed from [Campaign.enabledPacks]. Falls back to an empty catalog when composition fails
      * (see [catalogError]) so the screens render nothing instead of the app failing to load.
      */
     val catalog: ContentCatalog
-        get() = (catalogResult as? CatalogResult.Ok)?.catalog ?: EMPTY_CATALOG
+        get() = (PackCatalogs.compose(campaign.enabledPacks) as? CatalogResult.Ok)?.catalog ?: PackCatalogs.EMPTY
 
     /** Why [catalog] is empty, or `null` when it composed cleanly. */
     val catalogError: String?
-        get() {
-            val missing = catalogResult as? CatalogResult.MissingRequirement ?: return null
-            return if (missing.packId == missing.missing) {
-                "Cannot compose the campaign catalog: unknown content pack '${missing.packId}'"
-            } else {
-                "Cannot compose the campaign catalog: content pack '${missing.packId}' requires '${missing.missing}'"
-            }
-        }
+        get() = PackCatalogs.errorOf(PackCatalogs.compose(campaign.enabledPacks))
 
-    /** An unknown pack id has nothing to compose, so it is reported as its own missing requirement. */
-    private val catalogResult: CatalogResult
-        get() {
-            val enabled = campaign.enabledPacks
-            val unknown = enabled.firstOrNull { it !in knownPacks }
-            return if (unknown != null) {
-                CatalogResult.MissingRequirement(packId = unknown, missing = unknown)
-            } else {
-                ContentCatalogComposer.compose(enabled.map(knownPacks::getValue))
-            }
-        }
+    private val newCampaigns = NewCampaignFactory(clock)
 
     init {
         val existing = store.loadSnapshots().firstOrNull()
@@ -143,27 +110,14 @@ class SettlementRepository(
         val summary = createCampaign(name)
         val campaignId = Ulid.parse(summary.id)
         val settlementId = Ulid.generate(clock.tick(null).millis) { Random.nextInt() }
-        val campaign =
-            Campaign(
-                id = campaignId,
-                name = summary.name,
-                rulesetId = Core16Ruleset.id,
-                rulesetOverrides = RulesetOverrides(),
-                settlementIds = listOf(settlementId),
-                sync = SyncMeta(clock.tick(null), rev = 1),
-                enabledPacks = listOf(Core16Content.pack.id, Legacy15Content.pack.id),
-            )
-        val settlement =
-            Settlement
-                .new(id = settlementId, campaignId = campaignId, name = summary.name)
-                .copy(sync = SyncMeta(clock.tick(null), rev = 1))
+        val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, summary.name, summary.name)
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(startingRecord(settlement))
+            store.upsertSettlement(newCampaigns.startingRecord(settlement))
             memberships?.upsertMembership(summary)
         }
         this.campaign = campaign
-        this.record = startingRecord(settlement)
+        this.record = newCampaigns.startingRecord(settlement)
         return CampaignCard(
             campaignId = campaignId.value,
             name = settlement.name,
@@ -235,76 +189,11 @@ class SettlementRepository(
     private fun seed(): CampaignSnapshot {
         val campaignId = Ulid.generate(0L) { 0 }
         val settlementId = Ulid.generate(1L) { 1 }
-        val campaign =
-            Campaign(
-                id = campaignId,
-                name = "Walking Skeleton",
-                rulesetId = Core16Ruleset.id,
-                rulesetOverrides = RulesetOverrides(),
-                settlementIds = listOf(settlementId),
-                sync = SyncMeta(clock.tick(null), rev = 1),
-                enabledPacks = listOf(Core16Content.pack.id, Legacy15Content.pack.id),
-            )
-        val settlement =
-            Settlement
-                .new(id = settlementId, campaignId = campaignId, name = "New Settlement")
-                .copy(sync = SyncMeta(clock.tick(null), rev = 1))
+        val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, "Walking Skeleton", "New Settlement")
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(startingRecord(settlement))
+            store.upsertSettlement(newCampaigns.startingRecord(settlement))
         }
         return CampaignSnapshot(campaign, listOf(settlement))
     }
-
-    /**
-     * Opens with the Lantern Hoard and Armería built: Innovate and Craft refuse unbuilt locations,
-     * so without them Step 7 would be unreachable.
-     */
-    private fun startingRecord(settlement: Settlement): SettlementRecord =
-        SettlementRecord(
-            settlement = settlement,
-            state =
-                SettlementState(
-                    locations = LocationSet(built = listOf(STARTING_LOCATION, CRAFT_LOCATION)),
-                    innovations = InnovationCollection(STARTING_INNOVATIONS.map { it.copy(unlockedInYear = 1) }),
-                ),
-        ).withSurvivors(
-            List(FOUNDING_SURVIVORS) {
-                Survivor(id = Ulid.generate(clock.tick(null).millis) { Random.nextInt() })
-            },
-        )
 }
-
-/**
- * `Language` (1.6) and `Lenguaje` (1.5) share an id, so one definition is seeded carrying both
- * packs' consequences.
- */
-private val STARTING_INNOVATIONS: List<Innovation> =
-    listOfNotNull(
-        Core16Content.pack.bundle.innovations
-            .firstOrNull { it.id == InnovationId("language") }
-            ?.let { seed ->
-                val legacy =
-                    Legacy15Content.pack.bundle.innovations
-                        .firstOrNull { it.id == InnovationId("language") }
-                if (legacy ==
-                    null
-                ) {
-                    seed
-                } else {
-                    seed.copy(consequences = (seed.consequences + legacy.consequences).distinct())
-                }
-            },
-    )
-
-/** The location every settlement opens with, so Innovate is offered at a built location. */
-private val STARTING_LOCATION = LocationId("lantern_hoard")
-
-/** The location the curated 1.5 crafting recipes live on, built so Craft is reachable. */
-private val CRAFT_LOCATION = LocationId("weapon_crafter")
-
-/** The founding survivors a new settlement opens with. */
-private const val FOUNDING_SURVIVORS = 4
-
-/** A catalog with no packs, used when composition fails so the screens render nothing. */
-private val EMPTY_CATALOG = ContentCatalog(emptyList())
