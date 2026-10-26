@@ -2,7 +2,7 @@ package io.kdmtracker.app.sync
 
 /**
  * Wires the sign-in flow: it authenticates against [authApi] and persists the resulting bearer
- * token through [tokens] so subsequent [SyncCoordinator] passes are authenticated (Ruling AG).
+ * token through [tokens] so subsequent [SyncCoordinator] passes are authenticated.
  *
  * Kept separate from the transport and the coordinator so the "login stores a token" behaviour is
  * unit-testable with fakes and no Android or network machinery.

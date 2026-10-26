@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
  * decodes to an empty [io.kdmtracker.core.domain.HuntState]. v9 adds the settlement's showdown
  * state; a pre-v9 state that omits `showdown` decodes to an empty
  * [io.kdmtracker.core.domain.ShowdownState]. v10 adds the settlement's `specialShowdown` flag; a
- * pre-v10 state that omits it decodes to `false`. v11 (S1) re-keyed the resource ledger to
+ * pre-v10 state that omits it decodes to `false`. v11 re-keyed the resource ledger to
  * stable ids; a v11 document still decodes here, because every id-keyed field carries the
  * two-shape serializers that map a legacy display name through the identity tables. v12 re-keys
  * the built locations, the crafted gear and the unlocked innovations the same way — a v11

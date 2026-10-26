@@ -91,7 +91,7 @@ object ContentIdentity {
      * The id a legacy display name gets when no identity row covers it.
      *
      * A persisted name the tables do not know is data the user already has, so it survives under
-     * a readable `unknown.…` id rather than being dropped — same rule S1 gave `ResourceEntry`.
+     * a readable `unknown.…` id rather than being dropped — the same rule `ResourceEntry` follows.
      */
     fun synthesizedId(name: String): String =
         "unknown." + name.lowercase().map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")

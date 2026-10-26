@@ -45,7 +45,7 @@ internal fun HuntEventCard(
     onMarkKind: (HuntSpaceKind) -> Unit,
 ) {
     HuntPanel {
-        // S5: at the start step there is no event yet — only the hunt begins.
+        // At the start step there is no event yet — only the hunt begins.
         if (atStart) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Symbol("flag", KdmPalette.green, 16)
@@ -86,7 +86,7 @@ internal fun HuntEventCard(
 
         StepRoll(stepRoll = stepRoll, onEditRoll = onEditRoll)
 
-        // The card the group drew on their last advance (S5): its real name and rules text.
+        // The card the group drew on their last advance: its real name and rules text.
         if (drawnEvent != null) {
             Text(
                 text = drawnEvent.name,
@@ -95,7 +95,7 @@ internal fun HuntEventCard(
                 fontSize = 16.sp,
                 fontFamily = KdmFontFamilies.playfair,
             )
-            // S9: the design's "Flujo de Casillas" card — an italic quote intro + toned d10 blocks.
+            // The design's "Flujo de Casillas" card — an italic quote intro + toned d10 blocks.
             val card = HuntEventCardModel.parse(drawnEvent.text)
             if (card.intro.isNotEmpty()) {
                 Text(
@@ -198,7 +198,7 @@ internal fun HuntEventCard(
             )
         }
 
-        // The selected space's resolved history (S5): visible when navigating backward.
+        // The selected space's resolved history: visible when navigating backward.
         if (space.events.isNotEmpty()) {
             Text(
                 text = "Historial de la casilla $index".uppercase(),

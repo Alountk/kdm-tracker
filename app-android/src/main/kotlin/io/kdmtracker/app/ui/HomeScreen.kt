@@ -25,7 +25,7 @@ import io.kdmtracker.app.CampaignCard
  *
  * Each card shows `name · Lantern Year N · Population P` and the campaign's sharing badge
  * [CampaignCard.banner], so an owner-alone, owner-with-others and shared-with-me campaign are told
- * apart at a glance (Review Focus 2). The screen owns no state or rules: selections and creates are
+ * apart at a glance. The screen owns no state or rules: selections and creates are
  * reported through the callbacks; sync and sign-in live on the Account screen.
  */
 @Composable

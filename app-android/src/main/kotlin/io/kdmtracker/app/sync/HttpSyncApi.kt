@@ -28,7 +28,7 @@ class SyncHttpException(
 ) : IOException(message)
 
 /**
- * [SyncApi] over `java.net.HttpURLConnection` (Ruling AA: no HTTP framework).
+ * [SyncApi] over `java.net.HttpURLConnection` (no HTTP framework).
  *
  * Encodes/decodes the `:core` wire types with kotlinx-serialization. Each request carries the
  * bearer token supplied by [tokenProvider] (read fresh per call, so a rotated token is picked up

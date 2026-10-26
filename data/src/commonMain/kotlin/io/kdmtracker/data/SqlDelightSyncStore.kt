@@ -43,9 +43,8 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  * transactional) idempotent.
  *
  * [local] reads the canonical domain row (not the outbox), so the engine can merge against an edit
- * that the hub already acknowledged (Ruling AD). An unsupported [ChangeRecord.entityType] is
- * skipped and logged instead of throwing, so a single unrecognised record cannot wedge the pass
- * (Ruling AF).
+ * that the hub already acknowledged. An unsupported [ChangeRecord.entityType] is
+ * skipped and logged instead of throwing, so a single unrecognised record cannot wedge the pass.
  */
 class SqlDelightSyncStore(
     private val database: KdmDatabase,

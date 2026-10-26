@@ -57,7 +57,7 @@ object KdmSymbols {
             "arrow_drop_down" to 0xE5C5,
             "arrow_drop_up" to 0xE5C7,
             "arrow_forward" to 0xE5C8,
-            "arrow_back" to 0xE5C4, // beast retreat (S8)
+            "arrow_back" to 0xE5C4, // beast retreat
             "auto_stories" to 0xE666,
             "balance" to 0xEAF6,
             "bedtime" to 0xF159, // hunt board: Overwhelming Darkness (Stitch)
@@ -131,7 +131,7 @@ object KdmSymbols {
             "shield" to 0xE9E0,
             "shield_person" to 0xF650,
             "skull" to 0xF89A,
-            "star" to 0xF09A, // beast-event card mark, top-right (Stitch L4)
+            "star" to 0xF09A, // beast-event card mark, top-right (Stitch)
             "sports_mma" to 0xEA2C,
             "style" to 0xE41D,
             "swap_horizontal_circle" to 0xE933,

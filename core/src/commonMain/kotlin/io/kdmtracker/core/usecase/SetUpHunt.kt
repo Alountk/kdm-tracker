@@ -15,7 +15,7 @@ import io.kdmtracker.core.rules.StepResult
  * spaces are numbered **0-12** (section 2, aligned with this app array).
  * The fixed spaces (`START` @0, `OVERWHELMING_DARKNESS` @6, `STARVATION` @12) hold for every
  * quarry; each quarry also has its own monster-event (`E`) spaces and a beast starting space that
- * depends on the level (S6). Layout is code-hardcoded (the per-monster diagrams are images).
+ * depends on the level. Layout is code-hardcoded (the per-monster diagrams are images).
  *
  * `MarkSpaceKind` still works for manual adjustment.
  */

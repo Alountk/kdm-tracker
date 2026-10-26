@@ -23,11 +23,11 @@ data class HuntSpaceView(
     val tone: SpaceTone = SpaceTone.OUTLINE,
     val isParty: Boolean,
     val isBeast: Boolean = false,
-    /** The small type badge at the step's top-right (S1): `flag`/`swords`/`nights_stay`/`warning`/`skull`/`star`. */
+    /** The small type badge at the step's top-right: `flag`/`swords`/`nights_stay`/`warning`/`skull`/`star`. */
     val badge: String = "",
-    /** True on the party's active step only: renders the animated ping dot in place of [badge] (L5b). */
+    /** True on the party's active step only: renders the animated ping dot in place of [badge]. */
     val partyPing: Boolean = false,
-    /** False for the start (00) and final (12) steps, which render no number (S1). */
+    /** False for the start (00) and final (12) steps, which render no number. */
     val showNumber: Boolean = true,
 )
 
@@ -64,8 +64,8 @@ data class HuntBoardFrame(
                         isParty = isParty,
                         isBeast = isBeast,
                         badge = markBadge(space.kind, isBeast, isParty),
-                        partyPing = isParty && !isBeast, // the ping dot replaces the badge on the party's step (L5b)
-                        showNumber = index != 0 && index != last, // start + final steps carry no number (S1)
+                        partyPing = isParty && !isBeast, // the ping dot replaces the badge on the party's step
+                        showNumber = index != 0 && index != last, // start + final steps carry no number
                     )
                 }
             return HuntBoardFrame(
@@ -81,7 +81,7 @@ data class HuntBoardFrame(
             isParty: Boolean,
             isBeast: Boolean,
         ): String {
-            // Fixed spaces always keep their own mark — never the party's star (S2).
+            // Fixed spaces always keep their own mark — never the party's star.
             val fixed =
                 when (kind) {
                     HuntSpaceKind.START -> "foundation"
@@ -105,7 +105,7 @@ data class HuntBoardFrame(
             isParty: Boolean,
             isBeast: Boolean,
         ): String {
-            // Fixed spaces always keep their own label — never the party's Grupo (S2).
+            // Fixed spaces always keep their own label — never the party's Grupo.
             val fixed =
                 when (kind) {
                     HuntSpaceKind.START -> "Asent."
@@ -119,13 +119,13 @@ data class HuntBoardFrame(
                 isBeast -> hunt.quarry ?: "Bestia"
                 isParty -> "Grupo"
                 kind == HuntSpaceKind.MONSTER -> hunt.quarry ?: "Bestia"
-                // S4: a quarry special-event step is `E. <Animal>` (e.g. `E. León`).
+                // A quarry special-event step is `E. <Animal>` (e.g. `E. León`).
                 kind == HuntSpaceKind.MONSTER_E -> "E. ${quarryAnimal(hunt.quarry)}"
                 else -> "Evento"
             }
         }
 
-        /** The short Spanish animal for a quarry (S4): `White Lion` → `León`, etc. */
+        /** The short Spanish animal for a quarry: `White Lion` → `León`, etc. */
         private fun quarryAnimal(quarry: String?): String =
             when (quarry?.trim()) {
                 "White Lion" -> "León"
@@ -135,27 +135,27 @@ data class HuntBoardFrame(
             }
 
         /**
-         * The design's top-right type badge (S1/L5e). The **beast wins** over the fixed kind:
+         * The design's top-right type badge. The **beast wins** over the fixed kind:
          * wherever the beast stands, the step is a confrontation and shows `swords`.
          *
-         * The **party's step** shows no type badge — it carries the ping dot instead (L5b).
-         * An ordinary event step shows **no mark at all** (L5e); a quarry special event shows a
-         * `star` (L5e) — the eye lives only in the medallion centre.
+         * The **party's step** shows no type badge — it carries the ping dot instead.
+         * An ordinary event step shows **no mark at all**; a quarry special event shows a
+         * `star` — the eye lives only in the medallion centre.
          */
         private fun markBadge(
             kind: HuntSpaceKind,
             isBeast: Boolean,
             isParty: Boolean,
         ): String {
-            if (isParty) return "" // the party's step uses the ping dot, never a type badge (L5b)
+            if (isParty) return "" // the party's step uses the ping dot, never a type badge
             if (isBeast) return "swords"
             return when (kind) {
                 HuntSpaceKind.START -> "flag"
                 HuntSpaceKind.OVERWHELMING_DARKNESS -> "nights_stay"
                 HuntSpaceKind.STARVATION -> "warning"
                 HuntSpaceKind.MONSTER -> "skull" // final step when the beast is elsewhere
-                HuntSpaceKind.MONSTER_E -> "star" // quarry special event: a star, not the eye (L5e)
-                else -> "" // ordinary event step: no top-right mark (L5e)
+                HuntSpaceKind.MONSTER_E -> "star" // quarry special event: a star, not the eye
+                else -> "" // ordinary event step: no top-right mark
             }
         }
 
@@ -184,7 +184,7 @@ data class HuntBoardFrame(
         ): SpaceTone =
             when {
                 isBeast -> SpaceTone.BLOOD
-                isParty -> SpaceTone.GREEN // party / active tone is emerald (design decision L2)
+                isParty -> SpaceTone.GREEN // party / active tone is emerald (design decision)
                 kind == HuntSpaceKind.MONSTER -> SpaceTone.BLOOD
                 kind == HuntSpaceKind.MONSTER_E -> SpaceTone.GOLD
                 kind == HuntSpaceKind.OVERWHELMING_DARKNESS -> SpaceTone.VIOLET
