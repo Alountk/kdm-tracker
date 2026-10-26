@@ -526,6 +526,8 @@ unset it after the run. (A first re-run after new legacy rows is added will emit
 
 ## Project structure
 
+Layer rules and the code-comment convention live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ```text
 kdm-tracker/
 ├── core/                              # platform-agnostic domain + rules (Kotlin multiplatform: jvm + android)
