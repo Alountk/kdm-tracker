@@ -37,12 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Everything the ViewModel builds off the main thread.
- *
- * Constructing [controller] loads the campaign from the database, so the whole bundle is produced
- * inside the ViewModel's IO coroutine: the UI thread never touches the store. [close] releases
- * whatever the bundle opened (the SQLDelight driver), and [syncCoordinator] may be `null` when
- * wiring sync is not desired (for example in a unit test).
+ * Built off the main thread (constructing the controller loads from the DB). [close] releases the
+ * SQLDelight driver; [syncCoordinator] is `null` when sync is not wired, for example in unit tests.
  */
 class AppComponents(
     val controller: LanternYearController,
@@ -55,15 +51,9 @@ class AppComponents(
 /**
  * Retains the lantern-year loop across recomposition and configuration changes.
  *
- * The [LanternYearController] is built lazily by [buildComponents] on [dispatcher] (Review Focus 5:
- * no DB I/O on the UI thread), so [state] starts `null` until the load completes; the UI renders a
- * loading placeholder until then. Every mutation runs on the same IO dispatcher and, once it lands,
- * triggers [SyncCoordinator.syncNow] (a no-op when no coordinator is wired). [syncState] is always
- * available — it defaults to [SyncState.Idle] — so the sync control is usable before the load ends.
- *
- * [scope] is injectable so a JVM unit test can drive the ViewModel with `Dispatchers.Unconfined`
- * and observe results synchronously; production leaves it `null` and uses [viewModelScope], which
- * the lifecycle cancels automatically.
+ * Components are built on [dispatcher] so no DB I/O touches the UI thread; [state] is `null` until
+ * the load completes, while [syncState] is available from the start. [scope] is injectable so JVM
+ * tests can use `Dispatchers.Unconfined`; production uses [viewModelScope].
  */
 class LanternYearViewModel(
     private val buildComponents: (CoroutineScope) -> AppComponents,
@@ -77,7 +67,7 @@ class LanternYearViewModel(
     private val _state = MutableStateFlow<UiState?>(null)
     val state: StateFlow<UiState?> = _state.asStateFlow()
 
-    /** The Home campaign list, one card per stored campaign, refreshed after loads, creates and syncs. */
+    /** One card per stored campaign; refreshed after loads, creates and syncs. */
     private val _homeCards = MutableStateFlow<List<CampaignCard>>(emptyList())
     val homeCards: StateFlow<List<CampaignCard>> = _homeCards.asStateFlow()
 
@@ -95,10 +85,7 @@ class LanternYearViewModel(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle())
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
-    /**
-     * Set when a sign-in attempt fails, so the Account screen can show it inline while the session
-     * stays signed out (a failed sign-in stores no token, so the form must remain).
-     */
+    /** Set on a failed sign-in so the Account screen shows it inline; no token is stored, so the form stays. */
     private val _signInError = MutableStateFlow<String?>(null)
     val signInError: StateFlow<String?> = _signInError.asStateFlow()
 
@@ -107,25 +94,18 @@ class LanternYearViewModel(
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
     /**
-     * Whether the Home is the visible destination (Ruling AK). The app starts here; [select] and
-     * [create] leave it for the cockpit, and every controller frame is published with
-     * [Screen.Home] while it is set. Volatile because the UI thread flips it while the IO collector
-     * reads it on each emission.
+     * Whether the Home is the visible destination. [select] and [create] leave it; every controller
+     * frame is published with [Screen.Home] while it is set. Volatile: the UI thread flips it while
+     * the IO collector reads it.
      */
     @Volatile
     private var onHome = true
 
-    /**
-     * Whether the Account overlay is showing. It sits above Home and the phases; [forDisplay] renders
-     * [Screen.Account] while it is set. Volatile for the same reason as [onHome].
-     */
+    /** Whether the Account overlay is showing, above Home and the phases. Volatile like [onHome]. */
     @Volatile
     private var accountOpen = false
 
-    /**
-     * The shell tab the user last picked, overriding the phase-derived screen (the design's free
-     * tabs). `null` means "follow the record's phase". Volatile for the same reason as [onHome].
-     */
+    /** The tab the user last picked, overriding the phase-derived screen; `null` follows it. Volatile like [onHome]. */
     @Volatile
     private var shellTab: ShellTab? = null
 
@@ -198,12 +178,7 @@ class LanternYearViewModel(
         }
     }
 
-    /**
-     * Opens [campaignId]'s campaign in the cockpit and re-points the coordinator at it (Ruling AJ).
-     *
-     * Runs on [dispatcher] (the repository read is blocking) and triggers a sync of the newly
-     * selected campaign. An unknown id is a no-op, leaving the Home in place.
-     */
+    /** Opens the campaign in the cockpit, re-points the coordinator at it and syncs; an unknown id is a no-op. */
     fun select(campaignId: String) {
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
@@ -218,12 +193,7 @@ class LanternYearViewModel(
         }
     }
 
-    /**
-     * Returns to the Home from the cockpit and republishes the Home frame (Ruling AR).
-     *
-     * [onHome] flips immediately (the controller collector reads it per emission); the blocking
-     * repository read that rebuilds the card list runs on [dispatcher] (Review Focus 5).
-     */
+    /** [onHome] flips immediately; the blocking read that rebuilds the cards runs on [dispatcher]. */
     fun goHome() {
         onHome = true
         shellTab = null
@@ -257,12 +227,10 @@ class LanternYearViewModel(
     }
 
     /**
-     * Creates a settlement named [name] through the hub and opens it.
+     * Creates a settlement through the hub and opens it.
      *
-     * The hub round-trip runs on [dispatcher]; any failure — a transport error, a non-2xx hub reply,
-     * or a malformed 2xx body that fails to parse — surfaces as [actionError] and the Home stays put
-     * with no half-created state (Review Focus 4). [actionError] is cleared at the start of the
-     * attempt so a stale error cannot linger while the retry is in flight.
+     * Any failure (transport, non-2xx, malformed body) surfaces as [actionError] and leaves no
+     * half-created state. [actionError] is cleared first so a stale one cannot linger during a retry.
      */
     fun create(name: String) {
         if (name.isBlank()) return
@@ -288,7 +256,7 @@ class LanternYearViewModel(
         }
     }
 
-    /** Syncs every campaign the user can reach; the Home's Sync control (Review Focus 1). */
+    /** Syncs every campaign the user can reach. */
     fun syncAll() {
         components.get()?.syncCoordinator?.syncAll()
     }
@@ -301,13 +269,10 @@ class LanternYearViewModel(
 
     fun selectStep(number: Int) = mutate { it.selectStep(number) }
 
-    /** Unlocks [innovationName] through the Innovate action; a `Blocked` reason is published. */
     fun innovate(innovationName: String) = mutate { it.innovate(innovationName) }
 
-    /** Builds the settlement location named [locationName]. */
     fun build(locationName: String) = mutate { it.build(locationName) }
 
-    /** Appends [entry] to the settlement's resource ledger. */
     fun addResource(entry: ResourceEntry) = mutate { it.addResource(entry) }
 
     fun craft(
@@ -315,25 +280,20 @@ class LanternYearViewModel(
         gearName: String,
     ) = mutate { it.craft(locationName, gearName) }
 
-    /** Records [count] deaths at Step 5. */
     fun recordDeaths(count: Int) = mutate { it.recordDeaths(count) }
 
-    /** Records [count] births at Step 5. */
     fun recordBirths(count: Int) = mutate { it.recordBirths(count) }
 
-    /** Records the chosen principle [label] for [category] (Steps 5/6). */
     fun choosePrinciple(
         category: PrincipleCategory,
         label: String,
     ) = mutate { it.choosePrinciple(category, label) }
 
-    /** Ticks the reached milestone [id] as resolved (Step 6). */
     fun resolveMilestone(id: MilestoneId) = mutate { it.resolveMilestone(id) }
 
-    /** Records the Settlement Event [name] drawn this year (Step 4). */
     fun recordSettlementEvent(name: String) = mutate { it.recordSettlementEvent(name) }
 
-    /** Draws a random settlement event from the deck and records it (Step 4 convenience). */
+    /** Step 4 convenience: records a random event from the deck. */
     fun drawSettlementEvent() {
         val deck = _state.value?.settlementEventDeck.orEmpty()
         if (deck.isNotEmpty()) {
@@ -345,111 +305,84 @@ class LanternYearViewModel(
         components.get()?.syncCoordinator?.syncNow()
     }
 
-    /** Heals the returning survivors (Step 2). */
     fun healSurvivors() = mutate { it.healSurvivors() }
 
-    /** Chooses the departing survivors (Step 8). */
     fun markDeparting(ids: List<Ulid>) = mutate { it.markDeparting(ids) }
 
-    /** Assigns settlement gear to a survivor (Step 8). */
     fun assignGear(
         survivorId: Ulid,
         gearName: String,
     ) = mutate { it.assignGear(survivorId, gearName) }
 
-    /** Removes gear from a survivor (Step 8). */
     fun unassignGear(
         survivorId: Ulid,
         gearName: String,
     ) = mutate { it.unassignGear(survivorId, gearName) }
 
-    /** Saves an edited survivor from the Survivor Editor. */
     fun updateSurvivor(survivor: Survivor) = mutate { it.updateSurvivor(survivor) }
 
-    /** Sets up the hunt board (quarry + level + players). */
     fun setUpHunt(
         quarry: String,
         level: Int,
         players: Int,
     ) = mutate { it.setUpHunt(quarry, level, players) }
 
-    /** Assigns a party survivor to a player (1-based). */
     fun assignPlayer(
         survivorId: Ulid,
         player: Int,
     ) = mutate { it.assignPlayer(survivorId, player) }
 
-    /** Edits a hunt-board space's kind. */
     fun markSpaceKind(
         index: Int,
         kind: HuntSpaceKind,
     ) = mutate { it.markSpaceKind(index, kind) }
 
-    /** Advances the hunt party one space. */
     fun advanceHunt() = mutate { it.advanceHunt() }
 
-    /** Steps the monster one space toward the party, ambushing on contact. */
     fun moveMonster() = mutate { it.moveMonster() }
 
     fun retreatMonster() = mutate { it.retreatMonster() }
 
-    /** Places a hunt event on a space. */
     fun assignHuntEvent(
         index: Int,
         eventName: String,
     ) = mutate { it.assignHuntEvent(index, eventName) }
 
-    /** Marks a hunt event resolved. */
     fun resolveHuntEvent(
         index: Int,
         eventName: String,
     ) = mutate { it.resolveHuntEvent(index, eventName) }
 
-    /** Overwrites a step's stored 2d10 roll by hand (S6, `roll_edit`). */
     fun editHuntRoll(
         index: Int,
         roll: Int,
     ) = mutate { it.editHuntRoll(index, roll) }
 
-    /** Records the hunt outcome and moves the lantern year. */
     fun finishHunt(outcome: HuntStatus) = mutate { it.finishHunt(outcome) }
 
-    /** Sets up the showdown encounter (monster + level + the assembled AI deck). */
     fun setUpShowdown(
         monster: String,
         level: Int,
         deck: List<String>,
     ) = mutate { it.setUpShowdown(monster, level, deck) }
 
-    /** Draws the monster's AI card. */
     fun drawShowdownCard() = mutate { it.drawShowdownCard() }
 
-    /** Wounds the monster. */
     fun woundMonster() = mutate { it.woundMonster() }
 
-    /** Grants +1 hunt XP to each listed survivor. */
     fun grantHuntXp(survivorIds: List<Ulid>) = mutate { it.grantHuntXp(survivorIds) }
 
-    /** Declares (or clears) a Special Showdown for the current year. */
     fun declareSpecialShowdown(enabled: Boolean) = mutate { it.declareSpecialShowdown(enabled) }
 
-    /** Records the showdown outcome and returns the settlement to its next phase. */
     fun finishShowdown(status: ShowdownStatus) = mutate { it.finishShowdown(status) }
 
-    /**
-     * Signs the session out: clears the stored token through the components and marks the state
-     * signed out, so the chip and Account screen reflect it without waiting for a failed sync.
-     */
+    /** Clears the stored token and marks the state signed out without waiting for a failed sync. */
     fun signOut() {
         components.get()?.signOut?.invoke()
         _syncState.value = SyncState.NotConfigured
     }
 
-    /**
-     * Signs in with the given credentials on the IO thread, stores the token, then attempts a sync.
-     *
-     * A failure surfaces as [SyncState.Error] instead of crashing, mirroring the sync path.
-     */
+    /** A failure surfaces as [signInError] instead of crashing. */
     fun signIn(
         username: String,
         password: String,
@@ -471,6 +404,7 @@ class LanternYearViewModel(
         }
     }
 
+    /** Runs [block] on the controller off the main thread, then syncs. */
     private fun mutate(block: (LanternYearController) -> Unit) {
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch

@@ -37,13 +37,9 @@ sealed interface SyncState {
 /**
  * Runs the `:core` [SyncEngine] off the UI thread and mirrors its outcome into [state].
  *
- * The engine call is blocking (HTTP + SQLDelight), so [syncNow] and [syncAll] dispatch it onto
- * [dispatcher] (Review Focus 5) and never let a failure escape: a thrown exception becomes
- * [SyncState.Error] and the exception is swallowed so a flaky or offline hub cannot crash the app
- * (Review Focus 4). [CancellationException] is rethrown so structured cancellation still works when
- * the owning scope is torn down. The scope is supplied by the caller — the app hands in its
- * ViewModel scope — which keeps the coordinator JVM-testable and free of Android types beyond the
- * dispatcher default.
+ * The engine call is blocking (HTTP + SQLDelight), so it is dispatched onto [dispatcher]. A thrown
+ * exception becomes [SyncState.Error] instead of escaping, so a flaky or offline hub cannot crash
+ * the app; [CancellationException] is rethrown so the owning scope can still cancel.
  */
 class SyncCoordinator(
     campaignId: String,
@@ -56,27 +52,18 @@ class SyncCoordinator(
     private val onSynced: () -> Unit = {},
 ) {
     /**
-     * The campaign a [syncNow] pass operates on.
-     *
-     * Re-bound by [rebind] when the Home selection changes (Ruling AJ): the id is captured at
-     * construction, so a selection must move the sync target or [syncNow] would keep syncing the
-     * campaign the app started on. Volatile because the UI thread rebinds while an IO pass reads.
+     * The campaign [syncNow] operates on. The constructor value is captured once, so [rebind] must
+     * move it when the Home selection changes. Volatile: the UI thread rebinds while an IO pass reads.
      */
     @Volatile
     var campaignId: String = campaignId
         private set
 
-    /** Points [syncNow] at [campaignId]'s campaign after a Home selection. */
     fun rebind(campaignId: String) {
         this.campaignId = campaignId
     }
 
-    /**
-     * The last attempt's status.
-     *
-     * Seeded to [SyncState.NotConfigured] when no token is stored, so the sign-in form is visible
-     * before the first sync is ever attempted (sign-in minor). With a token it starts [SyncState.Idle].
-     */
+    /** Starts [SyncState.NotConfigured] without a stored token, so the sign-in form shows before any sync. */
     private val _state = MutableStateFlow(initialState())
 
     val state: StateFlow<SyncState> = _state.asStateFlow()
@@ -94,34 +81,26 @@ class SyncCoordinator(
     }
 
     /**
-     * Increments once per completed sync pass, whatever its outcome.
-     *
-     * The Home card list refreshes on every completion — a failing campaign must not hide the
-     * campaigns that did sync (Ruling AP). [state] alone cannot signal this: it stays [SyncState.Error]
-     * when any campaign fails, so a success-only refresh would drop the whole list.
+     * Increments once per completed pass, whatever its outcome. [state] cannot signal this: it stays
+     * [SyncState.Error] while any campaign fails, so a success-only refresh would drop the Home list.
      */
     private val _completedSyncs = MutableStateFlow(0L)
 
     val completedSyncs: StateFlow<Long> = _completedSyncs.asStateFlow()
 
     /**
-     * Whether a sync pass is currently running. An [AtomicBoolean] because [syncNow] is called from
-     * both the UI thread (the manual button) and [Dispatchers.IO] (after a mutation), so the
-     * claim/release must be atomic and visible across threads.
+     * Whether a pass is running. Atomic because [syncNow] is called from the UI thread (manual button)
+     * and from [Dispatchers.IO] (after a mutation).
      */
     private val inFlight = AtomicBoolean(false)
 
     /**
      * Launches one pull → merge → push pass on [dispatcher].
      *
-     * Without a stored token the pass is not attempted: the hub would answer `401`, so the state
-     * short-circuits to [SyncState.NotConfigured] and the user is prompted to sign in (Ruling AG).
-     *
-     * A sync already in flight is a no-op: the guard is an atomic compare-and-set, so overlapping
-     * callers cannot both start a pass (which would mean concurrent SQLDelight access and duplicate
-     * pushes). The flag is released in `finally` once the pass ends. A failure leaves the outbox
-     * untouched for the next attempt. On success [onSynced] runs before the state flips to [Idle]
-     * so the repository reloads the applied remote changes (Ruling AE).
+     * Without a token the hub would answer `401`, so the state short-circuits to
+     * [SyncState.NotConfigured]. An in-flight pass makes this a no-op (atomic compare-and-set), since
+     * overlapping passes would mean concurrent SQLDelight access and duplicate pushes. [onSynced] runs
+     * before the state flips to [SyncState.Idle] so the repository reloads the applied remote changes.
      */
     fun syncNow() {
         if (tokenProvider() == null) {
@@ -147,19 +126,14 @@ class SyncCoordinator(
     }
 
     /**
-     * Syncs every campaign the signed-in user can reach (Review Focus 1).
+     * Syncs every campaign the signed-in user can reach.
      *
-     * The sync set is derived from the **hub**, never from local rows (Ruling AQ): the campaigns the
-     * hub's `listCampaigns` returns, plus any campaign the app created through the hub (cached as a
-     * membership by `create`). A local, client-minted campaign the hub does not know — the first-run
-     * seed — has no membership and is therefore never submitted, so it cannot 403 the pass. Each
-     * campaign has its own cursor, so a campaign whose pull/push fails does not abort the others
-     * (Review Focus 3): the healthy campaigns still advance and the failures are collected and
-     * surfaced as [SyncState.Error] naming the campaigns that failed.
+     * The set comes from the **hub** (`listCampaigns`) plus campaigns created through it and cached as
+     * memberships, never from local rows: a client-minted campaign the hub does not know (the first-run
+     * seed) is skipped so it cannot 403 the pass. Each campaign has its own cursor, so one failing does
+     * not abort the others; failures are collected into a single [SyncState.Error] naming them.
      *
-     * Shares [syncNow]'s token and in-flight guards, so a manual sync and the sign-in sync cannot
-     * overlap. On every completion [completedSyncs] ticks so the Home list refreshes regardless of
-     * the outcome (Ruling AP).
+     * Shares [syncNow]'s token and in-flight guards.
      */
     fun syncAll() {
         if (tokenProvider() == null) {
