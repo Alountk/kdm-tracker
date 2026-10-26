@@ -1,4 +1,4 @@
-package io.kdmtracker.app.ui
+package io.kdmtracker.app.ui.hunt
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement

@@ -1,11 +1,11 @@
 package io.kdmtracker.app
 
-import io.kdmtracker.app.ui.BorderAccent
-import io.kdmtracker.app.ui.ChipBg
-import io.kdmtracker.app.ui.ChipText
-import io.kdmtracker.app.ui.HuntEventCardModel
-import io.kdmtracker.app.ui.RangeTone
-import io.kdmtracker.app.ui.style
+import io.kdmtracker.app.ui.hunt.BorderAccent
+import io.kdmtracker.app.ui.hunt.ChipBg
+import io.kdmtracker.app.ui.hunt.ChipText
+import io.kdmtracker.app.ui.hunt.HuntEventCardModel
+import io.kdmtracker.app.ui.hunt.RangeTone
+import io.kdmtracker.app.ui.hunt.style
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

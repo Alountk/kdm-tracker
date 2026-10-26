@@ -28,10 +28,10 @@ import io.kdmtracker.app.ui.AppChrome
 import io.kdmtracker.app.ui.AppTopBar
 import io.kdmtracker.app.ui.ChipAction
 import io.kdmtracker.app.ui.HomeScreen
-import io.kdmtracker.app.ui.HuntScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
 import io.kdmtracker.app.ui.SurvivorsScreen
+import io.kdmtracker.app.ui.hunt.HuntScreen
 import io.kdmtracker.app.ui.shell.AppShell
 import io.kdmtracker.app.ui.shell.ShellTab
 import io.kdmtracker.app.ui.theme.KdmTheme

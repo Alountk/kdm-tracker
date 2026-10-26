@@ -1,7 +1,7 @@
 package io.kdmtracker.app
 
-import io.kdmtracker.app.ui.HuntBoardFrame
-import io.kdmtracker.app.ui.SpaceTone
+import io.kdmtracker.app.ui.hunt.HuntBoardFrame
+import io.kdmtracker.app.ui.hunt.SpaceTone
 import io.kdmtracker.app.ui.theme.KdmSymbols
 import io.kdmtracker.core.domain.HuntSpace
 import io.kdmtracker.core.domain.HuntSpaceKind
