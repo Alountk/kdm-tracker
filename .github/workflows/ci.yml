@@ -50,5 +50,10 @@ jobs:
           yes | "$sdkmanager" --licenses > /dev/null || true
           "$sdkmanager" "platforms;android-37.0" "build-tools;36.0.0"
 
+      # --no-daemon uses Gradle's default JVM limits (about 384 MB of Metaspace), which the Android and
+      # Kotlin Multiplatform plugins exceed: the first run died with OutOfMemoryError: Metaspace.
       - name: Format and unit tests
-        run: ./gradlew --no-daemon spotlessCheck :core:jvmTest :data:jvmTest :server:test :app-android:testDebugUnitTest
+        run: >
+          ./gradlew --no-daemon
+          -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=1g"
+          spotlessCheck :core:jvmTest :data:jvmTest :server:test :app-android:testDebugUnitTest
