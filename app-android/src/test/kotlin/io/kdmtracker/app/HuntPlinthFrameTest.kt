@@ -1,6 +1,6 @@
 package io.kdmtracker.app
 
-import io.kdmtracker.app.ui.HuntPlinthFrame
+import io.kdmtracker.app.ui.hunt.HuntPlinthFrame
 import io.kdmtracker.core.domain.HuntState
 import kotlin.test.Test
 import kotlin.test.assertEquals

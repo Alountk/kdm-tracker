@@ -1,4 +1,4 @@
-package io.kdmtracker.app.ui
+package io.kdmtracker.app.ui.hunt
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.kdmtracker.app.ui.Symbol
 import io.kdmtracker.app.ui.theme.KdmPalette
 import io.kdmtracker.core.domain.HuntState
 

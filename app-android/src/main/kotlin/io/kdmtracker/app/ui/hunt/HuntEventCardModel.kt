@@ -1,4 +1,4 @@
-package io.kdmtracker.app.ui
+package io.kdmtracker.app.ui.hunt
 
 /**
  * A d10 result range of a hunt-event card, split out of the card's plain rules text.

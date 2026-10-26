@@ -1,4 +1,4 @@
-package io.kdmtracker.app.ui
+package io.kdmtracker.app.ui.hunt
 
 import io.kdmtracker.core.domain.HuntSpaceKind
 import io.kdmtracker.core.domain.HuntState
