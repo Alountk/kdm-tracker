@@ -104,20 +104,22 @@ class SettlementRepository(
      *
      * The hub call runs first because it owns campaign-id generation; an offline create throws
      * before any local write, so nothing is left half-created. Campaign, settlement and the `OWNER`
-     * membership are written in one transaction so a store failure cannot orphan the campaign row.
+     * membership are written in one transaction so a store failure cannot orphan the campaign row. The
+     * opening record is built once, so the held record and the stored one share their survivor ids.
      */
     fun create(name: String): CampaignCard {
         val summary = createCampaign(name)
         val campaignId = Ulid.parse(summary.id)
         val settlementId = Ulid.generate(clock.tick(null).millis) { Random.nextInt() }
         val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, summary.name, summary.name)
+        val opening = newCampaigns.startingRecord(settlement)
         store.transaction {
             store.upsertCampaign(campaign)
-            store.upsertSettlement(newCampaigns.startingRecord(settlement))
+            store.upsertSettlement(opening)
             memberships?.upsertMembership(summary)
         }
         this.campaign = campaign
-        this.record = newCampaigns.startingRecord(settlement)
+        this.record = opening
         return CampaignCard(
             campaignId = campaignId.value,
             name = settlement.name,
