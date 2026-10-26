@@ -40,7 +40,7 @@ class SettlementFlowBranchControllerTest {
     fun nemesisYearAdvancesToTheShowdown() {
         val (controller, _) = controller(year = 16, step = 11, nemesis = true)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
     }
@@ -49,7 +49,7 @@ class SettlementFlowBranchControllerTest {
     fun plainYearAdvancesToTheHunt() {
         val (controller, _) = controller(year = 1, step = 11)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(SettlementPhase.HUNT, controller.state.value.phase)
     }
@@ -58,7 +58,7 @@ class SettlementFlowBranchControllerTest {
     fun specialShowdownLoopsBackToTheDeathCountStep() {
         val (controller, _) = controller(year = 9, step = 9, special = true)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
         assertEquals(5, controller.state.value.currentStep)
@@ -68,7 +68,7 @@ class SettlementFlowBranchControllerTest {
     fun declaringASpecialShowdownPersists() {
         val (controller, repository) = controller(year = 9, step = 9)
 
-        controller.declareSpecialShowdown(true)
+        controller.showdown.declareSpecialShowdown(true)
 
         assertEquals(true, repository.record.state.specialShowdown)
     }
@@ -77,7 +77,7 @@ class SettlementFlowBranchControllerTest {
     fun stepNineWithoutTheFlagAdvancesToStepTen() {
         val (controller, _) = controller(year = 9, step = 9)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(SettlementPhase.SETTLEMENT, controller.state.value.phase)
         assertEquals(10, controller.state.value.currentStep)
@@ -87,7 +87,7 @@ class SettlementFlowBranchControllerTest {
     fun concludingTheSpecialShowdownClearsItAndTheEncounter() {
         val (controller, repository) = controller(year = 9, step = 9, special = true)
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(5, controller.state.value.currentStep)
         assertEquals(false, repository.record.state.specialShowdown)

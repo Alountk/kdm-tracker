@@ -34,7 +34,7 @@ class LanternYearViewModelTest {
     fun advancingUpdatesTheExposedState() {
         val viewModel = viewModel()
 
-        viewModel.advance()
+        viewModel.mutate { flow.advance() }
 
         assertEquals(2, viewModel.state.value?.currentStep)
     }

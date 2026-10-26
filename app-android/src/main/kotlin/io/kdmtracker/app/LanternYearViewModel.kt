@@ -14,14 +14,6 @@ import io.kdmtracker.app.sync.SyncCoordinator
 import io.kdmtracker.app.sync.SyncSignIn
 import io.kdmtracker.app.sync.SyncState
 import io.kdmtracker.app.ui.shell.ShellTab
-import io.kdmtracker.core.domain.HuntSpaceKind
-import io.kdmtracker.core.domain.HuntStatus
-import io.kdmtracker.core.domain.MilestoneId
-import io.kdmtracker.core.domain.PrincipleCategory
-import io.kdmtracker.core.domain.ResourceEntry
-import io.kdmtracker.core.domain.ShowdownStatus
-import io.kdmtracker.core.domain.Survivor
-import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.sync.SyncEngine
 import io.kdmtracker.data.KdmDatabaseFactory
 import kotlinx.coroutines.CancellationException
@@ -261,120 +253,17 @@ class LanternYearViewModel(
         components.get()?.syncCoordinator?.syncAll()
     }
 
-    fun advance() = mutate { it.advance() }
-
-    fun failHunt() = mutate { it.failHunt() }
-
-    fun previous() = mutate { it.previous() }
-
-    fun selectStep(number: Int) = mutate { it.selectStep(number) }
-
-    fun innovate(innovationName: String) = mutate { it.innovate(innovationName) }
-
-    fun build(locationName: String) = mutate { it.build(locationName) }
-
-    fun addResource(entry: ResourceEntry) = mutate { it.addResource(entry) }
-
-    fun craft(
-        locationName: String,
-        gearName: String,
-    ) = mutate { it.craft(locationName, gearName) }
-
-    fun recordDeaths(count: Int) = mutate { it.recordDeaths(count) }
-
-    fun recordBirths(count: Int) = mutate { it.recordBirths(count) }
-
-    fun choosePrinciple(
-        category: PrincipleCategory,
-        label: String,
-    ) = mutate { it.choosePrinciple(category, label) }
-
-    fun resolveMilestone(id: MilestoneId) = mutate { it.resolveMilestone(id) }
-
-    fun recordSettlementEvent(name: String) = mutate { it.recordSettlementEvent(name) }
-
     /** Step 4 convenience: records a random event from the deck. */
     fun drawSettlementEvent() {
         val deck = _state.value?.settlementEventDeck.orEmpty()
         if (deck.isNotEmpty()) {
-            recordSettlementEvent(deck.random().name)
+            mutate { settlement.recordSettlementEvent(deck.random().name) }
         }
     }
 
     fun syncNow() {
         components.get()?.syncCoordinator?.syncNow()
     }
-
-    fun healSurvivors() = mutate { it.healSurvivors() }
-
-    fun markDeparting(ids: List<Ulid>) = mutate { it.markDeparting(ids) }
-
-    fun assignGear(
-        survivorId: Ulid,
-        gearName: String,
-    ) = mutate { it.assignGear(survivorId, gearName) }
-
-    fun unassignGear(
-        survivorId: Ulid,
-        gearName: String,
-    ) = mutate { it.unassignGear(survivorId, gearName) }
-
-    fun updateSurvivor(survivor: Survivor) = mutate { it.updateSurvivor(survivor) }
-
-    fun setUpHunt(
-        quarry: String,
-        level: Int,
-        players: Int,
-    ) = mutate { it.setUpHunt(quarry, level, players) }
-
-    fun assignPlayer(
-        survivorId: Ulid,
-        player: Int,
-    ) = mutate { it.assignPlayer(survivorId, player) }
-
-    fun markSpaceKind(
-        index: Int,
-        kind: HuntSpaceKind,
-    ) = mutate { it.markSpaceKind(index, kind) }
-
-    fun advanceHunt() = mutate { it.advanceHunt() }
-
-    fun moveMonster() = mutate { it.moveMonster() }
-
-    fun retreatMonster() = mutate { it.retreatMonster() }
-
-    fun assignHuntEvent(
-        index: Int,
-        eventName: String,
-    ) = mutate { it.assignHuntEvent(index, eventName) }
-
-    fun resolveHuntEvent(
-        index: Int,
-        eventName: String,
-    ) = mutate { it.resolveHuntEvent(index, eventName) }
-
-    fun editHuntRoll(
-        index: Int,
-        roll: Int,
-    ) = mutate { it.editHuntRoll(index, roll) }
-
-    fun finishHunt(outcome: HuntStatus) = mutate { it.finishHunt(outcome) }
-
-    fun setUpShowdown(
-        monster: String,
-        level: Int,
-        deck: List<String>,
-    ) = mutate { it.setUpShowdown(monster, level, deck) }
-
-    fun drawShowdownCard() = mutate { it.drawShowdownCard() }
-
-    fun woundMonster() = mutate { it.woundMonster() }
-
-    fun grantHuntXp(survivorIds: List<Ulid>) = mutate { it.grantHuntXp(survivorIds) }
-
-    fun declareSpecialShowdown(enabled: Boolean) = mutate { it.declareSpecialShowdown(enabled) }
-
-    fun finishShowdown(status: ShowdownStatus) = mutate { it.finishShowdown(status) }
 
     /** Clears the stored token and marks the state signed out without waiting for a failed sync. */
     fun signOut() {
@@ -405,10 +294,10 @@ class LanternYearViewModel(
     }
 
     /** Runs [block] on the controller off the main thread, then syncs. */
-    private fun mutate(block: (LanternYearController) -> Unit) {
+    fun mutate(block: LanternYearController.() -> Unit) {
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
-            block(loaded.controller)
+            loaded.controller.block()
             loaded.syncCoordinator?.syncNow()
         }
     }

@@ -12,8 +12,8 @@ class StepBarControllerTest {
     @Test
     fun theCurrentStepIsReachableAndAFarForwardStepIsNot() {
         val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
-        controller.advance()
-        controller.advance()
+        controller.flow.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
 

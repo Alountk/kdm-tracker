@@ -20,7 +20,7 @@ class DevelopTabsTest {
             val definition =
                 controller.state.value.resourceDefinitions
                     .single { it.names.es == name }
-            controller.addResource(ResourceEntry(definition.id, 1))
+            controller.settlement.addResource(ResourceEntry(definition.id, 1))
         }
 
         fun hacha() =

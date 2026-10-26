@@ -47,7 +47,7 @@ class LanternYearControllerTest {
     fun advancingFromStepSevenYieldsStepEightWithCatalogTitle() {
         val controller = controllerAt(7)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(8, state.currentStep)
@@ -60,7 +60,7 @@ class LanternYearControllerTest {
     fun committingTheSettlementPhaseLandsOnTheHuntScreen() {
         val controller = controllerAt(11)
 
-        controller.advance()
+        controller.flow.advance()
 
         val state = controller.state.value
         assertEquals(Screen.Hunt, state.screen)
@@ -71,7 +71,7 @@ class LanternYearControllerTest {
     fun previousStepsBackWithoutCrossingPhaseBoundaries() {
         val controller = controllerAt(3)
 
-        controller.previous()
+        controller.flow.previous()
 
         assertEquals(2, controller.state.value.currentStep)
         assertEquals(Screen.Settlement, controller.state.value.screen)
@@ -81,7 +81,7 @@ class LanternYearControllerTest {
     fun previousIsFlooredAtTheFirstStep() {
         val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
-        controller.previous()
+        controller.flow.previous()
 
         assertEquals(1, controller.state.value.currentStep)
     }
@@ -90,7 +90,7 @@ class LanternYearControllerTest {
     fun selectStepAppliesTheNextStep() {
         val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
-        controller.selectStep(2)
+        controller.flow.selectStep(2)
 
         assertEquals(2, controller.state.value.currentStep)
     }
@@ -99,7 +99,7 @@ class LanternYearControllerTest {
     fun selectStepIgnoresAStepThatSkipsForward() {
         val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
-        controller.selectStep(11)
+        controller.flow.selectStep(11)
 
         assertEquals(1, controller.state.value.currentStep)
     }
@@ -108,7 +108,7 @@ class LanternYearControllerTest {
     fun selectStepAllowsRevisitingAnEarlierStep() {
         val controller = controllerAt(5)
 
-        controller.selectStep(3)
+        controller.flow.selectStep(3)
 
         assertEquals(3, controller.state.value.currentStep)
     }
@@ -117,10 +117,10 @@ class LanternYearControllerTest {
     fun selectStepIgnoresNumbersOutsideTheRulesetRange() {
         val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
-        controller.selectStep(0)
+        controller.flow.selectStep(0)
         assertEquals(1, controller.state.value.currentStep)
 
-        controller.selectStep(12)
+        controller.flow.selectStep(12)
         assertEquals(1, controller.state.value.currentStep)
     }
 

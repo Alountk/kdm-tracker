@@ -108,7 +108,7 @@ class SettlementCatalogTest {
         seed(store, name = "Core", enabledPacks = listOf(Core16Content.pack.id))
         val controller = LanternYearController(SettlementRepository(store))
 
-        controller.advance()
+        controller.flow.advance()
 
         assertEquals(2, controller.state.value.currentStep)
     }
