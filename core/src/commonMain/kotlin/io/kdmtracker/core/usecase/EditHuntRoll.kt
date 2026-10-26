@@ -4,7 +4,7 @@ import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
 
 /**
- * Lets the player overwrite a step's stored 2d10 roll by hand (S6, `roll_edit`).
+ * Lets the player overwrite a step's stored 2d10 roll by hand (`roll_edit`).
  *
  * The roll is per-step: [index] selects the board space whose roll is edited, and [roll] must be a
  * valid 2d10 sum (2..20). The edit persists on that step, so moving back shows the player's own

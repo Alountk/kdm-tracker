@@ -23,7 +23,7 @@ fun interface SyncAuthApi {
 }
 
 /**
- * [SyncAuthApi] over `java.net.HttpURLConnection` (Ruling AA: no HTTP framework).
+ * [SyncAuthApi] over `java.net.HttpURLConnection` (no HTTP framework).
  *
  * `POST`s `{"username","password"}` to `/api/v1/auth/login` and reads the token back from
  * `{"token":"<jwt>"}`. The credentials are only ever placed in the request body and are never logged.

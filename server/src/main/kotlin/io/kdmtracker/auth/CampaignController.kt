@@ -53,7 +53,7 @@ class CampaignController(
      * Lists every campaign the caller belongs to, whether they own it or joined it. Each summary
      * reports the caller's [CampaignSummaryResponse.role], the campaign's `OWNER` username, and the
      * usernames of the other members — the caller is deliberately excluded from
-     * [CampaignSummaryResponse.sharedWith] (Ruling AL). The result is ordered by name then id so the
+     * [CampaignSummaryResponse.sharedWith]. The result is ordered by name then id so the
      * app's campaign picker is stable.
      */
     @GetMapping

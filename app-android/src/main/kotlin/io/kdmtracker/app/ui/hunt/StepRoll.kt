@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.ui.theme.KdmPalette
 
-/** S6: the per-step 2d10 roll, shown for the selected step and editable by hand (`roll_edit`). */
+/** The per-step 2d10 roll, shown for the selected step and editable by hand (`roll_edit`). */
 @Composable
 internal fun StepRoll(
     stepRoll: Int?,

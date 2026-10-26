@@ -25,7 +25,7 @@ interface TokenStore {
 /**
  * [TokenStore] backed by a hardware-protected key in the Android Keystore.
  *
- * Rationale for the choice (Ruling AA): the token is a shared secret, so at rest it must not be
+ * Rationale for the choice: the token is a shared secret, so at rest it must not be
  * readable by other apps or by a rooted-device attacker who only slurps app data. The key lives in
  * the Keystore (not extractable), the token is encrypted with AES-GCM and only the ciphertext plus
  * IV are written to a private `SharedPreferences` file. That needs no third-party dependency —

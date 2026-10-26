@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 /**
  * Guards the `/api/v1/` API (except `/api/v1/auth/`) behind a valid bearer token. On success the
  * authenticated user id is exposed to controllers as the [AUTHENTICATED_USER_ID] request attribute;
- * a missing or invalid token yields 401. The legacy Thymeleaf routes are left untouched (Ruling S).
+ * a missing or invalid token yields 401. The legacy Thymeleaf routes are left untouched.
  */
 @Component
 class BearerTokenFilter(

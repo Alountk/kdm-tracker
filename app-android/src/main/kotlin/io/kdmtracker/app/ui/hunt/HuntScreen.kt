@@ -85,7 +85,7 @@ fun HuntScreen(
             onMoveMonster = onMoveMonster,
             onRetreatMonster = onRetreatMonster,
             onShowdown = { onFinishHunt(HuntStatus.QUARRY_FOUND) },
-            // S7: the advance gate — a drawn card not yet resolved on the party's space blocks it.
+            // The advance gate — a drawn card not yet resolved on the party's space blocks it.
             advanceBlocked =
                 run {
                     val drawn = hunt.drawnEvent

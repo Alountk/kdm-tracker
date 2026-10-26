@@ -11,17 +11,17 @@ import kotlin.random.Random
  *
  * Blocks when the board is not set up or the hunt is already over; the position is capped at the
  * last space. When a non-empty [deck] is supplied, one card is drawn at random and stored as the
- * hunt's active [HuntState.drawnEvent] (S5) — the player resolves it by hand. With the bare
+ * hunt's active [HuntState.drawnEvent] — the player resolves it by hand. With the bare
  * signature (no deck) nothing is drawn, so existing callers are unchanged.
  *
- * **S7 gate:** while a drawn card is not yet marked resolved on the party's current space, the
+ * **Gate:** while a drawn card is not yet marked resolved on the party's current space, the
  * party cannot step forward — [StepResult.Blocked]. Resolving it (assign + resolve on that space)
  * lifts the gate. No drawn card means no gate.
  */
 object AdvanceHunt {
     /**
      * Returns [StepResult.Ok] with the party one space ahead (and a drawn card when [deck] is
-     * non-empty), or [StepResult.Blocked] — including when the active event card is unresolved (S7).
+     * non-empty), or [StepResult.Blocked] — including when the active event card is unresolved.
      */
     fun run(
         record: SettlementRecord,
@@ -35,7 +35,7 @@ object AdvanceHunt {
         if (hunt.status != HuntStatus.ACTIVE) {
             return StepResult.Blocked("hunt is over")
         }
-        // S7: a drawn card must be resolved on the party's current space before advancing.
+        // A drawn card must be resolved on the party's current space before advancing.
         val drawn = hunt.drawnEvent
         if (drawn != null) {
             val current =
@@ -49,7 +49,7 @@ object AdvanceHunt {
         }
         val next = minOf(hunt.position + 1, hunt.spaces.lastIndex)
         val newDrawn = deck.randomOrNull(random)
-        // S6: roll 2d10 on the landed step — only the first time (a stored roll is kept).
+        // Roll 2d10 on the landed step — only the first time (a stored roll is kept).
         val spaces =
             hunt.spaces.mapIndexed { i, space ->
                 if (i == next && space.roll == null) space.copy(roll = roll2d10(random)) else space
@@ -69,6 +69,6 @@ object AdvanceHunt {
         )
     }
 
-    /** A 2d10 sum (2..20), the per-step hunt roll (S6). */
+    /** A 2d10 sum (2..20), the per-step hunt roll. */
     private fun roll2d10(random: Random): Int = random.nextInt(1, 11) + random.nextInt(1, 11)
 }

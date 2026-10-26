@@ -98,7 +98,7 @@ internal fun ActionButtons(
             }
         }
     }
-    // S8: a hunt event can make the beast step one space back — a manual counterpart of Mover Bestia.
+    // A hunt event can make the beast step one space back — a manual counterpart of Mover Bestia.
     OutlinedButton(
         onClick = onRetreatMonster,
         modifier = Modifier.fillMaxWidth(),

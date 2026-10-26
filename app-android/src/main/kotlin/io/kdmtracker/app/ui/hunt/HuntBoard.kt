@@ -124,11 +124,11 @@ private fun HuntSpaceCell(
         }
     val numberColor = accent ?: KdmPalette.ash
     val cellBg = KdmPalette.surfaceLow
-    val medallionSize = 44.dp // the design's `w-11 h-11` round medallion, always round (S2)
+    val medallionSize = 44.dp // the design's `w-11 h-11` round medallion, always round
     // Border weight: the active/party and the beast cells carry the design's 2px accent border.
     val borderWidth = if (view.isParty || isBeast || isSpecialEvent) 2.dp else 1.dp
 
-    // L5(d): every card is the SAME fixed size — the design's `w-[84px] h-[134px]`, so the track
+    // Every card is the SAME fixed size — the design's `w-[84px] h-[134px]`, so the track
     // has one uniform card height regardless of label wrap.
     val cellWidth = 72.dp
     val cellHeight = 132.dp // the design's `h-[134px]`; fits a 2-line label + caption without clipping
@@ -137,7 +137,7 @@ private fun HuntSpaceCell(
         modifier =
             Modifier
                 .width(cellWidth)
-                .height(cellHeight) // uniform height (L5d) — never content-driven
+                .height(cellHeight) // uniform height — never content-driven
                 .clip(RoundedCornerShape(8.dp))
                 .background(cellBg)
                 .border(
@@ -145,7 +145,7 @@ private fun HuntSpaceCell(
                     accent ?: KdmPalette.outlineVariant.copy(alpha = 0.5f),
                     RoundedCornerShape(8.dp),
                 ).clickable(onClick = onClick)
-                .padding(vertical = 4.dp, horizontal = 6.dp), // tight top pad so the row hugs the edge (L5c)
+                .padding(vertical = 4.dp, horizontal = 6.dp), // tight top pad so the row hugs the edge
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(
@@ -153,7 +153,7 @@ private fun HuntSpaceCell(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Top row (S1/L5c): number at the left + the type badge/ping at the right, flush to the
+            // Top row: number at the left + the type badge/ping at the right, flush to the
             // card's top edge (the row itself touches the border — no stray gap above it).
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -171,7 +171,7 @@ private fun HuntSpaceCell(
                     // Even with no number, the row keeps its left edge so the mark stays flush right.
                     Box(modifier = Modifier.size(10.dp))
                 }
-                // L5b: the party's step swaps its type badge for the animated ping dot.
+                // The party's step swaps its type badge for the animated ping dot.
                 if (view.partyPing) {
                     PartyPingDot(color = accent ?: KdmPalette.green)
                 } else {
@@ -182,8 +182,8 @@ private fun HuntSpaceCell(
                 modifier =
                     Modifier
                         .size(medallionSize)
-                        .clip(CircleShape) // always round (S2)
-                        // The quarry's eye (S2) sits on the dark container with a gold ring + gold eye —
+                        .clip(CircleShape) // always round
+                        // The quarry's eye sits on the dark container with a gold ring + gold eye —
                         // never a solid gold disc (the gold-on-gold eye would be invisible).
                         .background(if (isSpecialEvent) KdmPalette.surfaceContainer else medallionBg(tone))
                         .border(
@@ -217,8 +217,8 @@ private fun HuntSpaceCell(
                         name = view.icon,
                         color = ink,
                         size = 24,
-                        // Filled for the solid party/beast discs and for the quarry's gold eye (S2,
-                        // `FILL 1` in the design); outline for the neutral round marks.
+                        // Filled for the solid party/beast discs and for the quarry's gold eye
+                        // (`FILL 1` in the design); outline for the neutral round marks.
                         fill = isFilledMedallion || isSpecialEvent,
                     )
                 }
@@ -228,7 +228,7 @@ private fun HuntSpaceCell(
                 color = accent ?: KdmPalette.ash,
                 fontWeight = if (accent != null) FontWeight.Bold else FontWeight.Normal,
                 fontSize = 9.5.sp,
-                lineHeight = 11.sp, // tight leading so a 2-line label (Oscuridad Abrumadora) fits (L5)
+                lineHeight = 11.sp, // tight leading so a 2-line label (Oscuridad Abrumadora) fits
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -246,7 +246,7 @@ private fun HuntSpaceCell(
     }
 }
 
-/** The small top-right type badge (S1): a material glyph when it maps to a symbol, else its text. */
+/** The small top-right type badge: a material glyph when it maps to a symbol, else its text. */
 @Composable
 private fun BadgeMark(
     name: String,
@@ -275,7 +275,7 @@ private fun pingPhase(): Float {
 }
 
 /**
- * L5b/L5f: the party's top-right mark — a small circle that **switches on, grows small→large and
+ * The party's top-right mark — a small circle that **switches on, grows small→large and
  * vanishes, looping forever**, staying **inside the step** (its max size barely exceeds the other
  * icons, never overflowing the card). The design's `animate-ping` dot at 6px base.
  */

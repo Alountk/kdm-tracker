@@ -21,7 +21,7 @@ object KdmPalette {
     val gold = Color(0xFFE9C349)
     val onGold = Color(0xFF3C2F00)
 
-    // The hunt party's active tone is emerald, not gold — avoids colliding with gold beast-event cards (L2).
+    // The hunt party's active tone is emerald, not gold — avoids colliding with gold beast-event cards.
     val green = Color(0xFF10B981)
     val greenWash = Color(0x1F10B981)
     val goldContainer = Color(0xFFAF8D11)

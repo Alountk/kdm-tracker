@@ -36,7 +36,7 @@ import io.kdmtracker.data.db.Settlement as SettlementRow
  * settlements loaded for it, since ownership lives in `settlement.campaignId`.
  *
  * Every local mutation also lands in the `outbox`, inside the *same* transaction as the domain
- * row (Review Focus 2). The outbox is the client-side change log the sync engine pushes; its
+ * row. The outbox is the client-side change log the sync engine pushes; its
  * `(campaignId, entityType, entityId)` primary key makes replay idempotent — re-upserting an
  * entity replaces its pending entry instead of appending a second one. The outbox `payload` is the
  * entity's versioned transfer DTO (`CampaignDto`/`SettlementDto`) encoded as JSON, so a future

@@ -37,8 +37,8 @@ enum class ChipText { DANGER, GOLD, NEUTRAL }
 enum class BorderAccent { DANGER, GOLD, NEUTRAL }
 
 /**
- * The parsed model of a hunt-event card's rules text, for the design's "Flujo de Casillas" card
- * (S9): an **italic** intro (everything before the first d10 range) plus one block per result
+ * The parsed model of a hunt-event card's rules text, for the design's "Flujo de Casillas" card:
+ * an **italic** intro (everything before the first d10 range) plus one block per result
  * range, each with the design's tone.
  *
  * The decks store plain rules text (not structured ranges), so ranges are parsed from the text.

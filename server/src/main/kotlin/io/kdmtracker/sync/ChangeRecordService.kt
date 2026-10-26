@@ -54,7 +54,7 @@ class ChangeRecordService(
      * The campaign row is locked `PESSIMISTIC_WRITE` for the whole transaction, so concurrent pushes
      * to the same campaign serialize and cannot both assign the same `rev` from a stale `maxRev`.
      *
-     * Conflict model (Ruling W): the server performs **no** server-side last-write-wins or merge. The
+     * Conflict model: the server performs **no** server-side last-write-wins or merge. The
      * stored row is simply the most recent push for the `(campaignId, entityType, entityId)` triple,
      * and [ChangeRecord.baseRev] is persisted and echoed back verbatim, but never interpreted here.
      * LWW/conflict resolution is deferred to plan 3c (client-side merge), which uses `baseRev` to

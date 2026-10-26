@@ -10,11 +10,11 @@ data class SyncOutcome(
 /**
  * Orchestrates one sync pass: pull → merge (per-record LWW) → push.
  *
- * Ordering and failure semantics (Ruling Z, Review Focus 3–4):
+ * Ordering and failure semantics:
  * 1. Pull from the stored cursor.
- * 2. Merge each pulled record against the **canonical local record** (Ruling AD), falling back to
+ * 2. Merge each pulled record against the **canonical local record**, falling back to
  *    the outbox when the store has no canonical entry. A remote that wins is applied and its
- *    superseded local outbox entry dropped (Ruling Y). A local that wins stays pending; when it had
+ *    superseded local outbox entry dropped. A local that wins stays pending; when it had
  *    already been acknowledged (so it is canonical-only), it is re-enqueued so the hub converges.
  * 3. Advance the cursor to the pulled `latestRev` **only after the whole batch merges**.
  * 4. Push whatever is still pending; clear it on acknowledgement.

@@ -35,9 +35,9 @@ Code says **what** it does. A comment is for what the code cannot say.
 **Do not write:**
 
 - a restatement of the code (`/** Moves the monster. */ fun moveMonster()`);
-- process history: ODD task ids (`S3`, `T2`), PR numbers, "Ruling AJ", "Review Focus 3", design-tool
-  names, who asked for it. That belongs in `odd/tasks/`, the PR, or the commit message. If a durable
-  decision is needed to understand the code, link its document by path;
+- process history: task ids (`S3`), PR numbers, "Ruling AJ", "Review Focus 3", who asked for it. That
+  belongs in `odd/tasks/`, the PR, or the commit message. If a durable decision is needed to
+  understand the code, link its document by path;
 - architecture justifications on each class ("no business rules live here"). This page says it once;
 - a changelog (`previously this did X`). Git has it.
 
@@ -50,3 +50,12 @@ Code says **what** it does. A comment is for what the code cannot say.
 
 Test the rule on any comment: *would a reader who knows Kotlin and this page still be surprised
 without it?* If not, delete it.
+
+## Enforced
+
+`SourceHygieneTest` (runs with `./gradlew :app-android:testDebugUnitTest`) scans the production
+sources of every module and fails when:
+
+- a file is over 500 lines (generated content tables excepted). `DashboardController.kt` is listed as
+  a known exception that may not grow; split it and delete the entry;
+- a comment mentions a ruling, review focus, spec id (`S5`), PR number or `ODD`.
