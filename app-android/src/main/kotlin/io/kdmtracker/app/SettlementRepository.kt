@@ -30,14 +30,7 @@ import io.kdmtracker.core.sync.CampaignSummary
 import io.kdmtracker.core.sync.MembershipStore
 import kotlin.random.Random
 
-/**
- * One row of the Home campaign list: the campaign's settlement headline joined with its sharing
- * [banner].
- *
- * [name]/[lanternYear]/[population] come from the stored settlement (the campaign's live state);
- * [banner] is derived from the cached membership, falling back to an owned banner when the
- * membership has not been synced yet.
- */
+/** One Home-list row: the campaign's settlement headline plus its sharing [banner]. */
 data class CampaignCard(
     val campaignId: String,
     val name: String,
@@ -47,25 +40,12 @@ data class CampaignCard(
 )
 
 /**
- * Holder of the campaign and settlement the UI currently renders, backed by a [CampaignStore].
+ * Holds the campaign and settlement the UI renders, backed by a [CampaignStore].
  *
- * On construction it loads the first stored snapshot. If the store is empty — or a campaign exists
- * with no live settlement, which can only result from an interrupted seed — it seeds a single
- * "Walking Skeleton" campaign and its first settlement atomically through the store. [update]
- * stamps the incoming record's settlement with a fresh [SyncClock] value and an incremented
- * revision before writing, so last-write-wins has an ordering signal. No rules live here; the
- * controller drives the loop.
- *
- * The held [campaign]/[record] can be swapped by [select] (Ruling AJ: selecting a campaign from
- * Home re-scopes the cockpit) and by [create] (which opens the new campaign). [memberships] is the
- * optional offline membership cache used to badge [listCards] and to record the caller's `OWNER`
- * membership on create; when omitted (a test that does not exercise sharing) every campaign is
- * badged as owned.
- *
- * [createCampaign] is the hub round-trip [create] calls to obtain a server-owned campaign id. It is
- * injected (in production, `HttpSyncApi::createCampaign`) so the repository stays JVM-testable; the
- * client never mints an id it intends to sync, because the change-log endpoints only accept
- * server-issued campaign ids.
+ * Seeds a sample campaign when the store is empty or holds a campaign with no settlement (an
+ * interrupted seed). [memberships] is optional; without it every campaign is badged as owned.
+ * [createCampaign] is the hub round-trip that returns a server-issued campaign id (the change-log
+ * endpoints reject client-minted ids); it is injected to keep the repository JVM-testable.
  */
 class SettlementRepository(
     private val store: CampaignStore,
@@ -78,31 +58,19 @@ class SettlementRepository(
     var campaign: Campaign
         private set
 
-    /**
-     * The canonical held state: the settlement scalars together with its [SettlementState].
-     *
-     * [settlement] is the read-only compatibility accessor for callers that only need the scalars
-     * (the controller and the existing loop tests); the state is read and written through [record]
-     * and the [update] overloads.
-     */
+    /** The canonical held state: the settlement scalars together with its [SettlementState]. */
     var record: SettlementRecord
         private set
 
-    /** The held settlement scalars; a compatibility view over [record]'s settlement. */
+    /** Scalars-only view of [record]'s settlement. */
     val settlement: Settlement get() = record.settlement
 
-    /** The shipped packs this app knows how to resolve, keyed by their ids. */
     private val knownPacks: Map<String, ContentPack> =
         listOf(Core16Content.pack, Legacy15Content.pack).associateBy { it.id }
 
     /**
-     * The catalog composed from the held campaign's [Campaign.enabledPacks].
-     *
-     * Known pack ids (`core-1.6`, `core-1.5`) resolve to their shipped [ContentPack]s; the
-     * shipped default seed enables no packs, which composes an empty catalog. An unknown id,
-     * or a pack whose requirement is not enabled, does not crash: [catalogError] carries the
-     * reason and [catalog] falls back to an empty catalog, so the screens render nothing
-     * rather than the app failing to load.
+     * Composed from [Campaign.enabledPacks]. Falls back to an empty catalog when composition fails
+     * (see [catalogError]) so the screens render nothing instead of the app failing to load.
      */
     val catalog: ContentCatalog
         get() = (catalogResult as? CatalogResult.Ok)?.catalog ?: EMPTY_CATALOG
@@ -118,12 +86,7 @@ class SettlementRepository(
             }
         }
 
-    /**
-     * Resolves the held campaign's enabled packs and composes them.
-     *
-     * An unknown id short-circuits to a [CatalogResult.MissingRequirement] (there is no pack to
-     * compose), otherwise the composition reports a genuine missing requirement or `Ok`.
-     */
+    /** An unknown pack id has nothing to compose, so it is reported as its own missing requirement. */
     private val catalogResult: CatalogResult
         get() {
             val enabled = campaign.enabledPacks
@@ -142,14 +105,7 @@ class SettlementRepository(
         record = storedRecord(snapshot.campaign.id.value, snapshot.settlements.first())
     }
 
-    /**
-     * Every stored campaign as a Home card, ordered as the store returns them.
-     *
-     * A card needs a live settlement (its year and population); a campaign whose settlement is
-     * missing is skipped rather than rendered with placeholder numbers. The badge is the stored
-     * membership's [CampaignBadges] banner, defaulting to `OWNED`/`"Tuyo"` for a campaign whose
-     * membership has not been synced yet.
-     */
+    /** Every stored campaign as a Home card; a campaign with no settlement is skipped. */
     fun listCards(): List<CampaignCard> =
         store.loadSnapshots().mapNotNull { snapshot ->
             val settlement = snapshot.settlements.firstOrNull() ?: return@mapNotNull null
@@ -163,12 +119,10 @@ class SettlementRepository(
         }
 
     /**
-     * Swaps the held campaign and settlement to [campaignId]'s, so the cockpit reads that campaign
-     * only.
+     * Swaps the held campaign and settlement to [campaignId]'s.
      *
-     * Returns `false` and changes nothing when no stored campaign has that id, or when it has no
-     * live settlement to open. Campaigns are isolated by id: the previously held campaign's rows and
-     * sync cursor are never touched (Review Focus 3).
+     * Returns `false` and changes nothing if the id is unknown or has no settlement. The previously
+     * held campaign's rows and sync cursor are never touched.
      */
     fun select(campaignId: String): Boolean {
         val snapshot = store.loadSnapshots().firstOrNull { it.campaign.id.value == campaignId } ?: return false
@@ -179,18 +133,11 @@ class SettlementRepository(
     }
 
     /**
-     * Creates a campaign named [name] on the hub, then persists and opens its local state.
+     * Creates [name] on the hub, then persists and opens it locally.
      *
-     * The hub round-trip happens **first**: it owns campaign-id generation, so only the id it
-     * returns is accepted by the change-log endpoints. An offline or unauthenticated create throws
-     * before any write, so a failure leaves no half-created local campaign behind (Review Focus 4).
-     * The returned [CampaignSummary] carries the fresh `OWNER` role, which is cached as the local
-     * membership.
-     *
-     * The campaign, settlement and membership are written inside one [CampaignStore.transaction], so
-     * a store failure cannot leave a campaign row with no settlement (or an unbadged campaign)
-     * behind. The returned card reflects the freshly created state; the campaign is also listed by
-     * [listCards] from now on.
+     * The hub call runs first because it owns campaign-id generation; an offline create throws
+     * before any local write, so nothing is left half-created. Campaign, settlement and the `OWNER`
+     * membership are written in one transaction so a store failure cannot orphan the campaign row.
      */
     fun create(name: String): CampaignCard {
         val summary = createCampaign(name)
@@ -227,13 +174,10 @@ class SettlementRepository(
     }
 
     /**
-     * Re-reads the canonical snapshot from the store and refreshes the held settlement.
+     * Re-reads the selected campaign from the store after a sync applied remote changes.
      *
-     * Called after a sync pass applies remote changes (Ruling AE). Without it the repository keeps
-     * the pre-sync settlement, the UI never shows the remote edit, and the next local mutation
-     * writes the stale value back over the already-advanced remote row. Only the **selected**
-     * campaign is refreshed, so a sync of another campaign cannot yank the cockpit to a different
-     * settlement.
+     * Without it the next local mutation would write the stale pre-sync settlement over the newer
+     * remote row. Other campaigns are ignored so a background sync cannot switch the cockpit.
      */
     fun reload() {
         val selectedId = campaign.id.value
@@ -244,12 +188,8 @@ class SettlementRepository(
     }
 
     /**
-     * Writes [next] as the canonical record, stamping a fresh sync first.
-     *
-     * The record's settlement is stamped with `updatedAt` from `clock.tick(previous.updatedAt)` and
-     * `rev = previous.rev + 1`, where `previous` is the currently held record's sync, so
-     * last-write-wins has an ordering signal. The record's [SettlementState] is written alongside
-     * the scalars, so a state-carrying update is never lost.
+     * Writes [next], stamping `updatedAt` and `rev + 1` from the held record's sync so
+     * last-write-wins has an ordering signal.
      */
     fun update(next: SettlementRecord) {
         val previous = record.settlement.sync
@@ -268,23 +208,12 @@ class SettlementRepository(
         record = stamped
     }
 
-    /**
-     * Compatibility overload: updates the settlement scalars, preserving the held record's state.
-     *
-     * Delegates to [update] with the current [record] and only [next] swapped in, so a caller that
-     * only knows the settlement (the controller) cannot clobber the stored state.
-     */
+    /** Scalars-only overload: keeps the held record's state. */
     fun update(next: Settlement) {
         update(record.copy(settlement = next))
     }
 
-    /**
-     * The state-carrying record for [fallback] as stored under [campaignId].
-     *
-     * Reads the canonical `loadRecords` path; if a store somehow lists a settlement but returns no
-     * record for it, falls back to an empty-state record over the scalar settlement rather than
-     * dropping the settlement.
-     */
+    /** Falls back to an empty-state record if the store lists a settlement but has no record for it. */
     private fun storedRecord(
         campaignId: String,
         fallback: Settlement,
@@ -294,17 +223,14 @@ class SettlementRepository(
                 ?: SettlementRecord(fallback)
         ).migrated()
 
+    /** A campaign whose membership has not been synced yet is shown as owned. */
     private fun bannerFor(campaignId: String): CampaignBanner =
         memberships?.membership(campaignId)?.let { CampaignBadges.of(it) }
             ?: CampaignBanner(CampaignBadge.OWNED, "Tuyo")
 
     /**
-     * Writes the sample campaign and settlement in one transaction and returns them as the initial
-     * snapshot.
-     *
-     * The campaign and its settlement commit together, so a crash cannot leave a campaign row with
-     * no settlement behind. A later construction that finds such an orphan reseeds over it rather
-     * than crashing.
+     * Writes the sample campaign and settlement in one transaction, so a crash cannot leave a
+     * campaign without a settlement. Construction reseeds over such an orphan.
      */
     private fun seed(): CampaignSnapshot {
         val campaignId = Ulid.generate(0L) { 0 }
@@ -331,12 +257,8 @@ class SettlementRepository(
     }
 
     /**
-     * The opening [SettlementRecord] for a new settlement: its starting locations are already built.
-     *
-     * A settlement opens with the Lantern Hoard and the Armería built, so Innovate and Craft are
-     * offered at locations the settlement actually has (both use-cases refuse an unbuilt location).
-     * Without this the develop economy is unreachable — the Step 7 actions would all be `Blocked`.
-     * The Armería carries the curated 1.5 crafting recipes (see `Core15GearSeed`).
+     * Opens with the Lantern Hoard and Armería built: Innovate and Craft refuse unbuilt locations,
+     * so without them Step 7 would be unreachable.
      */
     private fun startingRecord(settlement: Settlement): SettlementRecord =
         SettlementRecord(
@@ -354,11 +276,8 @@ class SettlementRepository(
 }
 
 /**
- * The game's initial innovation(s), seeded so the unlock tree has a root to grow from.
- *
- * `Language` (1.6 seed) and `Lenguaje` (1.5) are one innovation under their shared id, so a
- * single merged definition is seeded — with the consequence union of both packs, which is what
- * the catalog would have composed for it.
+ * `Language` (1.6) and `Lenguaje` (1.5) share an id, so one definition is seeded carrying both
+ * packs' consequences.
  */
 private val STARTING_INNOVATIONS: List<Innovation> =
     listOfNotNull(

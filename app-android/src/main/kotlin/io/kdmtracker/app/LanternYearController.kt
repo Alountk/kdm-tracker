@@ -71,12 +71,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlin.random.Random
 
 /**
- * Drives the lantern-year loop for the UI.
- *
- * This class is deliberately plain Kotlin: it holds no Android APIs so it can be unit-tested on
- * the JVM. Every phase/step transition is delegated to `:core` ([AdvanceStep] over
- * [io.kdmtracker.core.rules.LanternYearFlow]); the controller only mirrors the resulting
- * [Settlement] into a [UiState] and maps the phase to a [Screen]. No business rules live here.
+ * Mirrors `:core` results into a [UiState] for the UI. Plain Kotlin (no Android APIs) so it runs in
+ * JVM tests.
  */
 class LanternYearController(
     private val repository: SettlementRepository,
@@ -84,13 +80,7 @@ class LanternYearController(
     private val catalog: ContentCatalog? = null,
     private val newSurvivorId: () -> Ulid = { Ulid.generate(System.currentTimeMillis()) { Random.nextInt() } },
 ) {
-    /**
-     * The content the step actions read.
-     *
-     * Production leaves [catalog] null so the repository's composed catalog is used; a JVM test can
-     * inject a composed catalog so the Step 7 use-cases run against a controlled pack. This is
-     * content plumbing only — every rule stays in `:core`.
-     */
+    /** The injected [catalog] (tests) or the repository's composed one. */
     private val content: ContentCatalog get() = catalog ?: repository.catalog
 
     private val _state =
@@ -98,34 +88,22 @@ class LanternYearController(
 
     val state: StateFlow<UiState> = _state.asStateFlow()
 
-    /** Every stored campaign as a Home card, joined with its sharing badge (Ruling AJ/AK). */
     fun cards(): List<CampaignCard> = repository.listCards()
 
-    /**
-     * Swaps the held campaign and settlement to [campaignId]'s and republishes the cockpit.
-     *
-     * Returns `false` and changes nothing when no stored campaign has that id (Review Focus 3).
-     */
+    /** Returns `false` and changes nothing if the id is unknown. */
     fun selectCampaign(campaignId: String): Boolean {
         if (!repository.select(campaignId)) return false
         reload()
         return true
     }
 
-    /**
-     * Creates [name] on the hub, persists and opens it, and returns its Home card.
-     *
-     * The hub round-trip and any local write live in [SettlementRepository.create]; a thrown
-     * failure escapes unchanged so the caller can surface it, and the prior selection is kept
-     * (Review Focus 4).
-     */
+    /** A hub failure escapes unchanged and the prior selection is kept. */
     fun createCampaign(name: String): CampaignCard {
         val card = repository.create(name)
         reload()
         return card
     }
 
-    /** Advances one position in the lantern-year flow, delegating the move to `:core`. */
     fun advance() {
         val context = flowContext()
         applyStep(
@@ -140,10 +118,7 @@ class LanternYearController(
         }
     }
 
-    /**
-     * The flow context for an advance: the current year is a nemesis year when its timeline lists a
-     * nemesis, and step 9 loops back when a Special Showdown is declared.
-     */
+    /** A nemesis year lists a nemesis in its timeline; a declared Special Showdown loops step 9 back. */
     private fun flowContext(): FlowContext =
         FlowContext(
             ruleset = ruleset,
@@ -151,21 +126,13 @@ class LanternYearController(
             hasSpecialShowdown = repository.record.state.specialShowdown,
         )
 
-    /** The nemesis the current year's timeline lists, or `null`. */
     fun nemesisFor(record: SettlementRecord): String? = record.nemesisOf(record.settlement.lanternYear)
 
-    /** Declares (or clears) a Special Showdown for the current year. */
     fun declareSpecialShowdown(enabled: Boolean) {
         applyResult(SetSpecialShowdown.run(repository.record, enabled))
     }
 
-    /**
-     * Records a failed hunt (for example a total party kill) and restarts the settlement year.
-     *
-     * The restart is produced entirely by `:core`'s hunt-failure branch; the controller only
-     * supplies the [FlowContext] that selects it, so the settlement re-enters at step 1. No
-     * survivors return from a failed hunt, so [returnees] is zero.
-     */
+    /** No survivors return from a failed hunt, so the restart gets zero returnees. */
     fun failHunt() {
         applyStep(
             returnees = 0,
@@ -174,12 +141,8 @@ class LanternYearController(
     }
 
     /**
-     * Runs one `:core` transition for [context] with [returnees] returning survivors and mirrors
-     * the resulting settlement.
-     *
-     * This is the single path both [advance] and [failHunt] take; neither reimplements any step or
-     * phase rule — the target always comes from `:core`. The returnee count is passed through so a
-     * TPK can express "0 returning survivors" instead of silently reusing the population.
+     * The one path [advance], [failHunt] and [finishHunt] take. Returnees are explicit so a total party
+     * kill can express "0 returning survivors" instead of reusing the population.
      */
     private fun applyStep(
         returnees: Int,
@@ -207,25 +170,14 @@ class LanternYearController(
         _state.value = uiState(repository.record, result.transition.describe())
     }
 
-    /**
-     * Moves the settlement one step back without crossing a phase boundary.
-     *
-     * Only meaningful on the settlement screen; on Hunt/Showdown it is a no-op, and the step is
-     * floored at 1.
-     */
+    /** No-op outside the settlement screen; the step is floored at 1. */
     fun previous() {
         val settlement = repository.settlement
         if (settlement.phase != SettlementPhase.SETTLEMENT || settlement.currentStep <= 1) return
         moveToStep(settlement.currentStep - 1)
     }
 
-    /**
-     * Jumps to [number] when `:core`'s flow allows entering it from the current position.
-     *
-     * The gate is [LanternYearFlow.canEnterStep]: a step may not be skipped forward (step 11 from
-     * step 1 is ignored), while revisiting the current step or any earlier one is allowed. The
-     * controller never decides this itself.
-     */
+    /** Gated by [LanternYearFlow.canEnterStep]: no skipping forward, revisiting earlier steps is fine. */
     fun selectStep(number: Int) {
         val settlement = repository.settlement
         val from = PhaseStep(settlement.phase, settlement.currentStep)
@@ -234,16 +186,8 @@ class LanternYearController(
     }
 
     /**
-     * Runs the Step 7 Innovate action to unlock [innovationName].
-     *
-     * The innovating location is found from the content: the first catalog location offering an
-     * [ActionKind.INNOVATE] action (the Lantern Hoard and its variants). The whole rule — the
-     * once-per-phase limit, the cost, the inventory guard and adding the innovation — is enforced
-     * by `:core`'s [Innovate]; the controller only supplies the record, the location and [content].
-     * An [StepResult.Ok] is persisted and republished; a [StepResult.Blocked] surfaces its reason.
-     *
-     * When the catalog models no Innovate location, nothing runs and an explanatory reason is
-     * surfaced rather than silently doing nothing.
+     * Innovates at the first built location offering [ActionKind.INNOVATE]; with none, it surfaces a
+     * reason instead of silently doing nothing.
      */
     fun innovate(innovationName: String) {
         val innovationId = innovationIdFor(innovationName)
@@ -263,13 +207,6 @@ class LanternYearController(
         applyResult(Innovate.run(repository.record, location.id, innovationId, content))
     }
 
-    /**
-     * Builds the settlement location named [locationName].
-     *
-     * Prerequisites, cost and storage are enforced entirely by `:core`'s [BuildLocation]; the
-     * controller resolves the displayed name to its stable id through the held [content], passes
-     * the held record and [content], and mirrors the outcome.
-     */
     fun build(locationName: String) {
         val locationId = locationIdFor(locationName)
         if (locationId == null) {
@@ -279,45 +216,22 @@ class LanternYearController(
         applyResult(BuildLocation.run(repository.record, locationId, content))
     }
 
-    /**
-     * The id of the location the screens display as [locationName], resolved against the held
-     * [content] in either language — the catalog is the authority that carries both the id and
-     * the names, and it is what the campaign actually enables.
-     */
+    /** Resolves a displayed name (either language) to its stable id through the held [content]. */
     private fun locationIdFor(locationName: String): LocationId? =
         content.locationDefinitions.firstOrNull { it.names.es == locationName || it.names.en == locationName }?.id
 
-    /** The id of the innovation the screens display as [innovationName]; see [locationIdFor]. */
     private fun innovationIdFor(innovationName: String): InnovationId? =
         content.innovationDefinitions.firstOrNull { it.names.es == innovationName || it.names.en == innovationName }?.id
 
-    /**
-     * Spends one endeavor for a generic Settlement Phase action.
-     *
-     * The single shared rule lives in `:core`'s [SpendEndeavor]; the action's effect is resolved by
-     * the players, so the controller only decrements the pool.
-     */
+    /** The action's effect is resolved by the players; only the pool is decremented. */
     fun spendEndeavor() {
         applyResult(SpendEndeavor.run(repository.record))
     }
 
-    /**
-     * Appends [entry] to the settlement's resource ledger.
-     *
-     * `:core`'s [AddResourceEntry] guards a spend that would overdraw the ledger; the controller
-     * mirrors the outcome like the other develop actions.
-     */
     fun addResource(entry: ResourceEntry) {
         applyResult(AddResourceEntry.run(repository.record, entry))
     }
 
-    /**
-     * Crafts [gearName] at the built location [locationName].
-     *
-     * The whole rule — the location must be built, its recipe, the innovation prerequisite and the
-     * resource cost — is enforced by `:core`'s [Craft]; the controller mirrors the outcome like the
-     * other develop actions.
-     */
     fun craft(
         locationName: String,
         gearName: String,
@@ -335,37 +249,28 @@ class LanternYearController(
         applyResult(Craft.run(repository.record, locationId, gearId, content))
     }
 
-    /** The id of the gear the screens display as [gearName]; see [locationIdFor]. */
     private fun gearIdFor(gearName: String): GearId? =
         content.gearDefinitions.firstOrNull { it.names.es == gearName || it.names.en == gearName }?.id
 
-    /**
-     * Records [count] deaths (Step 5): `:core`'s [RecordDeaths] raises the counter and lowers the
-     * population, floored at zero; the controller mirrors the outcome on a refusal.
-     */
     fun recordDeaths(count: Int) {
         applyResult(RecordDeaths.run(repository.record, count))
     }
 
-    /**
-     * Records [count] births (Step 5's counter panel): `:core`'s [RecordBirths] raises the counter
-     * and the population; the controller mirrors the outcome on a refusal.
-     */
     fun recordBirths(count: Int) {
         applyResult(RecordBirths.run(repository.record, count, newSurvivorId))
     }
 
-    /** Heals the returning survivors (Step 2): erase light/heavy injuries and clear tokens. */
+    /** Step 2: erases light/heavy injuries and clears tokens. */
     fun healSurvivors() {
         applyResult(StepResult.Ok(ReturnSurvivors.run(repository.record)))
     }
 
-    /** Chooses the departing survivors (Step 8), capped at the ruleset's departing limit. */
+    /** Step 8; capped at the ruleset's departing limit. */
     fun markDeparting(ids: List<Ulid>) {
         applyResult(MarkDeparting.run(repository.record, ids, ruleset.departingLimit))
     }
 
-    /** Assigns [gearName] from the settlement's crafted gear to a survivor (Step 8). */
+    /** Step 8; takes from the settlement's crafted gear. */
     fun assignGear(
         survivorId: Ulid,
         gearName: String,
@@ -373,7 +278,6 @@ class LanternYearController(
         applyResult(AssignGear.run(repository.record, survivorId, gearName))
     }
 
-    /** Removes [gearName] from a survivor (Step 8). */
     fun unassignGear(
         survivorId: Ulid,
         gearName: String,
@@ -381,12 +285,10 @@ class LanternYearController(
         applyResult(UnassignGear.run(repository.record, survivorId, gearName))
     }
 
-    /** Saves an edited survivor from the Survivor Editor. */
     fun updateSurvivor(survivor: Survivor) {
         applyResult(UpdateSurvivor.run(repository.record, survivor))
     }
 
-    /** Sets up the showdown encounter (monster + level + the assembled AI deck). */
     fun setUpShowdown(
         monster: String,
         level: Int,
@@ -395,22 +297,21 @@ class LanternYearController(
         applyResult(SetUpShowdown.run(repository.record, monster, level, deck.shuffled()))
     }
 
-    /** Draws the monster's AI card (the monster's turn). */
     fun drawShowdownCard() {
         applyResult(DrawShowdownCard.run(repository.record))
     }
 
-    /** Wounds the monster (removes the top AI card to the wound stack). */
+    /** Moves the top AI card to the wound stack. */
     fun woundMonster() {
         applyResult(WoundMonster.run(repository.record))
     }
 
-    /** Grants +1 hunt XP to each listed survivor. */
+    /** +1 hunt XP per listed survivor. */
     fun grantHuntXp(survivorIds: List<Ulid>) {
         applyResult(RecordHuntXp.run(repository.record, survivorIds))
     }
 
-    /** Records the showdown outcome and returns the settlement to its next phase. */
+    /** Records the outcome, then advances out of the Showdown. */
     fun finishShowdown(status: ShowdownStatus) {
         when (val result = SetShowdownOutcome.run(repository.record, status)) {
             is StepResult.Ok -> {
@@ -421,7 +322,6 @@ class LanternYearController(
         }
     }
 
-    /** Sets up the hunt board (quarry + level + players). */
     fun setUpHunt(
         quarry: String,
         level: Int,
@@ -430,7 +330,6 @@ class LanternYearController(
         applyResult(SetUpHunt.run(repository.record, quarry, level, players))
     }
 
-    /** Edits a hunt-board space's kind. */
     fun markSpaceKind(
         index: Int,
         kind: HuntSpaceKind,
@@ -438,24 +337,23 @@ class LanternYearController(
         applyResult(MarkSpaceKind.run(repository.record, index, kind))
     }
 
-    /** Advances the hunt party one space. */
     fun advanceHunt() {
         val quarry = repository.record.state.hunt.quarry
         val deck = quarry?.let { content.huntEventsFor(it) }.orEmpty()
         applyResult(AdvanceHunt.run(repository.record, deck = deck))
     }
 
-    /** Steps the monster one space toward the party, ambushing it on contact. */
+    /** Steps the monster toward the party, ambushing it on contact. */
     fun moveMonster() {
         applyResult(MoveMonster.run(repository.record))
     }
 
-    /** S8: steps the monster one space away from the party (a hunt-event retreat). */
+    /** A hunt-event retreat: steps the monster away from the party. */
     fun retreatMonster() {
         applyResult(RetreatMonster.run(repository.record))
     }
 
-    /** Assigns a party survivor to a player (1-based). */
+    /** [player] is 1-based. */
     fun assignPlayer(
         survivorId: Ulid,
         player: Int,
@@ -463,7 +361,6 @@ class LanternYearController(
         applyResult(AssignPlayer.run(repository.record, survivorId, player))
     }
 
-    /** Places a hunt event on a space. */
     fun assignHuntEvent(
         index: Int,
         eventName: String,
@@ -471,7 +368,6 @@ class LanternYearController(
         applyResult(AssignHuntEvent.run(repository.record, index, eventName))
     }
 
-    /** Marks a hunt event resolved. */
     fun resolveHuntEvent(
         index: Int,
         eventName: String,
@@ -479,7 +375,7 @@ class LanternYearController(
         applyResult(ResolveHuntEvent.run(repository.record, index, eventName))
     }
 
-    /** Overwrites a step's stored 2d10 roll by hand (S6, `roll_edit`). */
+    /** Manual override of a step's stored 2d10 roll. */
     fun editHuntRoll(
         index: Int,
         roll: Int,
@@ -487,10 +383,7 @@ class LanternYearController(
         applyResult(EditHuntRoll.run(repository.record, index, roll))
     }
 
-    /**
-     * Records the hunt outcome and moves the lantern year: a failed hunt restarts the Settlement
-     * Phase (no returnees); otherwise the settlement proceeds to the Showdown.
-     */
+    /** Found or ambushed goes to the Showdown; failed or run away re-enters the Settlement Phase. */
     fun finishHunt(outcome: HuntStatus) {
         when (val result = SetHuntOutcome.run(repository.record, outcome)) {
             is StepResult.Ok -> {
@@ -518,12 +411,6 @@ class LanternYearController(
         }
     }
 
-    /**
-     * Records the settlement's chosen principle [label] for [category] (Steps 5/6).
-     *
-     * The whole rule — the label must be a ruleset choice — lives in `:core`'s [ChoosePrinciple];
-     * an unknown choice surfaces its reason.
-     */
     fun choosePrinciple(
         category: PrincipleCategory,
         label: String,
@@ -531,23 +418,16 @@ class LanternYearController(
         applyResult(ChoosePrinciple.run(repository.record, category, label, ruleset))
     }
 
-    /** Ticks the reached milestone [id] as resolved (Step 6), via `:core`'s [ResolveMilestone]. */
     fun resolveMilestone(id: MilestoneId) {
         applyResult(ResolveMilestone.run(repository.record, id, ruleset))
     }
 
-    /**
-     * Records the Settlement Event [name] drawn this year (Step 4), via `:core`'s
-     * [RecordSettlementEvent]; the name must be one the catalog ships.
-     */
+    /** The name must be one the catalog ships. */
     fun recordSettlementEvent(name: String) {
         applyResult(RecordSettlementEvent.run(repository.record, name, content))
     }
 
-    /**
-     * Mirrors one `:core` action outcome: an [StepResult.Ok] is persisted and republished with no
-     * error, while a [StepResult.Blocked] leaves the record untouched and surfaces its reason.
-     */
+    /** Ok is persisted and republished; Blocked leaves the record untouched and surfaces its reason. */
     private fun applyResult(result: StepResult<SettlementRecord>) {
         when (result) {
             is StepResult.Ok -> {
@@ -563,11 +443,8 @@ class LanternYearController(
     }
 
     /**
-     * Re-reads the repository after an external (sync) change and republishes [state].
-     *
-     * The controller mirrors the settlement into [state] once per mutation; a sync pass mutates the
-     * store behind the controller's back, so without this the UI would keep rendering the pre-sync
-     * frame (Ruling AE).
+     * A sync pass mutates the store behind the controller's back; without this the UI keeps rendering
+     * the pre-sync frame.
      */
     fun reload() {
         repository.reload()
@@ -582,12 +459,8 @@ class LanternYearController(
     }
 
     /**
-     * Advances the lantern year when a move leaves the Update Timeline step forward.
-     *
-     * The Step 4 rule lives in `:core`'s [AdvanceTimeline]; this helper only decides *when* it
-     * applies — a move whose source is Step 4 and whose target is later ([UPDATE_TIMELINE_STEP]).
-     * Going back into Step 4, or moving anywhere else, leaves the record untouched. [AdvanceTimeline]
-     * is idempotent per phase, so revisiting Step 4 cannot double-increment.
+     * Fires only when leaving Step 4 forward. [AdvanceTimeline] is idempotent per phase, so revisiting
+     * Step 4 cannot double-increment.
      */
     private fun advanceTimelineIfNeeded(
         fromStep: Int,
@@ -600,13 +473,8 @@ class LanternYearController(
         }
 
     /**
-     * Funds the endeavor pool exactly once per Settlement Phase when the settlement enters Step 3.
-     *
-     * The Step 3 rule lives in `:core`'s [GainEndeavors]: the earned total is derived from the
-     * settlement's population through the ruleset and *added* to the pool. The controller never
-     * reimplements it — it only decides when the rule applies. A phase marker carried in
-     * [SettlementState.phaseActionsUsed] (which resets at the year boundary) keeps a revisit of
-     * Step 3 from funding a second time.
+     * Funds the pool once per Settlement Phase on entering Step 3; [GAIN_ENDEAVORS_MARKER] stops a
+     * revisit from funding twice.
      */
     private fun fundGainEndeavors(record: SettlementRecord): SettlementRecord {
         val settlement = record.settlement
@@ -776,14 +644,10 @@ private fun FlowTransition.describe(): String =
     }
 
 /**
- * Whether a transition out of [from] starts a fresh settlement year, so the once-per-phase
- * actions reset.
+ * Whether this transition out of [from] opens a fresh year, resetting once-per-phase actions.
  *
- * The boundary is scoped to the **source** phase: a [FlowTransition.Commit] counts only when it
- * leaves the Settlement Phase (which is the only place `:core`'s
- * [io.kdmtracker.core.rules.LanternYearFlow] emits one), and any transition landing on Settlement
- * step 1 opens the next year empty (a successful Showdown's aftermath or a failed hunt). A
- * mid-year move — including a hypothetical `Commit` from Hunt or Showdown — keeps the spent actions.
+ * Scoped to the **source** phase: a mid-year move (even a hypothetical `Commit` from Hunt or
+ * Showdown) keeps the spent actions.
  */
 internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
     when (this) {
@@ -795,10 +659,8 @@ internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
         is FlowTransition.Blocked -> false
     }
 
-/** The Settlement Phase step where the survivors' endeavors are earned. */
 private const val GAIN_ENDEAVORS_STEP = 3
 
-/** The Settlement Phase step where the lantern year advances, Update Timeline. */
 private const val UPDATE_TIMELINE_STEP = 4
 
 /** The phase marker recording that Step 3 funded the pool, so a revisit cannot double-fund it. */
