@@ -59,3 +59,6 @@ sources of every module and fails when:
 - a file is over 500 lines (generated content tables excepted). `DashboardController.kt` is listed as
   a known exception that may not grow; split it and delete the entry;
 - a comment mentions a ruling, review focus, spec id (`S5`), PR number or `ODD`.
+
+CI (`.github/workflows/ci.yml`) runs `spotlessCheck` and the unit tests of every module on each pull
+request and on pushes to main, so both the hygiene test and the formatter gate a merge.
