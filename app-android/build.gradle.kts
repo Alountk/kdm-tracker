@@ -36,13 +36,28 @@ android {
             libs.versions.android.targetSdk
                 .get()
                 .toInt()
-        versionCode = 1
-        versionName = "0.2.0"
+        versionCode = (findProperty("appVersionCode") as String?)?.toInt() ?: 1
+        versionName = (findProperty("appVersionName") as String?) ?: "0.2.0"
+    }
+
+    // The release keystore never lives in the repository: CI and local builds pass it through the
+    // environment, and without it `assembleRelease` produces an unsigned APK.
+    val releaseKeystore = providers.environmentVariable("KDM_KEYSTORE_FILE").orNull
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = providers.environmentVariable("KDM_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("KDM_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("KDM_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

@@ -136,6 +136,21 @@ Install it on a connected device or emulator:
 adb install -r app-android/build/outputs/apk/debug/app-debug.apk
 ```
 
+### Releasing
+
+Pushing a `v*` tag builds a signed APK and publishes it as a GitHub Release
+(`.github/workflows/release.yml`). The tag sets the version and the run number the version code:
+
+```bash
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+The signing key is a repository secret set (`KDM_KEYSTORE_BASE64`, `KDM_KEYSTORE_PASSWORD`,
+`KDM_KEY_ALIAS`, `KDM_KEY_PASSWORD`); the keystore itself stays out of the repository. Losing it
+means installed copies cannot be updated, so keep a backup. To build a signed APK locally, export
+`KDM_KEYSTORE_FILE`, `KDM_KEYSTORE_PASSWORD`, `KDM_KEY_ALIAS` and `KDM_KEY_PASSWORD`, then run
+`./gradlew :app-android:assembleRelease`.
+
 ## Settlement Steps 1 & 7
 
 Two Settlement Phase steps are real in the Compose app; the rest keep their `Pendiente` body. Both
