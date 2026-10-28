@@ -73,6 +73,18 @@ Layer rules and the code-comment convention are in [ARCHITECTURE.md](docs/ARCHIT
 
 ## Evolution
 
+<table>
+  <tr align="center">
+    <td colspan="4"><img src="docs/img/evolution-1-web.png" width="420" alt="First web dashboard"><br>3 Oct · web dashboard</td>
+  </tr>
+  <tr align="center" valign="top">
+    <td><img src="docs/img/evolution-2-skeleton.png" width="170" alt="First Android app, default Material"><br>5 Oct · first app</td>
+    <td><img src="docs/img/evolution-3-material.png" width="170" alt="Settlement step 1 with real data"><br>9 Oct · working step 1</td>
+    <td><img src="docs/img/evolution-4-shell.png" width="170" alt="Same step with the Atramentum theme and tabs"><br>10 Oct · Atramentum theme</td>
+    <td><img src="docs/img/evolution-5-now.png" width="170" alt="The same step in the current version"><br>today</td>
+  </tr>
+</table>
+
 | Date | Milestone |
 | --- | --- |
 | 3 Oct 2026 | First settlement manager: web dashboard with survivors, resources, innovations and a log |

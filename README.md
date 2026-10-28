@@ -71,6 +71,18 @@ Las reglas de capas y la convención de comentarios están en [ARCHITECTURE.md](
 
 ## Evolución
 
+<table>
+  <tr align="center">
+    <td colspan="4"><img src="docs/img/evolution-1-web.png" width="420" alt="Primer panel web"><br>3 oct · panel web</td>
+  </tr>
+  <tr align="center" valign="top">
+    <td><img src="docs/img/evolution-2-skeleton.png" width="170" alt="Primera app Android con Material por defecto"><br>5 oct · primera app</td>
+    <td><img src="docs/img/evolution-3-material.png" width="170" alt="Paso 1 del asentamiento con datos reales"><br>9 oct · paso 1 funcional</td>
+    <td><img src="docs/img/evolution-4-shell.png" width="170" alt="Mismo paso con el tema Atramentum y las pestañas"><br>10 oct · tema Atramentum</td>
+    <td><img src="docs/img/evolution-5-now.png" width="170" alt="El mismo paso en la versión actual"><br>hoy</td>
+  </tr>
+</table>
+
 | Fecha | Hito |
 | --- | --- |
 | 3 oct 2026 | Primer gestor de asentamientos: panel web con supervivientes, recursos, innovaciones y registro |
