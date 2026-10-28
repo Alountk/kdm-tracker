@@ -2,7 +2,7 @@
 #
 # The tag names the version (`v0.3.0` -> versionName 0.3.0) and the run number becomes the
 # versionCode, so each release installs over the previous one. The signing key comes from the
-# KDM_KEYSTORE_* repository secrets; see "Releasing" in the README.
+# KDM_KEYSTORE_* repository secrets; see "Releasing" in docs/development.md.
 name: release
 
 on:

@@ -1,6 +1,6 @@
 # Architecture
 
-The file tree lives in the [README](../README.md#project-structure). This page holds what the tree
+The file tree lives in the [project structure page](project-structure.md). This page holds what the tree
 cannot say: who may depend on whom, and how we comment.
 
 ## Layers
