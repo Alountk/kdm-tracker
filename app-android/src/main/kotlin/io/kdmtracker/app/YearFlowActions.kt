@@ -103,11 +103,7 @@ internal class YearFlowActions(
                 repository.update(result.value)
                 when (outcome) {
                     // Found or ambushed: the showdown begins.
-                    HuntStatus.QUARRY_FOUND, HuntStatus.AMBUSH ->
-                        applyStep(
-                            returnees = repository.settlement.population,
-                            context = FlowContext(ruleset = ruleset),
-                        )
+                    HuntStatus.QUARRY_FOUND, HuntStatus.AMBUSH -> enterShowdown()
                     // The hunt ends without a showdown: a party wipe (no returnees) or a run away
                     // (the survivors return); both re-enter the Settlement Phase.
                     HuntStatus.FAILED ->
@@ -123,6 +119,24 @@ internal class YearFlowActions(
             is StepResult.Blocked -> publishBlocked(result.reason)
         }
     }
+
+    /**
+     * The hunt ended by itself on the board (the party reached the beast or the beast reached the
+     * party): the showdown begins without a separate confirmation. No-op while the hunt is active or
+     * once the step has already moved on.
+     */
+    fun startShowdownOnContact() {
+        val record = repository.record
+        val status = record.state.hunt.status
+        if (record.settlement.phase != SettlementPhase.HUNT) return
+        if (status == HuntStatus.QUARRY_FOUND || status == HuntStatus.AMBUSH) enterShowdown()
+    }
+
+    private fun enterShowdown() =
+        applyStep(
+            returnees = repository.settlement.population,
+            context = FlowContext(ruleset = ruleset),
+        )
 
     /** Records the outcome, then advances out of the Showdown. */
     fun finishShowdown(status: ShowdownStatus) {

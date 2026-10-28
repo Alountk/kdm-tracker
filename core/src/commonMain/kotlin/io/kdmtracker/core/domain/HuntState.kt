@@ -11,7 +11,7 @@ enum class HuntSpaceKind { START, NORMAL, MONSTER_E, OVERWHELMING_DARKNESS, STAR
  * @property kind the space's role; the layout is player-set (the per-monster diagram is an image).
  * @property events the hunt-event names placed on this space.
  * @property resolved the subset of [events] already resolved.
- * @property roll the 2d10 result recorded the first time the party lands here, or `null`
+ * @property roll the two-d10 result ([HuntRoll], stored `1..100`) recorded the first time the party lands here, or `null`
  *   before any visit. Per-step and persistent: moving back shows this step's own roll, never the
  *   same one. The player may edit it by hand.
  */

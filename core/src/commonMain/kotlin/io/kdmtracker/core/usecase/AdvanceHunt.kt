@@ -1,6 +1,7 @@
 package io.kdmtracker.core.usecase
 
 import io.kdmtracker.core.domain.HuntEvent
+import io.kdmtracker.core.domain.HuntRoll
 import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
@@ -9,8 +10,9 @@ import kotlin.random.Random
 /**
  * Advances the hunt party one space toward the monster, drawing a random hunt-event card.
  *
- * Blocks when the board is not set up or the hunt is already over; the position is capped at the
- * last space. When a non-empty [deck] is supplied, one card is drawn at random and stored as the
+ * Blocks when the board is not set up or the hunt is already over. The party never walks past the
+ * monster: stepping onto its space ends the hunt as [HuntStatus.QUARRY_FOUND] (the showdown
+ * begins) and no event card is drawn there. When a non-empty [deck] is supplied, one card is drawn at random and stored as the
  * hunt's active [HuntState.drawnEvent] — the player resolves it by hand. With the bare
  * signature (no deck) nothing is drawn, so existing callers are unchanged.
  *
@@ -47,12 +49,15 @@ object AdvanceHunt {
                 return StepResult.Blocked("event not resolved")
             }
         }
-        val next = minOf(hunt.position + 1, hunt.spaces.lastIndex)
-        val newDrawn = deck.randomOrNull(random)
-        // Roll 2d10 on the landed step — only the first time (a stored roll is kept).
+        val monster = hunt.monsterPosition.coerceIn(0, hunt.spaces.lastIndex)
+        // A party already at (or, in older saves, past) the monster stays put and finds it.
+        val next = if (monster <= hunt.position) hunt.position else minOf(hunt.position + 1, monster)
+        val foundQuarry = next >= monster
+        val newDrawn = if (foundQuarry) null else deck.randomOrNull(random)
+        // Roll the two d10 on the landed step — only the first time (a stored roll is kept).
         val spaces =
             hunt.spaces.mapIndexed { i, space ->
-                if (i == next && space.roll == null) space.copy(roll = roll2d10(random)) else space
+                if (i == next && space.roll == null) space.copy(roll = rollD100(random)) else space
             }
         return StepResult.Ok(
             record.copy(
@@ -63,12 +68,13 @@ object AdvanceHunt {
                                 position = next,
                                 spaces = spaces,
                                 drawnEvent = newDrawn ?: hunt.drawnEvent,
+                                status = if (foundQuarry) HuntStatus.QUARRY_FOUND else hunt.status,
                             ),
                     ),
             ),
         )
     }
 
-    /** A 2d10 sum (2..20), the per-step hunt roll. */
-    private fun roll2d10(random: Random): Int = random.nextInt(1, 11) + random.nextInt(1, 11)
+    /** Two d10 read as a d100 (tens die, units die), the per-step hunt roll. */
+    private fun rollD100(random: Random): Int = HuntRoll.of(random.nextInt(0, 10), random.nextInt(0, 10))
 }

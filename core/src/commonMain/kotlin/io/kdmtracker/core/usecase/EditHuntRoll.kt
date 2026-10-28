@@ -1,13 +1,14 @@
 package io.kdmtracker.core.usecase
 
+import io.kdmtracker.core.domain.HuntRoll
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.rules.StepResult
 
 /**
- * Lets the player overwrite a step's stored 2d10 roll by hand (`roll_edit`).
+ * Lets the player overwrite a step's stored hunt roll by hand (`roll_edit`).
  *
  * The roll is per-step: [index] selects the board space whose roll is edited, and [roll] must be a
- * valid 2d10 sum (2..20). The edit persists on that step, so moving back shows the player's own
+ * valid d100 value ([HuntRoll.VALID], `00` stored as 100). The edit persists on that step, so moving back shows the player's own
  * number. Out-of-range values are [StepResult.Blocked].
  */
 object EditHuntRoll {
@@ -17,7 +18,7 @@ object EditHuntRoll {
         index: Int,
         roll: Int,
     ): StepResult<SettlementRecord> {
-        if (roll !in 2..20) {
+        if (roll !in HuntRoll.VALID) {
             return StepResult.Blocked("roll out of range")
         }
         val hunt = record.state.hunt

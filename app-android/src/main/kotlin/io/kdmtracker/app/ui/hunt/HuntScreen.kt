@@ -35,8 +35,7 @@ fun HuntScreen(
     onSetUpHunt: (String, Int, Int) -> Unit,
     onAssignPlayer: (Ulid, Int) -> Unit,
     onMarkSpaceKind: (Int, HuntSpaceKind) -> Unit,
-    onAssignHuntEvent: (Int, String) -> Unit,
-    onResolveHuntEvent: (Int, String) -> Unit,
+    onResolveDrawnEvent: () -> Unit,
     onEditHuntRoll: (Int, Int) -> Unit,
     onAdvanceHunt: () -> Unit,
     onMoveMonster: () -> Unit,
@@ -76,8 +75,7 @@ fun HuntScreen(
             atStart = hunt.position == 0,
             stepRoll = hunt.spaces.getOrElse(selected) { HuntSpace() }.roll,
             onEditRoll = { onEditHuntRoll(selected, it) },
-            onAssign = { onAssignHuntEvent(hunt.position, it) },
-            onResolve = { onResolveHuntEvent(hunt.position, it) },
+            onResolve = onResolveDrawnEvent,
             onMarkKind = { onMarkSpaceKind(selected, it) },
         )
         ActionButtons(

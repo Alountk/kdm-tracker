@@ -8,6 +8,7 @@ import io.kdmtracker.core.usecase.AssignPlayer
 import io.kdmtracker.core.usecase.EditHuntRoll
 import io.kdmtracker.core.usecase.MarkSpaceKind
 import io.kdmtracker.core.usecase.MoveMonster
+import io.kdmtracker.core.usecase.ResolveDrawnHuntEvent
 import io.kdmtracker.core.usecase.ResolveHuntEvent
 import io.kdmtracker.core.usecase.RetreatMonster
 import io.kdmtracker.core.usecase.SetUpHunt
@@ -15,6 +16,7 @@ import io.kdmtracker.core.usecase.SetUpHunt
 /** Hunt board actions: setup, party and beast movement, events and rolls. */
 internal class HuntPhaseActions(
     session: ControllerSession,
+    private val flow: YearFlowActions,
 ) : FeatureActions(session) {
     fun setUpHunt(
         quarry: String,
@@ -35,11 +37,18 @@ internal class HuntPhaseActions(
         val quarry = repository.record.state.hunt.quarry
         val deck = quarry?.let { content.huntEventsFor(it) }.orEmpty()
         applyResult(AdvanceHunt.run(repository.record, deck = deck))
+        flow.startShowdownOnContact()
     }
 
-    /** Steps the monster toward the party, ambushing it on contact. */
+    /** Steps the monster toward the party; reaching it ambushes the party and starts the showdown. */
     fun moveMonster() {
         applyResult(MoveMonster.run(repository.record))
+        flow.startShowdownOnContact()
+    }
+
+    /** Resolves the drawn event card on the party's space (placing it first) as one change. */
+    fun resolveDrawnEvent() {
+        applyResult(ResolveDrawnHuntEvent.run(repository.record))
     }
 
     /** A hunt-event retreat: steps the monster away from the party. */
