@@ -5,7 +5,7 @@
 # included, because a required check that is skipped leaves the pull request waiting forever.
 #
 # Every Gradle invocation needs the Android SDK (`:core` applies the Android Gradle Plugin), so the
-# job installs the packages listed in the README before running anything.
+# job installs the packages listed in docs/development.md before running anything.
 #
 # Actions are pinned to commit SHAs on purpose (as in ai-review.yml): change SHA and comment together.
 name: ci

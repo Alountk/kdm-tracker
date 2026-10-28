@@ -80,7 +80,7 @@ data class MigrationReport(
  *
  * `migrate()` itself is deliberately **not** an `ApplicationRunner` — it is an explicit one-shot
  * call. `LegacyMigrationRunner` wires it to startup behind the off-by-default
- * `sync.migration.run-on-startup` flag (see the README runbook); from code it is just
+ * `sync.migration.run-on-startup` flag (see the runbook in docs/server.md); from code it is just
  * `migration.migrate()`.
  */
 @Service
