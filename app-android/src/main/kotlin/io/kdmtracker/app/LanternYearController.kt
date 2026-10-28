@@ -23,7 +23,7 @@ class LanternYearController(
     internal val flow = YearFlowActions(session)
     internal val settlement = SettlementActions(session)
     internal val survivors = SurvivorActions(session)
-    internal val hunt = HuntPhaseActions(session)
+    internal val hunt = HuntPhaseActions(session, flow)
     internal val showdown = ShowdownActions(session)
 
     val state: StateFlow<UiState> = session.state

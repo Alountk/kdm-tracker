@@ -148,15 +148,63 @@ class HuntBoardUseCaseTest {
     }
 
     @Test
-    fun advanceMovesOneSpaceAndCapsAtTheEnd() {
+    fun advanceMovesOneSpaceAndStopsAtTheMonster() {
         val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 1)).value
+        val monster = started.state.hunt.monsterPosition
 
         val one = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started)).value
         assertEquals(1, one.state.hunt.position)
+        assertEquals(HuntStatus.ACTIVE, one.state.hunt.status)
 
         var last = one
-        repeat(20) { last = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(last)).value }
-        assertEquals(12, last.state.hunt.position)
+        while (last.state.hunt.status == HuntStatus.ACTIVE) {
+            last = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(last)).value
+        }
+        assertEquals(monster, last.state.hunt.position)
+        assertIs<StepResult.Blocked>(AdvanceHunt.run(last))
+    }
+
+    /** Reaching the beast ends the hunt as quarry found and draws no event card there. */
+    @Test
+    fun reachingTheMonsterFindsTheQuarryWithoutDrawingACard() {
+        val deck = listOf(HuntEvent("Card A", "a", HuntEventKind.BASIC))
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 1)).value
+        val nearMonster =
+            started.copy(
+                state =
+                    started.state.copy(
+                        hunt = started.state.hunt.copy(position = started.state.hunt.monsterPosition - 1),
+                    ),
+            )
+
+        val found = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(nearMonster, deck, Random(1))).value
+
+        assertEquals(HuntStatus.QUARRY_FOUND, found.state.hunt.status)
+        assertEquals(started.state.hunt.monsterPosition, found.state.hunt.position)
+        assertNull(found.state.hunt.drawnEvent)
+    }
+
+    /** Resolving the drawn card is one change: it is placed on the party's space and resolved. */
+    @Test
+    fun resolvingTheDrawnCardPlacesAndResolvesItInOneStep() {
+        val deck = listOf(HuntEvent("Card A", "a", HuntEventKind.BASIC))
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 1)).value
+        val drawn = assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started, deck, Random(1))).value
+        assertIs<StepResult.Blocked>(AdvanceHunt.run(drawn, deck, Random(2)))
+
+        val resolved = assertIs<StepResult.Ok<SettlementRecord>>(ResolveDrawnHuntEvent.run(drawn)).value
+
+        val space = resolved.state.hunt.spaces[resolved.state.hunt.position]
+        assertEquals(listOf("Card A"), space.events)
+        assertEquals(listOf("Card A"), space.resolved)
+        assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(resolved, deck, Random(2)))
+    }
+
+    @Test
+    fun resolvingWithNoDrawnCardIsBlocked() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 1)).value
+
+        assertIs<StepResult.Blocked>(ResolveDrawnHuntEvent.run(started))
     }
 
     /**
@@ -302,7 +350,7 @@ class HuntBoardUseCaseTest {
         assertIs<StepResult.Ok<SettlementRecord>>(AdvanceHunt.run(started))
     }
 
-    /** S6: landing on a step rolls 2d10 (sum 2..20) and stores it on that step. */
+    /** Landing on a step rolls two d10 as a d100 (1..100, `00` = 100) and stores it on that step. */
     @Test
     fun advanceRolls2d10OnTheLandedStep() {
         val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
@@ -310,7 +358,7 @@ class HuntBoardUseCaseTest {
 
         val landed = after.state.hunt.spaces[after.state.hunt.position]
         val roll = assertIs<Int>(landed.roll)
-        assertTrue(roll in 2..20, "2d10 sum must be 2..20, was $roll")
+        assertTrue(roll in 1..100, "the d100 roll must be 1..100, was $roll")
     }
 
     /** S6: a step keeps its own roll — a later visit never re-rolls a step that already has one. */
@@ -365,7 +413,21 @@ class HuntBoardUseCaseTest {
     @Test
     fun anOutOfRangeEditedRollIsRejected() {
         val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
-        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 1))
-        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 21))
+        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 0))
+        assertIs<StepResult.Blocked>(EditHuntRoll.run(started, 1, 101))
+    }
+
+    /** The edit accepts the whole d100 range, not the old 2..20 sum. */
+    @Test
+    fun theEditedRollAcceptsTheWholeD100Range() {
+        val started = assertIs<StepResult.Ok<SettlementRecord>>(SetUpHunt.run(record(), "White Lion", 1, 4)).value
+        listOf(1, 42, 100).forEach { roll ->
+            val edited = assertIs<StepResult.Ok<SettlementRecord>>(EditHuntRoll.run(started, 1, roll)).value
+            assertEquals(
+                roll,
+                edited.state.hunt.spaces[1]
+                    .roll,
+            )
+        }
     }
 }

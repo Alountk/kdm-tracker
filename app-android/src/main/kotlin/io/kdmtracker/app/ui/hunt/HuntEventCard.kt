@@ -40,8 +40,7 @@ internal fun HuntEventCard(
     atStart: Boolean,
     stepRoll: Int?,
     onEditRoll: (Int) -> Unit,
-    onAssign: (String) -> Unit,
-    onResolve: (String) -> Unit,
+    onResolve: () -> Unit,
     onMarkKind: (HuntSpaceKind) -> Unit,
 ) {
     HuntPanel {
@@ -175,16 +174,11 @@ internal fun HuntEventCard(
                     )
                 }
             }
-            // Resolve by hand: record the drawn card on the party's current space and mark it
-            // resolved. The button always acts on the current space (partySpace), independent of
-            // which space is being viewed (space / index).
-            val onParty = drawnEvent.name in partySpace.events
+            // One tap places the drawn card on the party's current space and resolves it; it acts
+            // on that space (partySpace) whichever space is being viewed (space / index).
             val isResolved = drawnEvent.name in partySpace.resolved
             OutlinedButton(
-                onClick = {
-                    if (!onParty) onAssign(drawnEvent.name)
-                    if (!isResolved) onResolve(drawnEvent.name)
-                },
+                onClick = onResolve,
                 enabled = !isResolved,
                 modifier = Modifier.fillMaxWidth(),
             ) {
