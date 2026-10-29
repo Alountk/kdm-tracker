@@ -54,6 +54,25 @@ class SettlementStepCatalogTest {
     }
 
     @Test
+    fun threeSummariesCarryTheDesignsVerbatimCopy() {
+        assertEquals(
+            "Cada superviviente que sobrevive y regresa de la cacería genera 1 esfuerzo (*). " +
+                "Se extinguen al concluir esta fase si no son consumidos.",
+            SettlementStepCatalog.byNumber(3).summary,
+        )
+        assertEquals(
+            "Selecciona una presa de la Lista de Presas y cuatro supervivientes con el valor " +
+                "para adentrarse en la oscuridad infinita.",
+            SettlementStepCatalog.byNumber(8).summary,
+        )
+        assertEquals(
+            "Guarda cualquier recurso no invertido y equipo sin asignar en el almacén del asentamiento " +
+                "para futuras innovaciones o cacerías.",
+            SettlementStepCatalog.byNumber(10).summary,
+        )
+    }
+
+    @Test
     fun everyStepStillCarriesASummary() {
         assertEquals(11, SettlementStepCatalog.ALL.size)
         assertTrue(SettlementStepCatalog.ALL.all { it.summary.isNotBlank() })
