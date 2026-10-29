@@ -160,3 +160,36 @@ modela como slice aparte. V2 solo reconstruye la pantalla 1:1 y modela `MoveMons
 
 - Raised by: V2 Caza scope decision, 2026-10-18.
 - Scope: `core/.../content/`, `core/.../usecase/`, `app-android/.../ui/HuntScreen.kt`.
+
+## Pasos del asentamiento 1:1: controles inertes y funciones retiradas (diferidos)
+
+Al reconstruir los cuerpos de los pasos 1–6 y 8–11 desde el diseño de Stitch, cada control que el
+diseño dibuja **deshabilitado** y cada función que el diseño ya no muestra quedan aquí.
+
+**Dibujado pero inerte** (no hay modelo detrás):
+
+- `+1 Supervivencia` a los que regresan (paso 2): la regla del núcleo no está modelada.
+- Alternar el consumo de esfuerzos por superviviente y su `−`/`+` (paso 3).
+- Las listas de comprobación del paso 11 y los chips de armadura / equipo del paso 8.
+- `Añadir Ítem` en `Equipo Almacenado` (paso 10): no hay un modelo para añadir equipo al almacén.
+- Cambiar la presa (`Canteras`) en el paso 8.
+- `Vida / IA` y `Dureza` del monstruo (paso 8): no hay modelo de estadísticas de monstruo.
+- La etiqueta de herida (corazón) del paso 2.
+
+**Retirado de la UI** (la lógica sigue en el controlador y sus tests):
+
+- Robar y registrar el evento de asentamiento (paso 4).
+- El contador de nacimientos y el hito Nueva Vida (paso 5); deshacer una muerte registrada.
+- La declaración del enfrentamiento especial y su UI de encuentro (paso 9).
+- El resumen y el aviso de esfuerzos sin gastar del paso 11 (el contador sigue en el pie).
+
+**Sin superficie diseñada:**
+
+- Las líneas de almacén que no son los cuatro recursos básicos no se muestran en el paso 10; se
+  resuelve junto con B3 (catálogo real de recursos).
+- Las fotos de fondo de los héroes quedan fuera de alcance.
+- Los hitos que el diseño no nombra conservan el texto en inglés del núcleo hasta B4 (selector de
+  idioma).
+
+- Raised by: reconstrucción 1:1 de los pasos del asentamiento, 2026-10-29.
+- Scope: `app-android/.../ui/*StepScreen.kt`, `core/.../usecase/`.
