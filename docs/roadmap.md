@@ -3,7 +3,7 @@
 One page: what the Stitch designs still owe the app, in the order to build it. Updated as
 slices land. `docs/backlog.md` keeps the small deferred items; this file keeps the program.
 
-## Where we are (2026-10-23)
+## Where we are (2026-10-29)
 
 The design program is "apply the Stitch design to the screens", in two parts plus a screen
 program. All of Part A is merged.
@@ -12,7 +12,7 @@ program. All of Part A is merged.
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
-| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A), Supervivientes (#37), Caza (#38–#41), Enfrentamiento | ✅ Asentamiento's designed part, Supervivientes & Caza done; **1 open** |
+| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A, step bodies #58–#59), Supervivientes (#37), Caza (#38–#41, #57), Enfrentamiento | ✅ Asentamiento (all eleven steps), Supervivientes & Caza done; **1 open** |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
 Design sources (Stitch project `4909212909494507782`):
