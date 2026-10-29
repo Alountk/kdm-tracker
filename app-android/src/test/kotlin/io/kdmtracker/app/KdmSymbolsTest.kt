@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 class KdmSymbolsTest {
     @Test
     fun glyphMapsEveryDesignedSymbol() {
-        assertEquals(98, designedGlyphs.size)
+        assertEquals(111, designedGlyphs.size)
         designedGlyphs.forEach { (name, code) -> assertEquals(code.toChar().toString(), KdmSymbols.glyph(name), name) }
     }
 
@@ -32,7 +32,7 @@ class KdmSymbolsTest {
 
     @Test
     fun everyDesignedGlyphIsMapped() {
-        assertEquals(98, KdmSymbols.glyphCount)
+        assertEquals(111, KdmSymbols.glyphCount)
     }
 
     /** S3: the fixed Overwhelming Darkness / Starvation icons resolve to bundled glyphs. */
@@ -49,6 +49,7 @@ internal val designedGlyphs: Map<String, Int> =
         "accessibility_new" to 0xE92C,
         "account_balance" to 0xE84F,
         "add" to 0xE145,
+        "add_circle" to 0xE147,
         "airline_seat_legroom_extra" to 0xE633,
         "airline_stops" to 0xE7D0,
         "arrow_drop_down" to 0xE5C5,
@@ -59,12 +60,16 @@ internal val designedGlyphs: Map<String, Int> =
         "balance" to 0xEAF6,
         "bedtime" to 0xF159,
         "bolt" to 0xEA0B,
+        "bookmark" to 0xE866,
+        "bookmark_border" to 0xE867,
         "brush" to 0xE3AE,
         "casino" to 0xEB40,
         "check" to 0xE5CA,
+        "check_box" to 0xE834,
         "check_box_outline_blank" to 0xE835,
         "check_circle" to 0xF0BE,
         "chevron_left" to 0xE5CB,
+        "cleaning_services" to 0xF0FF,
         "colorize" to 0xE3B8,
         "crisis_alert" to 0xEBE9,
         "cruelty_free" to 0xE799,
@@ -79,6 +84,7 @@ internal val designedGlyphs: Map<String, Int> =
         "expand_less" to 0xE5CE,
         "explore" to 0xE87A,
         "face" to 0xF008,
+        "family_restroom" to 0xF1A2,
         "favorite" to 0xE87E,
         "fitness_center" to 0xEB43,
         "format_h4" to 0xF860,
@@ -95,7 +101,9 @@ internal val designedGlyphs: Map<String, Int> =
         "groups" to 0xF233,
         "handyman" to 0xF10B,
         "hardware" to 0xEA59,
+        "healing" to 0xE3F3,
         "home" to 0xE9B2,
+        "hotel_class" to 0xE743,
         "hourglass_bottom" to 0xEA5C,
         "hourglass_empty" to 0xE88B,
         "info" to 0xE88E,
@@ -109,6 +117,7 @@ internal val designedGlyphs: Map<String, Int> =
         "lock_open" to 0xE898,
         "logout" to 0xE9BA,
         "manage_search" to 0xF02F,
+        "menu_book" to 0xEA19,
         "no_meals" to 0xF1D6,
         "nights_stay" to 0xF174,
         "nutrition" to 0xE110,
@@ -118,6 +127,7 @@ internal val designedGlyphs: Map<String, Int> =
         "psychology" to 0xEA4A,
         "psychology_alt" to 0xF8EA,
         "publish" to 0xE255,
+        "radiology" to 0xE125,
         "remove" to 0xE15B,
         "replay" to 0xE042,
         "restaurant" to 0xE56C,
@@ -131,15 +141,18 @@ internal val designedGlyphs: Map<String, Int> =
         "star" to 0xF09A,
         "sports_mma" to 0xEA2C,
         "style" to 0xE41D,
+        "swap_horiz" to 0xE8D4,
         "swap_horizontal_circle" to 0xE933,
         "swap_vert" to 0xE8D5,
         "swords" to 0xF889,
         "sync_alt" to 0xEA18,
         "target" to 0xE719,
+        "texture" to 0xE421,
         "touch_app" to 0xE913,
         "undo" to 0xE166,
         "unfold_more" to 0xE5D7,
         "verified" to 0xEF76,
+        "verified_user" to 0xE8E8,
         "visibility" to 0xE8F4,
         "vital_signs" to 0xE650,
         "warning" to 0xF083,

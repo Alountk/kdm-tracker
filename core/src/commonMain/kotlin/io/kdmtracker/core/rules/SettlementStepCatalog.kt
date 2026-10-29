@@ -32,8 +32,8 @@ object SettlementStepCatalog {
             SettlementStep(
                 3,
                 "Ganar Esfuerzos",
-                "+1 esfuerzo por cada superviviente que regresa, más los bonus que otorguen las " +
-                    "innovaciones y los principios.",
+                "Cada superviviente que sobrevive y regresa de la cacería genera 1 esfuerzo (*). " +
+                    "Se extinguen al concluir esta fase si no son consumidos.",
                 StepType.BOOKKEEPING,
             ),
             SettlementStep(
@@ -67,8 +67,8 @@ object SettlementStepCatalog {
             SettlementStep(
                 8,
                 "Preparar Supervivientes",
-                "Terminar la sesión o elegir los 4 supervivientes que parten (menos si la población es < 4) " +
-                    "y cargar sus cuadrículas de equipo.",
+                "Selecciona una presa de la Lista de Presas y cuatro supervivientes con el valor " +
+                    "para adentrarse en la oscuridad infinita.",
                 StepType.DECISION,
             ),
             SettlementStep(
@@ -81,8 +81,8 @@ object SettlementStepCatalog {
             SettlementStep(
                 10,
                 "Anotar y Almacenar",
-                "Escribir los recursos no gastados en el almacén del asentamiento y archivar las " +
-                    "cartas físicas.",
+                "Guarda cualquier recurso no invertido y equipo sin asignar en el almacén del asentamiento " +
+                    "para futuras innovaciones o cacerías.",
                 StepType.BOOKKEEPING,
             ),
             SettlementStep(
