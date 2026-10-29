@@ -1,129 +1,136 @@
 package io.kdmtracker.app.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.kdmtracker.app.UiState
-import io.kdmtracker.core.domain.Core16Milestones
-import io.kdmtracker.core.domain.PrincipleCategory
-import io.kdmtracker.core.ruleset.PrincipleChoice
+import io.kdmtracker.app.ui.theme.KdmType
+
+/** The step-5 body's static design copy, kept where `SettlementStepBodiesTest` can pin it. */
+internal object DeathCountStepCopy {
+    const val TITLE = "Bajas en la Primera Historia"
+
+    const val NOTE =
+        "Marca una casilla vacía por cada caído en combate o por eventos de historia " +
+            "durante la partida."
+}
 
 /**
- * Step 5 "Update the Death Count" body.
+ * Step 5 "Contador de Muertes" body: the design's deaths row card.
  *
- * Records deaths (which lower the population) and births (the counter panel's second input, the
- * only place the New Life milestone can be fed), and surfaces the one-time `Principle: Death`
- * choice once the first death is recorded. Stateless beyond the two text fields; every action is
- * reported through a callback and no rule lives here.
+ * `add` is the modeled death record ([io.kdmtracker.core.usecase.RecordDeaths] via the frame's
+ * controller, +1 per tap — the usecase refuses `count < 1`), so `remove` is drawn disabled (backlog:
+ * undo a recorded death). The subtitle is the design's zero-deaths copy and renders only while
+ * [io.kdmtracker.app.UiState.deaths] is 0 ([deathsRowSubtitle]); no designed copy exists for a
+ * nonzero count. The births counter and the step-5 principle card are gone — the same
+ * principle choice lives in step 6's milestone cards — so neither `RecordBirths` nor
+ * `onChoosePrinciple` appears here. The frame owns the step title and the opening paragraph.
  */
 @Composable
 fun DeathCountStepScreen(
     state: UiState,
     onRecordDeaths: (Int) -> Unit,
-    onRecordBirths: (Int) -> Unit,
-    onChoosePrinciple: (PrincipleCategory, String) -> Unit,
 ) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(text = state.stepTitle, style = MaterialTheme.typography.headlineMedium)
-        Text(
-            text =
-                "Deaths ${state.deaths} · Births ${state.births} · Population ${state.population}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        CounterRow(label = "Deaths", onRecord = onRecordDeaths)
-        CounterRow(label = "Births", onRecord = onRecordBirths)
-
-        val death =
-            state.milestoneViews.firstOrNull { it.id == Core16Milestones.PRINCIPLE_DEATH }
-        if (death != null && death.reached) {
-            PrincipleCard(
-                title = "Principle: Death",
-                choices = death.choices,
-                chosen = state.chosenPrinciples[PrincipleCategory.DEATH],
-                onChoosePrinciple = onChoosePrinciple,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CounterRow(
-    label: String,
-    onRecord: (Int) -> Unit,
-) {
-    var amount by remember { mutableStateOf("1") }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        OutlinedTextField(
-            value = amount,
-            onValueChange = { amount = it.filter(Char::isDigit) },
-            label = { Text(label) },
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-        )
-        Button(
-            onClick = { onRecord(amount.toIntOrNull() ?: 0) },
-            modifier = Modifier.width(120.dp),
+        // Meta row: the design's header-row `Total` pill.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
         ) {
-            Text("Record")
+            Row(
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest, MaterialTheme.shapes.small)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Total:".uppercase(),
+                    style = KdmType.labelCaps,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = state.deaths.toString(),
+                    style = KdmType.labelCaps.copy(fontSize = 14.sp, lineHeight = 18.sp),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
         }
-    }
-}
 
-@Composable
-private fun PrincipleCard(
-    title: String,
-    choices: List<PrincipleChoice>,
-    chosen: String?,
-    onChoosePrinciple: (PrincipleCategory, String) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest, MaterialTheme.shapes.medium)
+                    .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = title, style = MaterialTheme.typography.titleSmall)
-            chosen?.let { Text(text = "Chosen: $it", style = MaterialTheme.typography.bodyMedium) }
-            choices.forEach { choice ->
-                OutlinedButton(
-                    onClick = { onChoosePrinciple(choice.category, choice.label) },
-                    modifier = Modifier.fillMaxWidth(),
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = DeathCountStepCopy.TITLE,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                deathsRowSubtitle(state.deaths)?.let { subtitle ->
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Disabled: RecordDeaths refuses count < 1, so an undo needs a new usecase (backlog).
+                IconButton(
+                    onClick = {},
+                    enabled = false,
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.small),
                 ) {
-                    Text(choice.label)
+                    Symbol("remove", MaterialTheme.colorScheme.onSurfaceVariant, 18)
+                }
+                IconButton(
+                    onClick = { onRecordDeaths(1) },
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.small),
+                ) {
+                    Symbol("add", MaterialTheme.colorScheme.error, 18)
                 }
             }
         }
+
+        Text(
+            text = DeathCountStepCopy.NOTE,
+            style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

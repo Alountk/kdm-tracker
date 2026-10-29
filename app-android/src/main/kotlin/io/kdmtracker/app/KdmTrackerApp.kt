@@ -158,22 +158,13 @@ private fun InCampaignScreen(
                     onBuild = { act { settlement.build(it) } },
                     onAddResource = { act { settlement.addResource(it) } },
                     onCraft = { location, gear -> act { settlement.craft(location, gear) } },
-                    onRecordEvent = { act { settlement.recordSettlementEvent(it) } },
-                    onDrawEvent = viewModel::drawSettlementEvent,
                     onRecordDeaths = { act { settlement.recordDeaths(it) } },
-                    onRecordBirths = { act { settlement.recordBirths(it) } },
                     onChoosePrinciple = { category, label -> act { settlement.choosePrinciple(category, label) } },
                     onResolveMilestone = { act { settlement.resolveMilestone(it) } },
                     onHealSurvivors = { act { survivors.healSurvivors() } },
                     onDepartingChange = { act { survivors.markDeparting(it) } },
                     onAssignGear = { survivorId, gearName -> act { survivors.assignGear(survivorId, gearName) } },
                     onUnassignGear = { survivorId, gearName -> act { survivors.unassignGear(survivorId, gearName) } },
-                    onSaveSurvivor = { act { survivors.updateSurvivor(it) } },
-                    onDeclareSpecialShowdown = { act { showdown.declareSpecialShowdown(it) } },
-                    onSetUpShowdown = { monster, level, deck -> act { showdown.setUpShowdown(monster, level, deck) } },
-                    onDrawShowdownCard = { act { showdown.drawShowdownCard() } },
-                    onWoundMonster = { act { showdown.woundMonster() } },
-                    onGrantHuntXp = { act { showdown.grantHuntXp(it) } },
                 )
             // The design's Supervivientes tab is the paged survivor sheet: one survivor at a
             // time with a cycling prev button, no roster list.

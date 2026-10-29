@@ -33,18 +33,17 @@ import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
 import io.kdmtracker.core.domain.ResourceId
-import io.kdmtracker.core.domain.Survivor
 import io.kdmtracker.core.domain.Ulid
 
 /**
  * Stateless rendering of the Settlement Phase for one [UiState] frame.
  *
- * Step 1 (Set Up) hands the whole frame to [SetUpStepScreen]: it is read-only content with its own
- * confirm action. Every other step shows the cockpit — a header, a **thin top step bar** (the 11
- * steps as numbered chips, the current one highlighted and unreachable ones disabled, so the
- * navigation never eats half the width), a full-width body and the back/next controls. Step 7
- * (Develop) renders its own panels inline. All navigation is reported through the
- * callbacks; this composable owns no state and no rules.
+ * Every step shows the cockpit — a header, a **thin top step bar** (the 11 steps as numbered chips,
+ * the current one highlighted and unreachable ones disabled, so the navigation never eats half the
+ * width), a full-width body and the back/next controls. Step 1 renders its own body like every
+ * other step (the frame's advance replaces its old `Confirm Setup`), and step 7 (Develop) renders
+ * its panels inline. All navigation is reported through the callbacks; this composable owns no
+ * state and no rules.
  */
 @Composable
 fun SettlementScreen(
@@ -56,50 +55,36 @@ fun SettlementScreen(
     onBuild: (String) -> Unit = {},
     onAddResource: (ResourceEntry) -> Unit = {},
     onCraft: (String, String) -> Unit = { _, _ -> },
-    onRecordEvent: (String) -> Unit = {},
-    onDrawEvent: () -> Unit = {},
     onRecordDeaths: (Int) -> Unit = {},
-    onRecordBirths: (Int) -> Unit = {},
     onChoosePrinciple: (PrincipleCategory, String) -> Unit = { _, _ -> },
     onResolveMilestone: (MilestoneId) -> Unit = {},
     onHealSurvivors: () -> Unit = {},
     onDepartingChange: (List<Ulid>) -> Unit = {},
     onAssignGear: (Ulid, String) -> Unit = { _, _ -> },
     onUnassignGear: (Ulid, String) -> Unit = { _, _ -> },
-    onSaveSurvivor: (Survivor) -> Unit = {},
-    onDeclareSpecialShowdown: (Boolean) -> Unit = {},
-    onSetUpShowdown: (String, Int, List<String>) -> Unit = { _, _, _ -> },
-    onDrawShowdownCard: () -> Unit = {},
-    onWoundMonster: () -> Unit = {},
-    onGrantHuntXp: (List<Ulid>) -> Unit = {},
 ) {
-    if (state.currentStep == 1) {
-        SetUpStepScreen(state = state, onConfirm = onAdvance)
-        return
-    }
+    // The summary's and step 10's resource adjust share one entry into the ledger.
+    val adjust: (ResourceId, Int) -> Unit = { id, delta -> onAddResource(ResourceEntry(id, delta)) }
     SettlementCockpit(
         state = state,
         onAdvance = onAdvance,
         onPrevious = onPrevious,
         onSelectStep = onSelectStep,
-        onAdjust = { id, delta -> onAddResource(ResourceEntry(id, delta)) },
+        onAdjust = adjust,
     ) {
         when (state.currentStep) {
+            1 -> SetUpStepScreen(state = state)
             2 ->
                 SurvivorsReturnStepScreen(
                     state = state,
                     onHeal = onHealSurvivors,
-                    onSaveSurvivor = onSaveSurvivor,
-                    onAssignGear = onAssignGear,
-                    onUnassignGear = onUnassignGear,
                 )
-            4 -> TimelineStepScreen(state = state, onRecordEvent = onRecordEvent, onDrawEvent = onDrawEvent)
+            3 -> GainEndeavorsStepScreen(state = state)
+            4 -> TimelineStepScreen(state = state)
             5 ->
                 DeathCountStepScreen(
                     state = state,
                     onRecordDeaths = onRecordDeaths,
-                    onRecordBirths = onRecordBirths,
-                    onChoosePrinciple = onChoosePrinciple,
                 )
             6 ->
                 MilestonesStepScreen(
@@ -123,20 +108,9 @@ fun SettlementScreen(
                     onDepartingChange = onDepartingChange,
                     onAssignGear = onAssignGear,
                     onUnassignGear = onUnassignGear,
-                    onSaveSurvivor = onSaveSurvivor,
                 )
-            9 ->
-                SpecialShowdownStepScreen(
-                    state = state,
-                    onDeclareSpecialShowdown = onDeclareSpecialShowdown,
-                    onSetUpShowdown = onSetUpShowdown,
-                    onDrawShowdownCard = onDrawShowdownCard,
-                    onWoundMonster = onWoundMonster,
-                    onGrantHuntXp = onGrantHuntXp,
-                    onRecordDeaths = onRecordDeaths,
-                    onConclude = onAdvance,
-                )
-            10 -> ArchiveStepScreen(state = state)
+            9 -> SpecialShowdownStepScreen(state = state)
+            10 -> ArchiveStepScreen(state = state, onAdjust = adjust)
             11 -> EndPhaseStepScreen(state = state)
             else -> PendientePlaceholder(modifier = Modifier.fillMaxWidth())
         }
