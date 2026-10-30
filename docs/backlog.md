@@ -269,3 +269,22 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
 - Raised by: tests de flujo del año linterna, 2026-10-30.
 - Scope: `app-android/.../YearFlowActions.kt`, `core/.../usecase/SetHuntOutcome.kt`,
   `app-android/src/test/.../RulebookDivergencesTest.kt`.
+
+## Guardas de fase que el controlador no aplica todavía (casos límite, 2026-10-31)
+
+Los tests de `PhaseGuardGapsTest` enuncian cada guarda y están marcados `@Ignore` hasta que exista.
+Salieron de sondear el flujo del año linterna con casos límite; ninguna se ha corregido sin avisar
+al mantenedor. No son reglas del manual, son huecos del controlador.
+
+- **`advance()` sin guarda de fase** (`YearFlowActions.advance`): tras el paso 11 la fase pasa a Caza;
+  una segunda pulsación de «siguiente» antes de que la pantalla cambie salta de Caza a Enfrentamiento
+  con la caza sin resolver (`HuntStatus.ACTIVE`).
+- **`selectStep()` sin guarda de fase** (`YearFlowActions.selectStep`): la barra de pasos se muestra en
+  la pestaña Asentamiento aunque la fase sea Caza o Enfrentamiento; tocar un chip cambia el paso
+  dentro de esa fase (Caza, paso 2), un estado que el flujo no define.
+- **Salida a la caza sin superviviente que parta** (paso 11): hoy se confirma sin elegir a nadie en el
+  paso 8. El manual dice «elegir hasta 4 supervivientes» (paso 8, pág. 35), así que no prohíbe cero
+  literalmente; es una decisión de producto si hay que exigir al menos uno.
+
+- Raised by: sondeo de casos límite del asentamiento, 2026-10-31.
+- Scope: `app-android/.../YearFlowActions.kt`, `app-android/src/test/.../PhaseGuardGapsTest.kt`.

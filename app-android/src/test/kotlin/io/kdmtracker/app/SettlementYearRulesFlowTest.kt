@@ -106,4 +106,21 @@ class SettlementYearRulesFlowTest {
         assertEquals(2, state.lanternYear, "the year only moves on at the timeline step")
         assertEquals(0, state.endeavors)
     }
+
+    @Test
+    fun walkingBackAndForthInsideTheYearNeverEarnsOrCountsTwice() {
+        advanceTo(5)
+        assertEquals(4, state.endeavors)
+        assertEquals(2, state.lanternYear)
+
+        // Births at step 5 enlarge the population after the endeavors were earned.
+        controller.settlement.recordBirths(2)
+        repeat(4) { controller.flow.previous() }
+        assertEquals(1, state.currentStep)
+        advanceTo(5)
+
+        assertEquals(6, state.population)
+        assertEquals(4, state.endeavors, "the earlier survivors count, not the newborns, and only once")
+        assertEquals(2, state.lanternYear, "crossing the timeline step again keeps the year")
+    }
 }
