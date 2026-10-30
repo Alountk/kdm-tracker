@@ -9,12 +9,15 @@ package io.kdmtracker.core.domain
  * than splitting across two.
  *
  * @property names the bucket's label in each language, matching the design's own labels.
+ * @property basicId the plain resource of this material the grids adjust. A material has several
+ * basic resources (a monster skull is also a bone), so the material alone does not name one.
  */
 enum class ResourceMaterial(
     val names: LocalizedText,
+    val basicId: ResourceId,
 ) {
-    BONE(LocalizedText(es = "Hueso", en = "Bone")),
-    ORGAN(LocalizedText(es = "Órgano", en = "Organ")),
-    HIDE(LocalizedText(es = "Pellejo", en = "Hide")),
-    SCRAP(LocalizedText(es = "Chatarra", en = "Scrap")),
+    BONE(LocalizedText(es = "Hueso", en = "Bone"), ResourceId("bone.monster")),
+    ORGAN(LocalizedText(es = "Órgano", en = "Organ"), ResourceId("organ.monster")),
+    HIDE(LocalizedText(es = "Pellejo", en = "Hide"), ResourceId("hide.monster")),
+    SCRAP(LocalizedText(es = "Chatarra", en = "Scrap"), ResourceId("scrap")),
 }

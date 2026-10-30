@@ -141,13 +141,7 @@ private fun SettlementCockpit(
                         maxEndeavors = state.endeavorBreakdown.total,
                         resources =
                             SettlementSummaryModel.basicResources(
-                                // The design's grid is exactly these four, in this order: the catalog
-                                // carries more basic resources (and, from the legacy pack, English
-                                // duplicates of them), which would otherwise flood the row.
-                                definitions =
-                                    SettlementSummaryModel.DESIGN_ORDER.mapNotNull { name ->
-                                        state.resourceDefinitions.firstOrNull { it.names.es == name }
-                                    },
+                                definitions = state.resourceDefinitions,
                                 storage = state.storageLines,
                             ),
                     ),

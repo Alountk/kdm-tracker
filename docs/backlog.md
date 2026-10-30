@@ -226,3 +226,17 @@ mazo de IA).
 
 - Raised by: reconstrucción 1:1 del enfrentamiento, 2026-10-30.
 - Scope: `app-android/.../ui/showdown/`, `core/.../usecase/HealMonster.kt`.
+
+## Contar las celdas de recursos por material (B3, diferido)
+
+Las celdas del resumen y del paso 10 muestran la cantidad del recurso básico de su material
+(`ResourceMaterial.basicId`), no la suma del material: una Garra de León (hueso) no suma a la celda
+Hueso. `Storage.byMaterial` ya existe y está probada, pero usarla tal cual deja el `−` de la celda
+incoherente (la celda marcaría 3 y gastar del básico se rechazaría con 0).
+
+Antes de contar por material hace falta una regla de **gastar por material**: primero el recurso
+básico y después las variantes. Fabricar ya gasta por id y no cambia.
+
+- Raised by: saldar la deuda del grid de B3, 2026-10-30.
+- Scope: `app-android/.../ui/settlement/SettlementSummaryModel.kt`, `ui/StepBodies9To11Model.kt`,
+  `core/.../usecase/AddResourceEntry.kt`.

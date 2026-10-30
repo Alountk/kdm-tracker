@@ -8,6 +8,7 @@ import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.StorageLine
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,19 +24,20 @@ import kotlin.test.assertTrue
 class StepBodies9To11ModelTest {
     private fun definition(
         id: String,
-        es: String,
+        material: ResourceMaterial? = null,
     ): ResourceDefinition =
         ResourceDefinition(
             id = ResourceId(id),
-            names = LocalizedText(es),
+            names = LocalizedText(id),
             category = ResourceCategory.BASIC,
+            materials = setOfNotNull(material),
         )
 
-    private val bone = definition("bone", "Hueso de Monstruo")
-    private val organ = definition("organ", "Órgano de Monstruo")
-    private val hide = definition("hide", "Piel de Monstruo")
-    private val scrap = definition("scrap", "Scrap")
-    private val catalog = listOf(bone, organ, hide, scrap)
+    private val bone = definition("bone.monster", ResourceMaterial.BONE)
+    private val organ = definition("organ.monster", ResourceMaterial.ORGAN)
+    private val hide = definition("hide.monster", ResourceMaterial.HIDE)
+    private val scrap = definition("scrap", ResourceMaterial.SCRAP)
+    private val catalog = listOf(scrap, hide, bone, organ)
 
     // -- S9: the year-1 exemption card renders during the first settlement phase --
 
@@ -54,7 +56,7 @@ class StepBodies9To11ModelTest {
     fun theGridCarriesTheFourBasicResourcesInTheDesignsOrder() {
         val rows = resourceGridRows(definitions = catalog, storage = emptyList())
 
-        assertEquals(listOf("bone", "organ", "hide", "scrap"), rows.map { it.id.value })
+        assertEquals(listOf("bone.monster", "organ.monster", "hide.monster", "scrap"), rows.map { it.id.value })
         assertEquals(listOf("HUESO", "ÓRGANO", "PELLEJO", "CHATARRA"), rows.map { it.label })
         assertEquals(listOf("Básico", "Básico", "Básico", "Raro"), rows.map { it.subLabel })
         assertEquals(listOf("radiology", "vital_signs", "texture", "hardware"), rows.map { it.glyph })
@@ -65,7 +67,7 @@ class StepBodies9To11ModelTest {
         val rows =
             resourceGridRows(
                 definitions = catalog,
-                storage = listOf(StorageLine(ResourceId("hide"), 3), StorageLine(ResourceId("scrap"), 1)),
+                storage = listOf(StorageLine(ResourceId("hide.monster"), 3), StorageLine(ResourceId("scrap"), 1)),
             )
 
         assertEquals(listOf(0, 0, 3, 1), rows.map { it.count })
@@ -75,11 +77,13 @@ class StepBodies9To11ModelTest {
     fun resourcesTheDesignDoesNotNameDoNotReachTheGrid() {
         val rows =
             resourceGridRows(
-                definitions = catalog + definition("herb", "Hierba"),
-                storage = emptyList(),
+                definitions =
+                    catalog + definition("herb.fresh_acanthus") + definition("skull.monster", ResourceMaterial.BONE),
+                storage = listOf(StorageLine(ResourceId("skull.monster"), 5)),
             )
 
-        assertEquals(4, rows.size, "only the four designed basics render (the rest is backlog)")
+        assertEquals(4, rows.size, "only each material's basic resource renders (the rest is backlog)")
+        assertEquals(listOf(0, 0, 0, 0), rows.map { it.count })
     }
 
     @Test
@@ -87,7 +91,11 @@ class StepBodies9To11ModelTest {
         val rows =
             resourceGridRows(
                 definitions = catalog,
-                storage = listOf(StorageLine(ResourceId("bone"), 0), StorageLine(ResourceId("organ"), 1)),
+                storage =
+                    listOf(
+                        StorageLine(ResourceId("bone.monster"), 0),
+                        StorageLine(ResourceId("organ.monster"), 1),
+                    ),
             )
 
         assertFalse(rows[0].canDecrement, "minus is inert at zero — AddResourceEntry refuses the overdraw")

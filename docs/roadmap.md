@@ -87,11 +87,11 @@ turn, controller, hit-location deck state, instinct and terrain) is listed in `d
 
 From `docs/superpowers/specs/2026-10-10-content-identity-design.md`:
 
-- **B3 — the real resource catalog**: all 56 resources with ids and materials through the CSV,
-  plus variants. Also pays the **summary-grid debt**: `SettlementSummaryModel` still resolves
-  the four basic resources through a hardcoded Spanish `DESIGN` map
-  (`SettlementSummaryModel.kt:45`) — delete it and resolve through content identity +
-  `ResourceMaterial` instead (this was T5 of S1, never done).
+- **B3 — the real resource catalog** ✅ done. All 56 generated resources already carry an id and
+  their materials; the summary-grid debt is paid: the summary and step 10 resolve each cell
+  through `ResourceMaterial` (`basicId`, label, colour) instead of a hardcoded Spanish name map.
+  **Still open:** counting a cell by material (a Garra de León adding to Hueso) needs a
+  «spend by material» rule first; see `docs/backlog.md`.
 - **B4 — the language selector**: `Language{ES,EN}` runtime selector (Spanish default,
   incremental English), per the i18n decision. No selector exists in the UI today.
 
