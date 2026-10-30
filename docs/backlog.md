@@ -240,3 +240,13 @@ básico y después las variantes. Fabricar ya gasta por id y no cambia.
 - Raised by: saldar la deuda del grid de B3, 2026-10-30.
 - Scope: `app-android/.../ui/settlement/SettlementSummaryModel.kt`, `ui/StepBodies9To11Model.kt`,
   `core/.../usecase/AddResourceEntry.kt`.
+
+## Selector de idioma (B4, diferido)
+
+Selector de runtime `Language{ES,EN}`, con español por defecto e inglés incremental, según la decisión
+de i18n de la spec de identidad de contenido. Hoy no existe ningún selector en la UI: los nombres de
+contenido ya llevan `LocalizedText` (con respaldo a español), pero la interfaz usa literales en español.
+Se retira del roadmap por decisión del mantenedor y se retoma cuando se quiera jugar en inglés.
+
+- Raised by: priorización del mantenedor, 2026-10-30.
+- Scope: `core/.../domain/Language.kt`, `LocalizedText`, `app-android/.../ui/`.
