@@ -2,6 +2,7 @@ package io.kdmtracker.app.ui.settlement
 
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.StorageLine
 
 /** A basic resource's colour role, and the Material Symbol the design draws with it. */
@@ -12,6 +13,18 @@ enum class ResourceColour(
     CORAL("psychology"),
     GOLD("layers"),
     DIM("hardware"),
+    ;
+
+    companion object {
+        /** The role the design gives each material's cell. */
+        fun of(material: ResourceMaterial): ResourceColour =
+            when (material) {
+                ResourceMaterial.BONE -> BONE
+                ResourceMaterial.ORGAN -> CORAL
+                ResourceMaterial.HIDE -> GOLD
+                ResourceMaterial.SCRAP -> DIM
+            }
+    }
 }
 
 /** One cell of the summary's resource grid. */
@@ -26,9 +39,9 @@ data class SummaryResource(
 /**
  * The settlement summary's display values.
  *
- * Pure: the caller supplies the scalars, so tests build one directly. The resource grid is keyed by
- * the catalog's Spanish display name and takes the design's short label and colour; a resource the design
- * does not name keeps its catalog name and the dim role rather than disappearing.
+ * Pure: the caller supplies the scalars, so tests build one directly. The resource grid is one cell
+ * per [ResourceMaterial], in the design's order; each cell adjusts the material's
+ * [ResourceMaterial.basicId] resource and takes the material's own label and colour.
  */
 data class SettlementSummaryModel(
     val survivalLimit: Int,
@@ -37,19 +50,6 @@ data class SettlementSummaryModel(
     val resources: List<SummaryResource>,
 ) {
     companion object {
-        /** The four resources the design's grid shows, in its order. */
-        val DESIGN_ORDER: List<String> =
-            listOf("Hueso de Monstruo", "Órgano de Monstruo", "Piel de Monstruo", "Scrap")
-
-        /** The design's short label and colour per catalog resource name. */
-        private val DESIGN =
-            mapOf(
-                "Hueso de Monstruo" to (("Hueso") to ResourceColour.BONE),
-                "Órgano de Monstruo" to (("Órgano") to ResourceColour.CORAL),
-                "Piel de Monstruo" to (("Pellejo") to ResourceColour.GOLD),
-                "Scrap" to (("Chatarra") to ResourceColour.DIM),
-            )
-
         fun of(
             survivalLimit: Int,
             endeavors: Int,
@@ -63,19 +63,23 @@ data class SettlementSummaryModel(
                 resources = resources,
             )
 
-        /** Builds the grid from the catalog's basic resources and the settlement's storage. */
+        /**
+         * Builds the grid: a cell per material whose basic resource the catalog carries, counting
+         * that resource alone. A material with no basic resource in the catalog has no id to adjust,
+         * so its cell drops out rather than render dead.
+         */
         fun basicResources(
             definitions: List<ResourceDefinition>,
             storage: List<StorageLine>,
         ): List<SummaryResource> =
-            definitions.map { definition ->
-                val design = DESIGN[definition.names.es]
+            ResourceMaterial.entries.mapNotNull { material ->
+                val definition = definitions.firstOrNull { it.id == material.basicId } ?: return@mapNotNull null
                 SummaryResource(
                     id = definition.id,
                     name = definition.names.es,
-                    label = design?.first ?: definition.names.es,
+                    label = material.names.es,
                     quantity = storage.firstOrNull { it.id == definition.id }?.quantity ?: 0,
-                    colour = design?.second ?: ResourceColour.DIM,
+                    colour = ResourceColour.of(material),
                 )
             }
     }

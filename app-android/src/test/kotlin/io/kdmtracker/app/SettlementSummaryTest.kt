@@ -7,6 +7,7 @@ import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.StorageLine
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -58,55 +59,62 @@ class SettlementSummaryTest {
         assertEquals(4, model.maxEndeavors)
     }
 
+    private fun basic(
+        id: String,
+        material: ResourceMaterial,
+    ) = ResourceDefinition(
+        id = ResourceId(id),
+        names = LocalizedText(es = id),
+        category = ResourceCategory.BASIC,
+        materials = setOf(material),
+    )
+
+    private val catalog =
+        listOf(
+            basic("scrap", ResourceMaterial.SCRAP),
+            basic("skull.monster", ResourceMaterial.BONE),
+            basic("hide.monster", ResourceMaterial.HIDE),
+            basic("organ.monster", ResourceMaterial.ORGAN),
+            basic("bone.monster", ResourceMaterial.BONE),
+        )
+
     @Test
-    fun theBasicResourcesTakeTheDesignsLabelAndColourByDisplayName() {
-        val definitions =
-            listOf(
-                ResourceDefinition(
-                    ResourceId("bone.monster"),
-                    LocalizedText(es = "Hueso de Monstruo"),
-                    ResourceCategory.BASIC,
-                ),
-                ResourceDefinition(
-                    ResourceId("hide.monster"),
-                    LocalizedText(es = "Piel de Monstruo"),
-                    ResourceCategory.BASIC,
-                ),
-                ResourceDefinition(
-                    ResourceId("organ.monster"),
-                    LocalizedText(es = "Órgano de Monstruo"),
-                    ResourceCategory.BASIC,
-                ),
-                ResourceDefinition(ResourceId("scrap"), LocalizedText(es = "Scrap"), ResourceCategory.BASIC),
-            )
+    fun theGridHasOneCellPerMaterialInTheDesignsOrderWhateverTheCatalogOrder() {
+        val resources = SettlementSummaryModel.basicResources(catalog, emptyList())
+
+        assertEquals(listOf("Hueso", "Órgano", "Pellejo", "Chatarra"), resources.map { it.label })
+        assertEquals(
+            listOf("bone.monster", "organ.monster", "hide.monster", "scrap"),
+            resources.map { it.id.value },
+        )
+        assertEquals(
+            listOf(ResourceColour.BONE, ResourceColour.CORAL, ResourceColour.GOLD, ResourceColour.DIM),
+            resources.map { it.colour },
+        )
+    }
+
+    @Test
+    fun aCellCountsItsMaterialsBasicResourceAndNotTheOtherBonesInTheCatalog() {
         val storage =
             listOf(
                 StorageLine(ResourceId("bone.monster"), 1),
+                StorageLine(ResourceId("skull.monster"), 4),
                 StorageLine(ResourceId("scrap"), 2),
             )
 
-        val resources = SettlementSummaryModel.basicResources(definitions, storage)
+        val resources = SettlementSummaryModel.basicResources(catalog, storage)
 
-        assertEquals(listOf("Hueso", "Pellejo", "Órgano", "Chatarra"), resources.map { it.label })
         assertEquals(listOf(1, 0, 0, 2), resources.map { it.quantity })
     }
 
     @Test
-    fun aResourceTheDesignDoesNotNameFallsBackToItsCatalogName() {
+    fun aMaterialWhoseBasicResourceTheCatalogLacksDropsOut() {
         val resources =
             SettlementSummaryModel.basicResources(
-                definitions =
-                    listOf(
-                        ResourceDefinition(
-                            ResourceId("reliquia"),
-                            LocalizedText(es = "Reliquia"),
-                            ResourceCategory.SPECIAL,
-                        ),
-                    ),
-                storage = listOf(StorageLine(ResourceId("reliquia"), 3)),
+                definitions = catalog.filterNot { it.id.value == "scrap" },
+                storage = emptyList(),
             )
 
-        assertEquals(listOf("Reliquia"), resources.map { it.label })
-        assertEquals(listOf(3), resources.map { it.quantity })
+        assertEquals(listOf("Hueso", "Órgano", "Pellejo"), resources.map { it.label })
     }
 }

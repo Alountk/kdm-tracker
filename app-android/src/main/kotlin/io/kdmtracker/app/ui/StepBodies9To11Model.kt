@@ -1,8 +1,8 @@
 package io.kdmtracker.app.ui
 
-import io.kdmtracker.app.ui.settlement.SettlementSummaryModel
 import io.kdmtracker.core.domain.ResourceDefinition
 import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import io.kdmtracker.core.domain.StorageLine
 
 /**
@@ -44,9 +44,8 @@ data class GearChip(
     val count: Int,
 )
 
-/** The design's row per basic resource, keyed by the catalog's Spanish display name. */
+/** The design's row per material; the cell's label is the material's own name. */
 private data class GridDesign(
-    val label: String,
     val subLabel: String,
     val glyph: String,
     val tone: ResourceGridTone,
@@ -54,32 +53,29 @@ private data class GridDesign(
 
 private val GRID_DESIGN =
     mapOf(
-        "Hueso de Monstruo" to GridDesign("HUESO", "Básico", "radiology", ResourceGridTone.PRIMARY),
-        "Órgano de Monstruo" to GridDesign("ÓRGANO", "Básico", "vital_signs", ResourceGridTone.SECONDARY),
-        "Piel de Monstruo" to GridDesign("PELLEJO", "Básico", "texture", ResourceGridTone.PRIMARY),
-        "Scrap" to GridDesign("CHATARRA", "Raro", "hardware", ResourceGridTone.DIM),
+        ResourceMaterial.BONE to GridDesign("Básico", "radiology", ResourceGridTone.PRIMARY),
+        ResourceMaterial.ORGAN to GridDesign("Básico", "vital_signs", ResourceGridTone.SECONDARY),
+        ResourceMaterial.HIDE to GridDesign("Básico", "texture", ResourceGridTone.PRIMARY),
+        ResourceMaterial.SCRAP to GridDesign("Raro", "hardware", ResourceGridTone.DIM),
     )
 
 /**
- * The step-10 grid's rows — the four basic resources, in the design's order, with its short
- * labels and sub-labels.
- *
- * Id resolution mirrors [SettlementSummaryModel.basicResources]: rows are keyed by the catalog's
- * Spanish display name over [SettlementSummaryModel.DESIGN_ORDER] (the same four the summary
- * shows) and the count comes from the settlement's storage. A name the catalog no longer carries
- * drops out rather than rendering a cell with no id to adjust; storage lines the design does not
- * name stay unrendered (accepted consequence, backlog).
+ * The step-10 grid's rows: one per [ResourceMaterial] in the design's order, each adjusting the
+ * material's [ResourceMaterial.basicId] resource with the design's sub-label and glyph. The count
+ * is that resource's own quantity in the settlement's storage, the same as the summary's cell. A
+ * material whose basic resource the catalog lacks drops out rather than render a cell with no id to
+ * adjust; other stored resources stay unrendered (accepted consequence, backlog).
  */
 fun resourceGridRows(
     definitions: List<ResourceDefinition>,
     storage: List<StorageLine>,
 ): List<ResourceGridRow> =
-    SettlementSummaryModel.DESIGN_ORDER.mapNotNull { name ->
-        val design = GRID_DESIGN.getValue(name)
-        val definition = definitions.firstOrNull { it.names.es == name } ?: return@mapNotNull null
+    ResourceMaterial.entries.mapNotNull { material ->
+        val design = GRID_DESIGN.getValue(material)
+        val definition = definitions.firstOrNull { it.id == material.basicId } ?: return@mapNotNull null
         ResourceGridRow(
             id = definition.id,
-            label = design.label,
+            label = material.names.es.uppercase(),
             subLabel = design.subLabel,
             glyph = design.glyph,
             tone = design.tone,

@@ -3,7 +3,9 @@ package io.kdmtracker.core.content
 import io.kdmtracker.core.domain.InnovationId
 import io.kdmtracker.core.domain.LocalizedText
 import io.kdmtracker.core.domain.LocationId
+import io.kdmtracker.core.domain.ResourceCategory
 import io.kdmtracker.core.domain.ResourceId
+import io.kdmtracker.core.domain.ResourceMaterial
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -20,6 +22,28 @@ class ContentIdentityTest {
                 "no content id for '${definition.names.es}'",
             )
         }
+    }
+
+    @Test
+    fun eachMaterialsBasicResourceIsInTheCatalogAndFeedsThatMaterialAlone() {
+        ResourceMaterial.entries.forEach { material ->
+            val basic = catalog.resourceDefinitions.firstOrNull { it.id == material.basicId }
+
+            assertNotNull(basic, "no catalog resource ${material.basicId.value} for $material")
+            assertEquals(ResourceCategory.BASIC, basic.category)
+            assertEquals(setOf(material), basic.materials)
+        }
+    }
+
+    @Test
+    fun theMaterialsHaveDistinctBasicResources() {
+        assertEquals(
+            ResourceMaterial.entries.size,
+            ResourceMaterial.entries
+                .map { it.basicId }
+                .toSet()
+                .size,
+        )
     }
 
     @Test
