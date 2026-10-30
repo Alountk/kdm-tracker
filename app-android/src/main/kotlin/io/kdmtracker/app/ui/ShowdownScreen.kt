@@ -2,19 +2,24 @@ package io.kdmtracker.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.kdmtracker.app.UiState
+import io.kdmtracker.app.ui.showdown.AiCardSection
+import io.kdmtracker.app.ui.showdown.EncounterSetup
+import io.kdmtracker.app.ui.showdown.HitLocationsSection
+import io.kdmtracker.app.ui.showdown.OutcomeSection
+import io.kdmtracker.app.ui.showdown.ShowdownBoardModel
+import io.kdmtracker.app.ui.showdown.ShowdownHeader
 import io.kdmtracker.core.domain.ShowdownStatus
+import io.kdmtracker.core.domain.SurvivorStatus
 import io.kdmtracker.core.domain.Ulid
 
 /**
@@ -30,6 +35,7 @@ fun ShowdownScreen(
     onSetUpShowdown: (String, Int, List<String>) -> Unit,
     onDrawShowdownCard: () -> Unit,
     onWoundMonster: () -> Unit,
+    onHealMonster: () -> Unit,
     onGrantHuntXp: (List<Ulid>) -> Unit,
     onRecordDeaths: (Int) -> Unit,
     onFinishShowdown: (ShowdownStatus) -> Unit,
@@ -48,46 +54,36 @@ fun ShowdownScreen(
         return
     }
 
+    val model = ShowdownBoardModel.of(showdown, state.monsterCards)
+    val party = state.survivors.filter { it.status == SurvivorStatus.DEPARTING }.map { it.id }
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = state.settlementName, style = MaterialTheme.typography.headlineMedium)
-        Text(
-            text = "Showdown · ${showdown.monster} · Level ${showdown.level}",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        state.actionError?.let { message ->
-            Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        ShowdownHeader(model = model, onWound = onWoundMonster, onHeal = onHealMonster)
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            state.actionError?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            AiCardSection(drawn = model.drawn, onDraw = onDrawShowdownCard)
+            HitLocationsSection(locations = model.hitLocations, onWound = onWoundMonster)
+            OutcomeSection(
+                partyIds = party,
+                onGrantHuntXp = onGrantHuntXp,
+                onRecordDeaths = onRecordDeaths,
+                onFinish = onFinishShowdown,
+            )
         }
-
-        EncounterPanel(
-            state = state,
-            onDrawShowdownCard = onDrawShowdownCard,
-            onWoundMonster = onWoundMonster,
-            onGrantHuntXp = onGrantHuntXp,
-            onRecordDeaths = onRecordDeaths,
-            outcome = {
-                Text(text = "Outcome", style = MaterialTheme.typography.titleSmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = { onFinishShowdown(ShowdownStatus.VICTORY) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text("Victory")
-                    }
-                    OutlinedButton(
-                        onClick = { onFinishShowdown(ShowdownStatus.DEFEAT) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text("Defeat")
-                    }
-                }
-            },
-        )
     }
 }

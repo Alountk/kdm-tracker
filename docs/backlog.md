@@ -193,3 +193,36 @@ diseño dibuja **deshabilitado** y cada función que el diseño ya no muestra qu
 
 - Raised by: reconstrucción 1:1 de los pasos del asentamiento, 2026-10-29.
 - Scope: `app-android/.../ui/*StepScreen.kt`, `core/.../usecase/`.
+
+## Enfrentamiento 1:1: lo que el diseño dibuja y el modelo no tiene (V3, diferidos)
+
+Al reconstruir `ShowdownScreen` desde el diseño de Stitch (`León Blanco`) solo se conecta lo que el
+encuentro guardado ya sabe: mazo de IA, heridas, última carta robada y las localizaciones de
+impacto del monstruo. El resto queda aquí.
+
+**Dibujado sin datos detrás:**
+
+- `Mov`, `Res`, `Vel` y `Daño` del monstruo: se dibuja el guion; no hay estadísticas por monstruo y nivel.
+- El punto ciego es siempre la base 2x2 mirando a la derecha; no depende del monstruo.
+
+**Retirado de la UI** (no hay estado que lo respalde):
+
+- La ronda y el turno (`Ronda 1 · Turno Monstruo`), el `Paso 7: Robar Ataque` y `Resolver Ataque`.
+- El controlador del monstruo y su `+1 Locura`.
+- La carta de IA con la selección de objetivo por niveles: se muestra el texto impreso de la carta; solo
+  se extraen Velocidad, Precisión y Daño.
+- El tope del mazo de localizaciones (`Mano Extraña`, trampa) y las dos cartas «reveladas»: el
+  encuentro no guarda un mazo de localizaciones, así que la lista muestra todas y resolver una (fallo,
+  herida o crítico) la retira solo de la lista hasta barajar; no se persiste.
+- `Instinto pasivo` y `Terreno`: ni el instinto ni el terreno están modelados.
+
+**Aproximaciones:**
+
+- `Reacción` se marca cuando el texto de la localización empieza por `Fallo` o `Reflejo`.
+- El contador de impactos es un bloc de notas local; no se guarda.
+
+**Añadido para que el diseño funcione:** `HealMonster` (el `−` de heridas devuelve la última herida al
+mazo de IA).
+
+- Raised by: reconstrucción 1:1 del enfrentamiento, 2026-10-30.
+- Scope: `app-android/.../ui/showdown/`, `core/.../usecase/HealMonster.kt`.
