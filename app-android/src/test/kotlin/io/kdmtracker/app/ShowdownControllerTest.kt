@@ -38,6 +38,19 @@ class ShowdownControllerTest {
     }
 
     @Test
+    fun healingReturnsTheLastWoundToTheDeck() {
+        val (controller, repository) = controller()
+        controller.showdown.setUpShowdown("White Lion", 1, listOf("A", "B"))
+        controller.showdown.woundMonster()
+        assertEquals(1, repository.record.state.showdown.wounds.size)
+
+        controller.showdown.healMonster()
+
+        assertEquals(0, repository.record.state.showdown.wounds.size)
+        assertEquals(2, repository.record.state.showdown.aiDeck.size)
+    }
+
+    @Test
     fun drawingAndWoundingUpdateTheDeck() {
         val (controller, _) = controller()
         controller.showdown.setUpShowdown("White Lion", 1, listOf("A", "B"))
