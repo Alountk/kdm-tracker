@@ -1,5 +1,6 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Test
@@ -39,8 +40,9 @@ class LanternYearLoopTest {
     @Test
     fun aSuccessfulHuntAdvancesToTheShowdown() {
         val controller = controllerAt(SettlementPhase.HUNT, 1)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.flow.advance()
+        controller.flow.finishHunt(HuntStatus.QUARRY_FOUND)
 
         val state = controller.state.value
         assertEquals(Screen.Showdown, state.screen)

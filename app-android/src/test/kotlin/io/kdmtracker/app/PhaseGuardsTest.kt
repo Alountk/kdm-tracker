@@ -9,11 +9,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Edge cases where the lantern-year controller lets a step move happen outside the phase or state it
- * belongs to. Each test states the guard that should hold; they run once the guard exists. The
- * reasons are recorded in `docs/backlog.md`.
+ * Edge cases where the lantern-year controller could let a step move happen outside the phase or
+ * state it belongs to. Each test states the guard that should hold; the one still ignored runs once
+ * the guard exists. The reason is recorded in `docs/backlog.md`.
  */
-class PhaseGuardGapsTest {
+class PhaseGuardsTest {
     private val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
 
     private val state get() = controller.state.value
@@ -25,7 +25,6 @@ class PhaseGuardGapsTest {
         assertEquals(SettlementPhase.HUNT, state.phase)
     }
 
-    @Ignore("backlog: advance() has no phase guard, so a second tap at step 11 skips the unresolved hunt")
     @Test
     fun advancingWhileTheHuntIsActiveDoesNotSkipIt() {
         commitToTheHunt()
@@ -36,7 +35,6 @@ class PhaseGuardGapsTest {
         assertEquals(SettlementPhase.HUNT, state.phase)
     }
 
-    @Ignore("backlog: selectStep() checks the step number but not the phase, so a chip moves the hunt's step")
     @Test
     fun theSettlementStepChipsDoNothingOutsideTheSettlementPhase() {
         commitToTheHunt()
