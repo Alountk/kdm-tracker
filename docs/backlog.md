@@ -250,3 +250,22 @@ Se retira del roadmap por decisión del mantenedor y se retoma cuando se quiera 
 
 - Raised by: priorización del mantenedor, 2026-10-30.
 - Scope: `core/.../domain/Language.kt`, `LocalizedText`, `app-android/.../ui/`.
+
+## Reglas del manual que la app no cumple todavía (tests de flujo, 2026-10-30)
+
+Los tests de `RulebookDivergencesTest` enuncian cada regla y están marcados `@Ignore` hasta que
+exista el comportamiento. Se descubrieron al escribir los tests de flujo del año linterna contra el
+manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
+
+- **Paso 3, Ganar Esfuerzos** (fase de asentamiento, págs. 34-35 y 81-85): «cada superviviente que
+  regresa genera +1 esfuerzo». La app fondea con la población entera (`YearFlowActions.fundGainEndeavors`),
+  así que tras una caza fallida (partida muerta, nadie regresa) el paso 3 reparte igualmente 4 esfuerzos.
+  Las muertes se anotan en el paso 5, después del 3, por lo que la población aún las cuenta.
+- **Hambruna** (fase de caza, págs. 61-63): «si la caza llega o se resuelve en la casilla de hambruna,
+  se pierden d5 recursos del almacén; si la partida muere, la caza fracasa y se activa hambruna».
+  Hoy la casilla `STARVATION` existe en el tablero, pero llegar a ella o fracasar no quita recursos.
+  Hace falta decidir qué recursos se pierden (el manual no lo fija en el texto disponible).
+
+- Raised by: tests de flujo del año linterna, 2026-10-30.
+- Scope: `app-android/.../YearFlowActions.kt`, `core/.../usecase/SetHuntOutcome.kt`,
+  `app-android/src/test/.../RulebookDivergencesTest.kt`.
