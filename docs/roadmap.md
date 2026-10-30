@@ -3,7 +3,7 @@
 One page: what the Stitch designs still owe the app, in the order to build it. Updated as
 slices land. `docs/backlog.md` keeps the small deferred items; this file keeps the program.
 
-## Where we are (2026-10-29)
+## Where we are (2026-10-30)
 
 The design program is "apply the Stitch design to the screens", in two parts plus a screen
 program. All of Part A is merged.
@@ -12,7 +12,7 @@ program. All of Part A is merged.
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
-| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A, step bodies #58–#59), Supervivientes (#37), Caza (#38–#41, #57), Enfrentamiento | ✅ Asentamiento (all eleven steps), Supervivientes & Caza done; **1 open** |
+| **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A, step bodies #58–#59), Supervivientes (#37), Caza (#38–#41, #57), Enfrentamiento (#61–#62) | ✅ all four screens done |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
 Design sources (Stitch project `4909212909494507782`):
@@ -24,10 +24,10 @@ Design sources (Stitch project `4909212909494507782`):
 | Fase de Caza | `4632e56b39c5470188dbe0b087122767` | — |
 | Enfrentamiento: León Blanco | `cd089a6938264afea5bd710ff04e3716` | — |
 
-## Track 1 — the three screens still to rebuild 1:1
+## Track 1 — the screens rebuilt 1:1 ✅ done
 
 The app-shell spec (slice 5) declared the order: Asentamiento → Supervivientes → Caza →
-Enfrentamiento. Asentamiento's designed part is done; the rest follow.
+Enfrentamiento. All four are done.
 
 **Scope of "Asentamiento done":** the settlement-screen spec states the design covers the
 summary, the step frame and **one step of eleven (7 · Desarrollo)** — that is exactly what is
@@ -36,20 +36,11 @@ step of eleven"). Steps 1–6 and 8–11 originally had **no Stitch design at al
 functional implementations of our own text, kept as they are. The three Part A flows (Fabricar,
 Innovar, Añadir recursos) are actions inside step 7.
 
-**Next session target — the remaining settlement steps' design.** The maintainer has Stitch
-designs for the steps that were previously undesigned (1–6, 8–11) and a new session will
-implement them 1:1. Handoff notes:
-- The eleven canonical Spanish step names are fixed by the spec (line 32): `1 Preparación ·
-  2 Supervivientes Regresan · 3 Ganar Esfuerzos · 4 Actualizar Línea de Tiempo · 5 Actualizar
-  Contador de Muertes · 6 Comprobar Hitos · 7 Desarrollo · 8 Preparar Supervivientes ·
-  9 Enfrentamiento Especial · 10 Anotar y Almacenar · 11 El Fin del Principio`.
-- The **step frame** (`StepFrame.kt`) and **summary** (`SettlementSummary.kt`) already render on
-  all eleven steps; only the **bodies** (per-step content below the frame) are to be restyled.
-- Build from the **Stitch HTML**, never screenshots (hard rule). Get each step's screen id from
-  the Stitch project `4909212909494507782` and cache the HTML as was done for Caza
-  (`/tmp/stitch_hunt/*.html`).
-- Rules that carry: visual gate (REGLA DUDA — maintainer approves rendered emulator output before
-  any commit/push/PR), ~400-line PR budget, full suite gate.
+**The remaining settlement steps (1–6, 8–11) are done** (#58–#59): their bodies were rebuilt from
+the Stitch designs the maintainer later supplied; what the designs draw without a model behind it
+is in `docs/backlog.md`. Rules that carried through the whole track: build from the **Stitch HTML**,
+never screenshots; visual gate (the maintainer approves rendered emulator output before any
+commit/push/PR); ~400-line PR budget; full suite gate.
 
 ### V1 — Supervivientes: the paged survivor sheet tab ✅ done (#37)
 
@@ -84,11 +75,13 @@ per-step 2d10 roll (`roll_edit`, rolled on land, persisted, editable). Also re-s
 event-space config from the renumbered md (0-12: WL {1,2,5,8,9}, PHX {1,4,7,9},
 ANT {1,2,7,9}). Feature doc: `odd/tasks/hunt-steps-and-roll.md` (T1–T7, S1–S7, L1–L6).
 
-### V3 — Enfrentamiento: rebuild 1:1
+### V3 — Enfrentamiento: rebuild 1:1 ✅ done (#61–#62)
 
-`ShowdownScreen` (93 lines) is the thinnest screen in the app. Rebuild against Stitch
-`cd089a69…`: AI deck as the monster's health, the drawn AI card, hit locations with
-Fallo/Herida/Crítico, reactions, terrain, the wound tracker.
+`ShowdownScreen` is rebuilt against Stitch `cd089a69…`: the encounter banner with the AI deck as
+the monster's health, the drawn AI card with its Move & Attack numbers, the hit locations (a
+miss, a wound or a critical wound resolves one out of the list) and the outcome. `HealMonster`
+backs the `−` of the wound track. What the stored encounter cannot back (monster stats, round and
+turn, controller, hit-location deck state, instinct and terrain) is listed in `docs/backlog.md`.
 
 ## Track 2 — content identity, remaining slices
 
