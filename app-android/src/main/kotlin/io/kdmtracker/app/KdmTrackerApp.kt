@@ -194,6 +194,7 @@ private fun InCampaignScreen(
                     onSetUpShowdown = { monster, level, deck -> act { showdown.setUpShowdown(monster, level, deck) } },
                     onDrawShowdownCard = { act { showdown.drawShowdownCard() } },
                     onWoundMonster = { act { showdown.woundMonster() } },
+                    onHealMonster = { act { showdown.healMonster() } },
                     onGrantHuntXp = { act { showdown.grantHuntXp(it) } },
                     onRecordDeaths = { act { settlement.recordDeaths(it) } },
                     onFinishShowdown = { act { flow.finishShowdown(it) } },
