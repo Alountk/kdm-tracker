@@ -2,6 +2,7 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
+import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.Innovation
 import io.kdmtracker.core.domain.InnovationCollection
 import io.kdmtracker.core.domain.InnovationId
@@ -207,8 +208,9 @@ class SetUpStepControllerTest {
             ),
         )
         val controller = LanternYearController(repository)
+        controller.hunt.setUpHunt("White Lion", 1, 4)
 
-        controller.flow.advance()
+        controller.flow.finishHunt(HuntStatus.QUARRY_FOUND)
 
         val state = controller.state.value
         assertEquals(SettlementPhase.SHOWDOWN, state.phase)

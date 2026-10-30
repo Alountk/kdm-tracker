@@ -21,7 +21,12 @@ import io.kdmtracker.core.usecase.SetSpecialShowdown
 internal class YearFlowActions(
     session: ControllerSession,
 ) : FeatureActions(session) {
+    /**
+     * The step button and the showdown's end. A no-op while hunting: the hunt leaves through
+     * [finishHunt] or [startShowdownOnContact], never through a stray second tap here.
+     */
     fun advance() {
+        if (repository.settlement.phase == SettlementPhase.HUNT) return
         val context = flowContext()
         applyStep(
             returnees = repository.settlement.population,
@@ -88,9 +93,13 @@ internal class YearFlowActions(
         moveToStep(settlement.currentStep - 1)
     }
 
-    /** Gated by [LanternYearFlow.canEnterStep]: no skipping forward, revisiting earlier steps is fine. */
+    /**
+     * Gated by [LanternYearFlow.canEnterStep]: no skipping forward, revisiting earlier steps is fine.
+     * A no-op outside the Settlement Phase, where the step chips have no step to move.
+     */
     fun selectStep(number: Int) {
         val settlement = repository.settlement
+        if (settlement.phase != SettlementPhase.SETTLEMENT) return
         val from = PhaseStep(settlement.phase, settlement.currentStep)
         if (!LanternYearFlow.canEnterStep(number, from, FlowContext(ruleset = ruleset))) return
         moveToStep(number)
