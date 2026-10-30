@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
+import io.kdmtracker.core.domain.ShowdownStatus
 import io.kdmtracker.core.domain.SyncMeta
 import io.kdmtracker.core.domain.Ulid
 import io.kdmtracker.core.rules.StepResult
@@ -85,6 +86,37 @@ class ShowdownDeckUseCaseTest {
                 .isEmpty(),
         )
         assertEquals(listOf("A"), ok.value.state.showdown.wounds)
+    }
+
+    @Test
+    fun healReturnsTheLastWoundToTheTopOfTheDeck() {
+        val wounded =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                WoundMonster.run(
+                    assertIs<StepResult.Ok<SettlementRecord>>(WoundMonster.run(started(listOf("A", "B", "C")))).value,
+                ),
+            ).value
+
+        val healed = assertIs<StepResult.Ok<SettlementRecord>>(HealMonster.run(wounded)).value
+
+        assertEquals(listOf("B", "C"), healed.state.showdown.aiDeck)
+        assertEquals(listOf("A"), healed.state.showdown.wounds)
+    }
+
+    @Test
+    fun healWithNoWoundsIsBlocked() {
+        assertIs<StepResult.Blocked>(HealMonster.run(started(listOf("A", "B"))))
+    }
+
+    @Test
+    fun healAfterTheShowdownEndedIsBlocked() {
+        val wounded = assertIs<StepResult.Ok<SettlementRecord>>(WoundMonster.run(started(listOf("A", "B")))).value
+        val over =
+            assertIs<StepResult.Ok<SettlementRecord>>(
+                SetShowdownOutcome.run(wounded, ShowdownStatus.VICTORY),
+            ).value
+
+        assertIs<StepResult.Blocked>(HealMonster.run(over))
     }
 
     @Test
