@@ -11,7 +11,7 @@ program. All of Part A is merged.
 | Program | Scope | State |
 |---|---|---|
 | **Part A** — the Develop step's three flows | Fabricar (#34), Innovar + catálogo (#35), Añadir recursos (#36) | ✅ done |
-| **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32) | ✅ S1–S2 done; **S3, S4 open** |
+| **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32), S3 resource grid (#64) | ✅ S1–S3 done; S4 (language selector) moved to the backlog |
 | **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A, step bodies #58–#59), Supervivientes (#37), Caza (#38–#41, #57), Enfrentamiento (#61–#62) | ✅ all four screens done |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
 
@@ -92,8 +92,7 @@ From `docs/superpowers/specs/2026-10-10-content-identity-design.md`:
   through `ResourceMaterial` (`basicId`, label, colour) instead of a hardcoded Spanish name map.
   **Still open:** counting a cell by material (a Garra de León adding to Hueso) needs a
   «spend by material» rule first; see `docs/backlog.md`.
-- **B4 — the language selector**: `Language{ES,EN}` runtime selector (Spanish default,
-  incremental English), per the i18n decision. No selector exists in the UI today.
+- **B4 — the language selector**: moved to `docs/backlog.md` ("Selector de idioma").
 
 ## Track 3 — backlog and quality
 
