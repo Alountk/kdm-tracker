@@ -14,6 +14,8 @@ program. All of Part A is merged.
 | **Part B** — content identity (4 slices) | S1 resources (#31), S2 locations/gear/innovations (#32), S3 resource grid (#64) | ✅ S1–S3 done; S4 (language selector) moved to the backlog |
 | **Screens 1:1** — rebuild each designed screen | Asentamiento (#33 + Part A, step bodies #58–#59), Supervivientes (#37), Caza (#38–#41, #57), Enfrentamiento (#61–#62) | ✅ all four screens done |
 | Foundation | Atramentum theme (slice 4), app shell (slice 5) | ✅ done |
+| **Game flow tests** — the lantern year against the rulebook | settlement phase (#66–#69), hunt phase (#70–#73) | ✅ done; the ambush kinds are the one rule left in `docs/backlog.md` |
+| **Expansions** (Track 4) | Gorm first | 📋 planned, nothing built |
 
 Design sources (Stitch project `4909212909494507782`):
 
@@ -104,6 +106,59 @@ From `docs/backlog.md` — no screen work, but they close review debt:
    the catalogue filter state.
 4. **Two visual minors** (Innovar surface, each with its own emulator gate): `costChip` mixes
    effort with resource initials; the steal row's alignment drifts from the board.
+
+## Track 4 — expansions
+
+How to bring an expansion into the app. Gorm is the pilot because its files are already in
+`external-assets/expansiones/gorm/` (`Reglamento_gorm.pdf`, 14 pages; `Cartas_gorm.pdf`, 16 pages).
+The content-pack seam already exists (`docs/content-packs.md`: `ContentPack.requires`, the composer,
+`Campaign.enabledPacks`, the transfer document), so most of the work is removing what is still
+hardcoded and ingesting the content, not new architecture.
+
+**What the code hardcodes today** (found by reading it, each is a slice below):
+
+- `PackCatalogs.knownPacks` lists the two core packs, and `NewCampaignFactory` enables both with no
+  way for the player to choose.
+- A quarry is only a name in `ContentBundle.quarries`. Its board (monster-event spaces, the beast's
+  starting space per level) lives in `SetUpHunt`, and its short Spanish name in `HuntBoardFrame`.
+  An unknown quarry silently gets an empty layout and the beast on the starvation space.
+- Both Gorm PDFs are scans: `pdftotext` finds no text in them, so the current ingest scripts cannot
+  read them. `tesseract` is installed locally and nothing in `tools/content-ingest/` uses it yet.
+
+**Slices, in order** (each is its own PR, with its tests, under the usual gates):
+
+1. **E1 — pack registry and picker.** One registry of known packs (replacing the private map), a
+   pack choice when creating a campaign (`enabledPacks`), and a clear rule for changing it later:
+   enabling an expansion is allowed, disabling one that the campaign already uses is refused. A
+   settlement opened on a device that lacks a pack keeps showing the existing "unknown content pack"
+   error; sync must not drop the pack ids.
+2. **E2 — quarries as data.** A `QuarryDefinition` in `ContentBundle` carrying the board layout, the
+   starting space per level, whether it is a nemesis and the short name. `SetUpHunt` and
+   `HuntBoardFrame` read it; the three core quarries move over with no behaviour change, guarded by
+   `HuntPhaseRulesFlowTest` and the `SetUpHunt` tests. After this, a new quarry is a pack and no code.
+3. **E3 — ingest for scans.** An OCR step for the image-only PDFs: `tesseract` into a reviewed text
+   intermediate (OCR is wrong often enough that a person checks it), then the existing
+   emit-deterministic-Kotlin path. The PDFs stay git-ignored, and the generated sources stay the
+   only committed output. Determinism and a re-run check come with it.
+4. **E4 — the Gorm pack, one content kind per PR.** Ids namespaced by pack (`gorm.…`) through
+   `ContentIdentity`. Order: the quarry and its monster cards (AI, hit locations, basic actions) →
+   hunt events → resources → gear and crafting → locations and innovations → settlement events and
+   timeline entries. Each kind lands with a compose test (`requires` the core pack).
+5. **E5 — the rules Gorm adds beyond data.** Read the OCR'd rulebook once, list the new rules, and
+   treat each like the flow-test slice did: write the rule as a test against the real controller,
+   see it fail, implement it or record it in `docs/backlog.md`. Expect `RulesetOverrides` and new
+   hunt or showdown steps rather than data.
+6. **E6 — the template for the next expansion.** A checklist in `docs/content-packs.md`: the
+   source files, the OCR review, the pack id and `requires`, the content kinds, the new rules, and a
+   flow test that plays one hunt and showdown with the new quarry.
+
+**Done for a pack** means: it composes with the core packs, the ingest is byte-identical on a
+re-run, one hunt and showdown with its quarry plays through the real controller, and the maintainer
+has seen it on the emulator.
+
+**Decisions that belong to the maintainer, not to the slices:** which expansion follows Gorm, whether
+an expansion's text may be shown in English as well as Spanish (the language selector is deferred in
+`docs/backlog.md`), and whether packs are bundled in the app or downloadable later.
 
 ## Rules that carry across every slice
 
