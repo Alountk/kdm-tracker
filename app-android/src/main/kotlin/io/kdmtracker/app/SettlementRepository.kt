@@ -2,6 +2,8 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.content.CatalogResult
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.content.PackRegistry
+import io.kdmtracker.core.content.PackSelection
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.Settlement
 import io.kdmtracker.core.domain.SettlementRecord
@@ -41,6 +43,7 @@ class SettlementRepository(
     private val createCampaign: (String) -> CampaignSummary = { name ->
         throw IllegalStateException("Cannot create campaign '$name': no sync hub is configured")
     },
+    private val packs: PackRegistry = PackRegistry.shipped,
 ) {
     var campaign: Campaign
         private set
@@ -57,11 +60,11 @@ class SettlementRepository(
      * (see [catalogError]) so the screens render nothing instead of the app failing to load.
      */
     val catalog: ContentCatalog
-        get() = (PackCatalogs.compose(campaign.enabledPacks) as? CatalogResult.Ok)?.catalog ?: PackCatalogs.EMPTY
+        get() = (PackCatalogs.compose(campaign.enabledPacks, packs) as? CatalogResult.Ok)?.catalog ?: PackCatalogs.EMPTY
 
     /** Why [catalog] is empty, or `null` when it composed cleanly. */
     val catalogError: String?
-        get() = PackCatalogs.errorOf(PackCatalogs.compose(campaign.enabledPacks))
+        get() = PackCatalogs.errorOf(PackCatalogs.compose(campaign.enabledPacks, packs))
 
     private val newCampaigns = NewCampaignFactory(clock)
 
@@ -100,18 +103,29 @@ class SettlementRepository(
     }
 
     /**
-     * Creates [name] on the hub, then persists and opens it locally.
+     * Creates [name] on the hub, then persists and opens it locally, with the base packs plus the
+     * [expansions] the player picked.
      *
-     * The hub call runs first because it owns campaign-id generation; an offline create throws
+     * An expansion the registry refuses throws [IllegalArgumentException] before the hub is called, so
+     * a rejected choice leaves nothing behind. The hub call otherwise runs first because it owns
+     * campaign-id generation; an offline create throws
      * before any local write, so nothing is left half-created. Campaign, settlement and the `OWNER`
      * membership are written in one transaction so a store failure cannot orphan the campaign row. The
      * opening record is built once, so the held record and the stored one share their survivor ids.
      */
-    fun create(name: String): CampaignCard {
+    fun create(
+        name: String,
+        expansions: Set<String> = emptySet(),
+    ): CampaignCard {
+        val enabled =
+            when (val selection = packs.select(expansions)) {
+                is PackSelection.Ok -> selection.enabled
+                is PackSelection.Blocked -> throw IllegalArgumentException(selection.reason)
+            }
         val summary = createCampaign(name)
         val campaignId = Ulid.parse(summary.id)
         val settlementId = Ulid.generate(clock.tick(null).millis) { Random.nextInt() }
-        val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, summary.name, summary.name)
+        val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, summary.name, summary.name, enabled)
         val opening = newCampaigns.startingRecord(settlement)
         store.transaction {
             store.upsertCampaign(campaign)
@@ -191,7 +205,14 @@ class SettlementRepository(
     private fun seed(): CampaignSnapshot {
         val campaignId = Ulid.generate(0L) { 0 }
         val settlementId = Ulid.generate(1L) { 1 }
-        val (campaign, settlement) = newCampaigns.build(campaignId, settlementId, "Walking Skeleton", "New Settlement")
+        val (campaign, settlement) =
+            newCampaigns.build(
+                campaignId,
+                settlementId,
+                "Walking Skeleton",
+                "New Settlement",
+                packs.baseIds,
+            )
         store.transaction {
             store.upsertCampaign(campaign)
             store.upsertSettlement(newCampaigns.startingRecord(settlement))

@@ -38,8 +38,11 @@ class LanternYearController(
     }
 
     /** A hub failure escapes unchanged and the prior selection is kept. */
-    fun createCampaign(name: String): CampaignCard {
-        val card = repository.create(name)
+    fun createCampaign(
+        name: String,
+        expansions: Set<String> = emptySet(),
+    ): CampaignCard {
+        val card = repository.create(name, expansions)
         reload()
         return card
     }
