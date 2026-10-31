@@ -123,7 +123,7 @@ hardcoded and ingesting the content, not new architecture.
   starting space per level) lives in `SetUpHunt`, and its short Spanish name in `HuntBoardFrame`.
   An unknown quarry silently gets an empty layout and the beast on the starvation space.
 - Both Gorm PDFs are scans: `pdftotext` finds no text in them, so the current ingest scripts cannot
-  read them. `tesseract` is installed locally and nothing in `tools/content-ingest/` uses it yet.
+  read them. The maintainer supplies a Markdown transcription beside the PDFs instead.
 
 **Slices, in order** (each is its own PR, with its tests, under the usual gates):
 
@@ -136,15 +136,20 @@ hardcoded and ingesting the content, not new architecture.
    starting space per level, whether it is a nemesis and the short name. `SetUpHunt` and
    `HuntBoardFrame` read it; the three core quarries move over with no behaviour change, guarded by
    `HuntPhaseRulesFlowTest` and the `SetUpHunt` tests. After this, a new quarry is a pack and no code.
-3. **E3 — ingest for scans.** An OCR step for the image-only PDFs: `tesseract` into a reviewed text
-   intermediate (OCR is wrong often enough that a person checks it), then the existing
-   emit-deterministic-Kotlin path. The PDFs stay git-ignored, and the generated sources stay the
-   only committed output. Determinism and a re-run check come with it.
+3. **E3 — ingest from a reviewed intermediate.** The maintainer keeps one Markdown transcription per
+   expansion next to its PDFs (`external-assets/expansiones/gorm/gorm.md`); it is the ingest's
+   starting point, replacing a raw OCR pass. A transcription is not trusted until each section is
+   checked against the scan: `tesseract` helps find a page, but the check is a person comparing the
+   text with the page, diagrams included (a board strip or a deployment diagram is where a
+   transcription goes wrong first). Only a verified section feeds the existing
+   emit-deterministic-Kotlin path, and the verification is recorded per section in the ingest notes.
+   The PDFs and the Markdown stay git-ignored, and the generated sources stay the only committed
+   output. Determinism and a re-run check come with it.
 4. **E4 — the Gorm pack, one content kind per PR.** Ids namespaced by pack (`gorm.…`) through
    `ContentIdentity`. Order: the quarry and its monster cards (AI, hit locations, basic actions) →
    hunt events → resources → gear and crafting → locations and innovations → settlement events and
    timeline entries. Each kind lands with a compose test (`requires` the core pack).
-5. **E5 — the rules Gorm adds beyond data.** Read the OCR'd rulebook once, list the new rules, and
+5. **E5 — the rules Gorm adds beyond data.** Read the verified rulebook sections once, list the new rules, and
    treat each like the flow-test slice did: write the rule as a test against the real controller,
    see it fail, implement it or record it in `docs/backlog.md`. Expect `RulesetOverrides` and new
    hunt or showdown steps rather than data.
