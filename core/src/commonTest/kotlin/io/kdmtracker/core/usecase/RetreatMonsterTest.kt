@@ -40,22 +40,35 @@ class RetreatMonsterTest {
 
     @Test
     fun retreatMonsterStepsOneSpaceAwayFromTheParty() {
-        // beast starts at index 4 (Antelope L1), party at 0 -> retreat to 3
+        // beast starts at index 4 (Antelope L1), party at 0 -> retreat to 5, a wider gap
         val before = started().state.hunt.monsterPosition
         val moved = assertIs<StepResult.Ok<SettlementRecord>>(RetreatMonster.run(started())).value
-        assertEquals(before - 1, moved.state.hunt.monsterPosition)
+        assertEquals(before + 1, moved.state.hunt.monsterPosition)
     }
 
     @Test
-    fun retreatMonsterNeverGoesBelowTheStartSpace() {
-        // walk the beast down to index 0, then a further retreat is a no-op (stays at 0)
+    fun retreatMonsterNeverLeavesTheBoard() {
+        // walk the beast to the last space, then a further retreat is a no-op (stays there)
         var record = started()
-        while (record.state.hunt.monsterPosition > 0) {
+        val last = record.state.hunt.spaces.lastIndex
+        while (record.state.hunt.monsterPosition < last) {
             record = assertIs<StepResult.Ok<SettlementRecord>>(RetreatMonster.run(record)).value
         }
-        assertEquals(0, record.state.hunt.monsterPosition)
-        // another retreat keeps it at the Start space
+        assertEquals(last, record.state.hunt.monsterPosition)
         val again = assertIs<StepResult.Ok<SettlementRecord>>(RetreatMonster.run(record)).value
+        assertEquals(last, again.state.hunt.monsterPosition)
+    }
+
+    @Test
+    fun aBeastBehindThePartyStepsBackTowardStartAndStopsThere() {
+        val record = started()
+        val behind =
+            record.copy(
+                state = record.state.copy(hunt = record.state.hunt.copy(position = 6, monsterPosition = 1)),
+            )
+        val moved = assertIs<StepResult.Ok<SettlementRecord>>(RetreatMonster.run(behind)).value
+        assertEquals(0, moved.state.hunt.monsterPosition)
+        val again = assertIs<StepResult.Ok<SettlementRecord>>(RetreatMonster.run(moved)).value
         assertEquals(0, again.state.hunt.monsterPosition)
     }
 

@@ -266,11 +266,9 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
   Hoy la casilla `STARVATION` existe en el tablero, pero llegar a ella o fracasar no quita recursos.
   Hace falta decidir qué recursos se pierden (el manual no lo fija en el texto disponible).
 
-- **Retroceso del monstruo** (fase de caza, eventos como «Asustadizo» o «León Merodeador»): «se mueve
-  1 espacio alejándose de los supervivientes». `RetreatMonster` lo acerca (resta 1 al índice cuando
-  la bestia va por delante del grupo) y `RetreatMonsterTest` fija ese sentido. Además el evento del
-  Antílope pide alejarlo 3 espacios y el botón mueve uno por pulsación. Test `@Ignore` en
-  `HuntPhaseRulesFlowTest`.
+- **Retroceso del monstruo** (resuelto): `RetreatMonster` aleja la bestia del grupo (sube el índice) y
+  se queda dentro del tablero. Queda abierto que el evento del Antílope pida alejarla 3 espacios y el
+  botón mueva uno por pulsación.
 - **Emboscada** (fase de caza, págs. 61-63): hay dos emboscadas, la del monstruo («los supervivientes
   pierden su primer turno») y la de los supervivientes por un evento de sigilo («eligen quién actúa
   primero y colocan el terreno»). La app solo distingue `AMBUSH` (la bestia llega al grupo), que sirve

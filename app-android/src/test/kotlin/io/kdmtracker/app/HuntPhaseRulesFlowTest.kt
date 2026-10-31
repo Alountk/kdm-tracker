@@ -7,7 +7,6 @@ import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.WoundState
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.math.abs
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -17,8 +16,6 @@ import kotlin.test.assertTrue
  * Plays the hunt phase through the real controller and checks what the rulebook states (KDM 1.5 ES,
  * "Fase de Caza", pp. 61-63): the board layout, the party advancing one space at a time toward the
  * beast, the two ways a hunt ends in a showdown, damage carried over, and the run away exit.
- *
- * The rules the code does not follow yet live at the end of this class, marked `@Ignore`.
  */
 class HuntPhaseRulesFlowTest {
     private val repository = SettlementRepository(InMemoryCampaignStore())
@@ -109,7 +106,6 @@ class HuntPhaseRulesFlowTest {
         assertEquals(population, state.endeavors, "every survivor returned, so every one earns an endeavor")
     }
 
-    @Ignore("backlog: retreatMonster moves the beast toward the survivors, not away from them")
     @Test
     fun aRetreatingBeastMovesAwayFromTheSurvivors() {
         // Hunt events such as Asustadizo: the beast "se mueve 1 espacio alejándose de los supervivientes".
