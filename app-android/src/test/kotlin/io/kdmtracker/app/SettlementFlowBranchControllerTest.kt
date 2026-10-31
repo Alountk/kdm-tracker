@@ -40,6 +40,7 @@ class SettlementFlowBranchControllerTest {
     fun nemesisYearAdvancesToTheShowdown() {
         val (controller, _) = controller(year = 16, step = 11, nemesis = true)
 
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
 
         assertEquals(SettlementPhase.SHOWDOWN, controller.state.value.phase)
@@ -49,6 +50,7 @@ class SettlementFlowBranchControllerTest {
     fun plainYearAdvancesToTheHunt() {
         val (controller, _) = controller(year = 1, step = 11)
 
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
 
         assertEquals(SettlementPhase.HUNT, controller.state.value.phase)

@@ -4,14 +4,12 @@ import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SurvivorStatus
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
  * Edge cases where the lantern-year controller could let a step move happen outside the phase or
- * state it belongs to. Each test states the guard that should hold; the one still ignored runs once
- * the guard exists. The reason is recorded in `docs/backlog.md`.
+ * state it belongs to. Each test states a guard that must hold.
  */
 class PhaseGuardsTest {
     private val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
@@ -44,7 +42,6 @@ class PhaseGuardsTest {
         assertEquals(1, state.currentStep)
     }
 
-    @Ignore("backlog: the commit out of step 11 does not require a departing survivor")
     @Test
     fun theSettlementDoesNotCommitToTheHuntWithoutADepartingSurvivor() {
         while (state.currentStep < 11) controller.flow.advance()
@@ -53,5 +50,6 @@ class PhaseGuardsTest {
         controller.flow.advance()
 
         assertEquals(SettlementPhase.SETTLEMENT, state.phase)
+        assertEquals(NO_PARTY, state.actionError)
     }
 }

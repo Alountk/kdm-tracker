@@ -60,6 +60,7 @@ class LanternYearControllerTest {
     fun committingTheSettlementPhaseLandsOnTheHuntScreen() {
         val controller = controllerAt(11)
 
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
 
         val state = controller.state.value

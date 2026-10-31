@@ -129,6 +129,7 @@ class SetUpStepControllerTest {
     fun advancingStillBehavesAsBefore() {
         val controller = controllerAt(SettlementPhase.SETTLEMENT, 11)
 
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
 
         val state = controller.state.value
@@ -148,6 +149,7 @@ class SetUpStepControllerTest {
         )
         val controller = LanternYearController(repository)
 
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
 
         assertEquals(
