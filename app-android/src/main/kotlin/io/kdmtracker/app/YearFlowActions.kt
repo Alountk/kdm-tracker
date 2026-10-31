@@ -14,6 +14,7 @@ import io.kdmtracker.core.usecase.AdvanceStep
 import io.kdmtracker.core.usecase.AdvanceTimeline
 import io.kdmtracker.core.usecase.ClearShowdown
 import io.kdmtracker.core.usecase.GainEndeavors
+import io.kdmtracker.core.usecase.RecordDeaths
 import io.kdmtracker.core.usecase.SetHuntOutcome
 import io.kdmtracker.core.usecase.SetShowdownOutcome
 import io.kdmtracker.core.usecase.SetSpecialShowdown
@@ -64,12 +65,9 @@ internal class YearFlowActions(
             hasSpecialShowdown = repository.record.state.specialShowdown,
         )
 
-    /** No survivors return from a failed hunt, so the restart gets zero returnees. */
+    /** The hunting party is wiped out: its survivors die and the settlement restarts without them. */
     fun failHunt() {
-        applyStep(
-            returnees = 0,
-            context = FlowContext(ruleset = ruleset, huntFailed = true),
-        )
+        losePartyAndRestart()
     }
 
     /**
@@ -132,7 +130,7 @@ internal class YearFlowActions(
                     // The hunt ends without a showdown: a party wipe (no returnees) or a run away
                     // (the survivors return); both re-enter the Settlement Phase.
                     HuntStatus.FAILED -> {
-                        applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
+                        losePartyAndRestart()
                         starve()
                     }
                     HuntStatus.RUN_AWAY ->
@@ -166,6 +164,19 @@ internal class YearFlowActions(
             context = FlowContext(ruleset = ruleset),
         )
         if (onStarvation) starve()
+    }
+
+    /**
+     * A failed hunt is a party wipe: the departing survivors die as the hunt ends, as a showdown's
+     * deaths are recorded when they happen, so the settlement's population no longer counts them
+     * when the endeavors are earned at step 3.
+     */
+    private fun losePartyAndRestart() {
+        val party =
+            repository.record.state.survivors
+                .count { it.status == SurvivorStatus.DEPARTING }
+        if (party > 0) applyResult(RecordDeaths.run(repository.record, party))
+        applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
     }
 
     /** A starving hunt owes a d5 of stored resources; the player pays it by choosing what to discard. */

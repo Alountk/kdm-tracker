@@ -18,8 +18,6 @@ import kotlin.test.assertTrue
  * 81-85): returning survivors heal, each returning survivor earns an endeavor, the timeline moves
  * the year on, deaths are counted, unspent endeavors are lost at the end, and the year closes with
  * the hunt and the showdown.
- *
- * The rules the code does not follow yet live in [RulebookDivergencesTest].
  */
 class SettlementYearRulesFlowTest {
     private val controller = LanternYearController(SettlementRepository(InMemoryCampaignStore()))
@@ -122,5 +120,37 @@ class SettlementYearRulesFlowTest {
         assertEquals(6, state.population)
         assertEquals(4, state.endeavors, "the earlier survivors count, not the newborns, and only once")
         assertEquals(2, state.lanternYear, "crossing the timeline step again keeps the year")
+    }
+
+    @Test
+    fun aWipedPartyEarnsNoEndeavorsBecauseNobodyReturnsFromTheHunt() {
+        advanceTo(11)
+        controller.chooseTheDepartingParty()
+        controller.flow.advance()
+        controller.hunt.setUpHunt("White Lion", 1, 4)
+
+        controller.flow.finishHunt(HuntStatus.FAILED)
+
+        assertEquals(SettlementPhase.SETTLEMENT, state.phase)
+        assertEquals(4, state.deaths, "the party died with the hunt")
+        assertEquals(0, state.population)
+        advanceTo(3)
+        assertEquals(0, state.endeavors)
+    }
+
+    @Test
+    fun theSurvivorsWhoStayedHomeStillEarnTheirEndeavorWhenThePartyIsWiped() {
+        advanceTo(8)
+        controller.survivors.markDeparting(state.survivors.take(2).map { it.id })
+        advanceTo(11)
+        controller.flow.advance()
+        controller.hunt.setUpHunt("White Lion", 1, 2)
+
+        controller.flow.finishHunt(HuntStatus.FAILED)
+
+        assertEquals(2, state.deaths)
+        assertEquals(2, state.population)
+        advanceTo(3)
+        assertEquals(2, state.endeavors)
     }
 }

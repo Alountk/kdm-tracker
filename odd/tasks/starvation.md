@@ -6,7 +6,7 @@ Objective: a failed hunt (or one that ends on the starvation space) takes d5 res
 - S2. The same loss applies when the hunt reaches or resolves on the starvation space (board space 12): contact there (quarry found or ambush) triggers it too.
 - S3. User decision: "si, es lo que se hace en una partida." — the app rolls the d5 and the player chooses which stored resources to discard until the owed amount is paid; the app never discards on its own.
 - S4. The owed amount survives closing the app (stored with the settlement state) and is visible on any screen of the shell until it is paid, with a way to discard one unit of a stored resource at a time.
-- S5. `RulebookDivergencesTest.aFailedHuntLosesBetweenOneAndFiveStoredResourcesToStarvation` is enabled and passes; the backlog entry is closed.
+- S5. the divergence test for starvation (first written ignored in `RulebookDivergencesTest`, now `StarvationFlowTest`) passes; the backlog entry is closed.
 
 ## Tasks
 | ID | Specs | Route | Status | Commit |
