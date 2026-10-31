@@ -76,6 +76,73 @@ class PackRegistryTest {
         )
     }
 
+    private fun changed(
+        current: List<String>,
+        vararg wanted: String,
+    ): List<String> {
+        val change = registry.change(current, wanted.toList())
+        assertTrue(change is PackSelection.Ok, "expected Ok but was $change")
+        return change.enabled
+    }
+
+    @Test
+    fun anExpansionCanBeEnabledOnACampaignThatLacksIt() {
+        assertEquals(listOf("base", "core", "gorm"), changed(listOf("base", "core"), "base", "core", "gorm"))
+    }
+
+    @Test
+    fun keepingTheSamePacksChangesNothing() {
+        assertEquals(listOf("base", "core", "gorm"), changed(listOf("base", "core", "gorm"), "gorm", "core", "base"))
+    }
+
+    @Test
+    fun aPackTheCampaignAlreadyHasCannotBeDisabled() {
+        assertEquals(
+            PackSelection.Blocked("content pack 'gorm' is already enabled and cannot be disabled"),
+            registry.change(listOf("base", "core", "gorm"), listOf("base", "core")),
+        )
+    }
+
+    @Test
+    fun aBasePackCannotBeDisabledEither() {
+        assertEquals(
+            PackSelection.Blocked("content pack 'base' is already enabled and cannot be disabled"),
+            registry.change(listOf("base", "core"), listOf("core")),
+        )
+    }
+
+    @Test
+    fun aPackThisBuildDoesNotKnowIsKeptWhenAnotherIsEnabled() {
+        assertEquals(
+            listOf("base", "core", "future", "gorm"),
+            changed(listOf("base", "core", "future"), "base", "core", "future", "gorm"),
+        )
+    }
+
+    @Test
+    fun enablingAnUnknownPackIsRefused() {
+        assertEquals(
+            PackSelection.Blocked("unknown content pack 'nope'"),
+            registry.change(listOf("base", "core"), listOf("base", "core", "nope")),
+        )
+    }
+
+    @Test
+    fun enablingAnExpansionWhoseRequirementIsMissingIsRefused() {
+        assertEquals(
+            PackSelection.Blocked("content pack 'other' requires 'gorm'"),
+            registry.change(listOf("base", "core"), listOf("base", "core", "other")),
+        )
+    }
+
+    @Test
+    fun enablingAnExpansionAndItsRequirementTogetherIsAllowed() {
+        assertEquals(
+            listOf("base", "core", "gorm", "other"),
+            changed(listOf("base", "core"), "base", "core", "other", "gorm"),
+        )
+    }
+
     @Test
     fun theOptionalPacksAreTheOnesACampaignMayLeaveOut() {
         assertEquals(listOf(expansion, other), registry.optional)

@@ -144,6 +144,30 @@ class SettlementRepository(
     }
 
     /**
+     * Changes the held campaign's packs to [wanted], the full set it should end up with.
+     *
+     * Packs can be added but never removed (see [PackRegistry.change]); a refused choice throws
+     * [IllegalArgumentException] and writes nothing. The campaign is stamped like any other local edit
+     * so sync orders it after the version it replaces, and the outbox carries the new pack ids.
+     */
+    fun changePacks(wanted: Collection<String>) {
+        val enabled =
+            when (val change = packs.change(campaign.enabledPacks, wanted)) {
+                is PackSelection.Ok -> change.enabled
+                is PackSelection.Blocked -> throw IllegalArgumentException(change.reason)
+            }
+        if (enabled == campaign.enabledPacks) return
+        val previous = campaign.sync
+        val changed =
+            campaign.copy(
+                enabledPacks = enabled,
+                sync = previous.copy(updatedAt = clock.tick(previous.updatedAt), rev = previous.rev + 1),
+            )
+        store.upsertCampaign(changed)
+        campaign = changed
+    }
+
+    /**
      * Re-reads the selected campaign from the store after a sync applied remote changes.
      *
      * Without it the next local mutation would write the stale pre-sync settlement over the newer

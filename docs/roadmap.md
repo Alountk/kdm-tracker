@@ -127,7 +127,7 @@ hardcoded and ingesting the content, not new architecture.
 
 **Slices, in order** (each is its own PR, with its tests, under the usual gates):
 
-1. **E1 — pack registry and picker.** *(Registry and creation picker done; the change-later rule is open.)* One registry of known packs (replacing the private map), a
+1. **E1 — pack registry and picker.** *(Registry, creation picker and the change-later rule done; the screen is open.)* One registry of known packs (replacing the private map), a
    pack choice when creating a campaign (`enabledPacks`), and a clear rule for changing it later:
    enabling an expansion is allowed, disabling one that the campaign already uses is refused. A
    settlement opened on a device that lacks a pack keeps showing the existing "unknown content pack"
@@ -135,7 +135,12 @@ hardcoded and ingesting the content, not new architecture.
    Done: `PackRegistry` (`core`) holds every shipped pack and says which are base; a new campaign
    enables the base packs plus the expansions the player picks (an unknown pack or an unmet `requires`
    is refused before the hub is called), and the Home form shows a chip per optional pack, hidden
-   while there is none. Open: the rule and the screen for changing the packs of an existing campaign.
+   while there is none. `PackRegistry.change` is the rule for an existing campaign: packs can be added,
+   never removed, because nothing yet says whether the campaign's state uses a pack's content (it can be
+   relaxed once a pack's content can be traced in the state, E4); an id this build does not know is kept.
+   `SettlementRepository.changePacks` stamps the campaign so sync carries the change, and the controller
+   and ViewModel expose it, surfacing a refusal as the action error. Open: the screen that drives it,
+   waiting on a Stitch design.
 2. **E2 — quarries as data.** A `QuarryDefinition` in `ContentBundle` carrying the board layout, the
    starting space per level, whether it is a nemesis and the short name. `SetUpHunt` and
    `HuntBoardFrame` read it; the three core quarries move over with no behaviour change, guarded by
