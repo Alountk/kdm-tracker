@@ -4,6 +4,7 @@ import io.kdmtracker.core.domain.HuntStatus
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.domain.SettlementRecord
 import io.kdmtracker.core.domain.ShowdownStatus
+import io.kdmtracker.core.domain.SurvivorStatus
 import io.kdmtracker.core.rules.FlowContext
 import io.kdmtracker.core.rules.FlowTransition
 import io.kdmtracker.core.rules.LanternYearFlow
@@ -23,10 +24,15 @@ internal class YearFlowActions(
 ) : FeatureActions(session) {
     /**
      * The step button and the showdown's end. A no-op while hunting: the hunt leaves through
-     * [finishHunt] or [startShowdownOnContact], never through a stray second tap here.
+     * [finishHunt] or [startShowdownOnContact], never through a stray second tap here. The last
+     * settlement step is refused while nobody is chosen to depart: a hunt needs a party.
      */
     fun advance() {
         if (repository.settlement.phase == SettlementPhase.HUNT) return
+        if (leavesWithoutAParty()) {
+            publishBlocked(NO_PARTY)
+            return
+        }
         val context = flowContext()
         applyStep(
             returnees = repository.settlement.population,
@@ -38,6 +44,14 @@ internal class YearFlowActions(
             applyResult(SetSpecialShowdown.run(repository.record, false))
             applyResult(ClearShowdown.run(repository.record))
         }
+    }
+
+    private fun leavesWithoutAParty(): Boolean {
+        val settlement = repository.settlement
+        return settlement.phase == SettlementPhase.SETTLEMENT &&
+            settlement.currentStep == ruleset.settlementSteps.size &&
+            repository.record.state.survivors
+                .none { it.status == SurvivorStatus.DEPARTING }
     }
 
     /** A nemesis year lists a nemesis in its timeline; a declared Special Showdown loops step 9 back. */
@@ -217,6 +231,9 @@ internal fun FlowTransition.landsOnNewYear(from: SettlementPhase): Boolean =
             from != SettlementPhase.SETTLEMENT && to == PhaseStep(SettlementPhase.SETTLEMENT, 1)
         is FlowTransition.Blocked -> false
     }
+
+/** The refusal shown when the last settlement step is confirmed with no departing survivor. */
+internal const val NO_PARTY = "no departing survivors"
 
 private const val GAIN_ENDEAVORS_STEP = 3
 

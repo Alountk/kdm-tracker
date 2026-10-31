@@ -272,12 +272,10 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
 
 ## Guardas de fase del controlador (casos límite, 2026-10-31)
 
-`advance()` y `selectStep()` ya ignoran la fase de Caza (y `selectStep()` también la de Enfrentamiento);
-los tests están en `PhaseGuardsTest`. Queda una decisión de producto, con su test `@Ignore`:
-
-- **Salida a la caza sin superviviente que parta** (paso 11): hoy se confirma sin elegir a nadie en el
-  paso 8. El manual dice «elegir hasta 4 supervivientes» (paso 8, pág. 35), así que no prohíbe cero
-  literalmente; hay que decidir si exigir al menos uno.
+Resuelto: `advance()` y `selectStep()` ignoran la fase de Caza (y `selectStep()` también la de
+Enfrentamiento), y el último paso del asentamiento se rechaza con «no departing survivors» mientras
+nadie esté elegido para partir en el paso 8 (decisión del mantenedor: la caza necesita al menos un
+superviviente). Tests en `PhaseGuardsTest`.
 
 - Raised by: sondeo de casos límite del asentamiento, 2026-10-31.
 - Scope: `app-android/.../YearFlowActions.kt`, `app-android/src/test/.../PhaseGuardsTest.kt`.

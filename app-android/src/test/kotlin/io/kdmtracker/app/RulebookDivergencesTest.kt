@@ -21,6 +21,7 @@ class RulebookDivergencesTest {
 
     private fun failTheHunt() {
         while (state.currentStep < 11) controller.flow.advance()
+        controller.chooseTheDepartingParty()
         controller.flow.advance()
         controller.hunt.setUpHunt("White Lion", 1, 4)
         controller.flow.finishHunt(HuntStatus.FAILED)
