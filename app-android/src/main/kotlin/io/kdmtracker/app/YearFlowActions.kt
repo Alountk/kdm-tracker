@@ -17,6 +17,8 @@ import io.kdmtracker.core.usecase.GainEndeavors
 import io.kdmtracker.core.usecase.SetHuntOutcome
 import io.kdmtracker.core.usecase.SetShowdownOutcome
 import io.kdmtracker.core.usecase.SetSpecialShowdown
+import io.kdmtracker.core.usecase.SetUpHunt
+import io.kdmtracker.core.usecase.Starve
 
 /** Phase and step transitions of the lantern-year loop; every target comes from `:core`. */
 internal class YearFlowActions(
@@ -129,8 +131,10 @@ internal class YearFlowActions(
                     HuntStatus.QUARRY_FOUND, HuntStatus.AMBUSH -> enterShowdown()
                     // The hunt ends without a showdown: a party wipe (no returnees) or a run away
                     // (the survivors return); both re-enter the Settlement Phase.
-                    HuntStatus.FAILED ->
+                    HuntStatus.FAILED -> {
                         applyStep(returnees = 0, context = FlowContext(ruleset = ruleset, huntFailed = true))
+                        starve()
+                    }
                     HuntStatus.RUN_AWAY ->
                         applyStep(
                             returnees = repository.settlement.population,
@@ -155,11 +159,19 @@ internal class YearFlowActions(
         if (status == HuntStatus.QUARRY_FOUND || status == HuntStatus.AMBUSH) enterShowdown()
     }
 
-    private fun enterShowdown() =
+    private fun enterShowdown() {
+        val onStarvation = repository.record.state.hunt.position == SetUpHunt.STARVATION_INDEX
         applyStep(
             returnees = repository.settlement.population,
             context = FlowContext(ruleset = ruleset),
         )
+        if (onStarvation) starve()
+    }
+
+    /** A starving hunt owes a d5 of stored resources; the player pays it by choosing what to discard. */
+    private fun starve() {
+        applyResult(Starve.run(repository.record, Starve.roll()))
+    }
 
     /** Records the outcome, then advances out of the Showdown. */
     fun finishShowdown(status: ShowdownStatus) {

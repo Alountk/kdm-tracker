@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import io.kdmtracker.app.Screen
 import io.kdmtracker.app.UiState
+import io.kdmtracker.core.domain.ResourceId
 
 /** Which screens the shell wraps. Kept beside the frame it gates. */
 object AppShell {
@@ -30,6 +31,7 @@ fun AppShell(
     onAccount: () -> Unit,
     onExit: () -> Unit,
     onSelectStep: (Int) -> Unit,
+    onDiscardForStarvation: (ResourceId) -> Unit,
     content: @Composable () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -47,6 +49,13 @@ fun AppShell(
                     currentStep = state.currentStep,
                     reachableSteps = state.reachableSteps,
                     onSelectStep = onSelectStep,
+                )
+            }
+            if (state.starvationOwed > 0) {
+                StarvationBanner(
+                    owed = state.starvationOwed,
+                    choices = starvationChoices(state.storageLines, state.resourceDefinitions),
+                    onDiscard = onDiscardForStarvation,
                 )
             }
             content()

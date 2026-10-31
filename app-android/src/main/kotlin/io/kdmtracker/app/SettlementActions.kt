@@ -7,10 +7,12 @@ import io.kdmtracker.core.domain.LocationId
 import io.kdmtracker.core.domain.MilestoneId
 import io.kdmtracker.core.domain.PrincipleCategory
 import io.kdmtracker.core.domain.ResourceEntry
+import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.usecase.AddResourceEntry
 import io.kdmtracker.core.usecase.BuildLocation
 import io.kdmtracker.core.usecase.ChoosePrinciple
 import io.kdmtracker.core.usecase.Craft
+import io.kdmtracker.core.usecase.DiscardForStarvation
 import io.kdmtracker.core.usecase.Innovate
 import io.kdmtracker.core.usecase.RecordBirths
 import io.kdmtracker.core.usecase.RecordDeaths
@@ -63,6 +65,11 @@ internal class SettlementActions(
     /** The action's effect is resolved by the players; only the pool is decremented. */
     fun spendEndeavor() {
         applyResult(SpendEndeavor.run(repository.record))
+    }
+
+    /** Pays one unit of the starvation debt with the resource the player chose. */
+    fun discardForStarvation(id: ResourceId) {
+        applyResult(DiscardForStarvation.run(repository.record, id))
     }
 
     fun addResource(entry: ResourceEntry) {

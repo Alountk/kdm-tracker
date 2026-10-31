@@ -35,6 +35,8 @@ import kotlinx.serialization.json.jsonPrimitive
  * @property gear the ids of the gear the settlement has crafted.
  * @property principles the chosen principle label per [PrincipleCategory] (step 5/6 decisions).
  * @property resolvedMilestones the milestone ids the table has already resolved.
+ * @property starvationOwed the stored resources a starving hunt still takes from the settlement; the
+ *   player pays it by discarding chosen resources.
  */
 @Serializable
 data class SettlementState(
@@ -53,6 +55,7 @@ data class SettlementState(
     val hunt: HuntState = HuntState(),
     val showdown: ShowdownState = ShowdownState(),
     val specialShowdown: Boolean = false,
+    val starvationOwed: Int = 0,
 ) {
     /** Whether [key] has already been used during the current Settlement Phase. */
     fun usedInPhase(key: String): Boolean = key in phaseActionsUsed

@@ -146,6 +146,7 @@ private fun InCampaignScreen(
         onAccount = viewModel::goAccount,
         onExit = viewModel::goHome,
         onSelectStep = { act { flow.selectStep(it) } },
+        onDiscardForStarvation = { act { settlement.discardForStarvation(it) } },
     ) {
         when (state.screen) {
             Screen.Settlement ->

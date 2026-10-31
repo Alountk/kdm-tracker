@@ -56,6 +56,7 @@ internal class UiStateMapper(
             resourceDefinitions = content.resourceDefinitions,
             innovationDefinitions = content.innovationDefinitions,
             storageLines = record.storage(),
+            starvationOwed = record.state.starvationOwed,
             endeavorBreakdown = DerivedValues.endeavorsFor(settlement.population, ruleset),
             catalogError = catalogError(),
             innovationDeck = InnovationDeck.of(record.state.innovations).cards,
