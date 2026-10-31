@@ -261,11 +261,9 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
   regresa genera +1 esfuerzo». La app fondea con la población entera (`YearFlowActions.fundGainEndeavors`),
   así que tras una caza fallida (partida muerta, nadie regresa) el paso 3 reparte igualmente 4 esfuerzos.
   Las muertes se anotan en el paso 5, después del 3, por lo que la población aún las cuenta.
-- **Hambruna** (fase de caza, págs. 61-63): «si la caza llega o se resuelve en la casilla de hambruna,
-  se pierden d5 recursos del almacén; si la partida muere, la caza fracasa y se activa hambruna».
-  Hoy la casilla `STARVATION` existe en el tablero, pero llegar a ella o fracasar no quita recursos.
-  Hace falta decidir qué recursos se pierden (el manual no lo fija en el texto disponible).
-
+- **Hambruna** (resuelto): un fracaso de la caza, o llegar a la casilla de hambruna, deja una deuda de
+  d5 recursos (`Starve`); el jugador la paga descartando de uno en uno los recursos que elige
+  (`DiscardForStarvation`, banner de la barra superior). Tests en `StarvationFlowTest`.
 - **Retroceso del monstruo** (resuelto): `RetreatMonster` aleja la bestia del grupo (sube el índice) y
   se queda dentro del tablero. Queda abierto que el evento del Antílope pida alejarla 3 espacios y el
   botón mueva uno por pulsación.

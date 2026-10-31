@@ -85,6 +85,7 @@ data class UiState(
     val resourceDefinitions: List<ResourceDefinition> = emptyList(),
     val innovationDefinitions: List<Innovation> = emptyList(),
     val storageLines: List<StorageLine> = emptyList(),
+    val starvationOwed: Int = 0,
     val endeavorBreakdown: EndeavorBreakdown = EndeavorBreakdown(base = 0, bonuses = emptyList()),
     val catalogError: String? = null,
     val innovationDeck: List<String> = emptyList(),

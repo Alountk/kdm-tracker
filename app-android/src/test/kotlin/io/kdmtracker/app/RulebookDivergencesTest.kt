@@ -1,14 +1,11 @@
 package io.kdmtracker.app
 
 import io.kdmtracker.core.domain.HuntStatus
-import io.kdmtracker.core.domain.ResourceEntry
-import io.kdmtracker.core.domain.ResourceId
 import io.kdmtracker.core.domain.SettlementPhase
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Rules from the rulebook (KDM 1.5 ES) that the app does not follow yet. Each test states the rule;
@@ -38,18 +35,5 @@ class RulebookDivergencesTest {
         while (state.currentStep < 3) controller.flow.advance()
 
         assertEquals(0, state.endeavors)
-    }
-
-    @Ignore("backlog: starvation is only a board space; it takes no resources from the storage")
-    @Test
-    fun aFailedHuntLosesBetweenOneAndFiveStoredResourcesToStarvation() {
-        // Hunt phase, starvation: when the party wipes the hunt fails and starvation costs d5
-        // resources from the settlement storage.
-        controller.settlement.addResource(ResourceEntry(ResourceId("bone.monster"), 10))
-
-        failTheHunt()
-
-        val stored = state.storageLines.sumOf { it.quantity }
-        assertTrue(stored in 5..9, "storage kept $stored of 10 resources")
     }
 }
