@@ -253,14 +253,13 @@ Se retira del roadmap por decisión del mantenedor y se retoma cuando se quiera 
 
 ## Reglas del manual que la app no cumple todavía (tests de flujo, 2026-10-30)
 
-Los tests de `RulebookDivergencesTest` enuncian cada regla y están marcados `@Ignore` hasta que
-exista el comportamiento. Se descubrieron al escribir los tests de flujo del año linterna contra el
-manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
+Se descubrieron al escribir los tests de flujo del año linterna y de la caza contra el manual
+(KDM 1.5 ES). Cada una se enuncia como test y no se corrigió sin avisar al mantenedor.
 
-- **Paso 3, Ganar Esfuerzos** (fase de asentamiento, págs. 34-35 y 81-85): «cada superviviente que
-  regresa genera +1 esfuerzo». La app fondea con la población entera (`YearFlowActions.fundGainEndeavors`),
-  así que tras una caza fallida (partida muerta, nadie regresa) el paso 3 reparte igualmente 4 esfuerzos.
-  Las muertes se anotan en el paso 5, después del 3, por lo que la población aún las cuenta.
+- **Paso 3, Ganar Esfuerzos** (resuelto): una caza fallida mata a la partida al terminar (se cuentan sus
+  muertes como las del enfrentamiento), así que el paso 3 solo da esfuerzo a quienes siguen vivos.
+  Los supervivientes que se quedaron en el asentamiento sí lo ganan. Tests en
+  `SettlementYearRulesFlowTest`.
 - **Hambruna** (resuelto): un fracaso de la caza, o llegar a la casilla de hambruna, deja una deuda de
   d5 recursos (`Starve`); el jugador la paga descartando de uno en uno los recursos que elige
   (`DiscardForStarvation`, banner de la barra superior). Tests en `StarvationFlowTest`.
@@ -275,8 +274,8 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
 
 - Raised by: tests de flujo del año linterna, 2026-10-30.
 - Scope: `app-android/.../YearFlowActions.kt`, `core/.../usecase/SetHuntOutcome.kt`,
-  `core/.../usecase/RetreatMonster.kt`, `app-android/src/test/.../RulebookDivergencesTest.kt`,
-  `app-android/src/test/.../HuntPhaseRulesFlowTest.kt`.
+  `core/.../usecase/RetreatMonster.kt`, `app-android/src/test/.../HuntPhaseRulesFlowTest.kt`,
+  `app-android/src/test/.../StarvationFlowTest.kt`.
 
 ## Guardas de fase del controlador (casos límite, 2026-10-31)
 
