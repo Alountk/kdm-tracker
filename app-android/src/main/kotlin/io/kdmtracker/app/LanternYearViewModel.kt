@@ -251,6 +251,30 @@ class LanternYearViewModel(
         }
     }
 
+    /**
+     * Changes the open campaign's packs to [wanted], the full set it should have, then syncs.
+     *
+     * A refused choice (a pack removed, unknown, or missing its requirement) surfaces as [actionError]
+     * and leaves the campaign untouched.
+     */
+    fun changePacks(wanted: Collection<String>) {
+        workScope.launch(dispatcher) {
+            val loaded = components.get() ?: return@launch
+            _actionError.value = null
+            try {
+                loaded.controller.changePacks(wanted)
+                _state.value =
+                    loaded.controller.state.value
+                        .forDisplay()
+                loaded.syncCoordinator?.syncNow()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: IllegalArgumentException) {
+                _actionError.value = failure.message ?: "Could not change the content packs"
+            }
+        }
+    }
+
     /** Syncs every campaign the user can reach. */
     fun syncAll() {
         components.get()?.syncCoordinator?.syncAll()

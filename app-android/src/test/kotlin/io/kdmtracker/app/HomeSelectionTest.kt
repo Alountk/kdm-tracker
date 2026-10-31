@@ -154,6 +154,18 @@ class HomeSelectionTest {
     }
 
     @Test
+    fun aRefusedPackChangeSurfacesTheErrorAndLeavesTheCampaignAlone() {
+        val store = InMemoryCampaignStore()
+        val harness = harness(store)
+        val before = store.loadSnapshots().map { it.campaign }
+
+        harness.viewModel.changePacks(setOf("nope"))
+
+        assertEquals("unknown content pack 'nope'", harness.viewModel.actionError.value)
+        assertEquals(before, store.loadSnapshots().map { it.campaign })
+    }
+
+    @Test
     fun aHubRejectedCreateSurfacesTheHttpError() {
         val harness = harness(createCampaign = { throw SyncHttpException(409, "duplicate name") })
 

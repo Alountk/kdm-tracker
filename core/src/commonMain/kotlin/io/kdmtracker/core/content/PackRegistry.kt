@@ -54,6 +54,33 @@ class PackRegistry(
         return PackSelection.Ok(enabled)
     }
 
+    /**
+     * Resolves the packs an existing campaign ends up with when [wanted] is the full set it should have.
+     *
+     * Packs only get added: a pack in [current] that [wanted] leaves out is refused, because nothing
+     * yet says whether the campaign's state already uses its content. A pack in [current] that this
+     * build does not know stays as it is, so a campaign made on a newer build keeps its ids. Each added
+     * pack must be registered and have its `requires` among the packs the campaign ends up with.
+     */
+    fun change(
+        current: List<String>,
+        wanted: Collection<String>,
+    ): PackSelection {
+        wanted.firstOrNull { it !in byId && it !in current }?.let {
+            return PackSelection.Blocked("unknown content pack '$it'")
+        }
+        current.firstOrNull { it !in wanted }?.let {
+            return PackSelection.Blocked("content pack '$it' is already enabled and cannot be disabled")
+        }
+        val added = entries.map { it.pack.id }.filter { it in wanted && it !in current }
+        val enabled = current + added
+        for (id in added) {
+            val missing = byId.getValue(id).requires.firstOrNull { it !in enabled } ?: continue
+            return PackSelection.Blocked("content pack '$id' requires '$missing'")
+        }
+        return PackSelection.Ok(enabled)
+    }
+
     companion object {
         /** The packs this build ships. */
         val shipped =

@@ -47,6 +47,12 @@ class LanternYearController(
         return card
     }
 
+    /** A refused choice escapes as [IllegalArgumentException] and changes nothing. */
+    fun changePacks(wanted: Collection<String>) {
+        repository.changePacks(wanted)
+        session.republish()
+    }
+
     /**
      * A sync pass mutates the store behind the controller's back; without this the UI keeps rendering
      * the pre-sync frame.
