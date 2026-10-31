@@ -219,18 +219,21 @@ class LanternYearViewModel(
     }
 
     /**
-     * Creates a settlement through the hub and opens it.
+     * Creates a settlement through the hub and opens it, with the base packs plus the [expansions] picked.
      *
      * Any failure (transport, non-2xx, malformed body) surfaces as [actionError] and leaves no
      * half-created state. [actionError] is cleared first so a stale one cannot linger during a retry.
      */
-    fun create(name: String) {
+    fun create(
+        name: String,
+        expansions: Set<String> = emptySet(),
+    ) {
         if (name.isBlank()) return
         workScope.launch(dispatcher) {
             val loaded = components.get() ?: return@launch
             _actionError.value = null
             try {
-                val card = loaded.controller.createCampaign(name)
+                val card = loaded.controller.createCampaign(name, expansions)
                 _homeCards.value = loaded.controller.cards()
                 _createSucceeded.value += 1
                 onHome = false

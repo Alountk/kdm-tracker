@@ -31,10 +31,12 @@ import io.kdmtracker.app.ui.HomeScreen
 import io.kdmtracker.app.ui.SettlementScreen
 import io.kdmtracker.app.ui.ShowdownScreen
 import io.kdmtracker.app.ui.SurvivorsScreen
+import io.kdmtracker.app.ui.expansionOptions
 import io.kdmtracker.app.ui.hunt.HuntScreen
 import io.kdmtracker.app.ui.shell.AppShell
 import io.kdmtracker.app.ui.shell.ShellTab
 import io.kdmtracker.app.ui.theme.KdmTheme
+import io.kdmtracker.core.content.PackRegistry
 
 @Composable
 fun KdmTrackerApp(
@@ -49,6 +51,7 @@ fun KdmTrackerApp(
     val signInError by viewModel.signInError.collectAsState()
     val createSucceeded by viewModel.createSucceeded.collectAsState()
     var newSettlementName by remember { mutableStateOf("") }
+    val expansions = remember { expansionOptions(PackRegistry.shipped.optional) }
 
     // Clear the New-settlement field only once the create actually landed, so a failure keeps the
     // typed name (cheap minor).
@@ -108,6 +111,7 @@ fun KdmTrackerApp(
                                     newSettlementName = newSettlementName,
                                     onNewSettlementName = { newSettlementName = it },
                                     error = actionError,
+                                    expansions = expansions,
                                 )
                             Screen.Account -> {
                                 BackHandler { viewModel.closeAccount() }

@@ -136,6 +136,24 @@ class HomeSelectionTest {
     }
 
     @Test
+    fun aRefusedExpansionSurfacesTheErrorAndNeverReachesTheHub() {
+        var hubCalls = 0
+        val harness =
+            harness(
+                createCampaign = { name ->
+                    hubCalls++
+                    CampaignSummary(nextId().value, name, "OWNER", "", emptyList())
+                },
+            )
+
+        harness.viewModel.create("Gloom", setOf("nope"))
+
+        assertEquals("unknown content pack 'nope'", harness.viewModel.actionError.value)
+        assertEquals(0, hubCalls)
+        assertEquals(1, harness.viewModel.homeCards.value.size)
+    }
+
+    @Test
     fun aHubRejectedCreateSurfacesTheHttpError() {
         val harness = harness(createCampaign = { throw SyncHttpException(409, "duplicate name") })
 

@@ -3,6 +3,8 @@ package io.kdmtracker.app.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,11 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,10 +39,11 @@ import io.kdmtracker.app.CampaignCard
 fun HomeScreen(
     cards: List<CampaignCard>,
     onSelect: (String) -> Unit,
-    onCreate: (String) -> Unit,
+    onCreate: (String, Set<String>) -> Unit,
     newSettlementName: String,
     onNewSettlementName: (String) -> Unit,
     error: String?,
+    expansions: List<ExpansionOption> = emptyList(),
 ) {
     Column(
         modifier =
@@ -59,6 +67,7 @@ fun HomeScreen(
             name = newSettlementName,
             onNameChange = onNewSettlementName,
             onCreate = onCreate,
+            expansions = expansions,
         )
 
         if (cards.isEmpty()) {
@@ -105,29 +114,50 @@ private fun CampaignCardItem(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NewSettlementForm(
     name: String,
     onNameChange: (String) -> Unit,
-    onCreate: (String) -> Unit,
+    onCreate: (String, Set<String>) -> Unit,
+    expansions: List<ExpansionOption>,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = onNameChange,
-            label = { Text("New settlement") },
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-        )
-        Button(
-            onClick = { onCreate(name) },
-            enabled = name.isNotBlank(),
+    var picked by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Create")
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text("New settlement") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            Button(
+                onClick = { onCreate(name, picked) },
+                enabled = name.isNotBlank(),
+            ) {
+                Text("Create")
+            }
+        }
+        if (expansions.isNotEmpty()) {
+            Text(
+                text = "Expansions",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                expansions.forEach { option ->
+                    FilterChip(
+                        selected = option.id in picked,
+                        onClick = { picked = toggledExpansion(picked, option.id) },
+                        label = { Text(option.name) },
+                    )
+                }
+            }
         }
     }
 }

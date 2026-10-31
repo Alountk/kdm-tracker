@@ -29,6 +29,7 @@ internal class NewCampaignFactory(
         settlementId: Ulid,
         campaignName: String,
         settlementName: String,
+        enabledPacks: List<String>,
     ): Pair<Campaign, Settlement> {
         val campaign =
             Campaign(
@@ -38,7 +39,7 @@ internal class NewCampaignFactory(
                 rulesetOverrides = RulesetOverrides(),
                 settlementIds = listOf(settlementId),
                 sync = SyncMeta(clock.tick(null), rev = 1),
-                enabledPacks = listOf(Core16Content.pack.id, Legacy15Content.pack.id),
+                enabledPacks = enabledPacks,
             )
         val settlement =
             Settlement
