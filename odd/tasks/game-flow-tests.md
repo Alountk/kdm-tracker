@@ -13,7 +13,7 @@ Executable scenarios derived from the KDM 1.5 ES rulebook (local `external-asset
 | T1 | S1, S4 | inline | done (SettlementYearRulesFlowTest passes, 1 test executed) | this PR |
 | T2 | S2 | inline | done (RED observed: both rules fail on the current code; then `@Ignore` + backlog) | this PR |
 | T4 | S2 | inline | done (RED observed for the three guard gaps; then `@Ignore` + backlog; one passing pin) | this PR |
-| T3 | S3 | inline | pending (hunt-phase rules: next slice) | |
+| T3 | S3 | inline | done (HuntPhaseRulesFlowTest: 4 tests pass on the current code, 1 RED then `@Ignore` + backlog) | this PR |
 
 ## Log
 - L1 (2026-10-30): "creo que podemos dejar el B4 en el backlog y podriamos mirar de hacer tests de flows del juego, ya que tenemos las instrucciones tanto en md como en pdf." Then "dale" to starting with the settlement phase (the 11 steps).
@@ -21,3 +21,4 @@ Executable scenarios derived from the KDM 1.5 ES rulebook (local `external-asset
 - L3: two divergences found and left unfixed (S2): step 3 funds the whole population after a party wipe; starvation takes no resources.
 - L4 (2026-10-31): "dale alguna vuelta más a algun edge case que pudieramos tener sin controlar en la fase del asentamiento" — probed the controller; three guard gaps found (advance without phase guard, selectStep without phase guard, commit with no departing survivor), one pinned (back-and-forth never funds or advances twice).
 - L5 (2026-10-31): "si arreglalos ahora" (advance and selectStep phase guards, merged) and "si, por lo menos deberia de haber un minimo de supervivientes que van a la caza." (the last settlement step is refused with no departing survivor).
+- L6 (2026-10-31): "dale" to the hunt-phase flow tests. Board, one-space advance, unresolved-card gate, contact vs ambush, damage kept, run away: already followed. Divergences: retreat moves the beast closer (test ignored); the two ambush kinds and their effect are not modelled (backlog only, no observable yet).

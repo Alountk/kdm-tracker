@@ -266,9 +266,21 @@ manual (KDM 1.5 ES); ninguna se ha corregido sin avisar al mantenedor.
   Hoy la casilla `STARVATION` existe en el tablero, pero llegar a ella o fracasar no quita recursos.
   Hace falta decidir qué recursos se pierden (el manual no lo fija en el texto disponible).
 
+- **Retroceso del monstruo** (fase de caza, eventos como «Asustadizo» o «León Merodeador»): «se mueve
+  1 espacio alejándose de los supervivientes». `RetreatMonster` lo acerca (resta 1 al índice cuando
+  la bestia va por delante del grupo) y `RetreatMonsterTest` fija ese sentido. Además el evento del
+  Antílope pide alejarlo 3 espacios y el botón mueve uno por pulsación. Test `@Ignore` en
+  `HuntPhaseRulesFlowTest`.
+- **Emboscada** (fase de caza, págs. 61-63): hay dos emboscadas, la del monstruo («los supervivientes
+  pierden su primer turno») y la de los supervivientes por un evento de sigilo («eligen quién actúa
+  primero y colocan el terreno»). La app solo distingue `AMBUSH` (la bestia llega al grupo), que sirve
+  para pasar al enfrentamiento, pero el estado del enfrentamiento no guarda quién emboscó ni su
+  efecto. No hay test porque aún no existe dónde observarlo; hace falta decidir el modelo.
+
 - Raised by: tests de flujo del año linterna, 2026-10-30.
 - Scope: `app-android/.../YearFlowActions.kt`, `core/.../usecase/SetHuntOutcome.kt`,
-  `app-android/src/test/.../RulebookDivergencesTest.kt`.
+  `core/.../usecase/RetreatMonster.kt`, `app-android/src/test/.../RulebookDivergencesTest.kt`,
+  `app-android/src/test/.../HuntPhaseRulesFlowTest.kt`.
 
 ## Guardas de fase del controlador (casos límite, 2026-10-31)
 
