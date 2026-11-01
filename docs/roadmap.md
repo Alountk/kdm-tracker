@@ -139,7 +139,14 @@ hardcoded and ingesting the content, not new architecture.
    never removed, because nothing yet says whether the campaign's state uses a pack's content (it can be
    relaxed once a pack's content can be traced in the state, E4); an id this build does not know is kept.
    `SettlementRepository.changePacks` stamps the campaign so sync carries the change, and the controller
-   and ViewModel expose it, surfacing a refusal as the action error. Open: the screen that drives it,
+   and ViewModel expose it, surfacing a refusal as the action error. Combinations: `PackRegistry` takes
+   `PackRelation`s (incompatible or compatibility issues, each with a source: official, community or
+   chart). Choosing or adding packs refuses an *official* incompatibility and otherwise returns the
+   relations as `PackSelection.Ok.warnings` for the player to confirm; a change only looks at the
+   relations of the pack it adds. The shipped registry carries none yet: the data waits on the
+   maintainer's review of `external-assets/expansiones/compatibility.md` (a third-party chart, v0) and
+   `nodes-official.md` (the official node page). Same-node monsters replace each other per the official
+   page, which is not an incompatibility and is not modelled yet. Open: the screen that drives it,
    waiting on a Stitch design.
 2. **E2 — quarries as data.** A `QuarryDefinition` in `ContentBundle` carrying the board layout, the
    starting space per level, whether it is a nemesis and the short name. `SetUpHunt` and
