@@ -6,11 +6,29 @@ data class RegisteredPack(
     val base: Boolean = false,
 )
 
+/** What is wrong with two packs sitting in one campaign. */
+enum class RelationKind { INCOMPATIBLE, COMPATIBILITY_ISSUES }
+
+/** Who says so, strongest first: only an [OFFICIAL] incompatibility stops a campaign. */
+enum class RelationSource { OFFICIAL, COMMUNITY, CHART }
+
+/** A known problem between packs [a] and [b]. The order of the two ids does not matter. */
+data class PackRelation(
+    val a: String,
+    val b: String,
+    val kind: RelationKind,
+    val source: RelationSource,
+)
+
 /** The packs a campaign ends up with, or why a choice of expansions cannot be honoured. */
 sealed interface PackSelection {
-    /** [enabled] lists the base packs first, then the chosen expansions, in registry order. */
+    /**
+     * [enabled] lists the base packs first, then the chosen expansions, in registry order. [warnings] are the
+     * relations between the packs that were not stopped, for the player to confirm.
+     */
     data class Ok(
         val enabled: List<String>,
+        val warnings: List<PackRelation> = emptyList(),
     ) : PackSelection
 
     data class Blocked(
@@ -26,6 +44,7 @@ sealed interface PackSelection {
  */
 class PackRegistry(
     private val entries: List<RegisteredPack>,
+    private val relations: List<PackRelation> = emptyList(),
 ) {
     private val byId: Map<String, ContentPack> = entries.associate { it.pack.id to it.pack }
 
@@ -42,7 +61,8 @@ class PackRegistry(
      *
      * The base packs are always in. A pack nobody registered is refused, and so is one whose
      * `requires` are not all enabled: the player picks the requirement too, nothing is enabled on
-     * their behalf.
+     * their behalf. A relation between two chosen packs warns, or refuses when it is an official
+     * incompatibility.
      */
     fun select(chosen: Collection<String>): PackSelection {
         chosen.firstOrNull { it !in byId }?.let { return PackSelection.Blocked("unknown content pack '$it'") }
@@ -51,7 +71,7 @@ class PackRegistry(
             val missing = byId.getValue(id).requires.firstOrNull { it !in enabled } ?: continue
             return PackSelection.Blocked("content pack '$id' requires '$missing'")
         }
-        return PackSelection.Ok(enabled)
+        return judge(enabled, enabled)
     }
 
     /**
@@ -60,7 +80,8 @@ class PackRegistry(
      * Packs only get added: a pack in [current] that [wanted] leaves out is refused, because nothing
      * yet says whether the campaign's state already uses its content. A pack in [current] that this
      * build does not know stays as it is, so a campaign made on a newer build keeps its ids. Each added
-     * pack must be registered and have its `requires` among the packs the campaign ends up with.
+     * pack must be registered and have its `requires` among the packs the campaign ends up with. Only
+     * the relations of an added pack count: a pair the campaign already has is left alone.
      */
     fun change(
         current: List<String>,
@@ -78,7 +99,25 @@ class PackRegistry(
             val missing = byId.getValue(id).requires.firstOrNull { it !in enabled } ?: continue
             return PackSelection.Blocked("content pack '$id' requires '$missing'")
         }
-        return PackSelection.Ok(enabled)
+        return judge(enabled, added)
+    }
+
+    /** Refuses on an official incompatibility among [enabled] that involves an [added] pack; warns about the rest. */
+    private fun judge(
+        enabled: List<String>,
+        added: List<String>,
+    ): PackSelection {
+        val found =
+            relations
+                .filter { it.a in enabled && it.b in enabled && (it.a in added || it.b in added) }
+                .groupBy { setOf(it.a, it.b) to it.kind }
+                .values
+                .map { pair -> pair.minBy { it.source } }
+        found.firstOrNull { it.kind == RelationKind.INCOMPATIBLE && it.source == RelationSource.OFFICIAL }?.let {
+            val (first, second) = listOf(it.a, it.b).sortedBy(enabled::indexOf)
+            return PackSelection.Blocked("content pack '$first' is incompatible with '$second'")
+        }
+        return PackSelection.Ok(enabled, found)
     }
 
     companion object {
