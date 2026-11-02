@@ -29,6 +29,7 @@ data class ContentBundle(
     val timeline: List<TimelineEntry> = emptyList(),
     val quarries: List<String> = emptyList(),
     val nemeses: List<String> = emptyList(),
+    val nodeMonsters: List<NodeMonster> = emptyList(),
     val gear: List<Gear> = emptyList(),
     val settlementEvents: List<SettlementEvent> = emptyList(),
     val huntEvents: List<HuntEvent> = emptyList(),
