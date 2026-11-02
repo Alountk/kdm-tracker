@@ -1,5 +1,6 @@
 package io.kdmtracker.core.transfer
 
+import io.kdmtracker.core.content.NodeChoices
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.MilestoneId
@@ -33,6 +34,7 @@ object TransferMapper {
             sync = campaign.sync.toDto(),
             settlements = records.map { it.toDto() },
             enabledPacks = campaign.enabledPacks,
+            nodeChoices = campaign.nodeChoices.mapKeys { it.key.name },
         )
 
     /**
@@ -51,6 +53,7 @@ object TransferMapper {
                 settlementIds = dto.settlementIds.map { Ulid.parse(it) },
                 sync = dto.sync.toDomain(),
                 enabledPacks = dto.enabledPacks,
+                nodeChoices = NodeChoices.decode(dto.nodeChoices),
             )
         return campaign to dto.settlements.map { it.toDomain() }
     }

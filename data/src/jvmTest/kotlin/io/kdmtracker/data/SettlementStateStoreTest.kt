@@ -139,7 +139,7 @@ class SettlementStateStoreTest {
         KdmDatabase.Schema.migrate(driver, 3L, KdmDatabase.Schema.version)
 
         val database = KdmDatabase(driver)
-        assertEquals(5L, KdmDatabase.Schema.version)
+        assertEquals(6L, KdmDatabase.Schema.version)
         val records = SqlDelightCampaignStore(database).loadRecords(CAMPAIGN_ID)
         assertEquals(1, records.size)
         val record = records.single()
