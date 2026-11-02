@@ -102,6 +102,31 @@ class PackRegistry(
         return judge(enabled, added)
     }
 
+    /**
+     * The nodes where a pack [wanted] on top of [current] puts a monster against another one, in node
+     * order. The default is the monster of the last added pack, the one the official rule has replace the
+     * others. A node the campaign already contested is listed again only when an added pack joins it.
+     */
+    fun contests(
+        current: List<String>,
+        wanted: Collection<String>,
+    ): List<NodeContest> {
+        val enabled = entries.map { it.pack.id }.filter { it in current || it in wanted }
+        val monsters =
+            enabled.flatMap { id ->
+                byId
+                    .getValue(id)
+                    .bundle.nodeMonsters
+                    .map { id to it }
+            }
+        return MonsterNode.entries.mapNotNull { node ->
+            val onNode = monsters.filter { it.second.node == node }
+            val names = onNode.map { it.second.name }.distinct()
+            val joined = onNode.lastOrNull { it.first !in current }?.second?.name
+            if (names.size < 2 || joined == null) null else NodeContest(node, names, joined)
+        }
+    }
+
     /** Refuses on an official incompatibility among [enabled] that involves an [added] pack; warns about the rest. */
     private fun judge(
         enabled: List<String>,

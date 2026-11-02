@@ -145,9 +145,18 @@ hardcoded and ingesting the content, not new architecture.
    relations as `PackSelection.Ok.warnings` for the player to confirm; a change only looks at the
    relations of the pack it adds. The shipped registry carries none yet: the data waits on the
    maintainer's review of `external-assets/expansiones/compatibility.md` (a third-party chart, v0) and
-   `nodes-official.md` (the official node page). Same-node monsters replace each other per the official
-   page, which is not an incompatibility and is not modelled yet. Open: the screen that drives it,
-   waiting on a Stitch design.
+   `nodes-official.md` (the official node page). Nodes: a pack declares `nodeMonsters` on the official
+   nodes (`MonsterNode`) and a node holds one monster, so same-node monsters replace each other, which
+   is not an incompatibility. `ContentCatalog.occupants` takes the campaign's stored `nodeChoices`
+   when they name a candidate and otherwise the latest pack's monster; the quarry and nemesis lists
+   and the timeline (entries naming a replaced monster are dropped) follow it. `PackRegistry.contests`
+   lists the nodes an added pack contests, with the new monster as default, and
+   `SettlementRepository.changePacks(wanted, choices)` stores the choices (a campaign field that
+   syncs). Not modelled: People of the Stars keeping NN1, Slenderman / Manhunter / Lion Knight sitting
+   outside one-per-node, and a story event of a pack added mid-campaign whose year already passed (the
+   year events come from the enabled packs, so it never shows). A build that does not know a node
+   drops that choice when it rewrites the campaign. Open: the screen that drives it, waiting on a
+   Stitch design.
 2. **E2 — quarries as data.** A `QuarryDefinition` in `ContentBundle` carrying the board layout, the
    starting space per level, whether it is a nemesis and the short name. `SetUpHunt` and
    `HuntBoardFrame` read it; the three core quarries move over with no behaviour change, guarded by

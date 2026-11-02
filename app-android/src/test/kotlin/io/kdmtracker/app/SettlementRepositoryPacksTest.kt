@@ -1,8 +1,11 @@
 package io.kdmtracker.app
 
+import io.kdmtracker.core.content.ContentBundle
 import io.kdmtracker.core.content.ContentPack
 import io.kdmtracker.core.content.Core16Content
 import io.kdmtracker.core.content.Legacy15Content
+import io.kdmtracker.core.content.MonsterNode
+import io.kdmtracker.core.content.NodeMonster
 import io.kdmtracker.core.content.PackRegistry
 import io.kdmtracker.core.content.RegisteredPack
 import io.kdmtracker.core.persistence.InMemoryCampaignStore
@@ -91,5 +94,60 @@ class SettlementRepositoryPacksTest {
         repository.changePacks(registry.baseIds)
 
         assertEquals(before, stored())
+    }
+
+    private val gorm =
+        ContentPack(
+            id = "test.gorm",
+            version = "1",
+            name = "Gorm",
+            requires = listOf(Core16Content.pack.id),
+            bundle = ContentBundle(nodeMonsters = listOf(NodeMonster("Gorm", MonsterNode.NQ1))),
+        )
+    private val nodeRegistry =
+        PackRegistry(
+            listOf(
+                RegisteredPack(Core16Content.pack, base = true),
+                RegisteredPack(Legacy15Content.pack, base = true),
+                RegisteredPack(gorm),
+            ),
+        )
+    private val nodeStore = InMemoryCampaignStore()
+    private val nodeRepository = SettlementRepository(nodeStore, packs = nodeRegistry)
+
+    @Test
+    fun enablingAnExpansionReplacesTheMonsterOnItsNodeByDefault() {
+        nodeRepository.changePacks(nodeRegistry.baseIds + gorm.id)
+
+        assertTrue("Gorm" in nodeRepository.catalog.quarries)
+        assertTrue("White Lion" !in nodeRepository.catalog.quarries)
+    }
+
+    @Test
+    fun theChoiceMadeWhenEnablingIsStoredAndKeepsTheOriginalMonster() {
+        nodeRepository.changePacks(nodeRegistry.baseIds + gorm.id, mapOf(MonsterNode.NQ1 to "White Lion"))
+
+        assertEquals(
+            mapOf(MonsterNode.NQ1 to "White Lion"),
+            nodeStore
+                .loadSnapshots()
+                .single()
+                .campaign.nodeChoices,
+        )
+        assertTrue("White Lion" in nodeRepository.catalog.quarries)
+        assertTrue("Gorm" !in nodeRepository.catalog.quarries)
+    }
+
+    @Test
+    fun aChoiceNamingAMonsterTheNodeDoesNotHaveIsRefusedAndNothingIsWritten() {
+        val before = nodeStore.loadSnapshots().single().campaign
+
+        val failure =
+            assertFailsWith<IllegalArgumentException> {
+                nodeRepository.changePacks(nodeRegistry.baseIds + gorm.id, mapOf(MonsterNode.NQ1 to "Phoenix"))
+            }
+
+        assertEquals("node NQ1 has no monster 'Phoenix'", failure.message)
+        assertEquals(before, nodeStore.loadSnapshots().single().campaign)
     }
 }
