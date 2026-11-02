@@ -27,3 +27,10 @@ data class NodeMonster(
     val name: String,
     val node: MonsterNode,
 )
+
+/** A node several enabled packs put a monster on, offered to the players when an expansion joins it. */
+data class NodeContest(
+    val node: MonsterNode,
+    val candidates: List<String>,
+    val default: String,
+)

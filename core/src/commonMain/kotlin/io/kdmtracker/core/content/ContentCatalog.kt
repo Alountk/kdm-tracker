@@ -55,18 +55,6 @@ data class ContentCatalog(
         mergeDefinition(packs.flatMap { it.bundle.monsterCards }) { "${it.monster}|${it.kind}|${it.name}" }
     val gearDefinitions: List<Gear> =
         mergeDefinition(packs.flatMap { it.bundle.gear }) { it.id.value }
-    val timeline: List<TimelineEntry> =
-        packs
-            .flatMap { it.bundle.timeline }
-            .distinct()
-            .sortedWith(compareBy({ it.lanternYear }, { it.label }))
-
-    val innovations: List<String> = innovationDefinitions.map { it.names.es }.sorted()
-    val locations: List<String> = locationDefinitions.map { it.names.es }.sorted()
-    val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
-    val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
-    val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
-    val settlementEvents: List<String> = settlementEventDefinitions.map { it.name }.sorted()
     val nodeMonsters: List<NodeMonster> = packs.flatMap { it.bundle.nodeMonsters }.distinct()
 
     /**
@@ -81,6 +69,21 @@ data class ContentCatalog(
                 }.toMap()
         }
 
+    private val displaced: Set<String> = nodeMonsters.mapTo(mutableSetOf()) { it.name } - occupants.values.toSet()
+
+    val timeline: List<TimelineEntry> =
+        packs
+            .flatMap { it.bundle.timeline }
+            .distinct()
+            .filterNot { entry -> displaced.any { it in entry.label } }
+            .sortedWith(compareBy({ it.lanternYear }, { it.label }))
+
+    val innovations: List<String> = innovationDefinitions.map { it.names.es }.sorted()
+    val locations: List<String> = locationDefinitions.map { it.names.es }.sorted()
+    val resources: List<String> = resourceDefinitions.map { it.names.es }.sorted()
+    val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
+    val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
+    val settlementEvents: List<String> = settlementEventDefinitions.map { it.name }.sorted()
     val quarries: List<String> =
         (packs.flatMap { it.bundle.quarries } + occupants.filterKeys { it.quarry }.values).distinct().sorted()
     val nemeses: List<String> =
@@ -195,12 +198,15 @@ private fun combineInnovations(
     )
 
 object ContentCatalogComposer {
-    fun compose(packs: List<ContentPack>): CatalogResult {
+    fun compose(
+        packs: List<ContentPack>,
+        nodeChoices: Map<MonsterNode, String> = emptyMap(),
+    ): CatalogResult {
         val available = packs.mapTo(mutableSetOf()) { it.id }
         for (pack in packs) {
             val missing = pack.requires.firstOrNull { it !in available } ?: continue
             return CatalogResult.MissingRequirement(packId = pack.id, missing = missing)
         }
-        return CatalogResult.Ok(ContentCatalog(packs))
+        return CatalogResult.Ok(ContentCatalog(packs, nodeChoices))
     }
 }

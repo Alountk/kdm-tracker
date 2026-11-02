@@ -1,5 +1,6 @@
 package io.kdmtracker.core.content
 
+import io.kdmtracker.core.domain.TimelineEntry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -96,5 +97,35 @@ class NodeOccupancyTest {
             ),
             seed.occupants,
         )
+    }
+
+    private val butcherYear =
+        TimelineEntry(lanternYear = 16, label = "Nemesis: The Butcher Lvl 2")
+    private val storyYear = TimelineEntry(lanternYear = 4, label = "Story Event")
+    private val withTimeline =
+        ContentPack(
+            id = "base",
+            version = "1",
+            name = "base",
+            bundle =
+                ContentBundle(
+                    nodeMonsters = listOf(butcher),
+                    timeline = listOf(butcherYear, storyYear),
+                ),
+        )
+    private val manhunter = pack("manhunter", NodeMonster("Manhunter", MonsterNode.NN1))
+
+    @Test
+    fun theTimelineDropsTheEntriesOfAMonsterAnotherReplaced() {
+        val catalog = catalog(listOf(withTimeline, manhunter))
+
+        assertEquals(listOf(storyYear), catalog.timeline)
+    }
+
+    @Test
+    fun theTimelineKeepsTheEntriesOfTheMonsterTheCampaignChose() {
+        val catalog = catalog(listOf(withTimeline, manhunter), mapOf(MonsterNode.NN1 to "The Butcher"))
+
+        assertEquals(listOf(storyYear, butcherYear).sortedBy { it.lanternYear }, catalog.timeline)
     }
 }

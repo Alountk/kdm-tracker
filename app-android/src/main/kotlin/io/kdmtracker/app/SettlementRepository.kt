@@ -2,6 +2,7 @@ package io.kdmtracker.app
 
 import io.kdmtracker.core.content.CatalogResult
 import io.kdmtracker.core.content.ContentCatalog
+import io.kdmtracker.core.content.MonsterNode
 import io.kdmtracker.core.content.PackRegistry
 import io.kdmtracker.core.content.PackSelection
 import io.kdmtracker.core.domain.Campaign
@@ -60,11 +61,13 @@ class SettlementRepository(
      * (see [catalogError]) so the screens render nothing instead of the app failing to load.
      */
     val catalog: ContentCatalog
-        get() = (PackCatalogs.compose(campaign.enabledPacks, packs) as? CatalogResult.Ok)?.catalog ?: PackCatalogs.EMPTY
+        get() =
+            (PackCatalogs.compose(campaign.enabledPacks, packs, campaign.nodeChoices) as? CatalogResult.Ok)?.catalog
+                ?: PackCatalogs.EMPTY
 
     /** Why [catalog] is empty, or `null` when it composed cleanly. */
     val catalogError: String?
-        get() = PackCatalogs.errorOf(PackCatalogs.compose(campaign.enabledPacks, packs))
+        get() = PackCatalogs.errorOf(PackCatalogs.compose(campaign.enabledPacks, packs, campaign.nodeChoices))
 
     private val newCampaigns = NewCampaignFactory(clock)
 
@@ -144,23 +147,34 @@ class SettlementRepository(
     }
 
     /**
-     * Changes the held campaign's packs to [wanted], the full set it should end up with.
+     * Changes the held campaign's packs to [wanted], the full set it should end up with, and records the
+     * monster the players [choices] picked for the nodes the new packs contest.
      *
-     * Packs can be added but never removed (see [PackRegistry.change]); a refused choice throws
-     * [IllegalArgumentException] and writes nothing. The campaign is stamped like any other local edit
-     * so sync orders it after the version it replaces, and the outbox carries the new pack ids.
+     * Packs can be added but never removed (see [PackRegistry.change]); a refused choice, or a choice
+     * naming a monster its node does not have, throws [IllegalArgumentException] and writes nothing. The
+     * campaign is stamped like any other local edit so sync orders it after the version it replaces, and
+     * the outbox carries the new pack ids and choices.
      */
-    fun changePacks(wanted: Collection<String>) {
+    fun changePacks(
+        wanted: Collection<String>,
+        choices: Map<MonsterNode, String> = emptyMap(),
+    ) {
         val enabled =
             when (val change = packs.change(campaign.enabledPacks, wanted)) {
                 is PackSelection.Ok -> change.enabled
                 is PackSelection.Blocked -> throw IllegalArgumentException(change.reason)
             }
-        if (enabled == campaign.enabledPacks) return
+        val monsters = enabled.mapNotNull(packs::find).flatMap { it.bundle.nodeMonsters }
+        choices.forEach { (node, name) ->
+            require(monsters.any { it.node == node && it.name == name }) { "node $node has no monster '$name'" }
+        }
+        val nodeChoices = campaign.nodeChoices + choices
+        if (enabled == campaign.enabledPacks && nodeChoices == campaign.nodeChoices) return
         val previous = campaign.sync
         val changed =
             campaign.copy(
                 enabledPacks = enabled,
+                nodeChoices = nodeChoices,
                 sync = previous.copy(updatedAt = clock.tick(previous.updatedAt), rev = previous.rev + 1),
             )
         store.upsertCampaign(changed)

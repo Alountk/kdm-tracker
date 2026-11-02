@@ -3,6 +3,7 @@ package io.kdmtracker.app
 import io.kdmtracker.core.content.CatalogResult
 import io.kdmtracker.core.content.ContentCatalog
 import io.kdmtracker.core.content.ContentCatalogComposer
+import io.kdmtracker.core.content.MonsterNode
 import io.kdmtracker.core.content.PackRegistry
 
 /** Resolves a campaign's enabled content packs into a catalog. */
@@ -14,13 +15,14 @@ internal object PackCatalogs {
     fun compose(
         enabled: List<String>,
         registry: PackRegistry = PackRegistry.shipped,
+        nodeChoices: Map<MonsterNode, String> = emptyMap(),
     ): CatalogResult {
         val packs =
             enabled.map {
                 registry.find(it)
                     ?: return CatalogResult.MissingRequirement(packId = it, missing = it)
             }
-        return ContentCatalogComposer.compose(packs)
+        return ContentCatalogComposer.compose(packs, nodeChoices)
     }
 
     /** Why a composition left the catalog empty, or `null` when it composed cleanly. */
