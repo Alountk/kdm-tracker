@@ -203,8 +203,17 @@ object Core16Content {
                             ),
                         ),
                     timeline = Timeline.core16().entries,
-                    quarries = listOf("White Lion", "Screaming Antelope", "Phoenix"),
-                    nemeses = listOf("The Butcher", "King's Man", "The Hand", "The Watcher", "Golden Smoke Knight"),
+                    nodeMonsters =
+                        listOf(
+                            NodeMonster("White Lion", MonsterNode.NQ1),
+                            NodeMonster("Screaming Antelope", MonsterNode.NQ2),
+                            NodeMonster("Phoenix", MonsterNode.NQ3),
+                            NodeMonster("The Butcher", MonsterNode.NN1),
+                            NodeMonster("King's Man", MonsterNode.NN2),
+                            NodeMonster("The Hand", MonsterNode.NN3),
+                            NodeMonster("The Watcher", MonsterNode.CO),
+                            NodeMonster("Golden Smoke Knight", MonsterNode.FI),
+                        ),
                 ),
         )
 }

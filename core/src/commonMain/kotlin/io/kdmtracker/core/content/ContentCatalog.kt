@@ -35,6 +35,7 @@ sealed interface CatalogResult {
  */
 data class ContentCatalog(
     val packs: List<ContentPack>,
+    val nodeChoices: Map<MonsterNode, String> = emptyMap(),
 ) {
     val innovationDefinitions: List<Innovation> =
         mergeInnovationDefinitions(packs.flatMap { it.bundle.innovations })
@@ -66,8 +67,24 @@ data class ContentCatalog(
     val fightingArts: List<String> = fightingArtDefinitions.map { it.name }.sorted()
     val disorders: List<String> = disorderDefinitions.map { it.name }.sorted()
     val settlementEvents: List<String> = settlementEventDefinitions.map { it.name }.sorted()
-    val quarries: List<String> = packs.flatMap { it.bundle.quarries }.distinct().sorted()
-    val nemeses: List<String> = packs.flatMap { it.bundle.nemeses }.distinct().sorted()
+    val nodeMonsters: List<NodeMonster> = packs.flatMap { it.bundle.nodeMonsters }.distinct()
+
+    /**
+     * The monster that holds each node. A node with several candidates goes to the stored choice when it
+     * names one of them, otherwise to the one the latest pack declares, so an expansion replaces the base.
+     */
+    val occupants: Map<MonsterNode, String> =
+        nodeMonsters.groupBy({ it.node }, { it.name }).let { byNode ->
+            MonsterNode.entries
+                .mapNotNull { node ->
+                    byNode[node]?.let { names -> node to (nodeChoices[node]?.takeIf { it in names } ?: names.last()) }
+                }.toMap()
+        }
+
+    val quarries: List<String> =
+        (packs.flatMap { it.bundle.quarries } + occupants.filterKeys { it.quarry }.values).distinct().sorted()
+    val nemeses: List<String> =
+        (packs.flatMap { it.bundle.nemeses } + occupants.filterKeys { !it.quarry }.values).distinct().sorted()
 
     private fun <T> mergeDefinition(
         definitions: List<T>,
