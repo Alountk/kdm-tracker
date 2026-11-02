@@ -153,6 +153,7 @@ class PackRegistry(
                     RegisteredPack(Core16Content.pack, base = true),
                     RegisteredPack(Legacy15Content.pack, base = true),
                 ),
+                ExpansionRelations.chart,
             )
     }
 }

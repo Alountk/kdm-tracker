@@ -143,9 +143,11 @@ hardcoded and ingesting the content, not new architecture.
    `PackRelation`s (incompatible or compatibility issues, each with a source: official, community or
    chart). Choosing or adding packs refuses an *official* incompatibility and otherwise returns the
    relations as `PackSelection.Ok.warnings` for the player to confirm; a change only looks at the
-   relations of the pack it adds. The shipped registry carries none yet: the data waits on the
-   maintainer's review of `external-assets/expansiones/compatibility.md` (a third-party chart, v0) and
-   `nodes-official.md` (the official node page). Nodes: a pack declares `nodeMonsters` on the official
+   relations of the pack it adds. The shipped registry carries the chart's 23 problem pairs
+   (`ExpansionRelations.chart`: 6 red, 17 orange, all `CHART` so they only warn), keyed by the pack ids
+   the expansions will ship under; they do nothing until those packs are registered. The chart's
+   requirements, node overlaps and "interact" marks are not relations. The monsters each expansion puts
+   on a node (`nodes-official.md`) go into that expansion's own pack when it lands (E4). Nodes: a pack declares `nodeMonsters` on the official
    nodes (`MonsterNode`) and a node holds one monster, so same-node monsters replace each other, which
    is not an incompatibility. `ContentCatalog.occupants` takes the campaign's stored `nodeChoices`
    when they name a candidate and otherwise the latest pack's monster; the quarry and nemesis lists
