@@ -78,7 +78,7 @@ class CampaignEnabledPacksStoreTest {
         KdmDatabase.Schema.migrate(driver, 4L, KdmDatabase.Schema.version)
 
         val database = KdmDatabase(driver)
-        assertEquals(5L, KdmDatabase.Schema.version)
+        assertEquals(6L, KdmDatabase.Schema.version)
         assertEquals(
             "[]",
             database.campaignQueries

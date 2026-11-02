@@ -1,5 +1,6 @@
 package io.kdmtracker.data
 
+import io.kdmtracker.core.content.NodeChoices
 import io.kdmtracker.core.domain.Campaign
 import io.kdmtracker.core.domain.HybridLogicalClock
 import io.kdmtracker.core.domain.Settlement
@@ -82,6 +83,7 @@ class SqlDelightCampaignStore(
                 deletedAtMillis = sync.deletedAt?.millis,
                 deletedAtCounter = sync.deletedAt?.counter?.toLong(),
                 enabledPacksJson = json.encodeToString(campaign.enabledPacks),
+                nodeChoicesJson = json.encodeToString(campaign.nodeChoices.mapKeys { it.key.name }),
             )
             recordOutbox(campaign.toOutboxRecord())
         }
@@ -222,6 +224,7 @@ class SqlDelightCampaignStore(
             rulesetOverrides = json.decodeFromString(RulesetOverrides.serializer(), rulesetOverridesJson),
             settlementIds = settlementIds,
             enabledPacks = json.decodeFromString(enabledPacksJson),
+            nodeChoices = NodeChoices.decode(json.decodeFromString(nodeChoicesJson)),
             sync =
                 syncMeta(
                     updatedAtMillis = updatedAtMillis,

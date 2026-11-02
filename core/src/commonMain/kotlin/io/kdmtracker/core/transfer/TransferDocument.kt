@@ -53,6 +53,7 @@ data class CampaignDto(
     val sync: SyncMetaDto = SyncMetaDto(),
     val settlements: List<SettlementDto> = emptyList(),
     val enabledPacks: List<String> = emptyList(),
+    val nodeChoices: Map<String, String> = emptyMap(),
 )
 
 /**

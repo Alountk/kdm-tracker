@@ -12,8 +12,8 @@ Objective: packs declare which monster node each monster sits on; a campaign sto
 ## Tasks
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| T1 | S1, S3 | inline | done (NodeOccupancyTest, 8 tests; RED observed only as a compile failure) | this PR |
-| T2 | S2, S4 | inline | pending: `Campaign.nodeChoices` through the transfer document, the local store (migration) and the sync store | |
+| T1 | S1, S3 | inline | done (NodeOccupancyTest, 8 tests; RED observed only as a compile failure) | ecd3e04 (PR #79) |
+| T2 | S2, S4 | inline | done (CampaignNodeChoicesTransferTest 4 + CampaignNodeChoicesStoreTest 4; RED observed only as a compile failure; migration 5.sqm moves the schema to version 6 and three older migration tests pinned the version) | this PR |
 | T3 | S2, S5 | inline | pending: enabling packs takes the choices, stores them, swaps the timeline; contested nodes exposed for the sheet | |
 
 ## Log
